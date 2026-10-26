@@ -97,9 +97,6 @@ learnr_global_setup <- function() {
   )
 }
 
-kind_labels <- c(write = "Schreiben", predict = "Vorhersagen", debug = "Reparieren",
-                 complete = "Erg\u00e4nzen")
-
 learnr_exercise <- function(ex) {
   id <- ex$id
   setup <- c(

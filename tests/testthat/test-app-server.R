@@ -155,6 +155,37 @@ test_that("free mode filters rebuild the queue", {
   })
 })
 
+test_that("free mode starts with the topics filter and the checkboxes can widen it", {
+  local_progress_dir()
+  shiny::testServer(app_server(fx(), mode = "free", topics = c("base", "plots")), {
+    expect_setequal(q()$ids, c("fx-sum", "fx-plot"))
+    session$setInputs(mode = "free")  # first flush = init (ignoreInit)
+    session$setInputs(f_topic = "strings")
+    expect_equal(q()$ids, "fx-print")
+    # unchecking all topics shows all exercises, not the start filter again
+    session$setInputs(f_topic = NULL)
+    expect_setequal(q()$ids, names(fx()))
+  })
+})
+
+test_that("free mode without topics shows all exercises", {
+  local_progress_dir()
+  shiny::testServer(app_server(fx(), mode = "free"), {
+    expect_setequal(q()$ids, names(fx()))
+  })
+})
+
+test_that("app_ui preselects known start topics and opens the filter", {
+  html <- as.character(app_ui(fx(), "free", selected_topics = c("plots", "unknown")))
+  expect_match(html, 'value="plots" checked="checked"', fixed = TRUE)
+  expect_no_match(html, 'value="base" checked', fixed = TRUE)
+  expect_no_match(html, "unknown", fixed = TRUE)
+  expect_match(html, "collapse show", fixed = TRUE)
+  closed <- as.character(app_ui(fx(), "free"))
+  expect_no_match(closed, 'name="f_topic" value="[^"]+" checked')
+  expect_no_match(closed, "collapse show", fixed = TRUE)
+})
+
 test_that("exam mode: no hints, results recorded, finish disables checks", {
   local_progress_dir()
   shiny::testServer(app_server(fx(), mode = "exam", n = 2, time_limit = 5), {
@@ -170,6 +201,8 @@ test_that("exam mode: no hints, results recorded, finish disables checks", {
     session$setInputs(finish_exam = 1)
     expect_true(exam_over())
     expect_match(output$feedback$html, "von 2 richtig")
+    # finished early: the timer keeps the remaining time instead of 00:00
+    expect_match(output$timer, "^0[45]:[0-5][0-9]$")
     session$setInputs(check = 2)
     expect_length(exam_results(), 1)
   })

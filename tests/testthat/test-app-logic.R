@@ -96,9 +96,38 @@ test_that("exam_summary marks unanswered exercises", {
   expect_equal(nrow(exam_summary(character(), list(), exs)), 0)
 })
 
+test_that("exam_time_left counts down and freezes when the exam ends", {
+  start <- as.POSIXct("2026-10-26 10:00:00", tz = "UTC")
+  deadline <- start + 30 * 60
+  expect_equal(exam_time_left(deadline, start + 65), "28:55")
+  # finished early: remaining time stays, later clock ticks do not change it
+  expect_equal(exam_time_left(deadline, start + 600, finished_at = start + 125), "27:55")
+  expect_equal(exam_time_left(deadline, start + 3600, finished_at = start + 125), "27:55")
+  # time over (finished by the deadline observer): never negative
+  expect_equal(exam_time_left(deadline, deadline + 2, finished_at = deadline + 1), "00:00")
+})
+
 test_that("format_remaining and hint_label", {
   expect_equal(format_remaining(125), "02:05")
   expect_equal(format_remaining(-3), "00:00")
   expect_equal(hint_label(1, 3), "Hinweis (1/3)")
   expect_equal(hint_label(0, 0), "Keine Hinweise")
+})
+
+test_that("kind_help names the number of bugs in debug exercises", {
+  expect_match(kind_help(list(kind = "debug")), "mindestens einen Fehler")
+  expect_match(kind_help(list(kind = "debug", bugs = 1L)), "enth\u00e4lt einen Fehler")
+  expect_match(kind_help(list(kind = "debug", bugs = 2L)), "zwei Fehler.*alle")
+  expect_match(kind_help(list(kind = "debug", bugs = 7L)), "7 Fehler")
+  expect_null(kind_help(list(kind = "write")))
+  expect_match(kind_help(list(kind = "complete")), "L\u00fccken")
+})
+
+test_that("validate_exercise accepts bugs only as a positive whole number", {
+  base <- list(id = "d", topic = "t", title = "T", level = 1, kind = "debug",
+               prompt = "p", solution = "1", check = list(type = "value"))
+  expect_equal(validate_exercise(c(base, bugs = 2L))$bugs, 2L)
+  expect_error(validate_exercise(c(base, bugs = 0)), "bugs")
+  expect_error(validate_exercise(c(base, bugs = 1.5)), "bugs")
+  expect_error(validate_exercise(c(base, list(bugs = "zwei"))), "bugs")
 })

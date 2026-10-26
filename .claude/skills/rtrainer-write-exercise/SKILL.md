@@ -12,7 +12,7 @@ Vorlage: `rtrainer::new_exercise(topic, id, dir)`. Beispiel: `inst/exercises/02-
 ## Aufgabenarten (`kind`)
 - `write` (Standard): Code schreiben; Starter nur Gerüst/Kommentar.
 - `predict`: Code steht im Prompt (Setup erzeugt die Objekte), Nutzer tippt den erwarteten Wert als R-Literal (`c(4, NA, 7)`); Check `type: value`, Code-Antworten werden abgelehnt. Starter nur Kommentar. Prüft mentales Modell, z. B. Recycling, NA-Verhalten, Lazy Evaluation, Gruppierung nach `summarise()`.
-- `debug`: Starter enthält einen typischen Fehler; Nutzer repariert ihn. `misconception` benennt die Fehlvorstellung.
+- `debug`: Starter enthält einen typischen Fehler; Nutzer repariert ihn. `misconception` benennt die Fehlvorstellung. Bei mehr als einem Fehler `bugs: <n>` setzen (die App zeigt sonst „mindestens einen Fehler“).
 - `complete`: Lösung mit Lücken (`___`); nur für neue/schwere Themen (Mixed Models, targets, tidy evaluation), Lücken über 2-3 Aufgaben ausblenden (Fading). Bekannte Themen: nicht `complete`, sondern `write`.
 
 ## Qualitätsregeln

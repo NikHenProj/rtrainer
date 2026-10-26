@@ -1,13 +1,6 @@
 kind_labels <- c(write = "Schreiben", predict = "Vorhersagen", debug = "Fehler finden",
                  complete = "Erg\u00e4nzen")
 
-kind_help <- c(
-  write = NULL,
-  predict = "Erst \u00fcberlegen, dann pr\u00fcfen: Sag das Ergebnis voraus, ohne den Code vorher auszuf\u00fchren.",
-  debug = "Der Code enth\u00e4lt einen Fehler. Finde und behebe ihn.",
-  complete = "Erg\u00e4nze die L\u00fccken im Code."
-)
-
 confidence_labels <- c("1" = "unsicher", "2" = "ziemlich sicher", "3" = "sicher")
 
 app_server <- function(exercises, mode = "daily", n = 10, time_limit = 30, topics = NULL,
@@ -32,9 +25,15 @@ app_server <- function(exercises, mode = "daily", n = 10, time_limit = 30, topic
     exam_results <- shiny::reactiveVal(list())
     exam_over <- shiny::reactiveVal(FALSE)
     exam_start <- Sys.time()
+    exam_end <- NULL
 
+    # Topic filter of free mode starts with `topics`; afterwards the checkboxes
+    # rule (unchecking all shows all topics).
+    sel_topics <- shiny::reactiveVal(topics)
+    shiny::observeEvent(input$f_topic, sel_topics(input$f_topic),
+                        ignoreInit = TRUE, ignoreNULL = FALSE, priority = 1)
     filtered_ids <- function() {
-      filter_exercises(exercises, prog(), input$f_topic, input$f_level, input$f_tags,
+      filter_exercises(exercises, prog(), sel_topics(), input$f_level, input$f_tags,
                        isTRUE(input$f_due), today)
     }
     build_queue <- function(m) {
@@ -272,6 +271,7 @@ app_server <- function(exercises, mode = "daily", n = 10, time_limit = 30, topic
     # ---- exam --------------------------------------------------------------
     finish_exam <- function() {
       if (exam_over()) return()
+      exam_end <<- Sys.time()
       exam_over(TRUE)
       for (b in c("run", "check", "next_ex", "reset")) {
         shiny::updateActionButton(session, b, disabled = TRUE)
@@ -284,9 +284,8 @@ app_server <- function(exercises, mode = "daily", n = 10, time_limit = 30, topic
         if (!exam_over() && Sys.time() >= deadline) finish_exam()
       })
       output$timer <- shiny::renderText({
-        if (exam_over()) return("00:00")
-        shiny::invalidateLater(1000)
-        format_remaining(as.numeric(difftime(deadline, Sys.time(), units = "secs")))
+        if (!exam_over()) shiny::invalidateLater(1000)
+        exam_time_left(deadline, Sys.time(), exam_end)
       })
       output$exam_progress <- shiny::renderText({
         sprintf("%d von %d abgegeben", length(exam_results()), length(q()$ids))
@@ -321,7 +320,7 @@ app_server <- function(exercises, mode = "daily", n = 10, time_limit = 30, topic
       e <- exercises[[id]]
       shiny::tagList(
         shiny::markdown(e$prompt),
-        if (!is.null(kind_help[e$kind]) && !is.na(kind_help[e$kind])) shiny::helpText(kind_help[[e$kind]])
+        if (!is.null(h <- kind_help(e))) shiny::helpText(h)
       )
     })
     output$session_info <- shiny::renderUI({
@@ -344,7 +343,8 @@ app_server <- function(exercises, mode = "daily", n = 10, time_limit = 30, topic
         r <- exam_results()
         ok <- sum(unlist(r))
         total <- length(q()$ids)
-        used <- format_remaining(as.numeric(difftime(Sys.time(), exam_start, units = "secs")))
+        used <- format_remaining(as.numeric(difftime(exam_end %||% Sys.time(), exam_start,
+                                                     units = "secs")))
         return(shiny::tagList(
           feedback_box(if (ok >= total / 2) "success" else "danger", "Pr\u00fcfung beendet",
                        sprintf("%d von %d richtig (%.0f %%), Zeit: %s", ok, total,

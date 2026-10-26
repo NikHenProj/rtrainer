@@ -131,3 +131,32 @@ format_remaining <- function(secs) {
   secs <- max(0, round(secs))
   sprintf("%02d:%02d", secs %/% 60, secs %% 60)
 }
+
+# Remaining exam time; frozen at `finished_at` once the exam is over.
+exam_time_left <- function(deadline, now, finished_at = NULL) {
+  at <- if (is.null(finished_at)) now else min(finished_at, now)
+  format_remaining(as.numeric(difftime(deadline, at, units = "secs")))
+}
+
+# Instruction shown below the prompt. Debug exercises name the number of bugs
+# when the YAML gives `bugs`, otherwise "mindestens einen Fehler".
+kind_help <- function(ex) {
+  switch(ex$kind,
+    predict = paste("Erst \u00fcberlegen, dann pr\u00fcfen: Sag das Ergebnis voraus,",
+                    "ohne den Code vorher auszuf\u00fchren."),
+    debug = {
+      n <- ex$bugs
+      if (is.null(n)) {
+        "Der Code enth\u00e4lt mindestens einen Fehler. Finde und behebe ihn."
+      } else if (n == 1) {
+        "Der Code enth\u00e4lt einen Fehler. Finde und behebe ihn."
+      } else {
+        words <- c("zwei", "drei", "vier", "f\u00fcnf")
+        sprintf("Der Code enth\u00e4lt %s Fehler. Finde und behebe alle.",
+                if (n <= 5) words[n - 1] else n)
+      }
+    },
+    complete = "Erg\u00e4nze die L\u00fccken im Code.",
+    NULL
+  )
+}

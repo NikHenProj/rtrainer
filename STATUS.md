@@ -2,6 +2,13 @@
 
 Stand (2026-10-26): Meilensteine 1-5 erledigt, 65 Paket-Aufgaben. Meilenstein 5, Teil 2 (Vignetten, GitHub Actions, shinytest2) erledigt; Abnahmekriterien siehe unten. Noch kein GitHub-Remote.
 
+## Nach Meilenstein 5: Lücken behoben (Details: NEWS.md)
+- `start("free", topics = )` setzt den Themenfilter vor (Checkboxen gesetzt, Filter aufgeklappt); danach gelten die Checkboxen, alle abwählen = alle Themen.
+- Prüfungs-Timer behält nach „Prüfung beenden“ die Restzeit (`exam_time_left()`), die angezeigte Bearbeitungszeit bleibt ebenfalls stehen.
+- Debug-Aufgaben: Standardtext „mindestens einen Fehler“, neues optionales YAML-Feld `bugs` (validiert) für die Anzahl; `ggplot2-mapping-setting-debug` hat `bugs: 2`. Vignette und Skill `rtrainer-write-exercise` ergänzt.
+- Nebenbei gefunden: `kind_labels` war in `export_learnr.R` doppelt definiert und überschrieb das App-Badge („Reparieren“ statt „Fehler finden“), entfernt.
+- GitHub: `gh` fehlt noch (Nutzer installiert `gh` und meldet sich an); Repo `rtrainer`, öffentlich, unter dem eigenen Account. Danach `OWNER` im Badge ersetzen, pushen, CI prüfen.
+
 ## Abnahmekriterien (SPEC.md, geprüft 2026-10-26)
 | Kriterium | Ergebnis | Beleg |
 |---|---|---|
@@ -106,16 +113,13 @@ Arten: write 35 (54 %), predict 9 (14 %), debug 11 (17 %), complete 10 (15 %) �
 - Start für manuelle Tests: `.claude/launch.json` (Konfigurationen `rtrainer-daily`, `rtrainer-exam`; Skript und Datenverzeichnis liegen im Scratchpad dieser Sitzung, für neue Sitzungen ggf. neu anlegen).
 
 ## Als Nächstes
-GitHub-Remote anlegen, `OWNER` im README-Badge ersetzen, pushen und den ersten CI-Lauf prüfen (macOS/Windows, shinytest2 mit Chrome, learnr-Rendern mit Pandoc). Danach offene Lücken unten (z. B. `start(topics=)` im freien Modus, Exam-Timer).
+GitHub-Remote anlegen (`gh` installieren und anmelden: macht der Nutzer), `OWNER` im README-Badge ersetzen, pushen und den ersten CI-Lauf prüfen (macOS/Windows, shinytest2 mit Chrome, learnr-Rendern mit Pandoc). Danach restliche Lücken unten.
 
 ## Bekannte Lücken
 - learnr-Export: 3 Checks scheitern in gradethis trotz richtiger Lösung (`allFit()` braucht das globale Environment; Datei-Seiteneffekte im Setup werden für die Lösung nicht wiederholt). Gerendert und im Browser angesehen wurde noch kein exportiertes Tutorial (kein Pandoc).
 - shinytest2-Smoke-Test hängt lokal am Playwright-Chromium-Pfad in `~/.Renviron` (siehe oben).
 - "Loading required package: shiny" erscheint in den Tests (harmlos, kommt aus einer Abhängigkeit beim `testServer`).
 - predict-Prompts zeigen Code als Markdown-Block; in der App noch nicht gegengeprüft, wie das aussieht und dass der Starter-Kommentar nicht verwirrt.
-- Timer im Prüfungsmodus zeigt nach dem Beenden 00:00 statt der Restzeit.
-- Debug-Aufgaben zeigen immer „Der Code enthält einen Fehler.“, auch wenn der Prompt zwei Fehler nennt (mapping-setting-debug).
-- `start(topics = )` filtert im freien Modus die Aufgabenliste nicht vor (es erscheinen alle 65).
 - Pandoc fehlt lokal: Nur das Rendern exportierter learnr-Tutorials ist betroffen (Test übersprungen, läuft in CI). Vignetten brauchen kein Pandoc mehr.
 - CI-Workflow ist ungetestet, bis ein Remote existiert.
 - Feedback < 2 s gilt nicht für Aufgaben mit lme4/ggplot2/targets bei der ersten Prüfung (bis 6,7 s).
@@ -130,6 +134,6 @@ GitHub-Remote anlegen, `OWNER` im README-Badge ersetzen, pushen und den ersten C
 (keine)
 
 ## Letzte Testausgabe (gekürzt, 2026-10-26, via rtrainer-verifier, mit `CHROMOTE_CHROME`)
-- `devtools::test()`: `[ FAIL 0 | WARN 0 | SKIP 1 | PASS 702 ]` (Skip: Tutorial-Rendern – Pandoc fehlt). Browser-Smoke-Test lief und bestand.
-- `check_all_solutions()`: 65/65 ok, alle Starter schlagen fehl, max. 8,15 s (mixed-allfit-singular)
-- `devtools::check(--no-manual)`: `Status: OK` (0 errors | 0 warnings | 0 notes), Vignetten gebaut und geprüft
+- `devtools::test()`: `[ FAIL 0 | WARN 0 | SKIP 1 | PASS 727 ]` (Skip: Tutorial-Rendern – Pandoc fehlt). Browser-Smoke-Test lief und bestand.
+- `check_all_solutions()`: 65/65 ok, alle Starter schlagen fehl, max. 8,9 s (mixed-allfit-singular)
+- `devtools::check(--no-manual)`: `Status: OK` (0 errors | 0 warnings | 0 notes)

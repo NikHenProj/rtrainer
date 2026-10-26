@@ -23,7 +23,8 @@ start(
 
 \item{time_limit}{Exam time limit in minutes.}
 
-\item{topics}{Optional topic filter for daily and exam sessions.}
+\item{topics}{Optional topic filter. Restricts daily and exam sessions and
+preselects the topic filter in free mode (changeable there).}
 
 \item{dirs}{Extra exercise directories (see \code{\link[=add_exercise_dir]{add_exercise_dir()}}).}
 

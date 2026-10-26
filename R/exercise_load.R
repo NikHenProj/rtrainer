@@ -31,6 +31,10 @@ validate_exercise <- function(ex, file = NULL) {
   if (!ex$kind %in% kinds) {
     cli::cli_abort("`kind` muss eines von {kinds} sein{where}.")
   }
+  if (!is.null(ex$bugs) && !(is.numeric(ex$bugs) && length(ex$bugs) == 1 &&
+                              ex$bugs >= 1 && ex$bugs == round(ex$bugs))) {
+    cli::cli_abort("`bugs` muss eine ganze Zahl >= 1 sein{where}.")
+  }
   ex$misconception <- ex$misconception %||% ""
   ex$setup <- ex$setup %||% ""
   ex$starter <- ex$starter %||% ""

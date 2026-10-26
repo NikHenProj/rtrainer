@@ -24,7 +24,7 @@ document.addEventListener('keydown', function(e) {
 });
 "
 
-app_ui <- function(exercises, mode, show_confidence = TRUE) {
+app_ui <- function(exercises, mode, show_confidence = TRUE, selected_topics = NULL) {
   exam <- mode == "exam"
   topics <- sort(unique(vapply(exercises, `[[`, "", "topic")))
   tags <- sort(unique(unlist(lapply(exercises, `[[`, "tags"))))
@@ -47,10 +47,12 @@ app_ui <- function(exercises, mode, show_confidence = TRUE) {
       shiny::actionButton("random", "Zufallsaufgabe (nicht gemeistert)",
                           class = "btn-outline-primary btn-sm"),
       bslib::accordion(
-        open = FALSE,
+        # a start(topics = ) filter is visible and can be changed in free mode
+        open = if (length(selected_topics)) "Filter (freier Modus)" else FALSE,
         bslib::accordion_panel(
           "Filter (freier Modus)",
-          shiny::checkboxGroupInput("f_topic", "Themen", choices = topics),
+          shiny::checkboxGroupInput("f_topic", "Themen", choices = topics,
+                                    selected = intersect(selected_topics, topics)),
           shiny::checkboxGroupInput("f_level", "Level", choices = 1:3, inline = TRUE),
           shiny::selectizeInput("f_tags", "Tags", choices = tags, multiple = TRUE),
           shiny::checkboxInput("f_due", "Nur f\u00e4llige Wiederholungen")

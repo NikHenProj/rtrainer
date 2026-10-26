@@ -72,3 +72,10 @@
 - GitHub Actions: `.github/workflows/R-CMD-check.yaml` (r-lib/actions v2, ubuntu/macOS/Windows, R release). gradethis comes from r-universe through `setup-r`'s `extra-repositories` (in addition to `Additional_repositories`); Pandoc via `setup-pandoc` so the learnr render test runs in CI; Chrome via `browser-actions/setup-chrome`, exported as `CHROMOTE_CHROME`; `NOT_CRAN: true` so the shinytest2 smoke test is not skipped. Badge in README (owner placeholder until a GitHub remote exists).
 - Fix: the shinytest2 smoke test failed as soon as a browser was available. The serialised app object needed an installed rtrainer in the app process, and the progress directory option did not reach that process (it would have written to the real user directory). The test now writes a small `app.R` (`library(rtrainer)`, temp `rtrainer.data_dir`, fixture exercises) and starts `AppDriver` from that directory.
 - Local browser: no system install needed. An existing Playwright Chromium (`~/.cache/ms-playwright/chromium-*/chrome-linux64/chrome`) works as `CHROMOTE_CHROME`.
+
+## After milestone 5: gaps from STATUS.md
+
+- Fix: `start("free", topics = )` now preselects those topics in the free-mode filter (checkboxes checked, filter panel opened) and the queue starts filtered. The checkboxes take over after the first change; unchecking all shows all exercises again. `app_ui()` gains `selected_topics`.
+- Fix: the exam timer keeps the remaining time after "Prüfung beenden" instead of showing 00:00 (`exam_time_left()`); the "Zeit" in the result box is also frozen at the end instead of growing with every re-render.
+- Change: debug exercises say "mindestens einen Fehler" by default; the new optional YAML field `bugs` (whole number >= 1, validated) names the count ("zwei Fehler … behebe alle"). Set to 2 for `ggplot2-mapping-setting-debug`. Instruction text moved to `kind_help()` in `R/app_logic.R`.
+- Fix: `export_learnr.R` defined `kind_labels` a second time and, collated later, silently overrode the app badge (debug showed "Reparieren" instead of "Fehler finden"). The duplicate is removed; app and export now share one definition.

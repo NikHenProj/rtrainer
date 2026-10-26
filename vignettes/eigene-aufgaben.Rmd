@@ -32,6 +32,7 @@ cat(readLines(f), sep = "\n")
 | `title` | ja | kurzer Titel |
 | `level` | ja | 1 (leicht) bis 3 (schwer) |
 | `kind` | | `write` (Standard), `predict`, `debug` oder `complete` |
+| `bugs` | | nur `debug`: Anzahl der Fehler im Starter (sonst „mindestens einen Fehler“) |
 | `tags` | | Konzepte, z. B. `[NA, gruppierung]`; für schwächste Tags |
 | `packages` | | werden vor dem Setup geladen; fehlen sie, meldet die Prüfung das |
 | `seed` | | `set.seed()` vor Setup und Code (Standard 1), für deterministische Prüfungen |

@@ -29,3 +29,6 @@ tests/testthat/_snaps/**/*.new.png
 .idea/
 .claude/settings.local.json
 .claude/launch.json
+
+# testthat problem reports of failed runs
+tests/testthat/_problems/

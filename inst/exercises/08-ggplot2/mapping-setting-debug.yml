@@ -3,6 +3,7 @@ topic: ggplot2
 title: Mapping oder Setting?
 level: 1
 kind: debug
+bugs: 2
 tags: [ggplot2, aes, mapping, setting]
 packages: [ggplot2]
 seed: 1
