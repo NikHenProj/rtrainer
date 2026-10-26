@@ -1,6 +1,6 @@
 # STATUS
 
-Stand (2026-10-26): **M6 bis M8 Teil 3c abgenommen und in `main`** (alle 10 Beginner-Lektionen DE + EN). **M8 Teil 4 fertig, wartet auf Abnahme:** Mini-Projekt Beginner (DE), `de/project-beginner.qmd`. Nichts gepusht (`main` ist `origin/main` voraus). Entscheidungen: NEWS.md.
+Stand (2026-10-26): **M6 bis M8 Teil 4 abgenommen und in `main`** (alle 10 Beginner-Lektionen DE + EN, Mini-Projekt Beginner DE `de/project-beginner.qmd`). Nichts gepusht (`main` ist `origin/main` voraus). Entscheidungen: NEWS.md.
 
 ## Was steht
 - **Gerüst (M6):** Quarto-Website mit quarto-live/webR, Theme hell/dunkel (IBM Plex Sans, JetBrains Mono, Indigo), Kopfzeile Kursplan · Wiederholen (n fällig) · Pakete · Glossar · DE/EN · Hell/Dunkel · Suche.
@@ -35,9 +35,8 @@ Stand (2026-10-26): **M6 bis M8 Teil 3c abgenommen und in `main`** (alle 10 Begi
 - Kursplan: „nicht vorgesehen“-Zellen werden vom Screenreader einzeln vorgelesen (19×); ggf. kürzen.
 
 ## Als Nächstes
-1. Abnahme M8 Teil 4 durch Nick (`/de/project-beginner.html` durchklicken: Seitenaufbau, Übungen 1–7, Gesamtskript, Ladezeit; Kursplan-Zeile).
-2. Danach EN-Fassung des Mini-Projekts (`en/project-beginner.qmd`, `langs` entfernen, Rauchtest EN-Kursplan um `project` erweitern).
-3. Pages einrichten, pushen (nur nach Rückfrage); danach CI-Lauf prüfen. Dann M9 (Intermediate).
+1. EN-Fassung des Mini-Projekts (`en/project-beginner.qmd`, `langs` entfernen, Rauchtest EN-Kursplan um `project` erweitern).
+2. Pages einrichten, pushen (nur nach Rückfrage); danach CI-Lauf prüfen. Dann M9 (Intermediate).
 
 ## Umgebung
 - Quarto 1.10.19, R 4.6.1, Node 18, quarto-live 0.1.3-dev (`_extensions/r-wasm/live`, webR 0.6.0).

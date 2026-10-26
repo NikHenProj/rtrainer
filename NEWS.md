@@ -1,6 +1,6 @@
 # rtrainer (Quarto course)
 
-## Milestone 8, part 4: mini project beginner (DE) (awaiting acceptance)
+## Milestone 8, part 4: mini project beginner (DE) (accepted, merged into main)
 
 - Page `de/project-beginner.qmd` (`langs: [de]`): one analysis of `survey` from `data/survey.csv` to the report. Sections: brief with analysis plan (table of decisions) → 1 import → 2 exclusions → 3 scale scores → 4 group comparison → 5 report → full script (one live block, all steps; "Run locally" box with a Quarto document `format: docx` and inline R) → knowledge check (5 questions on analysis decisions) → checklist. Each exercise sits in its step and starts from the correct result of the previous step, so an error does not carry over.
 - Exercises (`exercises/project/beginner/`, 6 required + 1 optional): `pj-b-import` (readr + factor, graded with the new `check_types`), `pj-b-exclude` (attention check only, no `drop_na()`: 85 of 157 have a missing item), `pj-b-scales` (SUS, trust with reversal and `min_valid = 5`, raw TLX without reversing `tlx_performance`), `pj-b-ttest` (Welch), optional `pj-b-tlx-subscales` (mental demand and frustration go in opposite directions, the overall TLX hides it), `pj-b-table1` (six rows, `type`, `statistic`), `pj-b-results` (interpret: which result sentences are acceptable; non-significant ≠ no difference, p ≠ importance).
