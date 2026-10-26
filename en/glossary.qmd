@@ -2,6 +2,7 @@
 title: "Glossary"
 subtitle: "Technical terms English ↔ German"
 toc: false
+body-classes: rt-glossary-page
 ---
 
 The German terms are those used in the German version of the course. Search the glossary with the search at the top right or with Ctrl+F.

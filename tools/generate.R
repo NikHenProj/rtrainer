@@ -667,12 +667,23 @@ render_course_plan <- function(curriculum, course_lessons, lang) {
     )
   }, character(1))
 
-  course_json <- jsonlite::toJSON(lapply(course_lessons, function(lesson) {
-    list(
-      required = vapply(Filter(function(ex) isTRUE(ex$required), lesson$exercises), function(ex) ex$id, character(1)),
-      exercises = vapply(lesson$exercises, function(ex) ex$id, character(1))
-    )
-  }), auto_unbox = FALSE)
+  # Recommended path: level by level, topics in curriculum order.
+  order <- unlist(lapply(level_ids, level_sequence, curriculum = curriculum))
+  order <- order[order %in% names(course_lessons)]
+  course_json <- jsonlite::toJSON(list(
+    order = I(order),
+    lessons = lapply(course_lessons, function(lesson) {
+      id <- lesson$meta$lesson
+      list(
+        title = sprintf(
+          "%s (%s)", lesson_title(curriculum, id, lang),
+          level_title(curriculum, lesson_id_parts(id)$level, lang)
+        ),
+        required = I(vapply(Filter(function(ex) isTRUE(ex$required), lesson$exercises), function(ex) ex$id, character(1))),
+        exercises = I(vapply(lesson$exercises, function(ex) ex$id, character(1)))
+      )
+    })
+  ), auto_unbox = TRUE)
 
   paste0(
     "```{=html}\n<div class=\"rt-plan-wrap\"><table class=\"rt-plan\">",
@@ -816,7 +827,7 @@ render_packages <- function(packages, curriculum, course_lessons, lang) {
       if (length(pitfalls) > 0) c(sprintf("### %s", l$pkg_pitfalls), "", pitfalls) else NULL
     ), collapse = "\n")
   }, character(1))
-  paste(c(overview, "", profiles), collapse = "\n")
+  paste(c(paste(overview, collapse = "\n"), profiles), collapse = "\n\n")
 }
 
 render_glossary <- function(terms, curriculum, course_lessons, lang) {

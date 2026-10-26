@@ -14,7 +14,7 @@ resources:
 {{< include /_generated/en/group-comparisons-beginner/header.qmd >}}
 
 ::: {.callout-note .rt-loading-note appearance="simple"}
-R runs directly in your browser. On the first visit it takes 10–30 seconds to load (progress at the bottom right); after that it is faster.
+R runs directly in your browser. On the first visit it takes 10–30 seconds to load (status at the bottom right); after that it is faster.
 :::
 
 ## Why? {#why}
@@ -119,7 +119,7 @@ report::report(t.test(rt_ms ~ experience, data = rt_by_person))
 
 ## Exercises {#exercises}
 
-Three required exercises of increasing difficulty. **Run Code** runs your code and checks it right away. Reveal hints one at a time (**Show Hint**), the solution only after that.
+Three required exercises of increasing difficulty. **Run and check** runs your code and checks it right away. Reveal hints one at a time (**Show Hint**), the solution only after that.
 
 {{< include /_generated/en/group-comparisons-beginner/exercises.qmd >}}
 

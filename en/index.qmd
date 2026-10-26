@@ -6,6 +6,10 @@ body-classes: rt-plan-page
 ---
 
 ```{=html}
+<section class="rt-next" aria-label="Up next" hidden>
+  <p class="rt-next-label">Up next</p>
+  <a class="rt-next-link" href="#">Lesson</a>
+</section>
 <section class="rt-today" aria-labelledby="rt-today-title" hidden>
   <h2 id="rt-today-title" class="rt-today-title">Review today</h2>
   <p class="rt-today-text"></p>

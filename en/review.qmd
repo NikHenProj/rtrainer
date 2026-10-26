@@ -1,6 +1,6 @@
 ---
 title: "Review"
-subtitle: "Due exercises from completed lessons, using the Leitner system"
+subtitle: "Exercises from completed lessons, repeated at growing intervals"
 toc: false
 body-classes: rt-review-page
 ---

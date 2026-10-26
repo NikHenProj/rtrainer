@@ -1,5 +1,16 @@
 # rtrainer (Quarto course)
 
+## Milestone 7: review, backup, English version, smoke test (branch m7-wip, awaiting review)
+
+- Review page (`de/review.qmd`, `en/review.qmd`, `assets/review.js`): due cards from `assets/review-cards.json`, interleaved by lesson; webR is loaded only when a round starts, packages and data per card on demand. Confidence 1–3 must be chosen before checking; a confident error (confidence 3, first attempt wrong) shows misconception + explanation at once. After a correct answer: Leicht/Okay/Schwer ("Leicht" disabled with a reason when ≥ 2 hints); viewing the solution counts as wrong (box 1). Box 1 (interval 0) comes back once at the end of the round. Streak shown only on the review page.
+- Decision: the review page uses its own small editor (textarea, Tab indents, Ctrl+Enter checks) and webR directly instead of quarto-live, because cards are chosen at runtime. Checks run the same `rt_checker()` code (shipped inside the cards JSON).
+- Decision: Leitner/streak/completion logic moved to `assets/logic.js` (no DOM), shared by `progress.js` and `review.js`, tested with `node --test tests/js`. Dates are calendar arithmetic on YYYY-MM-DD (no 24 h offsets, safe across DST).
+- Export/import of progress as JSON file on the review page (`#backup`); import validates the format and asks inline before replacing.
+- Package profiles (`content/packages/*.yml`: dplyr, effectsize, parameters) and glossary (`content/glossary.yml`, 12 terms) as YAML templates, rendered by the generator for both languages; validated (bilingual texts, functions, duplicates).
+- English page tree `en/` (course plan, lesson, review, packages, glossary); `de/_metadata.yml`/`en/_metadata.yml` set language and TOC title. Decision: Quarto has one navbar per site, so `progress.js` translates the navbar/footer on English pages and marks the active item. Language switch leads to the same page and section; lesson sections have language-neutral ids (`#why`, `#concept`, `#example`, `#packages`, `#exercises`, `#check`, `#cheatsheet`).
+- Browser smoke test `tests/smoke-test.R` (chromote, headless): lesson exercise solved in webR and saved, review card checked and scheduled, English page and switch. Added to CI together with the Node tests.
+- Cognitive accessibility review (skills cognitive-accessibility:review, wayfinding-navigation, ui-ux-pro-max), fixes applied: course plan shows "Weitermachen mit / Als Nächstes" (resume point, less memory load); exercise button says "Ausführen und prüfen" because quarto-live checks on every run; loading note pointed to the wrong corner; review boxes explained in plain words with screen-reader text; "Leitner-System" jargon removed from the subtitle; check messages render `code` instead of raw backticks; code ligatures off (`|>` looks like what learners type); callouts use the accent colour (green/red/yellow stay reserved for status); package headings no longer swallowed by lists; wider glossary.
+
 ## Milestone 6: skeleton + prototype "Gruppenvergleiche – Beginner" (DE)
 
 - R package removed (R/, man/, tests/, vignettes/, DESCRIPTION, NAMESPACE); old exercises in `legacy/exercises/`, old dataset and script in `legacy/driving_sim_v0.*` (tag `v0-shiny` keeps everything).

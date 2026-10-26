@@ -14,7 +14,7 @@ resources:
 {{< include /_generated/de/group-comparisons-beginner/header.qmd >}}
 
 ::: {.callout-note .rt-loading-note appearance="simple"}
-R läuft hier direkt im Browser. Beim ersten Besuch lädt es 10–30 Sekunden (Fortschritt oben rechts), danach geht es schneller.
+R läuft hier direkt im Browser. Beim ersten Besuch lädt es 10–30 Sekunden (Anzeige unten rechts), danach geht es schneller.
 :::
 
 ## Wozu? {#why}
@@ -119,7 +119,7 @@ report::report(t.test(rt_ms ~ experience, data = rt_by_person))
 
 ## Übungen {#exercises}
 
-Drei Pflichtübungen mit steigender Schwierigkeit. **Ausführen** startet deinen Code und prüft ihn sofort. Hinweise deckst du einzeln auf (**Hinweis zeigen**), die Lösung erst danach.
+Drei Pflichtübungen mit steigender Schwierigkeit. **Ausführen und prüfen** startet deinen Code und prüft ihn sofort. Hinweise deckst du einzeln auf (**Hinweis zeigen**), die Lösung erst danach.
 
 {{< include /_generated/de/group-comparisons-beginner/exercises.qmd >}}
 

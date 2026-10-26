@@ -155,6 +155,8 @@ test_that("render_packages links existing lessons and marks planned ones", {
   expect_false(grepl("next-beginner.html", out, fixed = TRUE))
   expect_match(out, "- Trap", fixed = TRUE)
   expect_equal(render_packages(list(), curriculum, list(), "de"), "")
+  two <- render_packages(list(toy_package(), utils::modifyList(toy_package(), list(name = "other"))), curriculum, list(), "de")
+  expect_match(two, "- Falle\n\n## other", fixed = TRUE) # heading not swallowed by the list
 })
 
 test_that("glossary: validation, sorting by page language", {

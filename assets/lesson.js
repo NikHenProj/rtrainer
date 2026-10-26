@@ -361,12 +361,24 @@
     }
   }
 
-  if (ui) {
-    new MutationObserver((mutations) => {
-      mutations.forEach((m) => m.addedNodes.forEach(translate));
-    }).observe(document.querySelector("main") || document.body, { childList: true, subtree: true });
-    translate(document.querySelector("main"));
+  // In exercises "Run Code" also checks the answer; say so.
+  const RUN_CHECK = { de: "Ausführen und prüfen", en: "Run and check" }[lang];
+
+  function labelRunButtons() {
+    document.querySelectorAll(".rt-exercise .exercise-editor-btn-run-code").forEach((btn) => {
+      const walker = document.createTreeWalker(btn, NodeFilter.SHOW_TEXT);
+      let node;
+      while ((node = walker.nextNode())) {
+        if (node.nodeValue.trim() && node.nodeValue.trim() !== RUN_CHECK) node.nodeValue = RUN_CHECK;
+      }
+    });
   }
+
+  new MutationObserver((mutations) => {
+    mutations.forEach((m) => m.addedNodes.forEach(translate));
+    if (RUN_CHECK) labelRunButtons();
+  }).observe(document.querySelector("main") || document.body, { childList: true, subtree: true });
+  translate(document.querySelector("main"));
 
   // ---- Wire up -------------------------------------------------------------
   function renderAll(data) {

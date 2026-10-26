@@ -1,6 +1,6 @@
 ---
 title: "Wiederholen"
-subtitle: "Fällige Übungen aus abgeschlossenen Lektionen, nach dem Leitner-System"
+subtitle: "Übungen aus abgeschlossenen Lektionen, in wachsenden Abständen wiederholt"
 toc: false
 body-classes: rt-review-page
 ---

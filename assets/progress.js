@@ -55,12 +55,16 @@
       dueLabel: (n) => `${n} Übung${n === 1 ? "" : "en"} fällig`,
       today: (n) =>
         `${n} Übung${n === 1 ? " ist" : "en sind"} heute zur Wiederholung fällig.`,
+      resume: "Weitermachen mit",
+      next: "Als Nächstes",
     },
     en: {
       status: { "not-started": "not started", started: "started", done: "completed" },
       due: (n) => `${n} due`,
       dueLabel: (n) => `${n} exercise${n === 1 ? "" : "s"} due`,
       today: (n) => `${n} exercise${n === 1 ? " is" : "s are"} due for review today.`,
+      resume: "Continue with",
+      next: "Up next",
     },
   };
 
@@ -97,9 +101,20 @@
     if (!courseEl) return;
     const course = JSON.parse(courseEl.textContent);
     const t = text();
+    const next = L.nextLesson(data, course.order, course.lessons);
+    const nextBox = document.querySelector(".rt-next");
+    if (nextBox) {
+      nextBox.hidden = !next;
+      if (next) {
+        nextBox.querySelector(".rt-next-label").textContent = next.kind === "resume" ? t.resume : t.next;
+        const link = nextBox.querySelector("a");
+        link.href = `${next.id}.html`;
+        link.textContent = course.lessons[next.id].title;
+      }
+    }
     document.querySelectorAll(".rt-cell-active[data-lesson]").forEach((cell) => {
       const lesson = cell.dataset.lesson;
-      const info = course[lesson] || { required: [], exercises: [] };
+      const info = course.lessons[lesson] || { required: [], exercises: [] };
       const status = lessonStatus(data, lesson, info.exercises);
       const statusEl = cell.querySelector(".rt-status");
       statusEl.dataset.status = status;
@@ -113,7 +128,9 @@
     if (today) {
       const n = dueIds(data).length;
       today.hidden = n === 0;
-      today.querySelector(".rt-today-title").textContent += n > 0 ? ` (${n})` : "";
+      const title = today.querySelector(".rt-today-title");
+      title.dataset.base = title.dataset.base || title.textContent;
+      title.textContent = n > 0 ? `${title.dataset.base} (${n})` : title.dataset.base;
       today.querySelector(".rt-today-text").textContent = t.today(n);
     }
   }

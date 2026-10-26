@@ -104,3 +104,15 @@ test("validProgress accepts own format and rejects others", () => {
   assert.equal(L.validProgress(null), false);
   assert.equal(L.validProgress([]), false);
 });
+
+test("nextLesson resumes a started lesson, else the next new one", () => {
+  const lessons = { a: { exercises: ["a1"] }, b: { exercises: ["b1"] }, c: { exercises: [] } };
+  const order = ["a", "b", "c"];
+  assert.deepEqual(L.nextLesson(progress(), order, lessons), { id: "a", kind: "next" });
+  const data = progress({ lessons: { a: { completedAt: "t" } }, exercises: { b1: { solved: false } } });
+  assert.deepEqual(L.nextLesson(data, order, lessons), { id: "b", kind: "resume" });
+  data.lessons.b = { completedAt: "t" };
+  assert.deepEqual(L.nextLesson(data, order, lessons), { id: "c", kind: "next" });
+  data.lessons.c = { completedAt: "t" };
+  assert.equal(L.nextLesson(data, order, lessons), null);
+});

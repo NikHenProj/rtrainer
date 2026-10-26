@@ -2,6 +2,7 @@
 title: "Glossar"
 subtitle: "Fachbegriffe Deutsch ↔ Englisch"
 toc: false
+body-classes: rt-glossary-page
 ---
 
 Die englischen Begriffe brauchst du für Paketdokumentation, Fehlermeldungen und Fachliteratur. Durchsuchen kannst du das Glossar mit der Suche oben rechts oder mit Strg+F.

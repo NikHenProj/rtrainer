@@ -113,6 +113,16 @@
     return true;
   }
 
+  // Where to continue: the first started lesson on the recommended path,
+  // otherwise the first one not started. Null when everything is done.
+  function nextLesson(data, order, lessons) {
+    const status = (id) => lessonStatus(data, id, (lessons[id] && lessons[id].exercises) || []);
+    const started = order.find((id) => status(id) === "started");
+    if (started) return { id: started, kind: "resume" };
+    const fresh = order.find((id) => status(id) === "not-started");
+    return fresh ? { id: fresh, kind: "next" } : null;
+  }
+
   // Imported files must be rtrainer progress of a known version.
   function validProgress(data) {
     return Boolean(
@@ -124,6 +134,7 @@
   const api = {
     VERSION, INTERVALS, MAX_HISTORY, emptyProgress, isoDate, addDays, nextBox, effectiveResult,
     updateStreak, currentStreak, schedule, dueIds, dueQueue, lessonStatus, updateCompletion, validProgress,
+    nextLesson,
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.rtLogic = api;

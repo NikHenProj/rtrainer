@@ -21,8 +21,10 @@
       toPlan: "Zum Kursplan",
       start: (n) => `Wiederholung starten (${n})`,
       streak: (n) => (n === 1 ? "Serie: 1 Tag" : `Serie: ${n} Tage`),
-      boxes: "Boxen",
-      boxLabel: (b, n) => `Box ${b}: ${n}`,
+      boxes: "Deine Übungen in den Boxen",
+      boxCaption: "Box 1 kommt bald wieder, Box 5 ist gefestigt.",
+      boxLabel: (b, n) => `Box ${b}: ${n} ${n === 1 ? "Übung" : "Übungen"}`,
+      streakLabel: "Serie",
       loading: "R wird geladen …",
       loadingPkgs: (p) => `Pakete werden geladen: ${p} …`,
       loadingFailed: (m) => `R konnte nicht geladen werden: ${m}. Prüfe die Internetverbindung und lade die Seite neu.`,
@@ -82,8 +84,10 @@
       toPlan: "Go to course plan",
       start: (n) => `Start review (${n})`,
       streak: (n) => (n === 1 ? "Streak: 1 day" : `Streak: ${n} days`),
-      boxes: "Boxes",
-      boxLabel: (b, n) => `Box ${b}: ${n}`,
+      boxes: "Your exercises in the boxes",
+      boxCaption: "Box 1 comes back soon, box 5 is well learned.",
+      boxLabel: (b, n) => `Box ${b}: ${n} ${n === 1 ? "exercise" : "exercises"}`,
+      streakLabel: "Streak",
       loading: "Loading R …",
       loadingPkgs: (p) => `Loading packages: ${p} …`,
       loadingFailed: (m) => `R could not be loaded: ${m}. Check your connection and reload the page.`,
@@ -279,15 +283,18 @@ rt_review_run <- function(setup, solution, user_code, check_code) {
       const counts = [1, 2, 3, 4, 5].map((b) => ids.filter((id) => data.review[id].box === b).length);
       const meta = el("dl", { class: "rt-review-meta" });
       if (currentStreak(data) > 0) {
-        meta.append(el("div", {}, el("dt", { class: "visually-hidden" }, "Streak"), el("dd", {}, t.streak(currentStreak(data)))));
+        meta.append(el("div", {}, el("dt", { class: "visually-hidden" }, t.streakLabel), el("dd", {}, t.streak(currentStreak(data)))));
       }
       meta.append(
         el("div", {},
           el("dt", {}, t.boxes),
-          el("dd", {}, el("ol", { class: "rt-boxes" },
-            counts.map((n, i) => el("li", { "data-box": i + 1, "aria-label": t.boxLabel(i + 1, n) },
-              el("span", { class: "rt-box-n", "aria-hidden": "true" }, String(n)),
-              el("span", { class: "rt-box-label", "aria-hidden": "true" }, String(i + 1)))))))
+          el("dd", {},
+            el("ol", { class: "rt-boxes" },
+              counts.map((n, i) => el("li", { "data-box": i + 1 },
+                el("span", { class: "visually-hidden" }, t.boxLabel(i + 1, n)),
+                el("span", { class: "rt-box-n", "aria-hidden": "true" }, String(n)),
+                el("span", { class: "rt-box-label", "aria-hidden": "true" }, `Box ${i + 1}`)))),
+            el("p", { class: "rt-help" }, t.boxCaption)))
       );
       stage.append(meta);
     }
