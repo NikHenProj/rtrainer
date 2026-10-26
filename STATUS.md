@@ -1,6 +1,6 @@
 # STATUS
 
-Stand (2026-10-26): **M6 + M7 abgenommen und in `main` (Fast-Forward auf 4cca3f5). Meilenstein 8 Teil 1 ebenfalls in `main`:** Datensätze 2–4 und Triage der alten Aufgaben (freigegeben). Nichts gepusht; `main` ist 4 Commits vor `origin/main`. Entscheidungen: NEWS.md.
+Stand (2026-10-26): **M6 + M7 abgenommen und in `main` (Fast-Forward auf 4cca3f5). Meilenstein 8 Teil 1 ebenfalls in `main`:** Datensätze 2–4 und Triage der alten Aufgaben (freigegeben). Nichts gepusht (`main` ist `origin/main` voraus). Entscheidungen: NEWS.md.
 
 ## Was steht
 - **Gerüst (M6):** Quarto-Website mit quarto-live/webR, Theme hell/dunkel (IBM Plex Sans, JetBrains Mono, Indigo), Kopfzeile Kursplan · Wiederholen (n fällig) · Pakete · Glossar · DE/EN · Hell/Dunkel · Suche.
