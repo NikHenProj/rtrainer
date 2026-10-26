@@ -1,5 +1,11 @@
 # rtrainer (Quarto course)
 
+## Publication and M9 plan
+
+- GitHub Pages enabled with source "GitHub Actions"; `main` pushed, first deploy green. Site: https://nikhenproj.github.io/rtrainer/. All asset and data paths are relative, so the `/rtrainer/` subpath needs no change.
+- Load time online measured (time until all run buttons are ready): 10–16 s with warm cache, 14–21 s on first visit.
+- `docs/M9-plan.md`: intermediate level in 6 German packages of 3 lessons, then mini project and English; all core packages checked in the webR index; new dataset `acceptance` (TAM questionnaire) proposed for CFA, mediation and moderation.
+
 ## Milestone 8, part 5: mini project beginner (EN) (accepted, merged into main)
 
 - Page `en/project-beginner.qmd`, translated from the German page: same sections, anchors, code, data and exercise ids; numbers in English notation (`95% CI [2.7, 18.0]`), `tbl_summary()` labels in English in the full script. `langs: [de]` removed from `exercises/project/beginner/lesson.yml`, so the generator builds both languages.

@@ -1,6 +1,6 @@
 # STATUS
 
-Stand (2026-10-26): **M6 bis M8 Teil 5 abgenommen und in `main`** (alle 10 Beginner-Lektionen und Mini-Projekt Beginner, DE + EN). Nichts gepusht (`main` ist `origin/main` voraus). Entscheidungen: NEWS.md.
+Stand (2026-10-26): **M6 bis M8 Teil 5 abgenommen und in `main`** (alle 10 Beginner-Lektionen und Mini-Projekt Beginner, DE + EN). **Online seit 2026-10-26:** https://nikhenproj.github.io/rtrainer/ (Pages-Quelle GitHub Actions, CI-Lauf 40326391796 grün). M9 geplant: `docs/M9-plan.md`. Entscheidungen: NEWS.md.
 
 ## Was steht
 - **Gerüst (M6):** Quarto-Website mit quarto-live/webR, Theme hell/dunkel (IBM Plex Sans, JetBrains Mono, Indigo), Kopfzeile Kursplan · Wiederholen (n fällig) · Pakete · Glossar · DE/EN · Hell/Dunkel · Suche.
@@ -24,18 +24,23 @@ Stand (2026-10-26): **M6 bis M8 Teil 5 abgenommen und in `main`** (alle 10 Begin
 - `Rscript tests/smoke-test.R`: 0 failure(s); neu „en: project row links the English page“, „en: project page in English with exercises“ ok
 - EN-Projektseite nicht manuell im Browser durchgeklickt (nur Rauchtest: Titel, Übung, Gesamtskript vorhanden); EN-Übungen nicht im Browser bewertet (selbe IDs/Checks wie DE).
 
+## Online (2026-10-26)
+- CI (build 4,5 min, deploy 1,4 min): `56/56 exercises ok`, `[ FAIL 0 | WARN 4 | SKIP 0 | PASS 210 ]`, Node 12/0, `Generated 229 files`, Rauchtest `0 failure(s)`.
+- Ladezeit online (headless Chrome, bis alle „Run“-Knöpfe bereit; Erststart = frischer Browser / warm = neu laden): gruppenvergleiche 13,6 / 10,2 s; regression 15,1 / 11,7 s; Mini-Projekt (6 Pakete) 21,1 / 15,8 s. Nur eine Messung, gute Leitung.
+- Hinweis aus CI: `ubuntu-latest` wechselt ab 19.10.2026 auf Ubuntu 26; Lauf war schon grün, bei Fehlern `ubuntu-24.04` festsetzen.
+
 ## Offen / bekannte Lücken
 - Beginner-Lektionen 1–6 nicht manuell im Browser durchgeklickt (7–9 nur die Übungen, nicht Wissenscheck/Optik), nur Rauchtest (je eine Übung in cleaning und visualisation); Beispiel-Plots und SVG-Abbildungen von reshaping/visualisation/descriptives optisch nicht geprüft.
 - Plot-Check vergleicht feste Werte nicht (welche Farbe, `ncol`), nur ob gesetzt; Position und Daten eigener Ebenen (Referenzlinien) schon.
 - webR-Index geprüft (alle Kurspakete inkl. lme4, lmerTest, here, broom.helpers, flextable vorhanden); gtsummary-Seite lokal 15 s bei warmem Cache, lme4 noch nicht gemessen. broom.helpers wird angehängt und überdeckt gtsummary-Hilfsfunktionen (gleiche Funktionen, nur Meldung in der Konsole).
-- **Push + Pages:** Repo-Einstellung Pages-Quelle = „GitHub Actions“ setzen, dann pushen (nur nach Rückfrage). Ladezeit online messen (lokal: webR + Pakete ca. 12 s bei warmem Cache, Erststart ca. 30 s).
 - quarto-live-Ladeanzeige („Downloading webR/package …“) bleibt englisch; Code in Lektionsübungen bleibt nach Neuladen nicht erhalten (nur der Gelöst-Status).
 - Wiederholungs-Editor ist ein einfaches Textfeld (kein Syntax-Highlighting).
 - Linke Abschnittsleiste nur ab 1200 px; darunter übernimmt Quartos Inhaltsverzeichnis.
 - Kursplan: „nicht vorgesehen“-Zellen werden vom Screenreader einzeln vorgelesen (19×); ggf. kürzen.
 
 ## Als Nächstes
-1. Pages einrichten, pushen (nur nach Rückfrage); danach CI-Lauf prüfen. Dann M9 (Intermediate).
+1. Abnahme M9-Plan (`docs/M9-plan.md`), offene Punkte dort (Datensatz `acceptance`, Mediation).
+2. M9 Paket P1 (DE): import-, cleaning-, reshaping-intermediate.
 
 ## Umgebung
 - Quarto 1.10.19, R 4.6.1, Node 18, quarto-live 0.1.3-dev (`_extensions/r-wasm/live`, webR 0.6.0).
