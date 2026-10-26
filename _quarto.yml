@@ -8,6 +8,7 @@ project:
     - en/*.qmd
   resources:
     - data/*.csv
+    - data/*.xlsx
     - assets/review-cards.json
     - assets/*.js
 

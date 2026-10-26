@@ -17,3 +17,71 @@ driving_sim:
     driving_sim$experience <- factor(driving_sim$experience, levels = c("novice", "experienced"))
     driving_sim$condition <- factor(driving_sim$condition, levels = c("visual", "auditory", "haptic"))
     driving_sim <- tibble::as_tibble(driving_sim)
+survey:
+  file: survey.csv
+  script: data-raw/survey.R
+  description:
+    de: >-
+      Online-Fragebogen nach einem Infotainment-Prototyp: 160 Befragte, zwischen
+      den Gruppen interface = touch/voice. SUS (sus_01–sus_10, 1–5, gerade Items
+      negativ formuliert), NASA-TLX roh (tlx_*, 0–100), Vertrauen (trust_1–trust_6,
+      1–7, trust_3 und trust_5 umgepolt), Aufmerksamkeitsfrage, fehlende Werte.
+    en: >-
+      Online questionnaire after an infotainment prototype: 160 respondents,
+      between groups interface = touch/voice. SUS (sus_01–sus_10, 1–5, even items
+      negatively worded), raw NASA-TLX (tlx_*, 0–100), trust (trust_1–trust_6, 1–7,
+      trust_3 and trust_5 reverse-keyed), attention check, missing values.
+  load: |
+    survey <- read.csv("data/survey.csv")
+    survey$interface <- factor(survey$interface, levels = c("touch", "voice"))
+    survey <- tibble::as_tibble(survey)
+usability:
+  file: usability.csv
+  script: data-raw/usability.R
+  description:
+    de: >-
+      Moderierter Usability-Test: 24 Personen (novice/expert) testen 3 Prototypen
+      (A, B, C, Reihenfolge ausbalanciert, position) mit je 4 Aufgaben (task).
+      Erfolg success (0/1), Zeit time_s (Abbruch bei 180 s), Fehler errors,
+      Einfachheit seq (1–7). p07 hat Prototyp C nicht getestet.
+    en: >-
+      Moderated usability test: 24 participants (novice/expert) test 3 prototypes
+      (A, B, C, counterbalanced order, position) with 4 tasks each (task).
+      Success (0/1), time_s (timeout at 180 s), errors, ease rating seq (1–7).
+      p07 did not test prototype C.
+  load: |
+    usability <- read.csv("data/usability.csv")
+    usability$expertise <- factor(usability$expertise, levels = c("novice", "expert"))
+    usability$prototype <- factor(usability$prototype, levels = c("A", "B", "C"))
+    usability$task <- factor(usability$task, levels = c("search", "filter", "compare", "checkout"))
+    usability <- tibble::as_tibble(usability)
+raw_export:
+  file: raw_export.csv
+  script: data-raw/raw_export.R
+  description:
+    de: >-
+      Unordentlicher Export einer Feedback-Umfrage (CSV mit Semikolon und
+      Dezimalkomma): Exportinfo über der Kopfzeile, zweite Kopfzeile mit Fragetext,
+      gemischte Datumsformate, Alter als Text, uneinheitliche Kategorien,
+      Testantworten, Duplikate, Freitext. Wird nicht vorab eingelesen, nur der Pfad.
+    en: >-
+      Messy export of a feedback survey (CSV with semicolons and decimal commas):
+      export info above the header, a second header row with question text, mixed
+      date formats, age as text, inconsistent categories, test responses,
+      duplicates, free text. Not read in advance, only the path is set.
+  load: |
+    raw_export_csv <- "data/raw_export.csv"
+raw_export_xlsx:
+  file: raw_export.xlsx
+  script: data-raw/raw_export.R
+  description:
+    de: >-
+      Dieselben Antworten wie raw_export als Excel-Datei: Blatt „Export“ mit
+      Titelzeilen über der Kopfzeile und Summenzeile darunter, Datum teils als
+      Excel-Datum, teils als Text; Blatt „Codebook“. Nur der Pfad wird gesetzt.
+    en: >-
+      The same responses as raw_export as an Excel file: sheet "Export" with title
+      rows above the header and a total row below, dates partly Excel dates, partly
+      text; sheet "Codebook". Only the path is set.
+  load: |
+    raw_export_xlsx <- "data/raw_export.xlsx"

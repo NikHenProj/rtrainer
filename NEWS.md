@@ -1,6 +1,16 @@
 # rtrainer (Quarto course)
 
-## Milestone 7: review, backup, English version, smoke test (branch m7-wip, awaiting review)
+## Milestone 8, part 1: datasets 2–4, legacy triage (branch m8-wip)
+
+- Milestones 6 and 7 accepted without changes; `m7-wip` fast-forwarded into `main`.
+- `survey` (`data-raw/survey.R`): 160 respondents, between `interface = touch/voice`; SUS (standard keying, even items negative), raw NASA-TLX (0–100 in steps of 5), trust scale with reverse-keyed `trust_3`/`trust_5`; built-in effects (voice about +9 SUS points, −12 TLX mental), item nonresponse, a skipped block, failed attention checks, one straightliner.
+- `usability` (`data-raw/usability.R`): 24 participants × 3 prototypes (Latin square, `position`) × 4 tasks; `success`, `time_s` (censored at 180 s), `errors`, `seq`; p07 lacks prototype C (unbalanced on purpose).
+- `raw_export` / `raw_export_xlsx` (`data-raw/raw_export.R`): the same messy survey-tool export as semicolon CSV with decimal comma and as Excel (title rows, total row, mixed Excel/text dates, codebook sheet). Decision: their `load` code sets only the file path, because reading the file is the exercise.
+- Decision: missing values in `survey.csv` are empty cells (as survey tools export them); `read.csv()` reads them as `NA` in numeric columns.
+- `data/*.xlsx` added to the site resources; `tools/tests/test-datasets.R` checks files, load code and the documented data problems.
+- Triage of the 65 legacy exercises in `docs/legacy-triage.md`: 54 keep (18 for the beginner path), 11 drop. Awaiting Nick's approval; nothing migrated.
+
+## Milestone 7: review, backup, English version, smoke test (merged into main)
 
 - Review page (`de/review.qmd`, `en/review.qmd`, `assets/review.js`): due cards from `assets/review-cards.json`, interleaved by lesson; webR is loaded only when a round starts, packages and data per card on demand. Confidence 1–3 must be chosen before checking; a confident error (confidence 3, first attempt wrong) shows misconception + explanation at once. After a correct answer: Leicht/Okay/Schwer ("Leicht" disabled with a reason when ≥ 2 hints); viewing the solution counts as wrong (box 1). Box 1 (interval 0) comes back once at the end of the round. Streak shown only on the review page.
 - Decision: the review page uses its own small editor (textarea, Tab indents, Ctrl+Enter checks) and webR directly instead of quarto-live, because cards are chosen at runtime. Checks run the same `rt_checker()` code (shipped inside the cards JSON).
