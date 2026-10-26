@@ -1,0 +1,134 @@
+# Knowledge check: passed at >= `pass` share of correctly answered questions.
+lesson: sem-intermediate
+pass: 0.8
+questions:
+  - id: sm-i-q-syntax
+    prompt:
+      de: "Was bedeutet die Zeile `trust =~ trust_1 + trust_2 + trust_3` in einem lavaan-Modell?"
+      en: "What does the line `trust =~ trust_1 + trust_2 + trust_3` mean in a lavaan model?"
+    options:
+      - text:
+          de: "Der latente Faktor `trust` wird durch die drei Items gemessen; jedes Item bekommt eine Ladung."
+          en: "The latent factor `trust` is measured by the three items; each item gets a loading."
+        correct: true
+        explain:
+          de: "Richtig. `=~` heißt „wird gemessen durch“; `~` wäre eine Regression, `~~` eine (Ko-)Varianz."
+          en: "Right. `=~` means \"is measured by\"; `~` would be a regression, `~~` a (co)variance."
+      - text:
+          de: "`trust` ist die Summe der drei Items."
+          en: "`trust` is the sum of the three items."
+        correct: false
+        explain:
+          de: "Der Faktor ist das Gemeinsame der Items, gewichtet nach ihren Ladungen, ohne den Messfehler. Eine Summe enthält den Messfehler."
+          en: "The factor is what the items have in common, weighted by their loadings, without measurement error. A sum contains the error."
+      - text:
+          de: "`trust` sagt die drei Items vorher wie in einer Regression mit `lm()`, Messfehler inklusive."
+          en: "`trust` predicts the three items like a regression with `lm()`, measurement error included."
+        correct: false
+        explain:
+          de: "Die Richtung stimmt (Faktor → Items), aber der Faktor ist nicht beobachtet; er wird aus den Kovarianzen der Items geschätzt."
+          en: "The direction is right (factor → items), but the factor is not observed; it is estimated from the covariances of the items."
+  - id: sm-i-q-cutoffs
+    prompt:
+      de: "Ein Modell hat CFI = .93, RMSEA = .07 [.06, .08], SRMR = .05. Wie berichtest du das am besten?"
+      en: "A model has CFI = .93, RMSEA = .07 [.06, .08], SRMR = .05. How do you best report it?"
+    options:
+      - text:
+          de: "Akzeptabler, aber nicht guter Fit; alle Werte berichten und lokale Ursachen prüfen (Ladungen, Residuen, Modifikationsindizes)."
+          en: "Acceptable but not good fit; report all values and check local causes (loadings, residuals, modification indices)."
+        correct: true
+        explain:
+          de: "Ja. Richtwerte sind keine Schwellen mit Ja/Nein; transparent berichten und nach der Ursache suchen."
+          en: "Yes. Cut-offs are not yes/no thresholds; report transparently and look for the cause."
+      - text:
+          de: "Das Modell ist abgelehnt, weil CFI unter .95 liegt."
+          en: "The model is rejected because CFI is below .95."
+        correct: false
+        explain:
+          de: "Die Richtwerte von Hu und Bentler stammen aus Simulationen für bestimmte Bedingungen und sind keine Testgrenzen."
+          en: "Hu and Bentler's cut-offs come from simulations for specific conditions and are not test boundaries."
+      - text:
+          de: "Nur den SRMR berichten, weil er die Richtwerte erfüllt."
+          en: "Report only the SRMR because it meets the cut-off."
+        correct: false
+        explain:
+          de: "Das wäre selektives Berichten. Üblich sind χ² mit df und p, CFI, RMSEA mit KI und SRMR."
+          en: "That would be selective reporting. Usual are χ² with df and p, CFI, RMSEA with CI and SRMR."
+  - id: sm-i-q-negative
+    prompt:
+      de: "Du schätzt das Messmodell an Rohdaten, in denen `peou_3` nicht umgepolt ist. Was ändert sich gegenüber umgepolten Daten?"
+      en: "You fit the measurement model on raw data in which `peou_3` is not reversed. What changes compared with reversed data?"
+    options:
+      - text:
+          de: "Nur das Vorzeichen der Ladung von `peou_3`; Fit und alle anderen Ladungen bleiben gleich. ω aus dem Modell sinkt aber."
+          en: "Only the sign of the loading of `peou_3`; fit and all other loadings stay the same. ω from the model drops, though."
+        correct: true
+        explain:
+          de: "Genau. Die Kovarianzen ändern nur ihr Vorzeichen; `compRelSEM()` rechnet aber mit dem Summenwert, in dem sich das Item gegen die anderen stellt."
+          en: "Exactly. The covariances only change sign; `compRelSEM()` works with the sum score, in which the item works against the others."
+      - text:
+          de: "Das Modell passt schlechter, weil das Item nicht zum Faktor passt."
+          en: "The model fits worse because the item does not fit the factor."
+        correct: false
+        explain:
+          de: "Der Fit ist identisch: Eine Spiegelung des Items ändert nur das Vorzeichen seiner Kovarianzen."
+          en: "The fit is identical: mirroring the item only changes the sign of its covariances."
+      - text:
+          de: "Nichts, auch ω bleibt gleich."
+          en: "Nothing, ω stays the same too."
+        correct: false
+        explain:
+          de: "Fit und Beträge bleiben gleich, ω aus dem Modell nicht; hier sank es für die Bedienbarkeit von .85 auf .61."
+          en: "Fit and absolute values stay the same, ω from the model does not; here it dropped from .85 to .61 for ease of use."
+  - id: sm-i-q-modindices
+    prompt:
+      de: "`modindices(fit)` zeigt für `peou_1 ~~ trust_5` einen Modifikationsindex von 9.8. Was folgt daraus?"
+      en: "`modindices(fit)` shows a modification index of 9.8 for `peou_1 ~~ trust_5`. What follows?"
+    options:
+      - text:
+          de: "Nur wenn es eine inhaltliche Begründung gibt (z. B. ähnliche Formulierung), die Residualkorrelation erwägen und offenlegen; sonst nicht ins Modell aufnehmen."
+          en: "Only if there is a substantive reason (e.g. similar wording), consider the residual correlation and disclose it; otherwise do not add it."
+        correct: true
+        explain:
+          de: "Richtig. Modifikationsindizes sind datengetrieben; wer ihnen blind folgt, passt das Modell an Zufall an."
+          en: "Right. Modification indices are data-driven; following them blindly fits the model to noise."
+      - text:
+          de: "Die Residualkorrelation aufnehmen, weil der Fit dann besser wird."
+          en: "Add the residual correlation because the fit will improve."
+        correct: false
+        explain:
+          de: "Besser wird der Fit fast immer. Ohne Begründung ist das Overfitting, und das Modell ist nicht mehr konfirmatorisch."
+          en: "Fit almost always improves. Without a reason that is overfitting, and the model is no longer confirmatory."
+      - text:
+          de: "Das Modell ist falsch und muss mit einer EFA neu aufgestellt werden."
+          en: "The model is wrong and has to be rebuilt with an EFA."
+        correct: false
+        explain:
+          de: "Bei gutem Gesamtfit ist ein einzelner Index von 9.8 kein Grund, die Struktur zu verwerfen."
+          en: "With good overall fit, a single index of 9.8 is no reason to reject the structure."
+  - id: sm-i-q-nested
+    prompt:
+      de: "Wann darfst du zwei Modelle mit `lavTestLRT()` (χ²-Differenztest) vergleichen?"
+      en: "When may you compare two models with `lavTestLRT()` (χ² difference test)?"
+    options:
+      - text:
+          de: "Wenn sie auf denselben Daten und Variablen beruhen und das eine ein Spezialfall des anderen ist (verschachtelt)."
+          en: "When they use the same data and variables and one is a special case of the other (nested)."
+        correct: true
+        explain:
+          de: "Ja. Ein Modell ohne `pu_5` nutzt andere Variablen; dann taugt weder der Test noch AIC/BIC."
+          en: "Yes. A model without `pu_5` uses other variables; then neither the test nor AIC/BIC work."
+      - text:
+          de: "Immer, wenn beide konvergieren."
+          en: "Always, as long as both converge."
+        correct: false
+        explain:
+          de: "Nicht verschachtelte Modelle vergleicht man höchstens über AIC/BIC, und auch das nur bei denselben Variablen."
+          en: "Non-nested models can at most be compared via AIC/BIC, and only with the same variables."
+      - text:
+          de: "Nur wenn beide Modelle gleich viele Faktoren haben."
+          en: "Only if both models have the same number of factors."
+        correct: false
+        explain:
+          de: "Gerade der Vergleich von drei mit vier Faktoren ist ein typischer verschachtelter Vergleich."
+          en: "Comparing three with four factors is a typical nested comparison."

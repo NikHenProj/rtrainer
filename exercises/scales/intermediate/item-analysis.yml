@@ -1,0 +1,125 @@
+id: sc-i-item-analysis
+lesson: scales-intermediate
+order: 2
+title:
+  de: Eine Itemanalyse deuten
+  en: Interpreting an item analysis
+kind: interpret
+required: true
+packages: []
+data: []
+setup: ""
+prompt:
+  de: |
+    Itemanalyse der Nützlichkeitsskala mit `psych::alpha(select(acceptance, pu_1:pu_5))`
+    (gekürzt; α der ganzen Skala = .80):
+
+    ```
+    Reliability if an item is dropped:
+         raw_alpha average_r
+    pu_1      0.74      0.42
+    pu_2      0.75      0.43
+    pu_3      0.72      0.39
+    pu_4      0.75      0.44
+    pu_5      0.83      0.55
+
+    Item statistics
+           n raw.r r.drop mean   sd
+    pu_1 300  0.79   0.65 3.88 1.64
+    pu_2 300  0.77   0.62 3.87 1.67
+    pu_3 300  0.83   0.71 3.90 1.60
+    pu_4 300  0.75   0.60 3.95 1.59
+    pu_5 300  0.58   0.35 4.06 1.70
+    ```
+
+    `pu_5` lautet „Das System macht das Fahren unterhaltsamer“, die anderen Items
+    fragen nach Sicherheit, Entlastung und Zeitgewinn. Welche Aussagen stimmen?
+
+    1. `pu_5` hängt am schwächsten mit dem Rest der Skala zusammen; ohne `pu_5` stiege α von .80 auf .83.
+    2. Weil α ohne `pu_5` steigt, muss `pu_5` gestrichen werden; eine weitere Begründung ist nicht nötig.
+    3. Am Mittelwert von `pu_5` (4.06, der höchste) erkennt man, dass es das schwächste Item ist.
+    4. `r.drop` ist die Korrelation des Items mit der Summe der *übrigen* Items und deshalb kleiner als `raw.r`, das das Item selbst enthält.
+
+    Gib die Nummern der richtigen Aussagen aufsteigend als Vektor ein, z. B. `c(1, 2)`.
+  en: |
+    Item analysis of the usefulness scale with `psych::alpha(select(acceptance, pu_1:pu_5))`
+    (shortened; α of the whole scale = .80):
+
+    ```
+    Reliability if an item is dropped:
+         raw_alpha average_r
+    pu_1      0.74      0.42
+    pu_2      0.75      0.43
+    pu_3      0.72      0.39
+    pu_4      0.75      0.44
+    pu_5      0.83      0.55
+
+    Item statistics
+           n raw.r r.drop mean   sd
+    pu_1 300  0.79   0.65 3.88 1.64
+    pu_2 300  0.77   0.62 3.87 1.67
+    pu_3 300  0.83   0.71 3.90 1.60
+    pu_4 300  0.75   0.60 3.95 1.59
+    pu_5 300  0.58   0.35 4.06 1.70
+    ```
+
+    `pu_5` reads "The system makes driving more entertaining", the other items ask
+    about safety, relief and saving time. Which statements are true?
+
+    1. `pu_5` is the item least related to the rest of the scale; without `pu_5`, α would rise from .80 to .83.
+    2. Because α rises without `pu_5`, `pu_5` must be dropped; no further justification is needed.
+    3. The mean of `pu_5` (4.06, the highest) shows that it is the weakest item.
+    4. `r.drop` is the correlation of the item with the sum of the *other* items and therefore smaller than `raw.r`, which includes the item itself.
+
+    Type the numbers of the true statements in ascending order as a vector,
+    e.g. `c(1, 2)`.
+starter: |
+  # Nummern der richtigen Aussagen als Vektor / numbers of the true statements as a vector
+solution: |
+  c(1, 4)
+hints:
+  - de: "Welche Spalte beschreibt die Trennschärfe, also den Zusammenhang eines Items mit der übrigen Skala?"
+    en: "Which column describes the discrimination, i.e. how an item relates to the rest of the scale?"
+  - de: "Ein Mittelwert sagt etwas über die Schwierigkeit (Zustimmung), nicht über den Zusammenhang mit den anderen Items."
+    en: "A mean tells you about difficulty (agreement), not about the relation to the other items."
+  - de: "Streichen ist eine inhaltliche Entscheidung: Passt das Item zum Konstrukt? Was verliert die Skala, wenn es fehlt?"
+    en: "Dropping is a substantive decision: does the item fit the construct? What does the scale lose without it?"
+explanation:
+  de: |
+    Richtig sind 1 und 4. Die korrigierte Trennschärfe `r.drop` = .35 liegt
+    deutlich unter den anderen Items (.60–.71); Faustregel: unter .30 kritisch,
+    unter .40 genauer ansehen. Der Itemtext erklärt den Befund: „unterhaltsamer“
+    misst eher Freude am System (hedonisch) als Nützlichkeit. Streichen ist
+    trotzdem eine inhaltliche Entscheidung, keine automatische Folge von
+    „α if dropped“: Wer Items nach α auswählt, optimiert auf die eigene Stichprobe,
+    und eine etablierte Skala wird nicht mehr vergleichbar. Vertretbar ist: vorab
+    festlegen, beide Varianten berichten oder das Item mit Begründung entfernen
+    („pu_5 wurde wegen geringer Trennschärfe, r_it = .35, und inhaltlicher
+    Abweichung ausgeschlossen; α = .83“). Der Mittelwert zeigt nur, dass `pu_5`
+    etwas mehr Zustimmung bekommt.
+  en: |
+    Statements 1 and 4 are true. The corrected item-total correlation `r.drop`
+    = .35 is clearly below the other items (.60–.71); rule of thumb: below .30
+    critical, below .40 worth a closer look. The item text explains the finding:
+    "more entertaining" measures enjoyment of the system (hedonic) rather than
+    usefulness. Dropping it is still a substantive decision, not an automatic
+    consequence of "alpha if dropped": selecting items by α optimises for your
+    own sample, and an established scale is no longer comparable. Defensible
+    options: decide in advance, report both versions, or remove the item with
+    a reason ("pu_5 was excluded because of low discrimination, r_it = .35, and
+    its different content; α = .83"). The mean only shows that `pu_5` gets
+    slightly more agreement.
+misconception:
+  de: "Ein Item, ohne das α steigt, wird automatisch gestrichen; schwache Items erkennt man am Mittelwert."
+  en: "An item whose removal raises α is dropped automatically; weak items can be spotted by their mean."
+check:
+  type: value
+common_mistakes:
+  - pattern: "\\b2\\b"
+    message:
+      de: "Aussage 2 stimmt nicht: „α if dropped“ ist ein Hinweis, keine Regel. Ob ein Item gestrichen wird, entscheidet der Inhalt mit."
+      en: "Statement 2 is false: \"alpha if dropped\" is a pointer, not a rule. Whether an item is dropped also depends on its content."
+  - pattern: "\\b3\\b"
+    message:
+      de: "Aussage 3 stimmt nicht: Der Mittelwert beschreibt die Zustimmung (Schwierigkeit), nicht die Trennschärfe."
+      en: "Statement 3 is false: the mean describes agreement (difficulty), not discrimination."

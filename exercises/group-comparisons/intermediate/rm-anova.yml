@@ -1,0 +1,98 @@
+id: gc-i-rm-anova
+lesson: group-comparisons-intermediate
+order: 1
+title:
+  de: ANOVA mit Messwiederholung mit afex
+  en: Repeated-measures ANOVA with afex
+kind: write
+required: true
+packages: [afex, parameters]
+data: [driving_sim]
+setup: |
+  library(afex)
+prompt:
+  de: |
+    Im Fahrsimulator hat jede Person alle drei Warnmodalitäten (`condition`:
+    visual, auditory, haptic) mit je 4 Durchgängen erlebt; `experience` (novice,
+    experienced) unterscheidet die Personen. Unterscheiden sich die
+    Reaktionszeiten `rt_ms` zwischen den Modalitäten, und hängt das von der
+    Erfahrung ab?
+
+    Der Code im Feld behandelt alle 480 Durchgänge als unabhängig. Rechne
+    stattdessen eine gemischte ANOVA mit `afex::aov_ez()`: `condition` innerhalb,
+    `experience` zwischen den Personen, pro Person und Bedingung gemittelt
+    (`fun_aggregate = mean`), fehlende Reaktionszeiten ausgelassen. Speichere das
+    Ergebnis in `fit` und gib es zurück.
+  en: |
+    In the driving simulator, every participant experienced all three warning
+    modalities (`condition`: visual, auditory, haptic) with 4 trials each;
+    `experience` (novice, experienced) differs between participants. Do the
+    reaction times `rt_ms` differ between modalities, and does this depend on
+    experience?
+
+    The code in the box treats all 480 trials as independent. Instead, run a
+    mixed ANOVA with `afex::aov_ez()`: `condition` within, `experience` between
+    participants, averaged per participant and condition
+    (`fun_aggregate = mean`), leaving out missing reaction times. Save the
+    result in `fit` and return it.
+starter: |
+  fit <- aov(rt_ms ~ condition * experience, data = driving_sim)
+  summary(fit)
+solution: |
+  fit <- aov_ez(
+    id = "participant", dv = "rt_ms", data = driving_sim,
+    within = "condition", between = "experience",
+    fun_aggregate = mean, na.rm = TRUE
+  )
+  fit
+hints:
+  - de: "`aov_ez()` braucht die Personenkennung (`id`), die abhängige Variable (`dv`), die Daten und die Faktoren getrennt nach `within` und `between`."
+    en: "`aov_ez()` needs the participant identifier (`id`), the dependent variable (`dv`), the data and the factors split into `within` and `between`."
+  - de: "Spaltennamen stehen in Anführungszeichen: `id = \"participant\"`, `dv = \"rt_ms\"`. `na.rm = TRUE` reicht `aov_ez()` an `mean()` weiter."
+    en: "Column names go in quotes: `id = \"participant\"`, `dv = \"rt_ms\"`. `aov_ez()` passes `na.rm = TRUE` on to `mean()`."
+  - de: "`aov_ez(\"participant\", \"rt_ms\", driving_sim, within = \"condition\", between = \"experience\", fun_aggregate = mean, na.rm = TRUE)`"
+    en: "`aov_ez(\"participant\", \"rt_ms\", driving_sim, within = \"condition\", between = \"experience\", fun_aggregate = mean, na.rm = TRUE)`"
+explanation:
+  de: |
+    Haupteffekt Modalität: F(1.98, 75.08) = 179.9, p < .001, η²G = .42;
+    Haupteffekt Erfahrung: F(1, 38) = 22.5, p < .001, η²G = .33; keine
+    Wechselwirkung, F(1.98, 75.08) = 1.75, p = .18, η²G = .007. afex korrigiert
+    die Freiheitsgrade des Messwiederholungsfaktors automatisch nach
+    Greenhouse-Geisser (df 1.98 statt 2) und nutzt Typ-III-Quadratsummen mit
+    Effektkodierung, wie SPSS. `aov()` auf allen Durchgängen zählt jede Person
+    zwölfmal (Pseudoreplikation): 462 Fehler-Freiheitsgrade statt 38 bzw. 76.
+    Das generalisierte η² (`ges`) ist zwischen Designs vergleichbar; das partielle
+    η² eines Innersubjektfaktors (.83) ist viel größer, weil die
+    Personenunterschiede herausgerechnet sind. Bericht: „Die Reaktionszeit
+    unterschied sich zwischen den Modalitäten, F(1.98, 75.08) = 179.92,
+    p < .001, η²G = .42.“
+  en: |
+    Main effect of modality: F(1.98, 75.08) = 179.9, p < .001, η²G = .42; main
+    effect of experience: F(1, 38) = 22.5, p < .001, η²G = .33; no interaction,
+    F(1.98, 75.08) = 1.75, p = .18, η²G = .007. afex corrects the degrees of
+    freedom of the repeated-measures factor automatically (Greenhouse-Geisser,
+    df 1.98 instead of 2) and uses type III sums of squares with effect coding,
+    as SPSS does. `aov()` on all trials counts each participant twelve times
+    (pseudoreplication): 462 error degrees of freedom instead of 38 or 76.
+    Generalised η² (`ges`) is comparable across designs; the partial η² of a
+    within factor (.83) is much larger because individual differences are
+    removed. Report: "Reaction time differed between modalities,
+    F(1.98, 75.08) = 179.92, p < .001, η²G = .42."
+misconception:
+  de: "Bei Messwiederholung kann man alle Durchgänge wie unabhängige Beobachtungen in `aov()` geben."
+  en: "With repeated measures you can put all trials into `aov()` as independent observations."
+check:
+  type: value
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*na\\.rm)[\\s\\S]*aov_ez"
+    message:
+      de: "Ohne `na.rm = TRUE` wird das Personenmittel bei einem fehlenden Durchgang `NA`, und afex schließt die ganze Person aus (hier 11 von 40)."
+      en: "Without `na.rm = TRUE`, the participant mean becomes `NA` for a single missing trial, and afex drops the whole participant (here 11 of 40)."
+  - pattern: "between\\s*=\\s*\"condition\"|within\\s*=\\s*\"experience\""
+    message:
+      de: "Jede Person hat alle drei Modalitäten erlebt (`within`), aber nur eine Erfahrungsstufe (`between`)."
+      en: "Every participant experienced all three modalities (`within`), but has only one level of experience (`between`)."
+  - pattern: "^(?![\\s\\S]*aov_(ez|car|4))[\\s\\S]*\\baov\\("
+    message:
+      de: "`aov()` ohne Fehlerterm behandelt die 480 Durchgänge als unabhängig. Nimm `aov_ez()` aus afex."
+      en: "`aov()` without an error term treats the 480 trials as independent. Use `aov_ez()` from afex."

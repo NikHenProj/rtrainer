@@ -269,3 +269,44 @@ test_that("rt_check plot type: last value, named object, no plot", {
   user$fig <- p
   expect_true(rt_check(list(type = "plot", name = "fig"), env = env)$correct)
 })
+
+test_that("rt_compare compares lavaan models through their parameters", {
+  skip_if_not_installed("lavaan")
+  skip_if_not_installed("parameters")
+  d <- lavaan::HolzingerSwineford1939
+  model <- "visual =~ x1 + x2 + x3\ntextual =~ x4 + x5 + x6"
+  expected <- lavaan::cfa(model, data = d)
+  # Same model written differently (other order, own data copy): accepted.
+  same <- lavaan::cfa("textual =~ x4 + x5 + x6\nvisual =~ x1 + x2 + x3", data = d[names(d)])
+  expect_null(rt_compare(same, expected))
+  # Item missing: names the parameter.
+  fewer <- lavaan::cfa("visual =~ x1 + x2 + x3\ntextual =~ x4 + x5", data = d)
+  expect_match(rt_compare(fewer, expected), "Fehlt: `textual =~ x6`\\. Zusätzlich: keine")
+  # Long lists are cut after four parameters.
+  one_factor <- lavaan::cfa("visual =~ x1 + x2 + x3 + x4 + x5 + x6", data = d)
+  expect_match(rt_compare(one_factor, expected), "`textual ~~ visual`\\. Zusätzlich: `visual =~ x4`")
+  three <- lavaan::cfa(paste(model, "\nspeed =~ x7 + x8 + x9"), data = d)
+  expect_match(rt_compare(expected, three), "Fehlt: (`[^`]+`, ){4}…\\.")
+  # Same parameters, other values (one item reversed).
+  reversed <- transform(d, x2 = 10 - x2)
+  expect_match(rt_compare(lavaan::cfa(model, data = reversed), expected), "andere Werte \\(`Coefficient`\\)")
+  expect_match(rt_compare(lm(x1 ~ x2, d), expected, lang = "en"), "expected lavaan, got lm")
+})
+
+test_that("rt_compare compares afex ANOVAs by terms, F and df", {
+  skip_if_not_installed("afex")
+  skip_if_not_installed("parameters")
+  d <- data.frame(
+    id = factor(rep(1:12, each = 3)),
+    cond = factor(rep(c("a", "b", "c"), 12)),
+    y = c(5, 6, 8, 4, 6, 7, 6, 6, 9, 5, 7, 8, 3, 5, 6, 5, 5, 8, 4, 6, 9, 6, 7, 7, 5, 6, 8, 4, 5, 7, 6, 8, 9, 5, 6, 7)
+  )
+  quiet <- function(x) suppressMessages(suppressWarnings(x))
+  expected <- quiet(afex::aov_ez("id", "y", d, within = "cond"))
+  expect_null(rt_compare(quiet(afex::aov_car(y ~ cond + Error(id / cond), d)), expected))
+  # Ignoring the repeated measures: other term structure or other F.
+  between <- quiet(afex::aov_ez("id", "y", transform(d, id = factor(seq_len(nrow(d)))), between = "cond"))
+  expect_false(is.null(rt_compare(between, expected)))
+  d_other <- transform(d, y = y + c(0, 0, 3))
+  expect_match(rt_compare(quiet(afex::aov_ez("id", "y", d_other, within = "cond")), expected), "`F`")
+})

@@ -44,6 +44,8 @@ rt_messages <- list(
     table_variables = "Die Tabelle enthält andere Variablen: erwartet %s, erhalten %s.",
     table_header = "Der Tabellenkopf stimmt nicht (Gruppenspalten oder N je Gruppe). Prüfe `by` und die Daten.",
     table_values = "Die Kennwerte in der Tabelle stimmen noch nicht. Prüfe `statistic`, `type` und die Daten.",
+    model_terms = "Das Modell enthält andere Parameter. Fehlt: %s. Zusätzlich: %s.",
+    model_values = "Das Modell hat die richtigen Parameter, aber andere Werte (%s). Prüfe Daten (z. B. umgepolte Items), Variablen und Optionen.",
     check_error = "Beim Prüfen ist ein Fehler aufgetreten: %s"
   ),
   en = list(
@@ -80,6 +82,8 @@ rt_messages <- list(
     table_variables = "The table contains other variables: expected %s, got %s.",
     table_header = "The table header does not match (group columns or N per group). Check `by` and the data.",
     table_values = "The statistics in the table are not right yet. Check `statistic`, `type` and the data.",
+    model_terms = "The model contains other parameters. Missing: %s. Additional: %s.",
+    model_values = "The model has the right parameters, but other values (%s). Check the data (e.g. reverse-keyed items), variables and options.",
     check_error = "An error occurred while checking: %s"
   )
 )
@@ -184,6 +188,10 @@ rt_compare <- function(result, expected, tolerance = 1e-6,
     return(rt_compare_gtsummary(result, expected, lang))
   }
 
+  if (inherits(expected, rt_model_classes)) {
+    return(rt_compare_model(result, expected, tolerance, lang))
+  }
+
   if (is.data.frame(expected)) {
     if (!is.data.frame(result)) {
       return(rt_msg("class", lang, "data frame", class(result)[1]))
@@ -258,6 +266,58 @@ rt_compare <- function(result, expected, tolerance = 1e-6,
 
   if (!isTRUE(all.equal(result, expected, check.attributes = FALSE))) {
     return(rt_msg("values", lang))
+  }
+  NULL
+}
+
+# Fitted models whose objects differ in calls and environments (lavaan,
+# afex, lme4) are compared through parameters::model_parameters(): the same
+# parameters (identified by their name columns) with the same values.
+# Needs the parameters package, which the lessons with models load anyway.
+rt_model_classes <- c("lavaan", "afex_aov", "merMod")
+rt_model_keys <- c("To", "Operator", "From", "Parameter", "Component", "Group", "Effects")
+rt_model_values <- c("Coefficient", "F", "df", "df_error")
+
+rt_model_table <- function(x) {
+  tab <- as.data.frame(suppressWarnings(parameters::model_parameters(x)))
+  if (all(c("To", "Operator", "From") %in% names(tab))) {
+    # Covariances are symmetric: `a ~~ b` is the same as `b ~~ a`.
+    swap <- tab$Operator == "~~" & tab$To > tab$From
+    tab[swap, c("To", "From")] <- tab[swap, c("From", "To")]
+  }
+  keys <- intersect(rt_model_keys, names(tab))
+  tab$.key <- do.call(paste, c(unname(as.list(tab[keys])), sep = " "))
+  shown <- setdiff(keys, "Component")
+  tab$.label <- do.call(paste, c(unname(as.list(tab[shown])), sep = " "))
+  tab
+}
+
+rt_compare_model <- function(result, expected, tolerance = 1e-6, lang = "de") {
+  is_class <- vapply(rt_model_classes, function(cl) inherits(expected, cl), logical(1))
+  model_class <- rt_model_classes[is_class][1]
+  if (!inherits(result, model_class)) {
+    return(rt_msg("class", lang, model_class, class(result)[1]))
+  }
+  res <- rt_model_table(result)
+  exp <- rt_model_table(expected)
+  missing <- unique(exp$.label[!exp$.key %in% res$.key])
+  extra <- unique(res$.label[!res$.key %in% exp$.key])
+  if (length(missing) > 0 || length(extra) > 0) {
+    shown <- function(x) {
+      if (length(x) == 0) {
+        return(rt_msg("none", lang))
+      }
+      paste0(rt_collapse(utils::head(x, 4)), if (length(x) > 4) ", …")
+    }
+    return(rt_msg("model_terms", lang, shown(missing), shown(extra)))
+  }
+  res <- res[match(exp$.key, res$.key), , drop = FALSE]
+  cols <- intersect(rt_model_values, intersect(names(res), names(exp)))
+  differs <- cols[!vapply(cols, function(col) {
+    rt_num_equal(res[[col]], exp[[col]], tolerance)
+  }, logical(1))]
+  if (length(differs) > 0) {
+    return(rt_msg("model_values", lang, rt_collapse(differs)))
   }
   NULL
 }

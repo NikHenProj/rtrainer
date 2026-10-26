@@ -1,0 +1,108 @@
+id: sc-i-efa
+lesson: scales-intermediate
+order: 3
+title:
+  de: Faktorstruktur mit einer EFA prüfen
+  en: Checking the factor structure with an EFA
+kind: write
+required: true
+packages: [dplyr, tidyr, psych, GPArotation, parameters]
+data: [acceptance]
+setup: |
+  library(dplyr)
+  library(tidyr)
+  library(psych)
+  library(parameters)
+prompt:
+  de: |
+    Bilden die 18 Items in `acceptance` (`pu_1` bis `bi_4`) wirklich vier Faktoren?
+    Die Parallelanalyse (`fa.parallel(items, fm = "ml", fa = "fa")`) schlägt
+    4 Faktoren vor.
+
+    Rechne eine explorative Faktorenanalyse mit `psych::fa()`: 4 Faktoren,
+    Maximum Likelihood (`fm = "ml"`) und eine schiefwinklige Rotation (`"oblimin"`),
+    weil die Faktoren korrelieren dürfen. Der Rest des Codes ist fertig: Er macht
+    aus `model_parameters(efa, threshold = "max")` eine Tabelle mit der höchsten
+    Ladung jedes Items (`item`, `loading`). Die Faktornamen ML1–ML4 fallen dabei
+    weg, weil ihre Nummerierung von Lauf zu Lauf wechseln kann.
+  en: |
+    Do the 18 items in `acceptance` (`pu_1` to `bi_4`) really form four factors?
+    Parallel analysis (`fa.parallel(items, fm = "ml", fa = "fa")`) suggests
+    4 factors.
+
+    Run an exploratory factor analysis with `psych::fa()`: 4 factors, maximum
+    likelihood (`fm = "ml"`) and an oblique rotation (`"oblimin"`), because the
+    factors may correlate. The rest of the code is ready: it turns
+    `model_parameters(efa, threshold = "max")` into a table with the highest
+    loading of each item (`item`, `loading`). The factor names ML1–ML4 are
+    dropped, because their numbering can change from run to run.
+starter: |
+  items <- select(acceptance, pu_1:bi_4)
+  efa <- fa(items, nfactors = 1)
+  model_parameters(efa, threshold = "max") |>
+    pivot_longer(starts_with("ML"), names_to = "factor", values_to = "loading", values_drop_na = TRUE) |>
+    select(item = Variable, loading) |>
+    mutate(loading = round(loading, 2))
+solution: |
+  items <- select(acceptance, pu_1:bi_4)
+  efa <- fa(items, nfactors = 4, rotate = "oblimin", fm = "ml")
+  model_parameters(efa, threshold = "max") |>
+    pivot_longer(starts_with("ML"), names_to = "factor", values_to = "loading", values_drop_na = TRUE) |>
+    select(item = Variable, loading) |>
+    mutate(loading = round(loading, 2))
+hints:
+  - de: "`fa()` braucht drei Angaben: Anzahl Faktoren, Rotation, Schätzmethode."
+    en: "`fa()` needs three settings: number of factors, rotation, estimation method."
+  - de: "Die Argumente heißen `nfactors`, `rotate` und `fm`."
+    en: "The arguments are called `nfactors`, `rotate` and `fm`."
+  - de: "`fa(items, nfactors = 4, rotate = \"oblimin\", fm = ______)`"
+    en: "`fa(items, nfactors = 4, rotate = \"oblimin\", fm = ______)`"
+explanation:
+  de: |
+    Die vier Faktoren bilden die vier Skalen sauber ab: Jedes Item lädt am
+    höchsten auf „seinem“ Faktor (Komplexität ≈ 1, keine Querladungen). Zwei
+    Auffälligkeiten: `peou_3` und `trust_4` laden negativ, weil sie nicht umgepolt
+    sind; das ist für die Struktur unerheblich, für Summenwerte aber nicht. `pu_5`
+    lädt nur mit .40 und hat eine Uniqueness von .85: 85 % seiner Varianz erklärt
+    das Modell nicht. Schiefwinklig rotieren ist die Voreinstellung für
+    psychologische Konstrukte: Nützlichkeit und Bedienbarkeit korrelieren hier
+    zu .46 (`efa$Phi`). Varimax erzwingt unkorrelierte Faktoren und verteilt die
+    Ladungen dann künstlich auf mehrere Faktoren. Die Faktornamen ML1–ML4 sind
+    nur Nummern (die Reihenfolge kann wechseln); benennen musst du sie nach den
+    Items: Mit `model_parameters(efa, sort = TRUE, threshold = "max")` siehst du,
+    welche Items zusammen auf einem Faktor laden. Bericht: „Eine EFA (ML,
+    oblimin) mit vier Faktoren (Parallelanalyse) bestätigte die erwartete
+    Struktur; alle Ladungen |λ| ≥ .66, außer pu_5 (.40).“
+  en: |
+    The four factors reproduce the four scales cleanly: every item loads highest
+    on "its" factor (complexity ≈ 1, no cross-loadings). Two things stand out:
+    `peou_3` and `trust_4` load negatively because they are not reversed; this
+    does not matter for the structure, but it does for sum scores. `pu_5` only
+    loads .40 and has a uniqueness of .85: the model does not explain 85 % of its
+    variance. Oblique rotation is the default for psychological constructs:
+    usefulness and ease of use correlate .46 here (`efa$Phi`). Varimax forces
+    uncorrelated factors and then spreads loadings artificially across several
+    factors. The factor names ML1–ML4 are just numbers (their order can
+    change); you name them by their items: `model_parameters(efa, sort = TRUE,
+    threshold = "max")` shows which items load together on one factor. Report: "An EFA (ML, oblimin) with four factors (parallel analysis)
+    confirmed the expected structure; all loadings |λ| ≥ .66, except pu_5 (.40)."
+misconception:
+  de: "Varimax ist die Standardrotation; Faktoren sollten unkorreliert sein."
+  en: "Varimax is the standard rotation; factors should be uncorrelated."
+check:
+  type: value
+  ignore_row_order: true
+  ignore_col_order: false
+common_mistakes:
+  - pattern: "varimax"
+    message:
+      de: "Varimax erzwingt unkorrelierte Faktoren. Nützlichkeit, Bedienbarkeit und Absicht hängen aber zusammen; nimm `\"oblimin\"`."
+      en: "Varimax forces uncorrelated factors. Usefulness, ease of use and intention are related, though; use `\"oblimin\"`."
+  - pattern: "principal\\(|fm\\s*=\\s*\"pa\""
+    message:
+      de: "Gefragt ist Maximum Likelihood (`fm = \"ml\"`). Hauptkomponenten (`principal()`) sind keine Faktorenanalyse."
+      en: "Maximum likelihood (`fm = \"ml\"`) is asked for. Principal components (`principal()`) are not a factor analysis."
+  - pattern: "nfactors\\s*=\\s*[1235]\\b"
+    message:
+      de: "Die Parallelanalyse schlägt 4 Faktoren vor."
+      en: "Parallel analysis suggests 4 factors."

@@ -1,0 +1,76 @@
+id: gc-i-holm-predict
+lesson: group-comparisons-intermediate
+order: 4
+title:
+  de: Holm-Korrektur vorhersagen
+  en: Predicting the Holm correction
+kind: predict
+required: false
+packages: []
+data: []
+setup: ""
+prompt:
+  de: |
+    Was liefert der folgende Code? Führe ihn nicht aus, sondern gib das Ergebnis
+    als R-Wert ein (z. B. `c(0.1, 0.2, 0.3)`).
+
+    ```r
+    p <- c(0.04, 0.01, 0.03)
+    p.adjust(p, method = "holm")
+    ```
+  en: |
+    What does the following code return? Do not run it; type the result as an R
+    value instead (e.g. `c(0.1, 0.2, 0.3)`).
+
+    ```r
+    p <- c(0.04, 0.01, 0.03)
+    p.adjust(p, method = "holm")
+    ```
+starter: |
+  # Vorhersage als Wert / prediction as a value, z. B. c(0.1, 0.2, 0.3)
+solution: |
+  c(0.06, 0.03, 0.06)
+hints:
+  - de: "Holm sortiert die p-Werte aufsteigend und multipliziert den kleinsten mit 3, den nächsten mit 2, den größten mit 1."
+    en: "Holm sorts the p-values in ascending order and multiplies the smallest by 3, the next by 2, the largest by 1."
+  - de: "Sortiert: 0.01 × 3 = 0.03, 0.03 × 2 = 0.06, 0.04 × 1 = 0.04. Ein korrigierter Wert darf aber nicht kleiner sein als sein Vorgänger."
+    en: "Sorted: 0.01 × 3 = 0.03, 0.03 × 2 = 0.06, 0.04 × 1 = 0.04. But a corrected value may not be smaller than the one before it."
+  - de: "Nach dieser Regel wird aus 0.04 eine 0.06; das Ergebnis steht in der ursprünglichen Reihenfolge von `p`."
+    en: "By this rule, 0.04 becomes 0.06; the result is in the original order of `p`."
+explanation:
+  de: |
+    Holm ist schrittweise: Die sortierten p-Werte werden mit 3, 2, 1
+    multipliziert und dann kumulativ maximiert, damit die Rangfolge der
+    korrigierten Werte erhalten bleibt (0.03, 0.06, 0.06). `p.adjust()` gibt sie
+    in der Eingabereihenfolge zurück: `c(0.06, 0.03, 0.06)`. Bonferroni wäre
+    `c(0.12, 0.03, 0.09)`; Holm kontrolliert dieselbe familienweise Fehlerrate,
+    ist aber nie strenger und deshalb fast immer vorzuziehen. Korrigiert werden
+    nur p-Werte; wer Intervalle berichtet, braucht simultane KIs (z. B. Tukey in
+    `emmeans`).
+  en: |
+    Holm is step-wise: the sorted p-values are multiplied by 3, 2, 1 and then
+    cumulatively maximised, so the ranking of the corrected values is preserved
+    (0.03, 0.06, 0.06). `p.adjust()` returns them in the input order:
+    `c(0.06, 0.03, 0.06)`. Bonferroni would be `c(0.12, 0.03, 0.09)`; Holm
+    controls the same family-wise error rate, but is never stricter and
+    therefore almost always preferable. Only p-values are corrected; if you
+    report intervals, you need simultaneous CIs (e.g. Tukey in `emmeans`).
+misconception:
+  de: "Holm multipliziert jeden p-Wert einzeln mit seinem Rang, ohne die Reihenfolge zu wahren."
+  en: "Holm multiplies each p-value by its rank on its own, without preserving the order."
+check:
+  type: value
+  tolerance: 1.0e-8
+common_mistakes:
+  - pattern: "^[\\s\\S]*?c\\(\\s*0?\\.120*\\s*,\\s*0?\\.030*\\s*,\\s*0?\\.090*\\s*\\)\\s*$"
+    message:
+      de: "Das ist Bonferroni (alle mal 3). Holm multipliziert schrittweise mit 3, 2, 1."
+      en: "That is Bonferroni (all times 3). Holm multiplies step-wise by 3, 2, 1."
+  - pattern: "^[\\s\\S]*?c\\(\\s*0?\\.040*\\s*,\\s*0?\\.030*\\s*,\\s*0?\\.060*\\s*\\)\\s*$"
+    message:
+      de: "Fast: Die Faktoren stimmen, aber Holm erzwingt Monotonie. Der größte p-Wert kann nicht kleiner korrigiert sein als der zweitgrößte (0.06)."
+      en: "Almost: the factors are right, but Holm enforces monotonicity. The largest p-value cannot be corrected to less than the second largest (0.06)."
+  - pattern: "^[\\s\\S]*?c\\(\\s*0?\\.030*\\s*,\\s*0?\\.060*\\s*,\\s*0?\\.060*\\s*\\)\\s*$"
+    message:
+      de: "Die Werte stimmen, aber `p.adjust()` gibt sie in der ursprünglichen Reihenfolge von `p` zurück, nicht sortiert."
+      en: "The values are right, but `p.adjust()` returns them in the original order of `p`, not sorted."

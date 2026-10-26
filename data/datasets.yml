@@ -85,3 +85,24 @@ raw_export_xlsx:
       text; sheet "Codebook". Only the path is set.
   load: |
     raw_export_xlsx <- "data/raw_export.xlsx"
+acceptance:
+  file: acceptance.csv
+  script: data-raw/acceptance.R
+  description:
+    de: >-
+      Akzeptanzfragebogen zu einem Fahrerassistenzsystem nach einer Testfahrt
+      (Technology Acceptance Model): 300 Fahrerinnen und Fahrer. Nützlichkeit
+      (pu_1–pu_5), Bedienbarkeit (peou_1–peou_4, peou_3 umgepolt), Vertrauen
+      (trust_1–trust_5, trust_4 umgepolt), Nutzungsabsicht (bi_1–bi_4), alle 1–7;
+      dazu Alter, Geschlecht und Erfahrung mit Assistenzsystemen in Jahren
+      (experience). Keine fehlenden Werte.
+    en: >-
+      Acceptance questionnaire for a driver assistance system after a test drive
+      (Technology Acceptance Model): 300 drivers. Perceived usefulness (pu_1–pu_5),
+      ease of use (peou_1–peou_4, peou_3 reverse-keyed), trust (trust_1–trust_5,
+      trust_4 reverse-keyed), behavioural intention (bi_1–bi_4), all 1–7; plus age,
+      gender and years of experience with driver assistance (experience). No
+      missing values.
+  load: |
+    acceptance <- read.csv("data/acceptance.csv")
+    acceptance <- tibble::as_tibble(acceptance)

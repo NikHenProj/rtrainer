@@ -1,0 +1,86 @@
+id: sm-i-loadings
+lesson: sem-intermediate
+order: 2
+title:
+  de: Schwache Indikatoren finden
+  en: Finding weak indicators
+kind: write
+required: true
+packages: [dplyr, lavaan]
+data: [acceptance]
+setup: |
+  library(dplyr)
+  library(lavaan)
+  model <- "
+    pu =~ pu_1 + pu_2 + pu_3 + pu_4 + pu_5
+    peou =~ peou_1 + peou_2 + peou_3 + peou_4
+    trust =~ trust_1 + trust_2 + trust_3 + trust_4 + trust_5
+    bi =~ bi_1 + bi_2 + bi_3 + bi_4
+  "
+  fit <- cfa(model, data = acceptance)
+prompt:
+  de: |
+    `fit` ist das Vier-Faktoren-Modell aus der vorigen Übung, geschätzt an den
+    Rohdaten (`peou_3` und `trust_4` nicht umgepolt).
+
+    Gib alle Items zurück, deren **standardisierte** Ladung dem Betrag nach unter
+    .50 liegt: ein Data Frame mit den Spalten `factor`, `item` und `loading` (auf
+    2 Stellen gerundet).
+  en: |
+    `fit` is the four-factor model from the previous exercise, fitted on the raw
+    data (`peou_3` and `trust_4` not reversed).
+
+    Return all items whose **standardised** loading is below .50 in absolute
+    value: a data frame with the columns `factor`, `item` and `loading` (rounded
+    to 2 decimals).
+starter: |
+  standardizedSolution(fit) |>
+    filter(op == "=~")
+solution: |
+  standardizedSolution(fit) |>
+    filter(op == "=~", abs(est.std) < 0.5) |>
+    select(factor = lhs, item = rhs, loading = est.std) |>
+    mutate(loading = round(loading, 2))
+hints:
+  - de: "In `standardizedSolution()` stehen Faktor, Item und standardisierte Ladung in `lhs`, `rhs` und `est.std`."
+    en: "In `standardizedSolution()`, factor, item and standardised loading are in `lhs`, `rhs` and `est.std`."
+  - de: "Zwei Items laden negativ, weil sie nicht umgepolt sind. „Dem Betrag nach“ heißt `abs()`."
+    en: "Two items load negatively because they are not reversed. \"In absolute value\" means `abs()`."
+  - de: "`filter(op == \"=~\", abs(est.std) < 0.5)`, dann umbenennen mit `select(factor = lhs, ...)`."
+    en: "`filter(op == \"=~\", abs(est.std) < 0.5)`, then rename with `select(factor = lhs, ...)`."
+explanation:
+  de: |
+    Nur `pu_5` liegt darunter (λ = .37): Der Faktor erklärt .37² ≈ 14 % seiner
+    Varianz (R², `inspect(fit, "r2")`), bei den anderen Items 47–70 %. Ohne
+    `abs()` wären auch `peou_3` und `trust_4` (λ ≈ −.71) im Ergebnis, obwohl sie
+    gute Indikatoren sind; das Vorzeichen zeigt nur die Polung. Die
+    unstandardisierten Ladungen (`parameterEstimates()`) taugen für diesen
+    Vergleich nicht, weil sie von der Streuung der Items und vom Markeritem
+    abhängen. Faustregeln (λ ≥ .50, besser ≥ .70) sind grob; entscheidend ist,
+    ob ein Item inhaltlich zum Konstrukt passt. Bericht: „Alle standardisierten
+    Ladungen lagen zwischen |.69| und |.84|, außer pu_5 (.37).“
+  en: |
+    Only `pu_5` is below (λ = .37): the factor explains .37² ≈ 14 % of its
+    variance (R², `inspect(fit, "r2")`), 47–70 % for the other items. Without
+    `abs()`, `peou_3` and `trust_4` (λ ≈ −.71) would also be in the result,
+    although they are good indicators; the sign only shows the keying. The
+    unstandardised loadings (`parameterEstimates()`) are not suited for this
+    comparison, because they depend on the spread of the items and on the
+    marker item. Rules of thumb (λ ≥ .50, better ≥ .70) are rough; what matters
+    is whether an item fits the construct. Report: "All standardised loadings
+    were between |.69| and |.84|, except pu_5 (.37)."
+misconception:
+  de: "Eine negative Ladung ist eine schwache Ladung."
+  en: "A negative loading is a weak loading."
+check:
+  type: value
+  ignore_col_order: false
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*abs\\()[\\s\\S]*est\\.std\\s*<"
+    message:
+      de: "Ohne `abs()` landen auch die negativ ladenden, nicht umgepolten Items `peou_3` und `trust_4` im Ergebnis. Gefragt ist der Betrag."
+      en: "Without `abs()`, the negatively loading, unreversed items `peou_3` and `trust_4` end up in the result too. The absolute value is asked for."
+  - pattern: "parameterEstimates\\("
+    message:
+      de: "`parameterEstimates()` liefert unstandardisierte Ladungen; die hängen vom Markeritem ab. Nimm `standardizedSolution()`."
+      en: "`parameterEstimates()` gives unstandardised loadings, which depend on the marker item. Use `standardizedSolution()`."

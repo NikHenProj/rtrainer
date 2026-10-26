@@ -1,0 +1,134 @@
+# Knowledge check: passed at >= `pass` share of correctly answered questions.
+lesson: scales-intermediate
+pass: 0.8
+questions:
+  - id: sc-i-q-omega
+    prompt:
+      de: "Für eine Skala ergibt sich α = .80 und ω = .83. Wie erklärst du den Unterschied?"
+      en: "A scale has α = .80 and ω = .83. How do you explain the difference?"
+    options:
+      - text:
+          de: "Die Items laden unterschiedlich stark; α setzt gleiche Ladungen voraus und unterschätzt dann die Reliabilität."
+          en: "The items load with different strengths; α assumes equal loadings and then underestimates reliability."
+        correct: true
+        explain:
+          de: "Genau. ω gewichtet die Items nach ihren Ladungen; bei gleichen Ladungen wären beide gleich."
+          en: "Exactly. ω weights the items by their loadings; with equal loadings both would be the same."
+      - text:
+          de: "ω ist immer etwas höher, weil es auch Messfehler mitzählt."
+          en: "ω is always somewhat higher because it also counts measurement error."
+        correct: false
+        explain:
+          de: "Messfehler senkt jede Reliabilität. ω ist nicht grundsätzlich höher, sondern genauer, wenn die Ladungen ungleich sind."
+          en: "Measurement error lowers any reliability. ω is not higher by principle, but more accurate when loadings differ."
+      - text:
+          de: "Der Unterschied zeigt, dass die Skala zwei Faktoren hat."
+          en: "The difference shows that the scale has two factors."
+        correct: false
+        explain:
+          de: "Ob eine Skala eindimensional ist, zeigt eine Faktorenanalyse, nicht der Abstand zwischen α und ω."
+          en: "Whether a scale is unidimensional is shown by a factor analysis, not by the gap between α and ω."
+  - id: sc-i-q-rdrop
+    prompt:
+      de: "Ein Item hat `r.drop` = .18, alle anderen liegen über .55. Was ist der sinnvollste nächste Schritt?"
+      en: "One item has `r.drop` = .18, all others are above .55. What is the most sensible next step?"
+    options:
+      - text:
+          de: "Itemtext und Polung prüfen (vergessen umzupolen? anderer Inhalt?) und dann begründet entscheiden, wie du mit dem Item umgehst."
+          en: "Check the item text and keying (forgot to reverse? different content?) and then decide with reasons how to handle the item."
+        correct: true
+        explain:
+          de: "Ja. Eine niedrige Trennschärfe hat oft einen konkreten Grund; ein vergessenes Umpolen ergäbe sogar ein negatives `r.drop`."
+          en: "Yes. Low discrimination often has a concrete reason; forgotten reversing would even give a negative `r.drop`."
+      - text:
+          de: "Das Item sofort streichen, die Faustregel ist eindeutig."
+          en: "Drop the item right away, the rule of thumb is clear."
+        correct: false
+        explain:
+          de: "Faustregeln sind Hinweise. Streichen ändert die Skala und ihre Vergleichbarkeit; das braucht eine inhaltliche Begründung."
+          en: "Rules of thumb are pointers. Dropping changes the scale and its comparability; it needs a substantive reason."
+      - text:
+          de: "Nichts tun, solange α über .70 liegt."
+          en: "Do nothing as long as α is above .70."
+        correct: false
+        explain:
+          de: "Ein langes Instrument kann trotz eines unpassenden Items ein hohes α haben. Das Item misst dann vielleicht etwas anderes."
+          en: "A long instrument can have a high α despite an unsuitable item. That item may then measure something else."
+  - id: sc-i-q-parallel
+    prompt:
+      de: "Wozu dient die Parallelanalyse vor einer EFA?"
+      en: "What is parallel analysis for before an EFA?"
+    options:
+      - text:
+          de: "Sie vergleicht die Eigenwerte der Daten mit denen von Zufallsdaten gleicher Größe und schlägt vor, wie viele Faktoren mehr als Zufall erklären."
+          en: "It compares the eigenvalues of the data with those of random data of the same size and suggests how many factors explain more than chance."
+        correct: true
+        explain:
+          de: "Richtig. Sie ist das empfohlene Kriterium; das Kaiser-Kriterium (Eigenwert > 1) überschätzt die Faktorzahl oft."
+          en: "Right. It is the recommended criterion; the Kaiser criterion (eigenvalue > 1) often overestimates the number of factors."
+      - text:
+          de: "Sie prüft, ob zwei Gruppen dieselbe Faktorstruktur haben."
+          en: "It tests whether two groups have the same factor structure."
+        correct: false
+        explain:
+          de: "Das wäre Messinvarianz (Mehrgruppen-CFA), ein Expert-Thema."
+          en: "That would be measurement invariance (multi-group CFA), an expert topic."
+      - text:
+          de: "Sie entscheidet, welche Rotation passt."
+          en: "It decides which rotation fits."
+        correct: false
+        explain:
+          de: "Die Rotation wählst du inhaltlich: schiefwinklig, wenn die Faktoren korrelieren dürfen (fast immer)."
+          en: "You choose the rotation on substantive grounds: oblique if the factors may correlate (almost always)."
+  - id: sc-i-q-negative
+    prompt:
+      de: "In der EFA lädt `trust_4` mit −.70 auf dem Vertrauensfaktor. Was bedeutet das?"
+      en: "In the EFA, `trust_4` loads −.70 on the trust factor. What does that mean?"
+    options:
+      - text:
+          de: "Das Item gehört klar zum Faktor, ist aber negativ formuliert und noch nicht umgepolt."
+          en: "The item clearly belongs to the factor, but is negatively worded and not yet reversed."
+        correct: true
+        explain:
+          de: "Genau. Für die Struktur zählt der Betrag; vor dem Skalenwert musst du umpolen."
+          en: "Exactly. For the structure, the absolute value counts; before computing the scale score you must reverse it."
+      - text:
+          de: "Das Item misst das Gegenteil von Vertrauen und gehört auf einen eigenen Faktor."
+          en: "The item measures the opposite of trust and belongs to a factor of its own."
+        correct: false
+        explain:
+          de: "Eine hohe Ladung (Betrag .70) zeigt, dass das Item denselben Faktor misst, nur mit umgekehrtem Vorzeichen."
+          en: "A high loading (absolute value .70) shows that the item measures the same factor, just with the opposite sign."
+      - text:
+          de: "Negative Ladungen sind ein Schätzfehler; die Analyse muss wiederholt werden."
+          en: "Negative loadings are an estimation error; the analysis has to be repeated."
+        correct: false
+        explain:
+          de: "Negative Ladungen sind bei umgekehrt formulierten Items zu erwarten."
+          en: "Negative loadings are expected for reverse-worded items."
+  - id: sc-i-q-shift
+    prompt:
+      de: "Ein 1–7-Item wurde mit `6 - x` statt `8 - x` umgepolt. Was ändert sich am Skalenwert (Mittel aus 4 Items)?"
+      en: "A 1–7 item was reversed with `6 - x` instead of `8 - x`. What changes in the scale score (mean of 4 items)?"
+    options:
+      - text:
+          de: "Nur der Mittelwert: Er sinkt um 0.5. SD, Korrelationen und α bleiben gleich."
+          en: "Only the mean: it drops by 0.5. SD, correlations and α stay the same."
+        correct: true
+        explain:
+          de: "Richtig. Eine Verschiebung um 2 Punkte in einem von vier Items verschiebt den Mittelwert um 2/4; Streuungsmaße sind davon unberührt."
+          en: "Right. A shift of 2 points in one of four items shifts the mean by 2/4; measures of spread are unaffected."
+      - text:
+          de: "α sinkt deutlich, daran erkennt man den Fehler."
+          en: "α drops clearly, which reveals the error."
+        correct: false
+        explain:
+          de: "α hängt nur von Varianzen und Kovarianzen ab, und die ändert eine Konstante nicht. Genau deshalb ist der Fehler tückisch."
+          en: "α depends only on variances and covariances, which a constant does not change. That is exactly why the error is treacherous."
+      - text:
+          de: "Nichts, denn die Richtung der Polung stimmt."
+          en: "Nothing, because the direction of the keying is correct."
+        correct: false
+        explain:
+          de: "Die Richtung stimmt, die Lage nicht: Werte von −1 bis 5 statt 1 bis 7."
+          en: "The direction is right, the location is not: values from −1 to 5 instead of 1 to 7."

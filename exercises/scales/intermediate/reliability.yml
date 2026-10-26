@@ -1,0 +1,103 @@
+id: sc-i-reliability
+lesson: scales-intermediate
+order: 1
+title:
+  de: Alpha und Omega für alle Skalen auf einmal
+  en: Alpha and omega for all scales at once
+kind: write
+required: true
+packages: [dplyr, psych]
+data: [acceptance]
+setup: |
+  library(dplyr)
+  library(psych)
+prompt:
+  de: |
+    Der Akzeptanzfragebogen `acceptance` hat vier Skalen: Nützlichkeit (`pu_1`–`pu_5`),
+    Bedienbarkeit (`peou_1`–`peou_4`), Vertrauen (`trust_1`–`trust_5`) und
+    Nutzungsabsicht (`bi_1`–`bi_4`). `peou_3` und `trust_4` sind negativ formuliert.
+
+    Berechne mit `psych::reliability()` für alle vier Skalen Cronbachs α und
+    McDonalds ω (total). Umgepolte Items markierst du in der Schlüsselliste mit
+    einem Minus (`"-peou_3"`), statt sie vorher umzurechnen.
+
+    Ergebnis: ein Data Frame mit den Spalten `scale`, `alpha`, `omega_tot` (auf
+    2 Stellen gerundet), eine Zeile pro Skala in der Reihenfolge pu, peou, trust, bi.
+  en: |
+    The acceptance questionnaire `acceptance` has four scales: usefulness
+    (`pu_1`–`pu_5`), ease of use (`peou_1`–`peou_4`), trust (`trust_1`–`trust_5`)
+    and behavioural intention (`bi_1`–`bi_4`). `peou_3` and `trust_4` are
+    negatively worded.
+
+    Use `psych::reliability()` to compute Cronbach's α and McDonald's ω (total)
+    for all four scales. Mark reverse-keyed items in the key list with a minus
+    (`"-peou_3"`) instead of recoding them first.
+
+    Result: a data frame with the columns `scale`, `alpha`, `omega_tot` (rounded
+    to 2 decimals), one row per scale in the order pu, peou, trust, bi.
+starter: |
+  keys <- list(
+    pu = paste0("pu_", 1:5),
+    bi = paste0("bi_", 1:4)
+  )
+  rel <- psych::reliability(keys, select(acceptance, pu_1:bi_4))
+  rel$result.df
+solution: |
+  keys <- list(
+    pu = paste0("pu_", 1:5),
+    peou = c("peou_1", "peou_2", "-peou_3", "peou_4"),
+    trust = c("trust_1", "trust_2", "trust_3", "-trust_4", "trust_5"),
+    bi = paste0("bi_", 1:4)
+  )
+  rel <- psych::reliability(keys, select(acceptance, pu_1:bi_4))
+  tibble(
+    scale = rownames(rel$result.df),
+    alpha = round(rel$result.df[, "alpha"], 2),
+    omega_tot = round(rel$result.df[, "omega.tot"], 2)
+  )
+hints:
+  - de: "Ergänze in `keys` die Einträge `peou` und `trust` zwischen `pu` und `bi`; die Reihenfolge der Liste bestimmt die Zeilen."
+    en: "Add the entries `peou` and `trust` to `keys` between `pu` and `bi`; the order of the list sets the rows."
+  - de: "Umgepolte Items stehen als `\"-peou_3\"` und `\"-trust_4\"` in der Liste. `rel$result.df` ist eine Matrix mit den Spalten `alpha` und `omega.tot`."
+    en: "Reverse-keyed items appear as `\"-peou_3\"` and `\"-trust_4\"` in the list. `rel$result.df` is a matrix with the columns `alpha` and `omega.tot`."
+  - de: "`tibble(scale = rownames(rel$result.df), alpha = round(rel$result.df[, \"alpha\"], 2), ...)`"
+    en: "`tibble(scale = rownames(rel$result.df), alpha = round(rel$result.df[, \"alpha\"], 2), ...)`"
+explanation:
+  de: |
+    Alle vier Skalen sind ausreichend reliabel (α = .80 bis .88, ω = .83 bis
+    .90). ω liegt bei jeder Skala etwas über α. α setzt voraus, dass alle Items
+    gleich stark auf dem Faktor laden (tau-äquivalent); ist das verletzt, unterschätzt
+    α die Reliabilität. ω gewichtet die Items mit ihren Ladungen und ist deshalb
+    die bessere Kennzahl; der Abstand ist bei der Nützlichkeit am größten (.80 vs. .83),
+    weil `pu_5` deutlich schwächer lädt. Die Schlüsselliste mit Minus erspart das
+    Umrechnen und dokumentiert die Polung an einer Stelle. Ohne Minus hätte die
+    Bedienbarkeit α ≈ .13. Bericht: „Die Skalen waren reliabel (ω = .83–.90, α = .80–.88).“
+  en: |
+    All four scales are sufficiently reliable (α = .80 to .88, ω = .83 to .90).
+    ω is slightly above α for every scale. α assumes that all items load equally
+    strongly on the factor (tau-equivalence); if that is violated, α
+    underestimates reliability. ω weights the items by their loadings and is
+    therefore the better index; the gap is largest for usefulness (.80 vs. .83),
+    because `pu_5` loads much more weakly. The key list with minus signs saves
+    recoding and documents the keying in one place. Without the minus, ease of
+    use would have α ≈ .13. Report: "The scales were reliable (ω = .83–.90,
+    α = .80–.88)."
+misconception:
+  de: "α ist die Reliabilität; ω ist nur eine andere Schreibweise dafür."
+  en: "α is the reliability; ω is just another way of writing it."
+check:
+  type: value
+  ignore_col_order: false
+common_mistakes:
+  - pattern: "\"peou_3\"|'peou_3'"
+    message:
+      de: "`peou_3` ist negativ formuliert und braucht ein Minus in der Schlüsselliste: `\"-peou_3\"`."
+      en: "`peou_3` is negatively worded and needs a minus in the key list: `\"-peou_3\"`."
+  - pattern: "\"trust_4\"|'trust_4'"
+    message:
+      de: "`trust_4` ist negativ formuliert und braucht ein Minus in der Schlüsselliste: `\"-trust_4\"`."
+      en: "`trust_4` is negatively worded and needs a minus in the key list: `\"-trust_4\"`."
+  - pattern: "omega_h\\b|\"omega_h\""
+    message:
+      de: "`omega_h` (hierarchisch) ist der Anteil eines Generalfaktors. Gefragt ist ω total, Spalte `omega.tot`."
+      en: "`omega_h` (hierarchical) is the share of a general factor. The question asks for ω total, column `omega.tot`."

@@ -309,6 +309,73 @@ run_exercise("vi-i-patchwork", "p_rt + p_lane +\n  plot_layout(guides = \"collec
 checked <- wait_for("!!document.querySelector('#ex-vi-i-patchwork .exercise-grade.alert-success')", timeout = 90)
 step("visualisation-intermediate: patchwork graded correct", !is.na(checked), sprintf("%s s", checked))
 
+# 10. Intermediate P3: load time with psych (scales), lavaan (sem) and
+# afex/emmeans (group comparisons); lavaan and afex models are graded via
+# parameters::model_parameters() in webR.
+wait_lesson <- function(path, id) {
+  goto(path)
+  wait_for(sprintf(
+    "document.querySelectorAll('#ex-%s .exercise-editor-btn-run-code').length > 0 &&
+     document.querySelectorAll('.exercise-editor-btn-run-code.disabled').length === 0",
+    id
+  ), timeout = 300)
+}
+loaded <- wait_lesson("/de/scales-intermediate.html", "sc-i-efa")
+step("scales-intermediate: webR, psych and GPArotation ready", !is.na(loaded), sprintf("%s s", loaded))
+run_exercise("sc-i-efa", paste(
+  "items <- select(acceptance, pu_1:bi_4)",
+  "efa <- fa(items, nfactors = 4, rotate = \"oblimin\", fm = \"ml\")",
+  "model_parameters(efa, threshold = \"max\") |>",
+  "  pivot_longer(starts_with(\"ML\"), names_to = \"factor\", values_to = \"loading\", values_drop_na = TRUE) |>",
+  "  select(item = Variable, loading) |>",
+  "  mutate(loading = round(loading, 2))",
+  sep = "\n"
+))
+checked <- wait_for("!!document.querySelector('#ex-sc-i-efa .exercise-grade.alert-success')", timeout = 90)
+step("scales-intermediate: EFA solution graded correct", !is.na(checked), sprintf("%s s", checked))
+
+loaded <- wait_lesson("/de/sem-intermediate.html", "sm-i-cfa")
+step("sem-intermediate: webR, lavaan and semTools ready", !is.na(loaded), sprintf("%s s", loaded))
+cfa_code <- function(factors) {
+  lines <- c(
+    pu = "pu =~ pu_1 + pu_2 + pu_3 + pu_4 + pu_5",
+    peou = "peou =~ peou_1 + peou_2 + peou_3 + peou_4",
+    trust = "trust =~ trust_1 + trust_2 + trust_3 + trust_4 + trust_5",
+    bi = "bi =~ bi_1 + bi_2 + bi_3 + bi_4"
+  )
+  paste0("model <- \"\n", paste(lines[factors], collapse = "\n"), "\n\"\nfit <- cfa(model, data = acceptance)\nfit")
+}
+run_exercise("sm-i-cfa", cfa_code(c("pu", "peou", "trust")))
+hinted <- wait_for("(document.querySelector('#ex-sm-i-cfa .exercise-grade.alert-danger')?.textContent || '').includes('bi =~ bi_1')", timeout = 90)
+step("sem-intermediate: model without bi names the missing loadings", !is.na(hinted))
+run_exercise("sm-i-cfa", cfa_code(c("pu", "peou", "trust", "bi")))
+checked <- wait_for("!!document.querySelector('#ex-sm-i-cfa .exercise-grade.alert-success')", timeout = 90)
+step("sem-intermediate: lavaan model graded correct", !is.na(checked), sprintf("%s s", checked))
+
+loaded <- wait_lesson("/de/group-comparisons-intermediate.html", "gc-i-rm-anova")
+step("group-comparisons-intermediate: webR, afex, emmeans and modelbased ready", !is.na(loaded), sprintf("%s s", loaded))
+run_exercise("gc-i-rm-anova", paste(
+  "fit <- aov_ez(",
+  "  id = \"participant\", dv = \"rt_ms\", data = driving_sim,",
+  "  within = \"condition\", between = \"experience\", fun_aggregate = mean",
+  ")",
+  "fit",
+  sep = "\n"
+))
+hinted <- wait_for("(document.querySelector('#ex-gc-i-rm-anova .exercise-grade.alert-danger')?.textContent || '').includes('na.rm')", timeout = 90)
+step("group-comparisons-intermediate: missing na.rm gets the hint", !is.na(hinted))
+run_exercise("gc-i-rm-anova", paste(
+  "fit <- aov_ez(",
+  "  id = \"participant\", dv = \"rt_ms\", data = driving_sim,",
+  "  within = \"condition\", between = \"experience\",",
+  "  fun_aggregate = mean, na.rm = TRUE",
+  ")",
+  "fit",
+  sep = "\n"
+))
+checked <- wait_for("!!document.querySelector('#ex-gc-i-rm-anova .exercise-grade.alert-success')", timeout = 90)
+step("group-comparisons-intermediate: afex ANOVA graded correct", !is.na(checked), sprintf("%s s", checked))
+
 goto("/en/index.html")
 Sys.sleep(1)
 beginner <- c(

@@ -1,0 +1,19 @@
+# Lesson metadata; exercises are the other *.yml files in this folder
+# (sorted by `order`), the knowledge check is quiz.yml.
+lesson: group-comparisons-intermediate
+minutes: 55
+prerequisites: [group-comparisons-beginner]
+langs: [de]
+packages: [dplyr, tidyr, afex, emmeans, modelbased, performance, parameters]
+data: [driving_sim, usability]
+goals:
+  de:
+    - Einfaktorielle und gemischte ANOVA mit Messwiederholung mit afex rechnen und berichten (η²G)
+    - Paarvergleiche mit emmeans oder modelbased rechnen und für multiples Testen korrigieren (Holm)
+    - Zwei Messwiederholungsbedingungen gepaart statt unabhängig vergleichen
+    - Voraussetzungen am Modell (Residuen) statt an den Rohdaten prüfen
+  en:
+    - Run and report one-way and mixed repeated-measures ANOVAs with afex (η²G)
+    - Compute pairwise comparisons with emmeans or modelbased and correct for multiple testing (Holm)
+    - Compare two repeated-measures conditions paired instead of independently
+    - Check assumptions on the model (residuals) instead of the raw data

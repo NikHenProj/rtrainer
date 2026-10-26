@@ -1,0 +1,89 @@
+id: gc-i-paired-debug
+lesson: group-comparisons-intermediate
+order: 3
+title:
+  de: Zwei Bedingungen derselben Personen vergleichen
+  en: Comparing two conditions of the same participants
+kind: debug
+required: true
+packages: [dplyr, tidyr]
+data: [driving_sim]
+setup: |
+  library(dplyr)
+  library(tidyr)
+prompt:
+  de: |
+    Um wie viel ist die Übernahme nach visueller Warnung langsamer als nach
+    haptischer? Der Code läuft, ignoriert aber das Design: Dieselben 40 Personen
+    haben beide Bedingungen mit je 4 Durchgängen erlebt.
+
+    Repariere die Analyse: pro Person und Bedingung mitteln (fehlende Werte
+    auslassen), dann ein gepaarter t-Test für die Differenz visual − haptic. Das
+    Ergebnis bleibt das `t.test()`-Objekt.
+  en: |
+    How much slower is the take-over after a visual warning than after a haptic
+    one? The code runs, but ignores the design: the same 40 participants
+    experienced both conditions with 4 trials each.
+
+    Fix the analysis: average per participant and condition (leaving out
+    missing values), then a paired t-test for the difference visual − haptic.
+    The result stays the `t.test()` object.
+starter: |
+  visual <- driving_sim |> filter(condition == "visual") |> pull(rt_ms)
+  haptic <- driving_sim |> filter(condition == "haptic") |> pull(rt_ms)
+  t.test(visual, haptic)
+solution: |
+  wide <- driving_sim |>
+    filter(condition %in% c("visual", "haptic")) |>
+    summarise(rt = mean(rt_ms, na.rm = TRUE), .by = c(participant, condition)) |>
+    pivot_wider(names_from = condition, values_from = rt)
+  t.test(wide$visual, wide$haptic, paired = TRUE)
+hints:
+  - de: "Zwei Probleme: Was ist die unabhängige Einheit, und welche Werte gehören zusammen?"
+    en: "Two problems: what is the independent unit, and which values belong together?"
+  - de: "Mittle pro Person und Bedingung, bring beide Bedingungen nebeneinander (eine Zeile pro Person) und teste die Differenzen."
+    en: "Average per participant and condition, put both conditions side by side (one row per participant) and test the differences."
+  - de: "`summarise(..., .by = c(participant, condition))`, `pivot_wider()`, dann `t.test(wide$visual, wide$haptic, paired = TRUE)`."
+    en: "`summarise(..., .by = c(participant, condition))`, `pivot_wider()`, then `t.test(wide$visual, wide$haptic, paired = TRUE)`."
+explanation:
+  de: |
+    Der ursprüngliche Code behandelt gut 2 × 160 Durchgänge als zwei unabhängige
+    Stichproben: Personen zählen mehrfach (Pseudoreplikation, df ≈ 311), und die
+    großen Unterschiede zwischen Personen landen im Fehlerterm (KI 190 bis
+    270 ms). Gepaart auf Personenebene testest du die 40 Differenzen: visual ist
+    im Mittel 230 ms langsamer, 95-%-KI [206, 254], t(39) = 19.17, p < .001. Das
+    Intervall ist halb so breit, weil jede Person ihre eigene Kontrolle ist.
+    Standardisiert: d_z = 2.97 (`effectsize::repeated_measures_d(wide$visual,
+    wide$haptic, method = "z")`). `paired = TRUE` auf Durchgangsebene wäre
+    ebenfalls falsch: Die Durchgänge sind keine Paare. Bei mehr als zwei
+    Bedingungen nimmst du die ANOVA mit Messwiederholung (`aov_ez()`) oder ein
+    Mixed Model.
+  en: |
+    The original code treats about 2 × 160 trials as two independent samples:
+    participants count several times (pseudoreplication, df ≈ 311), and the
+    large differences between participants end up in the error term (CI 190 to
+    270 ms). Paired at participant level, you test the 40 differences: visual is
+    230 ms slower on average, 95% CI [206, 254], t(39) = 19.17, p < .001. The
+    interval is half as wide because each participant is their own control.
+    Standardised: d_z = 2.97 (`effectsize::repeated_measures_d(wide$visual,
+    wide$haptic, method = "z")`). `paired = TRUE` at trial level would be
+    wrong too: the trials are not pairs. With more than two conditions, use the
+    repeated-measures ANOVA (`aov_ez()`) or a mixed model.
+misconception:
+  de: "Mehr Durchgänge sind mehr unabhängige Beobachtungen; Messwiederholung kann man wie zwei Gruppen auswerten."
+  en: "More trials are more independent observations; repeated measures can be analysed like two groups."
+check:
+  type: value
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*(summarise|summarize|aggregate))[\\s\\S]*paired\\s*=\\s*TRUE"
+    message:
+      de: "`paired = TRUE` auf Durchgangsebene paart beliebige Durchgänge. Mittle zuerst pro Person und Bedingung."
+      en: "`paired = TRUE` at trial level pairs arbitrary trials. Average per participant and condition first."
+  - pattern: "^(?![\\s\\S]*paired)[\\s\\S]*(summarise|summarize)"
+    message:
+      de: "Die Personenmittel stimmen, aber beide Werte stammen von derselben Person: `paired = TRUE`."
+      en: "The participant means are right, but both values come from the same participant: `paired = TRUE`."
+  - pattern: "^(?![\\s\\S]*na\\.rm)[\\s\\S]*mean\\("
+    message:
+      de: "Ohne `na.rm = TRUE` wird das Personenmittel bei einem fehlenden Durchgang `NA`, und die Person fällt aus dem Test."
+      en: "Without `na.rm = TRUE`, the participant mean becomes `NA` for a single missing trial, and the participant drops out of the test."

@@ -1,0 +1,90 @@
+id: sm-i-compare
+lesson: sem-intermediate
+order: 5
+title:
+  de: Zwei Messmodelle vergleichen
+  en: Comparing two measurement models
+kind: write
+required: false
+packages: [lavaan]
+data: [acceptance]
+setup: |
+  library(lavaan)
+  model_4 <- "
+    pu =~ pu_1 + pu_2 + pu_3 + pu_4 + pu_5
+    peou =~ peou_1 + peou_2 + peou_3 + peou_4
+    trust =~ trust_1 + trust_2 + trust_3 + trust_4 + trust_5
+    bi =~ bi_1 + bi_2 + bi_3 + bi_4
+  "
+  fit_4 <- cfa(model_4, data = acceptance)
+prompt:
+  de: |
+    Ein Gutachter fragt, ob Nützlichkeit und Bedienbarkeit nicht dasselbe messen.
+    `fit_4` ist das Vier-Faktoren-Modell.
+
+    Schätze ein Drei-Faktoren-Modell `fit_3`, in dem alle Items von `pu` und `peou`
+    auf einem gemeinsamen Faktor `use` laden (`trust` und `bi` wie bisher), und
+    vergleiche beide Modelle mit `lavTestLRT()`. Gib die Vergleichstabelle zurück.
+  en: |
+    A reviewer asks whether usefulness and ease of use measure the same thing.
+    `fit_4` is the four-factor model.
+
+    Fit a three-factor model `fit_3` in which all items of `pu` and `peou` load on
+    one common factor `use` (`trust` and `bi` as before), and compare both models
+    with `lavTestLRT()`. Return the comparison table.
+starter: |
+  model_3 <- "
+    use =~ pu_1 + pu_2 + pu_3 + pu_4 + pu_5
+  "
+  fit_3 <- cfa(model_3, data = acceptance)
+  fit_3
+solution: |
+  model_3 <- "
+    use =~ pu_1 + pu_2 + pu_3 + pu_4 + pu_5 + peou_1 + peou_2 + peou_3 + peou_4
+    trust =~ trust_1 + trust_2 + trust_3 + trust_4 + trust_5
+    bi =~ bi_1 + bi_2 + bi_3 + bi_4
+  "
+  fit_3 <- cfa(model_3, data = acceptance)
+  lavTestLRT(fit_3, fit_4)
+hints:
+  - de: "`use` bekommt alle neun Items; `trust` und `bi` übernimmst du aus `model_4`."
+    en: "`use` gets all nine items; copy `trust` and `bi` from `model_4`."
+  - de: "Beide Modelle beruhen auf denselben 18 Items; M3 ist ein Spezialfall von M4 (Korrelation pu–peou = 1). Deshalb ist ein χ²-Differenztest möglich."
+    en: "Both models use the same 18 items; M3 is a special case of M4 (correlation pu–peou = 1). That is why a χ² difference test is possible."
+  - de: "`lavTestLRT(fit_3, fit_4)`; die Reihenfolge ist egal, lavaan sortiert nach Freiheitsgraden."
+    en: "`lavTestLRT(fit_3, fit_4)`; the order does not matter, lavaan sorts by degrees of freedom."
+explanation:
+  de: |
+    Das Drei-Faktoren-Modell passt deutlich schlechter: Δχ²(3) = 339.9,
+    p < .001; auch AIC (18 823 vs. 18 489) und BIC sprechen klar für vier
+    Faktoren. Das Ein-Faktor-Modell für `use` ist in M4 verschachtelt (die
+    Korrelation zwischen pu und peou auf 1 gesetzt), deshalb ist der Test zulässig.
+    Inhaltlich: Die beiden Faktoren korrelieren nur zu .46 (`lavInspect(fit_4,
+    "cor.lv")`), sie sind also verwandt, aber unterscheidbar (diskriminante
+    Validität). Der χ²-Differenztest wird bei großen Stichproben schnell
+    signifikant; berichte deshalb auch die Fitindizes beider Modelle. Bericht:
+    „Ein Modell mit gemeinsamem Faktor für Nützlichkeit und Bedienbarkeit passte
+    schlechter als das Vier-Faktoren-Modell, Δχ²(3) = 339.9, p < .001,
+    CFI = .86 vs. .99.“
+  en: |
+    The three-factor model fits much worse: Δχ²(3) = 339.9, p < .001; AIC
+    (18,823 vs. 18,489) and BIC also clearly favour four factors. The
+    one-factor model for `use` is nested in M4 (the correlation between pu and
+    peou set to 1), so the test is valid. Substantively: the two factors only
+    correlate .46 (`lavInspect(fit_4, "cor.lv")`), so they are related but
+    distinguishable (discriminant validity). The χ² difference test becomes
+    significant quickly in large samples; so also report the fit indices of
+    both models. Report: "A model with one common factor for usefulness and
+    ease of use fit worse than the four-factor model, Δχ²(3) = 339.9,
+    p < .001, CFI = .86 vs. .99."
+check:
+  type: value
+common_mistakes:
+  - pattern: "anova\\(\\s*fit_3\\s*,\\s*fit_3|lavTestLRT\\(\\s*fit_3\\s*\\)"
+    message:
+      de: "Vergleiche beide Modelle: `lavTestLRT(fit_3, fit_4)`."
+      en: "Compare both models: `lavTestLRT(fit_3, fit_4)`."
+  - pattern: "use\\s*=~[^\\n]*\\n\\s*peou\\s*=~"
+    message:
+      de: "Im Drei-Faktoren-Modell gibt es keinen eigenen Faktor `peou` mehr; seine Items laden auf `use`."
+      en: "The three-factor model no longer has a factor `peou` of its own; its items load on `use`."

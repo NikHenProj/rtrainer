@@ -1,0 +1,19 @@
+# Lesson metadata; exercises are the other *.yml files in this folder
+# (sorted by `order`), the knowledge check is quiz.yml.
+lesson: scales-intermediate
+minutes: 50
+prerequisites: [scales-beginner]
+langs: [de]
+packages: [dplyr, tidyr, psych, GPArotation, parameters]
+data: [acceptance]
+goals:
+  de:
+    - Reliabilität mehrerer Skalen mit α und ω in einem Schritt berechnen
+    - Eine Itemanalyse (Trennschärfe, α ohne Item) lesen und begründet entscheiden
+    - Mit Parallelanalyse und EFA prüfen, ob die Items die erwarteten Faktoren bilden
+    - Umgepolte Items korrekt behandeln, auch auf 1–7-Skalen
+  en:
+    - Compute the reliability of several scales with α and ω in one step
+    - Read an item analysis (item-total correlation, α if dropped) and decide with reasons
+    - Check with parallel analysis and EFA whether the items form the expected factors
+    - Handle reverse-keyed items correctly, also on 1–7 scales

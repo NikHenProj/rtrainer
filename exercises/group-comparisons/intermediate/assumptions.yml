@@ -1,0 +1,91 @@
+id: gc-i-assumptions
+lesson: group-comparisons-intermediate
+order: 5
+title:
+  de: Voraussetzungen am Modell prüfen
+  en: Checking assumptions on the model
+kind: write
+required: false
+packages: [afex, performance]
+data: [driving_sim]
+setup: |
+  library(afex)
+  library(performance)
+  fit <- aov_ez(
+    id = "participant", dv = "rt_ms", data = driving_sim,
+    within = "condition", between = "experience",
+    fun_aggregate = mean, na.rm = TRUE
+  )
+prompt:
+  de: |
+    Für die gemischte ANOVA `fit` sollen zwei Voraussetzungen geprüft werden:
+    gleiche Varianzen zwischen den Erfahrungsgruppen und normalverteilte
+    Residuen. Der Code im Feld testet die Normalverteilung an den Rohdaten aller
+    480 Durchgänge.
+
+    Prüfe stattdessen beides mit performance am Modell: `check_homogeneity(fit)`
+    und `check_normality(fit)`. Gib die beiden p-Werte als benannten Vektor
+    `c(homogeneity = ..., normality = ...)` zurück, auf 3 Stellen gerundet
+    (`as.numeric()` macht aus dem Prüfergebnis den p-Wert).
+  en: |
+    Two assumptions of the mixed ANOVA `fit` are to be checked: equal variances
+    across the experience groups and normally distributed residuals. The code in
+    the box tests normality on the raw data of all 480 trials.
+
+    Instead, check both on the model with performance: `check_homogeneity(fit)`
+    and `check_normality(fit)`. Return both p-values as a named vector
+    `c(homogeneity = ..., normality = ...)`, rounded to 3 decimals
+    (`as.numeric()` turns the check result into the p-value).
+starter: |
+  p_normality <- shapiro.test(driving_sim$rt_ms)$p.value
+  round(c(normality = p_normality), 3)
+solution: |
+  round(c(
+    homogeneity = as.numeric(check_homogeneity(fit)),
+    normality = as.numeric(check_normality(fit))
+  ), 3)
+hints:
+  - de: "Die ANOVA nimmt normalverteilte *Fehler* an, nicht normalverteilte Rohwerte. Die Prüffunktionen bekommen deshalb das Modell `fit`."
+    en: "The ANOVA assumes normally distributed *errors*, not normally distributed raw values. The check functions therefore take the model `fit`."
+  - de: "`check_homogeneity(fit)` rechnet einen Levene-Test für den Zwischenfaktor, `check_normality(fit)` einen Shapiro-Wilk-Test auf die Residuen."
+    en: "`check_homogeneity(fit)` runs a Levene test for the between factor, `check_normality(fit)` a Shapiro-Wilk test on the residuals."
+  - de: "`round(c(homogeneity = as.numeric(check_homogeneity(fit)), normality = ...), 3)`"
+    en: "`round(c(homogeneity = as.numeric(check_homogeneity(fit)), normality = ...), 3)`"
+explanation:
+  de: |
+    Levene: p = .473, kein Hinweis auf ungleiche Varianzen. Shapiro-Wilk auf den
+    Residuen: p = .020, die Residuen weichen leicht von der Normalverteilung ab.
+    Die Rohdaten (p = .16) hätten das verdeckt: Sie mischen Personen, Bedingungen
+    und Durchgänge und sind die falsche Größe. Solche Tests sind kein
+    Freigabeschalter: Bei kleinen Stichproben haben sie wenig Power, bei großen
+    schlagen sie bei belanglosen Abweichungen an. Besser: Residuen ansehen
+    (`plot(check_normality(fit), type = "qq")`) und robust absichern, etwa mit
+    Personenmitteln auf log-Skala oder getrimmten Mitteln (Lektion
+    Nichtparametrisch und robust). Die Sphärizität musst du nicht prüfen: afex
+    korrigiert die Freiheitsgrade ohnehin nach Greenhouse-Geisser.
+  en: |
+    Levene: p = .473, no sign of unequal variances. Shapiro-Wilk on the
+    residuals: p = .020, the residuals deviate slightly from normality. The raw
+    data (p = .16) would have hidden this: they mix participants, conditions and
+    trials and are the wrong quantity. Such tests are not a release switch: in
+    small samples they have little power, in large ones they flag trivial
+    deviations. Better: look at the residuals
+    (`plot(check_normality(fit), type = "qq")`) and protect the result with a
+    robust analysis, e.g. participant means on a log scale or trimmed means
+    (lesson Nonparametric and robust). You do not need to test sphericity:
+    afex corrects the degrees of freedom with Greenhouse-Geisser anyway.
+misconception:
+  de: "Für eine ANOVA müssen die Rohdaten normalverteilt sein, und ein nicht signifikanter Test belegt die Voraussetzung."
+  en: "For an ANOVA, the raw data must be normally distributed, and a non-significant test proves the assumption."
+check:
+  type: value
+  tolerance: 1.0e-6
+common_mistakes:
+  - pattern: "shapiro\\.test\\([^)]*\\$\\s*rt_ms"
+    message:
+      de: "Das prüft die Rohwerte. Die ANOVA nimmt normalverteilte Residuen an: `check_normality(fit)`."
+      en: "That tests the raw values. The ANOVA assumes normally distributed residuals: `check_normality(fit)`."
+  - pattern: "check_sphericity"
+    message:
+      de: "Sphärizität ist hier nicht gefragt (afex korrigiert sie automatisch). Gefragt sind Varianzhomogenität und Normalverteilung."
+      en: "Sphericity is not asked for here (afex corrects for it automatically). The question asks for homogeneity of variance and normality."

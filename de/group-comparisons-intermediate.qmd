@@ -1,0 +1,141 @@
+---
+title: "Gruppenvergleiche"
+subtitle: "Intermediate · ANOVA mit Messwiederholung (afex), Kontraste, Holm"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, tidyr, afex, emmeans, modelbased, performance, parameters]
+resources:
+  - ../data/driving_sim.csv
+  - ../data/usability.csv
+---
+
+{{< include /_generated/de/group-comparisons-intermediate/runtime.qmd >}}
+
+{{< include /_generated/de/group-comparisons-intermediate/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R läuft hier direkt im Browser. Beim ersten Besuch lädt es 20–40 Sekunden (Anzeige unten rechts), danach geht es schneller.
+:::
+
+## Wozu? {#why}
+
+**Forschungsfrage:** Machen die Testpersonen mit einem der drei Prototypen weniger Bedienfehler, und mit welchem genau?
+
+Im Usability-Test (`usability`) hat jede Person alle drei Prototypen A, B und C mit je vier Aufgaben bearbeitet. Das ist ein Messwiederholungsdesign: Die Werte einer Person hängen zusammen, und genau das macht den Vergleich genauer, wenn du es berücksichtigst. Im Beginner-Teil hast du zwei unabhängige Gruppen mit dem t-Test verglichen. Bei drei und mehr Bedingungen derselben Personen brauchst du die ANOVA mit Messwiederholung, danach gezielte Paarvergleiche und eine Korrektur für mehrere Tests.
+
+## Konzept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 200" role="img" aria-labelledby="fig-gci-title fig-gci-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-gci-title">Messwiederholung: Linien je Person</title>
+  <desc id="fig-gci-desc">Drei Spalten für die Prototypen A, B und C. Jede Person ist eine Linie über die drei Prototypen. Die Linien liegen auf sehr unterschiedlicher Höhe (Personenunterschiede), verlaufen aber ähnlich: von A nach B nach unten, von B nach C nach oben. Rechts der Hinweis: Die ANOVA mit Messwiederholung vergleicht die Verläufe innerhalb der Personen; die Höhe der Linien fällt aus dem Fehlerterm.</desc>
+  <line x1="60" y1="170" x2="360" y2="170" class="rt-fig-axis" />
+  <text x="90" y="190" text-anchor="middle" class="rt-fig-label">A</text>
+  <text x="210" y="190" text-anchor="middle" class="rt-fig-label">B</text>
+  <text x="330" y="190" text-anchor="middle" class="rt-fig-label">C</text>
+  <polyline points="90,40 210,70 330,30" fill="none" class="rt-fig-a" />
+  <polyline points="90,85 210,110 330,75" fill="none" class="rt-fig-a" />
+  <polyline points="90,115 210,140 330,100" fill="none" class="rt-fig-b" />
+  <polyline points="90,140 210,160 330,125" fill="none" class="rt-fig-b" />
+  <text x="380" y="50" class="rt-fig-label">jede Linie: eine Person</text>
+  <text x="380" y="80" class="rt-fig-label">Höhe: Personenunterschied</text>
+  <text x="380" y="98" class="rt-fig-label rt-fig-muted">(fällt aus dem Fehler)</text>
+  <text x="380" y="128" class="rt-fig-label">Verlauf: Effekt des</text>
+  <text x="380" y="146" class="rt-fig-label">Prototyps (wird getestet)</text>
+</svg>
+<figcaption>Bei Messwiederholung vergleicht der Test die Veränderung innerhalb jeder Person. Deshalb braucht er weniger Personen als ein Vergleich unabhängiger Gruppen.</figcaption>
+</figure>
+```
+
+- **Erst aggregieren, dann testen:** Die unabhängige Einheit ist die Person. `afex::aov_ez()` mittelt mit `fun_aggregate = mean` die Durchgänge pro Person und Bedingung; `aov()` auf allen Durchgängen wäre Pseudoreplikation.
+- **within und between:** Faktoren, die jede Person in allen Stufen erlebt (Prototyp, Warnmodalität), stehen in `within`; Merkmale der Person (Erfahrung) in `between`. Beides zusammen ergibt eine gemischte ANOVA.
+- **Sphärizität:** Die Varianzen der Differenzen zwischen allen Bedingungspaaren sollen gleich sein. afex korrigiert die Freiheitsgrade standardmäßig nach Greenhouse-Geisser (z. B. F(1.77, 39.03)); ein Vortest ist nicht nötig.
+- **Effektgröße:** afex gibt das generalisierte η² (`ges`) aus. Es ist zwischen Designs vergleichbar, anders als das partielle η², das bei Innersubjektfaktoren sehr groß wird.
+- **Paarvergleiche:** `emmeans(fit, ~ prototype) |> pairs(adjust = "holm")`; berichte Differenzen mit KI (`confint()`). Holm kontrolliert die familienweise Fehlerrate wie Bonferroni, ist aber nie strenger. `modelbased::estimate_contrasts()` liefert dasselbe als ordentliche Tabelle.
+- **Fehlende Zellen:** Fehlt einer Person eine ganze Bedingung, schließt die ANOVA sie aus (Meldung „Missing values for … ID(s)“). Ein Mixed Model (Lektion Messwiederholung und Mixed Models) nutzt auch unvollständige Personen.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## Mehr dazu: Typ-III-Quadratsummen, Kontraste und Voraussetzungen
+
+- **Typ III:** afex setzt Effektkodierung (`contr.sum`) und Typ-III-Quadratsummen wie SPSS. Bei ungleichen Gruppengrößen hängen Haupteffekte sonst von der Kodierung ab; `aov()` rechnet Typ I (Reihenfolge der Terme zählt).
+- **Geplante Kontraste** statt aller Paare: `contrast(emmeans(fit, ~ prototype), list(B_vs_rest = c(-0.5, 1, -0.5)))` testet eine gezielte Hypothese mit mehr Power.
+- **Interaktion zerlegen:** `emmeans(fit, ~ condition | experience)` gibt die Bedingungsmittel getrennt nach Gruppe; `pairs()` darauf vergleicht innerhalb jeder Gruppe.
+- **Voraussetzungen:** `performance::check_homogeneity(fit)` (Levene für Zwischenfaktoren), `check_normality(fit)` (Residuen). Tests sind kein Freigabeschalter; Residuen-Plots ansehen und bei Bedarf robust rechnen (Lektion Nichtparametrisch und robust).
+:::
+
+## Beispiel {#example}
+
+Bedienfehler pro Person und Prototyp mitteln (vier Aufgaben) und eine ANOVA mit Messwiederholung rechnen:
+
+```{webr}
+fit <- aov_ez(
+  id = "participant", dv = "errors", data = usability,
+  within = "prototype", fun_aggregate = mean
+)
+fit
+```
+
+Die Warnung meldet, dass p07 ausgeschlossen wurde: Prototyp C fehlt. Es bleiben 23 Personen. Der Prototyp wirkt sich auf die Fehlerzahl aus, F(1.77, 39.03) = 7.27, p = .003, η²G = .18. Welche Prototypen unterscheiden sich?
+
+```{webr}
+contrasts <- emmeans(fit, ~ prototype) |>
+  pairs(adjust = "holm")
+contrasts
+confint(contrasts)
+```
+
+Mit B entstehen weniger Fehler als mit A (Δ = 0.50 pro Aufgabe, p = .009) und als mit C (Δ = 0.74, p = .008); A und C unterscheiden sich nicht nachweisbar (p = .27). `confint()` korrigiert die Intervalle nach Bonferroni, weil es für Holm keine simultanen Intervalle gibt. Dieselben Vergleiche als Tabelle mit KI:
+
+```{webr}
+estimate_contrasts(fit, contrast = "prototype", p_adjust = "holm")
+```
+
+**So berichtest du es:** Die Anzahl der Bedienfehler unterschied sich zwischen den Prototypen, F(1.77, 39.03) = 7.27, p = .003, η²G = .18 (Greenhouse-Geisser-korrigiert, n = 23; p07 ohne Prototyp C ausgeschlossen). Paarvergleiche (Holm) zeigten weniger Fehler mit Prototyp B als mit A, Δ = 0.50, 95-%-KI [0.17, 0.83], p = .009, und als mit C, Δ = 0.74 [0.29, 1.19], p = .008.
+
+## Paketvergleich {#packages}
+
+| Aufgabe | Empfehlung | Alternative |
+|---|---|---|
+| ANOVA mit Messwiederholung, gemischt | **afex** `aov_ez()`, `aov_car()` | `rstatix::anova_test()` (tidy, gleiche Korrekturen); `aov()` mit `Error()`-Term (Typ I, keine Korrektur); ab unvollständigen Daten Mixed Model mit `afex::mixed()` / lme4 |
+| Effektgröße | **afex** `ges` in der Ausgabe | `effectsize::eta_squared(fit, generalized = TRUE)`, `omega_squared()` |
+| Paarvergleiche, Kontraste | **emmeans** `emmeans()` + `pairs()` / `contrast()` | **modelbased** `estimate_contrasts()` (Tabelle mit KI, gleiche Rechnung); `rstatix::pairwise_t_test(paired = TRUE)` |
+| Korrektur | Holm (`adjust = "holm"`) | Tukey (alle Paare), Bonferroni (strenger), `p.adjust()` für beliebige p-Werte |
+| Voraussetzungen | **performance** `check_normality()`, `check_homogeneity()` | `car::leveneTest()`; `check_sphericity()` ist mit GG-Korrektur meist überflüssig |
+
+## Übungen {#exercises}
+
+Drei Pflichtübungen und zwei Zusatzübungen. **Ausführen und prüfen** startet deinen Code und prüft ihn sofort. Hinweise deckst du einzeln auf (**Hinweis zeigen**), die Lösung erst danach.
+
+{{< include /_generated/de/group-comparisons-intermediate/exercises.qmd >}}
+
+## Wissenscheck {#check}
+
+{{< include /_generated/de/group-comparisons-intermediate/quiz.qmd >}}
+
+## Spickzettel {#cheatsheet}
+
+```r
+# ANOVA mit Messwiederholung (gemittelt pro Person und Bedingung)
+fit <- aov_ez(
+  id = "participant", dv = "rt_ms", data = d,
+  within = "condition", between = "experience",
+  fun_aggregate = mean, na.rm = TRUE
+)
+fit                                           # GG-korrigiert, ges = eta2 generalisiert
+
+# Paarvergleiche mit Holm, Differenzen mit KI
+emmeans(fit, ~ condition) |> pairs(adjust = "holm")
+estimate_contrasts(fit, contrast = "condition", p_adjust = "holm")
+
+# Zwei Bedingungen: gepaart auf Personenebene
+wide <- d |>
+  summarise(rt = mean(rt_ms, na.rm = TRUE), .by = c(participant, condition)) |>
+  pivot_wider(names_from = condition, values_from = rt)
+t.test(wide$visual, wide$haptic, paired = TRUE)
+
+# Voraussetzungen am Modell
+check_normality(fit); check_homogeneity(fit)
+p.adjust(p, method = "holm")
+```

@@ -1,0 +1,90 @@
+id: gc-i-contrasts
+lesson: group-comparisons-intermediate
+order: 2
+title:
+  de: Paarvergleiche nach der ANOVA mit emmeans
+  en: Pairwise comparisons after the ANOVA with emmeans
+kind: complete
+required: true
+packages: [afex, emmeans]
+data: [driving_sim]
+setup: |
+  library(afex)
+  library(emmeans)
+  fit <- aov_ez(
+    id = "participant", dv = "rt_ms", data = driving_sim,
+    within = "condition", between = "experience",
+    fun_aggregate = mean, na.rm = TRUE
+  )
+prompt:
+  de: |
+    `fit` ist die gemischte ANOVA aus der vorigen Übung. Die Modalität hat einen
+    Haupteffekt; welche Modalitäten unterscheiden sich, und um wie viel?
+
+    Ergänze die Lücken `______`: Randmittel der Modalitäten (gemittelt über die
+    Erfahrung), alle Paarvergleiche mit Holm-Korrektur, als Data Frame (Spalten
+    `contrast`, `estimate`, `SE`, `df`, `t.ratio`, `p.value`).
+  en: |
+    `fit` is the mixed ANOVA from the previous exercise. Modality has a main
+    effect; which modalities differ, and by how much?
+
+    Fill in the gaps `______`: marginal means of the modalities (averaged over
+    experience), all pairwise comparisons with Holm correction, as a data frame
+    (columns `contrast`, `estimate`, `SE`, `df`, `t.ratio`, `p.value`).
+starter: |
+  emmeans(fit, ~ ______) |>
+    pairs(adjust = "______") |>
+    as.data.frame()
+solution: |
+  emmeans(fit, ~ condition) |>
+    pairs(adjust = "holm") |>
+    as.data.frame()
+hints:
+  - de: "Nach `~` steht der Faktor, dessen Stufen verglichen werden."
+    en: "After `~` comes the factor whose levels are compared."
+  - de: "`adjust` nimmt den Namen des Korrekturverfahrens als Text, wie `p.adjust()`."
+    en: "`adjust` takes the name of the correction method as text, like `p.adjust()`."
+  - de: "`emmeans(fit, ~ condition)` und `pairs(adjust = \"holm\")`."
+    en: "`emmeans(fit, ~ condition)` and `pairs(adjust = \"holm\")`."
+explanation:
+  de: |
+    Alle drei Modalitäten unterscheiden sich: visual ist 158 ms langsamer als
+    auditory und 230 ms langsamer als haptic, auditory 72 ms langsamer als haptic
+    (alle p < .001 nach Holm). Holm kontrolliert die familienweise Fehlerrate wie
+    Bonferroni, ist aber nie strenger; Tukey (Voreinstellung von `pairs()`) ist
+    bei allen Paarvergleichen gleich gut. Wichtig für den Bericht sind die
+    Differenzen mit KI (`confint()` auf das `pairs()`-Ergebnis), nicht nur die
+    p-Werte. afex rechnet die Kontraste eines Innersubjektfaktors standardmäßig
+    mit einem multivariaten Modell: Jeder Vergleich hat seinen eigenen
+    Standardfehler, unabhängig von der Sphärizität. `TukeyHSD()` funktioniert
+    nur mit `aov()` und ist für Messwiederholung ungeeignet. Bericht: „Haptische
+    Warnungen führten zu schnelleren Reaktionen als visuelle, Δ = 230 ms,
+    t(38) = 19.41, p < .001 (Holm).“
+  en: |
+    All three modalities differ: visual is 158 ms slower than auditory and
+    230 ms slower than haptic, auditory 72 ms slower than haptic (all p < .001
+    after Holm). Holm controls the family-wise error rate like Bonferroni, but is
+    never stricter; Tukey (the default of `pairs()`) works equally well for all
+    pairwise comparisons. For the report, the differences with CIs matter
+    (`confint()` on the `pairs()` result), not just the p-values. afex computes
+    contrasts of a within factor with a multivariate model by default: each
+    comparison has its own standard error, independent of sphericity.
+    `TukeyHSD()` only works with `aov()` and is unsuitable for repeated
+    measures. Report: "Haptic warnings led to faster reactions than visual
+    ones, Δ = 230 ms, t(38) = 19.41, p < .001 (Holm)."
+check:
+  type: value
+  ignore_col_order: false
+common_mistakes:
+  - pattern: "adjust\\s*=\\s*\"bonferroni\""
+    message:
+      de: "Bonferroni ist erlaubt, aber unnötig streng. Gefragt ist Holm: `adjust = \"holm\"`."
+      en: "Bonferroni is allowed, but needlessly strict. Holm is asked for: `adjust = \"holm\"`."
+  - pattern: "~\\s*condition\\s*\\*\\s*experience|~\\s*experience"
+    message:
+      de: "Gefragt sind die Randmittel der Modalitäten, gemittelt über die Erfahrung: `~ condition`."
+      en: "The marginal means of the modalities, averaged over experience, are asked for: `~ condition`."
+  - pattern: "TukeyHSD"
+    message:
+      de: "`TukeyHSD()` braucht ein `aov()`-Objekt und ignoriert die Messwiederholung. Nimm `emmeans()` + `pairs()`."
+      en: "`TukeyHSD()` needs an `aov()` object and ignores the repeated measures. Use `emmeans()` + `pairs()`."

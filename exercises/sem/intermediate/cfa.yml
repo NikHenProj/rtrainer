@@ -1,0 +1,90 @@
+id: sm-i-cfa
+lesson: sem-intermediate
+order: 1
+title:
+  de: Ein Messmodell mit vier Faktoren schätzen
+  en: Fitting a measurement model with four factors
+kind: write
+required: true
+packages: [lavaan, parameters]
+data: [acceptance]
+setup: |
+  library(lavaan)
+prompt:
+  de: |
+    Der Akzeptanzfragebogen soll vier Konstrukte messen: Nützlichkeit `pu`
+    (`pu_1`–`pu_5`), Bedienbarkeit `peou` (`peou_1`–`peou_4`), Vertrauen `trust`
+    (`trust_1`–`trust_5`) und Nutzungsabsicht `bi` (`bi_1`–`bi_4`).
+
+    Ergänze das Modell um die drei fehlenden Faktoren (Namen wie angegeben, Items
+    in der Reihenfolge ihrer Nummern) und schätze es mit `cfa()` an den
+    Rohdaten `acceptance`. Die letzte Zeile gibt das Modellobjekt `fit` zurück.
+  en: |
+    The acceptance questionnaire is meant to measure four constructs: usefulness
+    `pu` (`pu_1`–`pu_5`), ease of use `peou` (`peou_1`–`peou_4`), trust `trust`
+    (`trust_1`–`trust_5`) and behavioural intention `bi` (`bi_1`–`bi_4`).
+
+    Add the three missing factors to the model (names as given, items in the
+    order of their numbers) and fit it with `cfa()` on the raw data
+    `acceptance`. The last line returns the model object `fit`.
+starter: |
+  model <- "
+    pu =~ pu_1 + pu_2 + pu_3 + pu_4 + pu_5
+  "
+  fit <- cfa(model, data = acceptance)
+  fit
+solution: |
+  model <- "
+    pu =~ pu_1 + pu_2 + pu_3 + pu_4 + pu_5
+    peou =~ peou_1 + peou_2 + peou_3 + peou_4
+    trust =~ trust_1 + trust_2 + trust_3 + trust_4 + trust_5
+    bi =~ bi_1 + bi_2 + bi_3 + bi_4
+  "
+  fit <- cfa(model, data = acceptance)
+  fit
+hints:
+  - de: "Jeder Faktor bekommt eine eigene Zeile im Modelltext: Faktorname, Operator, Items."
+    en: "Each factor gets its own line in the model text: factor name, operator, items."
+  - de: "„wird gemessen durch“ heißt in lavaan `=~`; die Items verbindest du mit `+`."
+    en: "\"is measured by\" is `=~` in lavaan; you join the items with `+`."
+  - de: "Zum Beispiel `peou =~ peou_1 + peou_2 + peou_3 + peou_4`, analog für `trust` und `bi`."
+    en: "For example `peou =~ peou_1 + peou_2 + peou_3 + peou_4`, likewise for `trust` and `bi`."
+explanation:
+  de: |
+    Die Ausgabe von `fit` zeigt: Schätzung konvergiert, 300 Beobachtungen,
+    χ²(129) = 143.8, p = .18. lavaan legt die Skala jedes Faktors über das erste
+    Item fest (Ladung 1, „Marker“); deshalb hängen die unstandardisierten Ladungen
+    von der Reihenfolge ab, die standardisierten nicht. Die Faktoren dürfen in
+    `cfa()` automatisch korrelieren. Die Rohdaten reichen: `peou_3` und `trust_4`
+    bekommen eine negative Ladung, Fit und Struktur bleiben gleich. Umpolen musst
+    du erst für Summenwerte und für ω aus dem Modell. Den Fit liest du mit
+    `fitMeasures()`, die Ladungen mit `standardizedSolution()` oder
+    `model_parameters(fit, standardize = TRUE)`.
+  en: |
+    The output of `fit` shows: estimation converged, 300 observations,
+    χ²(129) = 143.8, p = .18. lavaan sets the scale of each factor via the first
+    item (loading 1, "marker"); so the unstandardised loadings depend on the
+    order, the standardised ones do not. In `cfa()`, the factors are allowed to
+    correlate automatically. The raw data are enough: `peou_3` and `trust_4` get
+    a negative loading, fit and structure stay the same. You only need to
+    reverse them for sum scores and for ω from the model. Read the fit with
+    `fitMeasures()`, the loadings with `standardizedSolution()` or
+    `model_parameters(fit, standardize = TRUE)`.
+misconception:
+  de: "In lavaan schreibt man Faktoren wie Regressionen mit `~`."
+  en: "In lavaan, factors are written like regressions with `~`."
+check:
+  type: value
+common_mistakes:
+  - pattern: "(?m)^\\s*(peou|trust|bi)\\s*~(?!~)\\s"
+    message:
+      de: "`~` ist eine Regression (beobachtete Variable wird vorhergesagt). Ein Faktor, der durch Items gemessen wird, steht mit `=~`."
+      en: "`~` is a regression (an observed variable is predicted). A factor measured by items uses `=~`."
+  - pattern: "\\bsem\\(|\\blavaan\\("
+    message:
+      de: "Nimm `cfa()`: Es setzt die üblichen Voreinstellungen (Faktoren korrelieren, erste Ladung = 1). `lavaan()` setzt sie nicht."
+      en: "Use `cfa()`: it sets the usual defaults (factors correlate, first loading = 1). `lavaan()` does not."
+  - pattern: "8\\s*-\\s*(peou_3|trust_4)"
+    message:
+      de: "Für das Messmodell musst du nicht umpolen; gefragt ist das Modell an den Rohdaten `acceptance`."
+      en: "You do not need to reverse items for the measurement model; the question asks for the model on the raw data `acceptance`."

@@ -1,0 +1,134 @@
+# Knowledge check: passed at >= `pass` share of correctly answered questions.
+lesson: group-comparisons-intermediate
+pass: 0.8
+questions:
+  - id: gc-i-q-gg
+    prompt:
+      de: "afex berichtet für die Modalität F(1.98, 75.08) = 179.92. Warum sind die Freiheitsgrade keine ganzen Zahlen?"
+      en: "afex reports F(1.98, 75.08) = 179.92 for modality. Why are the degrees of freedom not whole numbers?"
+    options:
+      - text:
+          de: "afex korrigiert sie nach Greenhouse-Geisser, um eine mögliche Verletzung der Sphärizität auszugleichen."
+          en: "afex corrects them with Greenhouse-Geisser to compensate for a possible violation of sphericity."
+        correct: true
+        explain:
+          de: "Richtig. Die Freiheitsgrade werden mit ε ≤ 1 multipliziert; ε = 0.99 heißt hier: kaum Verletzung."
+          en: "Right. The degrees of freedom are multiplied by ε ≤ 1; ε = 0.99 means hardly any violation here."
+      - text:
+          de: "Weil fehlende Werte als Bruchteile von Personen zählen."
+          en: "Because missing values count as fractions of participants."
+        correct: false
+        explain:
+          de: "Fehlende Durchgänge wurden durch das Personenmittel aufgefangen; die Personenzahl ist ganzzahlig."
+          en: "Missing trials were absorbed by the participant mean; the number of participants is a whole number."
+      - text:
+          de: "Das ist ein Rundungsfehler in der Ausgabe."
+          en: "That is a rounding error in the output."
+        correct: false
+        explain:
+          de: "Nein, die Korrektur ist Absicht und gehört so in den Bericht."
+          en: "No, the correction is intentional and belongs in the report as is."
+  - id: gc-i-q-ges
+    prompt:
+      de: "Für einen Innersubjektfaktor gibt afex η²G = .42 aus, das partielle η² ist .83. Was berichtest du?"
+      en: "For a within factor, afex gives η²G = .42, partial η² is .83. What do you report?"
+    options:
+      - text:
+          de: "η²G, weil es zwischen Designs (Messwiederholung vs. unabhängige Gruppen) vergleichbar ist; das partielle η² überschätzt den Effekt im Vergleich."
+          en: "η²G, because it is comparable across designs (repeated measures vs. independent groups); partial η² overstates the effect by comparison."
+        correct: true
+        explain:
+          de: "Ja. Das partielle η² eines Innersubjektfaktors rechnet die Personenunterschiede heraus und wird deshalb sehr groß."
+          en: "Yes. The partial η² of a within factor removes individual differences and therefore becomes very large."
+      - text:
+          de: "Das partielle η², weil es größer ist."
+          en: "Partial η², because it is larger."
+        correct: false
+        explain:
+          de: "Größer ist kein Kriterium. Wichtig ist, dass Leser den Effekt mit anderen Studien vergleichen können."
+          en: "Larger is not a criterion. What matters is that readers can compare the effect with other studies."
+      - text:
+          de: "Keins von beiden; bei Messwiederholung gibt es keine Effektgröße."
+          en: "Neither; there is no effect size with repeated measures."
+        correct: false
+        explain:
+          de: "Doch: η²G für den Gesamteffekt, für Paarvergleiche Differenzen mit KI oder d_z."
+          en: "There is: η²G for the overall effect, differences with CIs or d_z for pairwise comparisons."
+  - id: gc-i-q-missing-cell
+    prompt:
+      de: "`aov_ez()` meldet: „Missing values for 1 ID(s), which were removed before analysis: p07“. Was ist passiert?"
+      en: "`aov_ez()` reports: \"Missing values for 1 ID(s), which were removed before analysis: p07\". What happened?"
+    options:
+      - text:
+          de: "p07 hat in mindestens einer Bedingung keinen Wert; die ANOVA mit Messwiederholung braucht vollständige Personen und schließt p07 ganz aus."
+          en: "p07 has no value in at least one condition; the repeated-measures ANOVA needs complete participants and excludes p07 entirely."
+        correct: true
+        explain:
+          de: "Genau. Berichte das (n = 23). Ein Mixed Model (lme4) könnte die vorhandenen Bedingungen von p07 nutzen."
+          en: "Exactly. Report it (n = 23). A mixed model (lme4) could use the conditions p07 does have."
+      - text:
+          de: "afex hat die fehlenden Werte von p07 durch den Mittelwert ersetzt."
+          en: "afex replaced p07's missing values with the mean."
+        correct: false
+        explain:
+          de: "afex imputiert nicht; es schließt die Person aus."
+          en: "afex does not impute; it excludes the participant."
+      - text:
+          de: "Nur die fehlende Bedingung von p07 fällt weg, die anderen gehen ein."
+          en: "Only p07's missing condition is dropped, the others are used."
+        correct: false
+        explain:
+          de: "Das wäre bei einem Mixed Model so. Die klassische ANOVA braucht für jede Person alle Zellen."
+          en: "That would be the case with a mixed model. The classic ANOVA needs all cells for every participant."
+  - id: gc-i-q-holm
+    prompt:
+      de: "Drei Paarvergleiche ergeben unkorrigiert p = .004, .030, .200. Welche bleiben nach Holm (α = .05) signifikant?"
+      en: "Three pairwise comparisons give uncorrected p = .004, .030, .200. Which stay significant after Holm (α = .05)?"
+    options:
+      - text:
+          de: "Nur der erste: .004 × 3 = .012; der zweite wird .030 × 2 = .060."
+          en: "Only the first: .004 × 3 = .012; the second becomes .030 × 2 = .060."
+        correct: true
+        explain:
+          de: "Richtig. Holm prüft schrittweise; sobald einer nicht mehr signifikant ist, sind es die größeren auch nicht."
+          en: "Right. Holm tests step-wise; once one is no longer significant, the larger ones are not either."
+      - text:
+          de: "Die ersten beiden, beide liegen unter .05."
+          en: "The first two, both are below .05."
+        correct: false
+        explain:
+          de: "Das wäre ohne Korrektur. Bei drei Tests steigt sonst die Wahrscheinlichkeit für mindestens ein falsch positives Ergebnis auf bis zu 14 %."
+          en: "That would be without correction. With three tests, the chance of at least one false positive would otherwise rise to up to 14 %."
+      - text:
+          de: "Keiner, Holm teilt α durch die Anzahl der Tests im Quadrat."
+          en: "None, Holm divides α by the squared number of tests."
+        correct: false
+        explain:
+          de: "Holm vergleicht den kleinsten p-Wert mit α/3, den nächsten mit α/2 usw."
+          en: "Holm compares the smallest p-value with α/3, the next with α/2, and so on."
+  - id: gc-i-q-paired
+    prompt:
+      de: "Warum ist das KI der Differenz visual − haptic im gepaarten Test (206 bis 254 ms) halb so breit wie im ungepaarten auf allen Durchgängen (190 bis 270 ms)?"
+      en: "Why is the CI of the difference visual − haptic in the paired test (206 to 254 ms) half as wide as in the unpaired one on all trials (190 to 270 ms)?"
+    options:
+      - text:
+          de: "Jede Person ist ihre eigene Kontrolle; die großen Unterschiede zwischen Personen fallen aus dem Fehlerterm."
+          en: "Each participant is their own control; the large differences between participants drop out of the error term."
+        correct: true
+        explain:
+          de: "Genau. Getestet werden die Differenzen pro Person, deren Streuung viel kleiner ist als die der Rohwerte."
+          en: "Exactly. The differences per participant are tested, and their spread is much smaller than that of the raw values."
+      - text:
+          de: "Der gepaarte Test hat mehr Freiheitsgrade."
+          en: "The paired test has more degrees of freedom."
+        correct: false
+        explain:
+          de: "Umgekehrt: 39 statt rund 311. Er ist trotzdem genauer, weil der Fehlerterm kleiner ist."
+          en: "The opposite: 39 instead of about 311. It is still more precise, because the error term is smaller."
+      - text:
+          de: "Durch das Mitteln werden Ausreißer entfernt."
+          en: "Averaging removes outliers."
+        correct: false
+        explain:
+          de: "Mitteln glättet etwas, aber der Hauptgrund ist die Paarung: Personenunterschiede heben sich in der Differenz auf."
+          en: "Averaging smooths a little, but the main reason is the pairing: individual differences cancel out in the difference."

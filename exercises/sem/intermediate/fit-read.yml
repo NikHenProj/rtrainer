@@ -1,0 +1,109 @@
+id: sm-i-fit-read
+lesson: sem-intermediate
+order: 3
+title:
+  de: Modellfit deuten
+  en: Interpreting model fit
+kind: interpret
+required: true
+packages: []
+data: []
+setup: ""
+prompt:
+  de: |
+    Zwei Messmodelle für den Akzeptanzfragebogen (n = 300), Ausgabe von
+    `fitMeasures(fit, c("chisq", "df", "pvalue", "cfi", "rmsea", "rmsea.ci.lower", "rmsea.ci.upper", "srmr"))`, gerundet:
+
+    ```
+    # M4: vier Faktoren (pu, peou, trust, bi)
+     chisq   df pvalue   cfi rmsea rmsea.ci.lower rmsea.ci.upper  srmr
+    143.78  129  0.177 0.994 0.020          0.000          0.035 0.038
+
+    # M3: Nützlichkeit und Bedienbarkeit als ein Faktor
+     chisq   df pvalue   cfi rmsea rmsea.ci.lower rmsea.ci.upper  srmr
+    483.70  132  0.000 0.856 0.094          0.084          0.104 0.082
+    ```
+
+    In M4 hat `pu_5` eine standardisierte Ladung von .37, alle anderen liegen
+    über |.68|. Welche Aussagen stimmen?
+
+    1. M4 passt gut zu den Daten: CFI über .95, RMSEA (mit KI) unter .06, SRMR unter .08.
+    2. Der nicht signifikante χ²-Test von M4 beweist, dass das Vier-Faktoren-Modell das richtige ist.
+    3. M3 passt deutlich schlechter; das spricht dafür, Nützlichkeit und Bedienbarkeit als getrennte Konstrukte zu messen.
+    4. Weil der Gesamtfit von M4 gut ist, sind alle Items gute Indikatoren ihres Faktors.
+
+    Gib die Nummern der richtigen Aussagen aufsteigend als Vektor ein, z. B. `c(1, 2)`.
+  en: |
+    Two measurement models for the acceptance questionnaire (n = 300), output of
+    `fitMeasures(fit, c("chisq", "df", "pvalue", "cfi", "rmsea", "rmsea.ci.lower", "rmsea.ci.upper", "srmr"))`, rounded:
+
+    ```
+    # M4: four factors (pu, peou, trust, bi)
+     chisq   df pvalue   cfi rmsea rmsea.ci.lower rmsea.ci.upper  srmr
+    143.78  129  0.177 0.994 0.020          0.000          0.035 0.038
+
+    # M3: usefulness and ease of use as one factor
+     chisq   df pvalue   cfi rmsea rmsea.ci.lower rmsea.ci.upper  srmr
+    483.70  132  0.000 0.856 0.094          0.084          0.104 0.082
+    ```
+
+    In M4, `pu_5` has a standardised loading of .37, all others are above |.68|.
+    Which statements are true?
+
+    1. M4 fits the data well: CFI above .95, RMSEA (with CI) below .06, SRMR below .08.
+    2. The non-significant χ² test of M4 proves that the four-factor model is the right one.
+    3. M3 fits much worse; this supports measuring usefulness and ease of use as separate constructs.
+    4. Because the overall fit of M4 is good, all items are good indicators of their factor.
+
+    Type the numbers of the true statements in ascending order as a vector,
+    e.g. `c(1, 2)`.
+starter: |
+  # Nummern der richtigen Aussagen als Vektor / numbers of the true statements as a vector
+solution: |
+  c(1, 3)
+hints:
+  - de: "Übliche Richtwerte (Hu & Bentler): CFI ≥ .95, RMSEA ≤ .06, SRMR ≤ .08."
+    en: "Common cut-offs (Hu & Bentler): CFI ≥ .95, RMSEA ≤ .06, SRMR ≤ .08."
+  - de: "Ein nicht signifikanter Test heißt: keine Abweichung nachgewiesen. Gibt es andere Modelle, die genauso gut passen könnten?"
+    en: "A non-significant test means: no deviation detected. Could other models fit just as well?"
+  - de: "Der Gesamtfit beschreibt, wie gut das Modell die Korrelationen wiedergibt. Was sagt eine Ladung von .37 über ein einzelnes Item?"
+    en: "Overall fit describes how well the model reproduces the correlations. What does a loading of .37 say about a single item?"
+explanation:
+  de: |
+    Richtig sind 1 und 3. M4 erfüllt alle üblichen Richtwerte, die Obergrenze
+    des RMSEA-KI (.035) eingeschlossen. Ein nicht signifikanter χ²-Test beweist
+    nichts: Er zeigt nur, dass keine Abweichung nachweisbar ist, und hängt stark
+    von n ab (bei großen Stichproben wird fast jedes Modell signifikant). Andere
+    Modelle können gleich gut passen. M3 verfehlt alle Richtwerte; der direkte
+    Vergleich (`lavTestLRT(m3, m4)`: Δχ²(3) = 339.9, p < .001) spricht klar für
+    zwei getrennte Faktoren (sie korrelieren nur zu .46). Guter Gesamtfit und
+    schwache Einzelitems schließen sich nicht aus: `pu_5` passt ins Muster
+    (keine Fehlspezifikation), misst aber wenig vom Faktor. Bericht: „Das
+    Vier-Faktoren-Modell passte gut, χ²(129) = 143.8, p = .18, CFI = .99,
+    RMSEA = .02, 90-%-KI [.00, .04], SRMR = .04.“
+  en: |
+    Statements 1 and 3 are true. M4 meets all common cut-offs, including the
+    upper bound of the RMSEA CI (.035). A non-significant χ² test proves
+    nothing: it only shows that no deviation can be detected, and it depends
+    heavily on n (with large samples almost every model becomes significant).
+    Other models may fit equally well. M3 misses all cut-offs; the direct
+    comparison (`lavTestLRT(m3, m4)`: Δχ²(3) = 339.9, p < .001) clearly favours
+    two separate factors (they only correlate .46). Good overall fit and weak
+    single items are not mutually exclusive: `pu_5` fits the pattern (no
+    misspecification), but measures little of the factor. Report: "The
+    four-factor model fit well, χ²(129) = 143.8, p = .18, CFI = .99,
+    RMSEA = .02, 90% CI [.00, .04], SRMR = .04."
+misconception:
+  de: "Ein nicht signifikanter χ²-Test bestätigt das Modell, und guter Gesamtfit heißt, dass jedes Item gut misst."
+  en: "A non-significant χ² test confirms the model, and good overall fit means every item measures well."
+check:
+  type: value
+common_mistakes:
+  - pattern: "\\b2\\b"
+    message:
+      de: "Aussage 2 stimmt nicht: Ein nicht signifikanter Test zeigt nur, dass keine Abweichung nachweisbar ist. Andere Modelle können genauso gut passen."
+      en: "Statement 2 is false: a non-significant test only shows that no deviation can be detected. Other models may fit just as well."
+  - pattern: "\\b4\\b"
+    message:
+      de: "Aussage 4 stimmt nicht: Der Gesamtfit sagt nichts über die Stärke einzelner Ladungen; `pu_5` lädt nur mit .37."
+      en: "Statement 4 is false: overall fit says nothing about the strength of single loadings; `pu_5` only loads .37."

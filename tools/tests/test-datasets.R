@@ -47,3 +47,39 @@ test_that("raw export CSV needs skip, semicolon and decimal comma", {
   expect_true(all(c("TEST_1", "TEST_2") %in% raw$`Response ID`))
   expect_equal(sum(duplicated(raw)), 2)
 })
+
+test_that("acceptance has four TAM scales with two reverse-keyed items", {
+  acceptance <- load_dataset("acceptance")$acceptance
+  items <- c(
+    paste0("pu_", 1:5), paste0("peou_", 1:4),
+    paste0("trust_", 1:5), paste0("bi_", 1:4)
+  )
+  expect_equal(nrow(acceptance), 300)
+  expect_true(all(c("respondent", "age", "experience", items) %in% names(acceptance)))
+  expect_false(anyNA(acceptance))
+  expect_true(all(unlist(acceptance[items]) %in% 1:7))
+  # Reverse-keyed items correlate negatively with the rest of their scale.
+  expect_lt(cor(acceptance$peou_3, acceptance$peou_1), 0)
+  expect_lt(cor(acceptance$trust_4, acceptance$trust_1), 0)
+  expect_gt(cor(acceptance$peou_2, acceptance$peou_1), 0.4)
+})
+
+test_that("acceptance has one weak item and fits the four-factor model", {
+  skip_if_not_installed("lavaan")
+  d <- load_dataset("acceptance")$acceptance
+  model <- "
+    pu =~ pu_1 + pu_2 + pu_3 + pu_4 + pu_5
+    peou =~ peou_1 + peou_2 + peou_3 + peou_4
+    trust =~ trust_1 + trust_2 + trust_3 + trust_4 + trust_5
+    bi =~ bi_1 + bi_2 + bi_3 + bi_4
+  "
+  fit <- lavaan::cfa(model, data = d)
+  std <- lavaan::standardizedSolution(fit)
+  loadings <- abs(std$est.std[std$op == "=~"])
+  names(loadings) <- std$rhs[std$op == "=~"]
+  expect_lt(loadings[["pu_5"]], 0.5)
+  expect_true(all(loadings[names(loadings) != "pu_5"] > 0.6))
+  fit_measures <- lavaan::fitMeasures(fit, c("cfi", "rmsea"))
+  expect_gt(fit_measures[["cfi"]], 0.95)
+  expect_lt(fit_measures[["rmsea"]], 0.06)
+})

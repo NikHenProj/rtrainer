@@ -1,0 +1,153 @@
+---
+title: "Fragebögen und Skalen"
+subtitle: "Intermediate · Reliabilität mit ω, Itemanalyse, explorative Faktorenanalyse"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, tidyr, psych, GPArotation, parameters]
+resources:
+  - ../data/acceptance.csv
+---
+
+{{< include /_generated/de/scales-intermediate/runtime.qmd >}}
+
+{{< include /_generated/de/scales-intermediate/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R läuft hier direkt im Browser. Beim ersten Besuch lädt es 10–30 Sekunden (Anzeige unten rechts), danach geht es schneller.
+:::
+
+## Wozu? {#why}
+
+**Forschungsfrage:** Messen die vier Skalen eines Akzeptanzfragebogens zu einem Fahrerassistenzsystem (Nützlichkeit, Bedienbarkeit, Vertrauen, Nutzungsabsicht) das, was sie messen sollen, und wie zuverlässig?
+
+Im Beginner-Teil hast du Items umgepolt, Skalenwerte gebildet und α berechnet. Bei einem neuen oder übersetzten Fragebogen reicht das nicht: α unterstellt, dass alle Items gleich gut messen, und sagt nichts darüber, ob die Items überhaupt die geplanten Skalen bilden. Bevor du mit Skalenwerten rechnest oder ein Strukturmodell aufstellst, prüfst du deshalb drei Dinge: Wie zuverlässig ist jede Skala (ω)? Welche Items passen nicht (Itemanalyse)? Bilden die Items die erwarteten Faktoren (explorative Faktorenanalyse, EFA)?
+
+## Konzept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 200" role="img" aria-labelledby="fig-sci-title fig-sci-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-sci-title">Ein Faktor mit fünf Items und unterschiedlichen Ladungen</title>
+  <desc id="fig-sci-desc">Oben der Faktor Nützlichkeit, darunter fünf Items pu_1 bis pu_5. Die Pfeile tragen die Ladungen .76, .70, .83, .69 und .37; der Pfeil zu pu_5 ist gestrichelt und schwach. Rechts der Text: Alpha nimmt an, dass alle Pfeile gleich stark sind; Omega nutzt die geschätzten Ladungen.</desc>
+  <defs><marker id="rt-arrow-sci" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10 z" class="rt-fig-arrowhead" /></marker></defs>
+  <rect x="150" y="14" width="120" height="34" rx="17" class="rt-fig-box-accent" />
+  <text x="210" y="36" text-anchor="middle" class="rt-fig-label">Nützlichkeit</text>
+  <line x1="190" y1="48" x2="50" y2="146" class="rt-fig-arrow" marker-end="url(#rt-arrow-sci)" />
+  <line x1="200" y1="48" x2="130" y2="146" class="rt-fig-arrow" marker-end="url(#rt-arrow-sci)" />
+  <line x1="210" y1="48" x2="210" y2="146" class="rt-fig-arrow" marker-end="url(#rt-arrow-sci)" />
+  <line x1="220" y1="48" x2="290" y2="146" class="rt-fig-arrow" marker-end="url(#rt-arrow-sci)" />
+  <line x1="230" y1="48" x2="370" y2="146" class="rt-fig-arrow" stroke-dasharray="4 4" marker-end="url(#rt-arrow-sci)" />
+  <text x="92" y="100" class="rt-fig-label">.76</text>
+  <text x="148" y="100" class="rt-fig-label">.70</text>
+  <text x="214" y="100" class="rt-fig-label">.83</text>
+  <text x="258" y="100" class="rt-fig-label">.69</text>
+  <text x="312" y="100" class="rt-fig-label rt-fig-muted">.37</text>
+  <rect x="20" y="148" width="60" height="28" class="rt-fig-box" /><text x="50" y="167" text-anchor="middle" class="rt-fig-code">pu_1</text>
+  <rect x="100" y="148" width="60" height="28" class="rt-fig-box" /><text x="130" y="167" text-anchor="middle" class="rt-fig-code">pu_2</text>
+  <rect x="180" y="148" width="60" height="28" class="rt-fig-box" /><text x="210" y="167" text-anchor="middle" class="rt-fig-code">pu_3</text>
+  <rect x="260" y="148" width="60" height="28" class="rt-fig-box" /><text x="290" y="167" text-anchor="middle" class="rt-fig-code">pu_4</text>
+  <rect x="340" y="148" width="60" height="28" class="rt-fig-box" /><text x="370" y="167" text-anchor="middle" class="rt-fig-code">pu_5</text>
+  <text x="420" y="60" class="rt-fig-label">α: alle Pfeile</text>
+  <text x="420" y="78" class="rt-fig-label">gleich stark</text>
+  <text x="420" y="110" class="rt-fig-label">ω: geschätzte</text>
+  <text x="420" y="128" class="rt-fig-label">Ladungen</text>
+</svg>
+<figcaption>Standardisierte Ladungen der Nützlichkeitsskala. Weil `pu_5` deutlich schwächer lädt, unterschätzt α die Reliabilität (α = .80, ω = .83).</figcaption>
+</figure>
+```
+
+- **Reliabilität:** Cronbachs α setzt voraus, dass alle Items gleich stark laden (tau-äquivalent). McDonalds ω (total) nutzt die geschätzten Ladungen und ist deshalb die bessere Standardangabe; α berichtest du zusätzlich zur Vergleichbarkeit. `psych::reliability()` rechnet beide für mehrere Skalen auf einmal; umgepolte Items stehen mit Minus in der Schlüsselliste (`"-peou_3"`).
+- **Itemanalyse:** Die korrigierte Trennschärfe `r.drop` ist die Korrelation eines Items mit der Summe der *übrigen* Items. Faustregel: unter .30 kritisch, unter .40 genauer ansehen; negativ heißt fast immer: nicht umgepolt. „α if dropped“ ist ein Hinweis, keine Entscheidungsregel.
+- **Wie viele Faktoren?** Die Parallelanalyse (`fa.parallel()`) vergleicht die Eigenwerte der Daten mit denen von Zufallsdaten und ist dem Kaiser-Kriterium (Eigenwert > 1) überlegen.
+- **EFA:** `fa(items, nfactors, rotate = "oblimin", fm = "ml")`. Schiefwinklige Rotation, weil psychologische Konstrukte korrelieren; `model_parameters()` zeigt Ladungen, Komplexität (≈ 1: Item lädt nur auf einem Faktor) und Uniqueness (nicht erklärter Anteil).
+- **EFA oder CFA?** Die EFA sucht eine Struktur, die konfirmatorische Faktorenanalyse (CFA, nächste Lektion) prüft eine vorab festgelegte. Bei einem etablierten Fragebogen ist die CFA der Hauptweg; die EFA hilft bei neuen oder übersetzten Instrumenten und bei Problemen in der CFA.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## Mehr dazu: welches ω?
+
+- **ω total** (`omega.tot`): Anteil der Varianz des Summenwerts, den alle gemeinsamen Faktoren erklären. Für eine einzelne Skala die übliche Angabe.
+- **ω hierarchisch** (`omega_h`): Anteil, den ein Generalfaktor erklärt. Wichtig, wenn eine Skala Unterfacetten hat und du wissen willst, ob ein Gesamtwert sinnvoll ist.
+- **ω aus einer CFA** (`semTools::compRelSEM()`): nutzt die Ladungen deines Messmodells; bei sauber gepolten Items fast gleich wie `omega.tot`.
+- **Ordinale Items** (wenige Stufen, schiefe Verteilungen): ω auf Basis polychorischer Korrelationen (`psych::omega(..., poly = TRUE)`) ist dann genauer. Bei 7 Stufen und symmetrischen Antworten ändert sich wenig.
+:::
+
+## Beispiel {#example}
+
+Zuerst die Itemanalyse der Bedienbarkeitsskala, so wie die Daten aus dem Export kommen:
+
+```{webr}
+acceptance |>
+  select(peou_1:peou_4) |>
+  psych::alpha()
+```
+
+α = .13 und eine Warnung: `peou_3` korreliert negativ mit den anderen Items (`r.drop` = −.64). Das Item ist nicht schwach, sondern nicht umgepolt; ohne `peou_3` stiege α auf .82. Statt umzurechnen, markierst du es in der Schlüsselliste von `reliability()`:
+
+```{webr}
+keys <- list(
+  pu = paste0("pu_", 1:5),
+  peou = c("peou_1", "peou_2", "-peou_3", "peou_4")
+)
+psych::reliability(keys, select(acceptance, pu_1:pu_5, peou_1:peou_4))
+```
+
+Mit Minus: Bedienbarkeit α = .84, ω = .86; Nützlichkeit α = .80, ω = .83. Bilden die neun Items wirklich zwei Faktoren? Parallelanalyse, dann EFA:
+
+```{webr}
+items <- select(acceptance, pu_1:pu_5, peou_1:peou_4)
+fa.parallel(items, fm = "ml", fa = "fa", plot = FALSE)
+
+efa <- fa(items, nfactors = 2, rotate = "oblimin", fm = "ml")
+model_parameters(efa, sort = TRUE, threshold = 0.3)
+round(efa$Phi, 2)
+```
+
+Zwei Faktoren, jedes Item lädt nur auf seinem (Komplexität ≈ 1). `peou_3` lädt negativ, weil es in `items` nicht umgepolt ist; für die Struktur zählt der Betrag. `pu_5` fällt mit .40 und einer Uniqueness von .86 ab. Die Faktoren korrelieren zu .46 (`efa$Phi`), deshalb oblimin statt varimax.
+
+**So berichtest du es:** Die Nützlichkeit (5 Items, ω = .83, α = .80) und die Bedienbarkeit (4 Items, ω = .86, α = .84) waren reliabel. Eine explorative Faktorenanalyse (ML, oblimin, zwei Faktoren nach Parallelanalyse) bestätigte die Zuordnung der Items; das Item pu_5 lud schwach (λ = .40).
+
+## Paketvergleich {#packages}
+
+| Aufgabe | Empfehlung | Alternative |
+|---|---|---|
+| α und ω für mehrere Skalen | **psych** `reliability(keys, items)` | `psych::omega()` je Skala (ausführlicher, mehr Warnungen); `performance::cronbachs_alpha()` (nur α) |
+| Itemanalyse | **psych** `alpha()` (`r.drop`, „if dropped“) | `performance::item_reliability()`, `item_difficulty()` |
+| Anzahl Faktoren | **psych** `fa.parallel()` | `parameters::n_factors()` (viele Kriterien, braucht mehr Pakete) |
+| EFA | **psych** `fa()` + **parameters** `model_parameters()` | `factanal()` (Basis-R, nur ML, weniger Rotationen) |
+| ω aus einer CFA | **semTools** `compRelSEM()` | siehe Lektion CFA und SEM |
+
+## Übungen {#exercises}
+
+Drei Pflichtübungen und eine Zusatzübung. **Ausführen und prüfen** startet deinen Code und prüft ihn sofort. Hinweise deckst du einzeln auf (**Hinweis zeigen**), die Lösung erst danach.
+
+{{< include /_generated/de/scales-intermediate/exercises.qmd >}}
+
+## Wissenscheck {#check}
+
+{{< include /_generated/de/scales-intermediate/quiz.qmd >}}
+
+## Spickzettel {#cheatsheet}
+
+```r
+# alpha und omega für mehrere Skalen, umgepolte Items mit Minus
+keys <- list(
+  pu = paste0("pu_", 1:5),
+  peou = c("peou_1", "peou_2", "-peou_3", "peou_4")
+)
+rel <- psych::reliability(keys, items)
+rel$result.df[, c("alpha", "omega.tot")]
+
+# Itemanalyse: r.drop, alpha if dropped
+psych::alpha(select(d, pu_1:pu_5))
+
+# Anzahl Faktoren, dann EFA
+fa.parallel(items, fm = "ml", fa = "fa", plot = FALSE)
+efa <- fa(items, nfactors = 4, rotate = "oblimin", fm = "ml")
+model_parameters(efa, sort = TRUE, threshold = "max")
+efa$Phi                                       # Faktorkorrelationen
+
+# Umpolen auf 1–7: Minimum + Maximum − x
+d |> mutate(peou_3 = 8 - peou_3)
+datawizard::reverse_scale(d$peou_3, range = c(1, 7))
+```

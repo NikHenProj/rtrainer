@@ -1,0 +1,79 @@
+id: sc-i-reverse-debug
+lesson: scales-intermediate
+order: 4
+title:
+  de: Umgepolt, aber mit dem falschen Bereich
+  en: Reversed, but with the wrong range
+kind: debug
+required: false
+packages: [dplyr]
+data: [acceptance]
+setup: |
+  library(dplyr)
+prompt:
+  de: |
+    Gesucht sind Mittelwert `M` und Standardabweichung `SD` des Skalenwerts
+    Bedienbarkeit (Mittel aus `peou_1` bis `peou_4`, Antwortskala 1–7, `peou_3`
+    negativ formuliert), beide auf 2 Stellen gerundet.
+
+    Der Code stammt aus einem SUS-Skript und läuft ohne Fehler. α der Skala ist
+    damit auch korrekt (.84). Trotzdem ist ein Wert falsch. Repariere den Code.
+  en: |
+    The task is the mean `M` and standard deviation `SD` of the ease-of-use score
+    (mean of `peou_1` to `peou_4`, response scale 1–7, `peou_3` negatively
+    worded), both rounded to 2 decimals.
+
+    The code comes from a SUS script and runs without errors. α of the scale is
+    correct with it, too (.84). Still, one value is wrong. Fix the code.
+starter: |
+  acceptance |>
+    mutate(peou_3 = 6 - peou_3) |>
+    mutate(peou = rowMeans(pick(starts_with("peou_")))) |>
+    summarise(M = round(mean(peou), 2), SD = round(sd(peou), 2))
+solution: |
+  acceptance |>
+    mutate(peou_3 = 8 - peou_3) |>
+    mutate(peou = rowMeans(pick(starts_with("peou_")))) |>
+    summarise(M = round(mean(peou), 2), SD = round(sd(peou), 2))
+hints:
+  - de: "Was wird aus einer 1 und aus einer 7, wenn du `6 - x` rechnest? Liegen die Werte noch auf der Skala 1–7?"
+    en: "What do a 1 and a 7 become when you compute `6 - x`? Are the values still on the 1–7 scale?"
+  - de: "Umpolen heißt: kleinster plus größter Skalenwert minus x."
+    en: "Reversing means: smallest plus largest scale value minus x."
+  - de: "Auf einer 1–7-Skala ist das `8 - peou_3`."
+    en: "On a 1–7 scale that is `8 - peou_3`."
+explanation:
+  de: |
+    `6 - x` passt zu einer 1–5-Skala (1 + 5). Auf 1–7 macht es aus 1 eine 5 und
+    aus 7 eine −1: Das Item ist zwar richtig gepolt, aber um 2 Punkte verschoben.
+    Gemittelt über vier Items sinkt der Skalenwert um 0.5 (M = 3.57 statt 4.07).
+    Tückisch: SD, Korrelationen und α ändern sich durch eine Verschiebung nicht,
+    deshalb fällt der Fehler bei der Reliabilität nicht auf, sondern erst bei
+    Mittelwerten, Vergleichen mit Normwerten oder Mittelpunkt-Tests. Sicherer ist
+    `datawizard::reverse_scale(peou_3, range = c(1, 7))` mit ausdrücklichem
+    Bereich; ohne `range` nimmt es den *beobachteten* Bereich, der bei kleinen
+    Stichproben kleiner sein kann. Prüfe nach dem Umpolen `range()` des Items.
+  en: |
+    `6 - x` fits a 1–5 scale (1 + 5). On 1–7 it turns 1 into 5 and 7 into −1: the
+    item is keyed correctly, but shifted by 2 points. Averaged over four items,
+    the scale score drops by 0.5 (M = 3.57 instead of 4.07). The catch: SD,
+    correlations and α do not change with a shift, so the error does not show up
+    in the reliability, only in means, comparisons with norms or midpoint tests.
+    Safer is `datawizard::reverse_scale(peou_3, range = c(1, 7))` with an
+    explicit range; without `range` it uses the *observed* range, which can be
+    smaller in small samples. Check `range()` of the item after reversing.
+misconception:
+  de: "Umpolen ist immer `6 - x`; wenn α stimmt, stimmt auch der Skalenwert."
+  en: "Reversing is always `6 - x`; if α is right, the scale score is right too."
+check:
+  type: value
+  ignore_col_order: false
+common_mistakes:
+  - pattern: "7\\s*-\\s*peou_3"
+    message:
+      de: "`7 - x` macht aus 7 eine 0. Umpolen heißt Minimum + Maximum − x, also `8 - x` auf einer 1–7-Skala."
+      en: "`7 - x` turns 7 into 0. Reversing means minimum + maximum − x, i.e. `8 - x` on a 1–7 scale."
+  - pattern: "reverse_scale\\(\\s*peou_3\\s*\\)"
+    message:
+      de: "Ohne `range` nimmt `reverse_scale()` den beobachteten Bereich. Gib `range = c(1, 7)` an, damit das Ergebnis nicht von der Stichprobe abhängt."
+      en: "Without `range`, `reverse_scale()` uses the observed range. Pass `range = c(1, 7)` so the result does not depend on the sample."

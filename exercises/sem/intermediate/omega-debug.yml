@@ -1,0 +1,86 @@
+id: sm-i-omega-debug
+lesson: sem-intermediate
+order: 4
+title:
+  de: Omega aus dem Modell ist zu niedrig
+  en: Omega from the model is too low
+kind: debug
+required: false
+packages: [dplyr, lavaan, semTools]
+data: [acceptance]
+setup: |
+  library(dplyr)
+  library(lavaan)
+  library(semTools)
+  model <- "
+    pu =~ pu_1 + pu_2 + pu_3 + pu_4 + pu_5
+    peou =~ peou_1 + peou_2 + peou_3 + peou_4
+    trust =~ trust_1 + trust_2 + trust_3 + trust_4 + trust_5
+    bi =~ bi_1 + bi_2 + bi_3 + bi_4
+  "
+prompt:
+  de: |
+    Der Code berechnet ω für jede Skala aus dem Messmodell (`semTools::compRelSEM()`).
+    Bedienbarkeit (ω = .61) und Vertrauen (ω = .75) fallen auffällig ab, obwohl
+    alle ihre Items dem Betrag nach mit über .70 laden.
+
+    Finde die Ursache und repariere den Code. Das Ergebnis bleibt der gerundete
+    Vektor mit vier Werten (`pu`, `peou`, `trust`, `bi`). `model` ist im Setup
+    definiert.
+  en: |
+    The code computes ω for each scale from the measurement model
+    (`semTools::compRelSEM()`). Ease of use (ω = .61) and trust (ω = .75) are
+    strikingly low, although all their items load above .70 in absolute value.
+
+    Find the cause and fix the code. The result stays the rounded vector with
+    four values (`pu`, `peou`, `trust`, `bi`). `model` is defined in the setup.
+starter: |
+  fit <- cfa(model, data = acceptance)
+  round(unlist(compRelSEM(fit)), 2)
+solution: |
+  reversed <- acceptance |>
+    mutate(across(c(peou_3, trust_4), \(x) 8 - x))
+  fit <- cfa(model, data = reversed)
+  round(unlist(compRelSEM(fit)), 2)
+hints:
+  - de: "Welche beiden Skalen sind betroffen, und was haben sie gemeinsam?"
+    en: "Which two scales are affected, and what do they have in common?"
+  - de: "ω aus dem Modell gilt für den *Summenwert* der Items. Was passiert mit einer Summe, wenn ein Item negativ lädt?"
+    en: "ω from the model applies to the *sum score* of the items. What happens to a sum when one item loads negatively?"
+  - de: "Pole `peou_3` und `trust_4` vor dem Schätzen um (`8 - x`, Skala 1–7) und schätze das Modell neu."
+    en: "Reverse `peou_3` and `trust_4` before fitting (`8 - x`, scale 1–7) and fit the model again."
+explanation:
+  de: |
+    `compRelSEM()` berechnet die Reliabilität des *ungewichteten Summenwerts*
+    aller Items eines Faktors. Ein nicht umgepoltes Item lädt negativ und zieht
+    die Summe in die Gegenrichtung: Wahre Varianz hebt sich teilweise auf, ω sinkt.
+    Für Fit und Ladungen ist die Polung egal, für ω und Summenwerte nicht. Nach
+    dem Umpolen: pu .81, peou .85, trust .88, bi .88; ω aus
+    `psych::reliability()` (.83–.90) liegt etwas höher, weil es auf einer
+    anderen Faktorlösung beruht. Merke: Erst umpolen, dann alles, was auf Summen
+    beruht (Skalenwerte, α, ω). Bericht: „Die Skalen waren reliabel
+    (ω = .81–.88, aus dem CFA-Modell).“
+  en: |
+    `compRelSEM()` computes the reliability of the *unweighted sum score* of all
+    items of a factor. An unreversed item loads negatively and pulls the sum in
+    the opposite direction: true variance partly cancels out, ω drops. For fit
+    and loadings, the keying does not matter; for ω and sum scores it does.
+    After reversing: pu .81, peou .85, trust .88, bi .88; ω from
+    `psych::reliability()` (.83–.90) is slightly higher because it rests on
+    a different factor solution. Remember: reverse first, then everything based on
+    sums (scale scores, α, ω). Report: "The scales were reliable (ω = .81–.88,
+    from the CFA model)."
+misconception:
+  de: "Weil die CFA mit negativen Ladungen umgehen kann, muss man für ω aus dem Modell nicht umpolen."
+  en: "Because the CFA can handle negative loadings, you do not need to reverse items for ω from the model."
+check:
+  type: value
+common_mistakes:
+  - pattern: "6\\s*-\\s*(peou_3|trust_4|x)\\b"
+    message:
+      de: "Die Skala geht von 1 bis 7: umpolen mit `8 - x`."
+      en: "The scale goes from 1 to 7: reverse with `8 - x`."
+  - pattern: "^(?![\\s\\S]*trust_4)[\\s\\S]*peou_3"
+    message:
+      de: "Auch die Vertrauensskala hat ein negativ formuliertes Item: `trust_4`."
+      en: "The trust scale has a negatively worded item, too: `trust_4`."
