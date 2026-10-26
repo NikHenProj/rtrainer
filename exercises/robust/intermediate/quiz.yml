@@ -1,0 +1,134 @@
+# Knowledge check: passed at >= `pass` share of correctly answered questions.
+lesson: robust-intermediate
+pass: 0.8
+questions:
+  - id: rb-i-q-which-test
+    prompt:
+      de: "Vier Gestaltungsvarianten werden von vier verschiedenen Gruppen (je 20 Personen) auf einer 7-stufigen Skala bewertet. Welcher Rangtest passt?"
+      en: "Four design variants are rated on a 7-point scale by four different groups (20 people each). Which rank test fits?"
+    options:
+      - text:
+          de: "Kruskal-Wallis (`kruskal_test()`), Effektgröße ε² bzw. η²[H] (`kruskal_effsize()`), danach Paarvergleiche mit Holm."
+          en: "Kruskal-Wallis (`kruskal_test()`), effect size ε² or η²[H] (`kruskal_effsize()`), then pairwise comparisons with Holm."
+        correct: true
+        explain:
+          de: "Richtig: unabhängige Gruppen, mehr als zwei. Für Paarvergleiche `dunn_test()` oder `wilcox_test(p.adjust.method = \"holm\")`."
+          en: "Right: independent groups, more than two. For pairwise comparisons `dunn_test()` or `wilcox_test(p.adjust.method = \"holm\")`."
+      - text:
+          de: "Friedman-Test, weil es mehr als zwei Bedingungen sind."
+          en: "Friedman test, because there are more than two conditions."
+        correct: false
+        explain:
+          de: "Friedman ist für Messwiederholung (dieselben Personen in allen Bedingungen). Hier sind die Gruppen unabhängig."
+          en: "Friedman is for repeated measures (the same people in all conditions). Here the groups are independent."
+      - text:
+          de: "Mehrere Mann-Whitney-Tests ohne Korrektur, weil Rangtests kein multiples Testen kennen."
+          en: "Several Mann-Whitney tests without correction, because rank tests are not affected by multiple testing."
+        correct: false
+        explain:
+          de: "Auch Rangtests häufen den α-Fehler an. Erst der Gesamttest, dann korrigierte Paarvergleiche."
+          en: "Rank tests also accumulate the α error. First the omnibus test, then corrected pairwise comparisons."
+  - id: rb-i-q-medians
+    prompt:
+      de: "Ein Mann-Whitney-Test ergibt p = .002, die Mediane beider Gruppen sind aber gleich (je 4). Wie ist das möglich?"
+      en: "A Mann-Whitney test gives p = .002, but the medians of both groups are equal (4 each). How is that possible?"
+    options:
+      - text:
+          de: "Der Test vergleicht, ob Werte der einen Gruppe systematisch größer sind (Rangsummen), nicht die Mediane; die Verteilungen unterscheiden sich trotz gleichem Median."
+          en: "The test compares whether values of one group are systematically larger (rank sums), not the medians; the distributions differ despite equal medians."
+        correct: true
+        explain:
+          de: "Genau. Nur bei gleicher Verteilungsform wird der U-Test zum Medianvergleich. Berichte deshalb die Effektgröße (r oder Rang-biseriale Korrelation)."
+          en: "Exactly. Only with distributions of the same shape does the U test become a comparison of medians. Therefore report the effect size (r or rank-biserial correlation)."
+      - text:
+          de: "Das ist ein Rechenfehler; bei gleichen Medianen muss p = 1 sein."
+          en: "That is a calculation error; with equal medians p must be 1."
+        correct: false
+        explain:
+          de: "Nein, das kommt bei ordinalen Skalen mit vielen Bindungen häufig vor."
+          en: "No, this happens often with ordinal scales and many ties."
+      - text:
+          de: "Der Test hat die Mittelwerte verglichen."
+          en: "The test compared the means."
+        correct: false
+        explain:
+          de: "Der U-Test nutzt nur Ränge, keine Mittelwerte der Rohwerte."
+          en: "The U test uses only ranks, not means of the raw values."
+  - id: rb-i-q-trimmed
+    prompt:
+      de: "Was macht der Yuen-Test mit 20 % Trimmung?"
+      en: "What does Yuen's test with 20 % trimming do?"
+    options:
+      - text:
+          de: "Er vergleicht die Mittel der mittleren 60 % jeder Gruppe und schätzt den Standardfehler aus winsorisierten Varianzen."
+          en: "It compares the means of the middle 60 % of each group and estimates the standard error from winsorised variances."
+        correct: true
+        explain:
+          de: "Richtig. 20 % an jedem Ende fallen aus dem Mittel; die Streuung geht über die Winsorisierung trotzdem ein. Bei Normalverteilung verliert er wenig Power, bei schiefen Daten gewinnt er viel."
+          en: "Right. 20 % at each end drop out of the mean; the spread still enters through winsorising. Under normality it loses little power, with skewed data it gains a lot."
+      - text:
+          de: "Er löscht 20 % der Personen als Ausreißer und rechnet dann einen normalen t-Test."
+          en: "It deletes 20 % of the participants as outliers and then runs an ordinary t-test."
+        correct: false
+        explain:
+          de: "Ein t-Test auf den gekürzten Daten hätte zu kleine Standardfehler. Yuen korrigiert das."
+          en: "A t-test on the shortened data would have standard errors that are too small. Yuen corrects for that."
+      - text:
+          de: "Er vergleicht Ränge wie der Mann-Whitney-Test."
+          en: "It compares ranks like the Mann-Whitney test."
+        correct: false
+        explain:
+          de: "Nein, er bleibt auf der Skala der Daten: Die Differenz ist in Skalenpunkten deutbar, mit KI."
+          en: "No, it stays on the scale of the data: the difference can be read in scale points, with a CI."
+  - id: rb-i-q-paired
+    prompt:
+      de: "Dieselben 30 Personen bewerten zwei Prototypen (SEQ, 1–7). Welcher Aufruf passt?"
+      en: "The same 30 participants rate two prototypes (SEQ, 1–7). Which call fits?"
+    options:
+      - text:
+          de: "`wilcox_test(d, seq ~ prototype, paired = TRUE)` auf den Personenmitteln, nach `participant` sortiert und vollständig."
+          en: "`wilcox_test(d, seq ~ prototype, paired = TRUE)` on the participant means, sorted by `participant` and complete."
+        correct: true
+        explain:
+          de: "Ja: Vorzeichen-Rang-Test für abhängige Messungen. rstatix paart über die Reihenfolge der Zeilen, deshalb sortiert und ohne Lücken."
+          en: "Yes: signed-rank test for dependent measurements. rstatix pairs by row order, hence sorted and without gaps."
+      - text:
+          de: "`wilcox_test(d, seq ~ prototype)`, weil Rangtests nicht zwischen gepaart und unabhängig unterscheiden."
+          en: "`wilcox_test(d, seq ~ prototype)`, because rank tests do not distinguish paired from independent."
+        correct: false
+        explain:
+          de: "Doch: Ohne `paired = TRUE` rechnet R den U-Test für unabhängige Gruppen und verschenkt die Paarung."
+          en: "They do: without `paired = TRUE`, R runs the U test for independent groups and wastes the pairing."
+      - text:
+          de: "`kruskal_test(d, seq ~ prototype)`."
+          en: "`kruskal_test(d, seq ~ prototype)`."
+        correct: false
+        explain:
+          de: "Kruskal-Wallis ist für unabhängige Gruppen."
+          en: "Kruskal-Wallis is for independent groups."
+  - id: rb-i-q-when
+    prompt:
+      de: "Wann ist eine robuste oder nichtparametrische Analyse die bessere Wahl?"
+      en: "When is a robust or nonparametric analysis the better choice?"
+    options:
+      - text:
+          de: "Bei ordinalen Daten, deutlicher Schiefe oder Ausreißern, vor allem in kleinen Stichproben; am besten vorab im Analyseplan festgelegt."
+          en: "With ordinal data, clear skewness or outliers, especially in small samples; ideally fixed in advance in the analysis plan."
+        correct: true
+        explain:
+          de: "Richtig. Nicht erst den t-Test rechnen und bei p > .05 auf den Rangtest wechseln: Das ist eine versteckte Mehrfachtestung."
+          en: "Right. Do not run the t-test first and switch to the rank test when p > .05: that is hidden multiple testing."
+      - text:
+          de: "Immer dann, wenn der Shapiro-Wilk-Test auf den Rohdaten p < .05 ergibt."
+          en: "Whenever the Shapiro-Wilk test on the raw data gives p < .05."
+        correct: false
+        explain:
+          de: "Normalverteilt sein sollen die Residuen, nicht die Rohdaten; und der Test hat bei kleinen n kaum Power, bei großen schlägt er bei Kleinigkeiten an."
+          en: "The residuals should be normal, not the raw data; and the test has little power at small n and flags trivial deviations at large n."
+      - text:
+          de: "Wenn der t-Test nicht signifikant ist, weil Rangtests mehr Power haben."
+          en: "When the t-test is not significant, because rank tests have more power."
+        correct: false
+        explain:
+          de: "Das ist p-Hacking. Bei normalverteilten Daten haben Rangtests sogar etwas weniger Power."
+          en: "That is p-hacking. With normal data, rank tests even have slightly less power."

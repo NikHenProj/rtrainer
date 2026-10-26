@@ -1,6 +1,6 @@
 # Triage der 65 alten Aufgaben (freigegeben)
 
-Stand 2026-10-26. Quelle: `legacy/exercises/` (Tag `v0-shiny`). Migriert: 34 von 54 (markiert).
+Stand 2026-10-26. Quelle: `legacy/exercises/` (Tag `v0-shiny`). Migriert: 35 von 54 (markiert).
 
 **Freigegeben von Nick am 2026-10-26: 54 behalten, 11 streichen.** 18 der behaltenen gehören in den Beginner-Pfad (M8), markiert mit **B**.
 
@@ -49,7 +49,7 @@ Stand 2026-10-26. Quelle: `legacy/exercises/` (Tag `v0-shiny`). Migriert: 34 von
 | 32 | 06-stats/correlation | write | regression-beginner **B** | `correlation::correlation()` statt `cor.test()`; Interpretation mit KI. | **Migriert (M8.2c).**
 | 33 | 06-stats/describe-person | write | descriptives-beginner **B** | Zwei Stufen mitteln (Person, dann Bedingung); Abgrenzung zu `gc-b-describe` (dort schon aggregiert). | **Migriert (M8.2b).**
 | 34 | 06-stats/lm-centered | write | regression-beginner **B** | `parameters::model_parameters()`; zentrieren mit `datawizard::center()` als Variante. | **Migriert (M8.2c).**
-| 35 | 06-stats/mannwhitney | write | robust-intermediate | `rstatix::wilcox_test()` + `wilcox_effsize()`; englische Stufen. |
+| 35 | 06-stats/mannwhitney | write | robust-intermediate | `rstatix::wilcox_test()` + `wilcox_effsize()`; englische Stufen. | **Migriert (M9 P4, `rb-i-mann-whitney`: rstatix `wilcox_test()` + `wilcox_effsize()`, Stufen `female`/`male`).**
 | 36 | 06-stats/padjust-predict | predict | group-comparisons-intermediate | Unverändert (Holm). | **Migriert (M9 P3, `gc-i-holm-predict`, Zusatzübung).**
 | 37 | 06-stats/paired-debug | debug | group-comparisons-intermediate | Gepaarter Vergleich; ergänzt `gc-b-pseudoreplication` (dort: Durchgänge als unabhängig gezählt). | **Migriert (M9 P3, `gc-i-paired-debug`).**
 | 38 | 06-stats/tukey | complete | group-comparisons-intermediate | `emmeans`/`modelbased::estimate_contrasts()` statt `TukeyHSD()`. | **Migriert (M9 P3, `gc-i-contrasts`: `emmeans()` + `pairs(adjust = "holm")` an der gemischten ANOVA).**

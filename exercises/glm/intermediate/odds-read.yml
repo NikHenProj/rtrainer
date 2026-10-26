@@ -1,0 +1,126 @@
+id: gl-i-odds-read
+lesson: glm-intermediate
+order: 4
+title:
+  de: Odds Ratios und Prozentpunkte deuten
+  en: Interpreting odds ratios and percentage points
+kind: interpret
+required: false
+packages: []
+data: []
+setup: ""
+prompt:
+  de: |
+    Logistische Regression für den Aufgabenerfolg, `success ~ prototype + expertise`,
+    und die Umrechnung mit marginaleffects (gekürzt):
+
+    ```
+    > model_parameters(fit, exponentiate = TRUE)
+    Parameter          | Odds Ratio |       95% CI |      p
+    (Intercept)        |       2.62 | [1.54, 4.61] | < .001
+    prototype [B]      |       2.19 | [1.00, 5.02] | 0.054
+    prototype [C]      |       0.69 | [0.35, 1.36] | 0.288
+    expertise [expert] |       1.99 | [1.10, 3.67] | 0.025
+
+    > avg_predictions(fit, by = "prototype")
+     prototype Estimate  2.5 % 97.5 %
+             A    0.781  0.699  0.863
+             B    0.885  0.822  0.949
+             C    0.717  0.626  0.808
+
+    > avg_comparisons(fit, variables = "prototype", vcov = ~participant)
+     Contrast Estimate Pr(>|z|)   2.5 % 97.5 %
+        B - A   0.1038   0.0553 -0.0024 0.2100
+        C - A  -0.0667   0.3854 -0.2173 0.0839
+    ```
+
+    Welche Aussagen stimmen?
+
+    1. Die Chance (Odds) auf Erfolg ist mit B etwa 2.2-mal so hoch wie mit A, bei gleicher Erfahrung.
+    2. Mit B ist die Erfolgswahrscheinlichkeit 2.19-mal so hoch wie mit A.
+    3. Auf der Wahrscheinlichkeitsskala löst B im Mittel rund 10 Prozentpunkte mehr Aufgaben; mit den Daten vereinbar sind Effekte von etwa 0 bis 21 Prozentpunkten.
+    4. Weil p = .054 > .05, sind A und B gleich gut.
+
+    Gib die Nummern der richtigen Aussagen aufsteigend als Vektor ein, z. B. `c(1, 2)`.
+  en: |
+    Logistic regression for task success, `success ~ prototype + expertise`,
+    and the translation with marginaleffects (shortened):
+
+    ```
+    > model_parameters(fit, exponentiate = TRUE)
+    Parameter          | Odds Ratio |       95% CI |      p
+    (Intercept)        |       2.62 | [1.54, 4.61] | < .001
+    prototype [B]      |       2.19 | [1.00, 5.02] | 0.054
+    prototype [C]      |       0.69 | [0.35, 1.36] | 0.288
+    expertise [expert] |       1.99 | [1.10, 3.67] | 0.025
+
+    > avg_predictions(fit, by = "prototype")
+     prototype Estimate  2.5 % 97.5 %
+             A    0.781  0.699  0.863
+             B    0.885  0.822  0.949
+             C    0.717  0.626  0.808
+
+    > avg_comparisons(fit, variables = "prototype", vcov = ~participant)
+     Contrast Estimate Pr(>|z|)   2.5 % 97.5 %
+        B - A   0.1038   0.0553 -0.0024 0.2100
+        C - A  -0.0667   0.3854 -0.2173 0.0839
+    ```
+
+    Which statements are true?
+
+    1. The odds of success are about 2.2 times as high with B as with A, at equal experience.
+    2. With B, the probability of success is 2.19 times as high as with A.
+    3. On the probability scale, B solves about 10 percentage points more tasks on average; effects from about 0 to 21 percentage points are compatible with the data.
+    4. Because p = .054 > .05, A and B are equally good.
+
+    Enter the numbers of the true statements in ascending order as a vector, e.g. `c(1, 2)`.
+starter: |
+  # Nummern der richtigen Aussagen / numbers of the true statements, z. B. c(1, 2)
+solution: |
+  c(1, 3)
+hints:
+  - de: "Odds sind Erfolg : Misserfolg (bei 78 % Erfolg 0.78 / 0.22 ≈ 3.6), keine Wahrscheinlichkeiten."
+    en: "Odds are success : failure (at 78 % success 0.78 / 0.22 ≈ 3.6), not probabilities."
+  - de: "Vergleiche die vorhergesagten Erfolgsquoten von A und B: Wie groß ist ihr Verhältnis wirklich?"
+    en: "Compare the predicted success rates of A and B: how large is their ratio really?"
+  - de: "0.885 / 0.781 ≈ 1.13. Ein nicht signifikantes Ergebnis belegt keine Gleichheit. Zwei Aussagen stimmen."
+    en: "0.885 / 0.781 ≈ 1.13. A non-significant result does not prove equality. Two statements are true."
+explanation:
+  de: |
+    Richtig sind 1 und 3. Ein Odds Ratio vergleicht Chancen (Erfolg :
+    Misserfolg), nicht Wahrscheinlichkeiten. Bei hohen Erfolgsquoten liegen
+    beide weit auseinander: Die Erfolgswahrscheinlichkeit steigt von 78 % auf
+    89 %, also um den Faktor 1.13 bzw. um 10 Prozentpunkte, obwohl OR = 2.19
+    (Aussage 2 falsch). Nur bei seltenen Ereignissen (< 10 %) sind OR und
+    Wahrscheinlichkeitsverhältnis ähnlich. Aussage 4 ist falsch: Das KI reicht
+    von etwa 0 bis +21 Prozentpunkten; ein Nutzen von B ist gut möglich, nur
+    nicht sicher belegt. Für das Produktteam: „B löst voraussichtlich etwa 10
+    Prozentpunkte mehr Aufgaben (KI 0 bis 21); für eine sichere Aussage
+    brauchen wir mehr Personen.“ Gleichwertigkeit prüfst du mit einem
+    Äquivalenztest (`parameters::equivalence_test()`), nicht über p > .05.
+  en: |
+    Statements 1 and 3 are true. An odds ratio compares odds (success :
+    failure), not probabilities. With high success rates the two are far
+    apart: the probability of success rises from 78 % to 89 %, i.e. by a
+    factor of 1.13 or by 10 percentage points, although OR = 2.19 (statement 2
+    false). Only for rare events (< 10 %) are OR and probability ratio
+    similar. Statement 4 is false: the CI ranges from about 0 to +21
+    percentage points; a benefit of B is quite possible, just not established
+    with certainty. For the product team: "B probably solves about 10
+    percentage points more tasks (CI 0 to 21); a firm statement needs more
+    participants." Test equivalence with an equivalence test
+    (`parameters::equivalence_test()`), not via p > .05.
+misconception:
+  de: "Ein Odds Ratio ist ein Verhältnis von Wahrscheinlichkeiten, und p > .05 heißt „kein Unterschied“."
+  en: "An odds ratio is a ratio of probabilities, and p > .05 means \"no difference\"."
+check:
+  type: value
+common_mistakes:
+  - pattern: "^[\\s\\S]*?c\\([^)]*2[^)]*\\)\\s*$"
+    message:
+      de: "Aussage 2 stimmt nicht: Die Wahrscheinlichkeit steigt von 0.78 auf 0.89, das ist Faktor 1.13. 2.19 ist das Verhältnis der Odds."
+      en: "Statement 2 is false: the probability rises from 0.78 to 0.89, a factor of 1.13. 2.19 is the ratio of the odds."
+  - pattern: "^[\\s\\S]*?c\\([^)]*4\\s*\\)\\s*$"
+    message:
+      de: "Aussage 4 stimmt nicht: Ein nicht signifikantes Ergebnis belegt keine Gleichheit; das KI reicht bis +21 Prozentpunkte."
+      en: "Statement 4 is false: a non-significant result does not prove equality; the CI reaches up to +21 percentage points."

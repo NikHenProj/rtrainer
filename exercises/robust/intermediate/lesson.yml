@@ -1,0 +1,19 @@
+# Lesson metadata; exercises are the other *.yml files in this folder
+# (sorted by `order`), the knowledge check is quiz.yml.
+lesson: robust-intermediate
+minutes: 50
+prerequisites: [group-comparisons-beginner]
+langs: [de]
+packages: [dplyr, rstatix, effectsize, WRS2]
+data: [driving_sim, survey, usability]
+goals:
+  de:
+    - Rangtests (Mann-Whitney, Wilcoxon, Kruskal-Wallis, Friedman) mit rstatix rechnen und mit Effektgröße berichten
+    - Getrimmte Mittel mit WRS2 vergleichen (Yuen-Test) und das Ergebnis deuten
+    - Wissen, was Rangtests vergleichen (Verteilungen, nicht Mediane) und wann sie nötig sind
+    - Rangtests mit Messwiederholung auf vollständige Personen und mit Holm-Korrektur rechnen
+  en:
+    - Run rank tests (Mann-Whitney, Wilcoxon, Kruskal-Wallis, Friedman) with rstatix and report them with an effect size
+    - Compare trimmed means with WRS2 (Yuen's test) and interpret the result
+    - Know what rank tests compare (distributions, not medians) and when they are needed
+    - Run repeated-measures rank tests on complete participants and with Holm correction

@@ -1,0 +1,134 @@
+# Knowledge check: passed at >= `pass` share of correctly answered questions.
+lesson: regression-intermediate
+pass: 0.8
+questions:
+  - id: rg-i-q-partial
+    prompt:
+      de: "In `lm(bi ~ age + experience + pu + peou + trust)` hat `pu` den Koeffizienten 0.27. Was bedeutet das?"
+      en: "In `lm(bi ~ age + experience + pu + peou + trust)`, `pu` has the coefficient 0.27. What does that mean?"
+    options:
+      - text:
+          de: "Zwei Personen, die sich um einen Punkt Nützlichkeit unterscheiden, aber gleich alt, gleich erfahren und bei Bedienbarkeit und Vertrauen gleich sind, unterscheiden sich im Mittel um 0.27 Punkte Absicht."
+          en: "Two people who differ by one point in usefulness but are equal in age, experience, ease of use and trust differ on average by 0.27 points of intention."
+        correct: true
+        explain:
+          de: "Richtig: ein Teileffekt, bei Konstanthalten der übrigen Prädiktoren im Modell."
+          en: "Right: a partial effect, holding the other predictors in the model constant."
+      - text:
+          de: "Nützlichkeit und Absicht korrelieren zu .27."
+          en: "Usefulness and intention correlate at .27."
+        correct: false
+        explain:
+          de: "Die einfache Korrelation ist .37; der Koeffizient ist unstandardisiert und um die anderen Prädiktoren bereinigt."
+          en: "The simple correlation is .37; the coefficient is unstandardised and adjusted for the other predictors."
+      - text:
+          de: "Nützlichkeit erklärt 27 % der Varianz der Absicht."
+          en: "Usefulness explains 27 % of the variance in intention."
+        correct: false
+        explain:
+          de: "Ein Koeffizient ist kein Varianzanteil. Das ganze Modell erklärt R² = .27."
+          en: "A coefficient is not a share of variance. The whole model explains R² = .27."
+  - id: rg-i-q-delta-r2
+    prompt:
+      de: "Modell 1 (Alter, Erfahrung) hat R² = .056, Modell 2 (zusätzlich drei Skalen) R² = .268. Wie berichtest du den Zugewinn?"
+      en: "Model 1 (age, experience) has R² = .056, model 2 (three scales added) R² = .268. How do you report the gain?"
+    options:
+      - text:
+          de: "ΔR² = .21 mit dem F-Test aus `anova(m1, m2)`, hier F(3, 294) = 28.36, p < .001."
+          en: "ΔR² = .21 with the F test from `anova(m1, m2)`, here F(3, 294) = 28.36, p < .001."
+        correct: true
+        explain:
+          de: "Ja: Zugewinn als Differenz der R² und der Test, ob er größer als 0 ist."
+          en: "Yes: the gain as the difference of the R² values and the test whether it is larger than 0."
+      - text:
+          de: "Nur das R² von Modell 2, weil es das beste Modell ist."
+          en: "Only the R² of model 2, because it is the best model."
+        correct: false
+        explain:
+          de: "Die Frage war, was die Skalen über Alter und Erfahrung hinaus erklären; dafür braucht es den Vergleich."
+          en: "The question was what the scales explain beyond age and experience; that needs the comparison."
+      - text:
+          de: "Die Summe der p-Werte der drei neuen Koeffizienten."
+          en: "The sum of the p-values of the three new coefficients."
+        correct: false
+        explain:
+          de: "p-Werte lassen sich nicht addieren. Der F-Test prüft die drei Prädiktoren gemeinsam."
+          en: "p-values cannot be added. The F test checks the three predictors jointly."
+  - id: rg-i-q-centre
+    prompt:
+      de: "Warum zentriert man Prädiktoren vor einer Interaktion?"
+      en: "Why do you centre predictors before an interaction?"
+    options:
+      - text:
+          de: "Damit die Haupteffekte für einen sinnvollen Wert des anderen Prädiktors gelten (den Mittelwert) statt für 0, und damit die Prädiktoren nicht mit dem Produktterm korrelieren."
+          en: "So that the main effects apply at a sensible value of the other predictor (the mean) instead of 0, and so the predictors do not correlate with the product term."
+        correct: true
+        explain:
+          de: "Richtig. Interaktion, Vorhersagen und R² bleiben gleich; nur die Bedeutung der Haupteffekte ändert sich."
+          en: "Right. The interaction, predictions and R² stay the same; only the meaning of the main effects changes."
+      - text:
+          de: "Weil die Interaktion sonst nicht signifikant wird."
+          en: "Because otherwise the interaction does not become significant."
+        correct: false
+        explain:
+          de: "Die Interaktion hat zentriert und unzentriert dasselbe b und denselben p-Wert."
+          en: "The interaction has the same b and the same p-value centred and uncentred."
+      - text:
+          de: "Weil `lm()` nur zentrierte Prädiktoren verarbeiten kann."
+          en: "Because `lm()` can only handle centred predictors."
+        correct: false
+        explain:
+          de: "`lm()` rechnet mit beliebigen Werten; es geht um die Deutung."
+          en: "`lm()` works with any values; it is about interpretation."
+  - id: rg-i-q-hetero
+    prompt:
+      de: "`check_heteroscedasticity(fit)` meldet „Heteroscedasticity (non-constant error variance) detected (p = .003)“. Was ist ein sinnvoller nächster Schritt?"
+      en: "`check_heteroscedasticity(fit)` reports \"Heteroscedasticity (non-constant error variance) detected (p = .003)\". What is a sensible next step?"
+    options:
+      - text:
+          de: "Residuen gegen vorhergesagte Werte ansehen und die Koeffizienten mit robusten Standardfehlern absichern, z. B. `model_parameters(fit, vcov = \"HC3\")`."
+          en: "Look at residuals against fitted values and back up the coefficients with robust standard errors, e.g. `model_parameters(fit, vcov = \"HC3\")`."
+        correct: true
+        explain:
+          de: "Genau. Ungleiche Fehlervarianz verzerrt die Standardfehler, nicht die Koeffizienten. HC3 korrigiert die SE."
+          en: "Exactly. Unequal error variance biases the standard errors, not the coefficients. HC3 corrects the SEs."
+      - text:
+          de: "Die Personen mit den größten Residuen löschen, bis der Test nicht mehr anschlägt."
+          en: "Delete the people with the largest residuals until the test no longer fires."
+        correct: false
+        explain:
+          de: "Daten nach dem Test zu entfernen, bis er passt, ist nicht zu rechtfertigen."
+          en: "Removing data until the test passes cannot be justified."
+      - text:
+          de: "Nichts, weil heteroskedastische Fehler die Koeffizienten unbrauchbar machen und man das Modell verwerfen muss."
+          en: "Nothing, because heteroscedastic errors make the coefficients useless and the model has to be discarded."
+        correct: false
+        explain:
+          de: "Die Koeffizienten bleiben unverzerrt; nur die Unsicherheit ist falsch geschätzt."
+          en: "The coefficients stay unbiased; only the uncertainty is estimated wrongly."
+  - id: rg-i-q-vif
+    prompt:
+      de: "Im unzentrierten Interaktionsmodell `bi ~ pu * experience` meldet `check_collinearity()` VIF = 14.8 für `pu:experience`. Wie deutest du das?"
+      en: "In the uncentred interaction model `bi ~ pu * experience`, `check_collinearity()` reports VIF = 14.8 for `pu:experience`. How do you interpret that?"
+    options:
+      - text:
+          de: "Das liegt am Produktterm, der mit seinen Bestandteilen korreliert; nach dem Zentrieren sinkt der VIF auf etwa 1, die Interaktion bleibt gleich."
+          en: "It is caused by the product term correlating with its components; after centring the VIF drops to about 1, the interaction stays the same."
+        correct: true
+        explain:
+          de: "Richtig. performance weist selbst darauf hin („Model has interaction terms. VIFs might be inflated.“)."
+          en: "Right. performance points this out itself (\"Model has interaction terms. VIFs might be inflated.\")."
+      - text:
+          de: "Nützlichkeit und Erfahrung messen dasselbe; einer der beiden muss raus."
+          en: "Usefulness and experience measure the same thing; one of them has to go."
+        correct: false
+        explain:
+          de: "Sie korrelieren nur zu .23. Der hohe VIF entsteht durch den Produktterm."
+          en: "They correlate only at .23. The high VIF comes from the product term."
+      - text:
+          de: "Die Interaktion ist dadurch nicht schätzbar und ihr p-Wert ungültig."
+          en: "The interaction therefore cannot be estimated and its p-value is invalid."
+        correct: false
+        explain:
+          de: "Der Test der Interaktion ist von dieser Kollinearität nicht betroffen (zentriert dasselbe p)."
+          en: "The test of the interaction is not affected by this collinearity (same p when centred)."

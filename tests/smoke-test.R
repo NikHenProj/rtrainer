@@ -376,6 +376,39 @@ run_exercise("gc-i-rm-anova", paste(
 checked <- wait_for("!!document.querySelector('#ex-gc-i-rm-anova .exercise-grade.alert-success')", timeout = 90)
 step("group-comparisons-intermediate: afex ANOVA graded correct", !is.na(checked), sprintf("%s s", checked))
 
+# 11. Intermediate P4: load time with rstatix/WRS2 (robust), modelbased
+# (regression) and marginaleffects/sandwich (glm); a WRS2 result, an lm
+# interaction and cluster-robust marginal effects are graded in webR.
+loaded <- wait_lesson("/de/robust-intermediate.html", "rb-i-yuen")
+step("robust-intermediate: webR, rstatix, effectsize and WRS2 ready", !is.na(loaded), sprintf("%s s", loaded))
+run_exercise("rb-i-yuen", paste(
+  "fit <- yuen(tlx_physical ~ interface, data = survey)",
+  "round(c(diff = fit$diff, ci_low = fit$conf.int[1], ci_high = fit$conf.int[2], p = fit$p.value), 3)",
+  sep = "\n"
+))
+checked <- wait_for("!!document.querySelector('#ex-rb-i-yuen .exercise-grade.alert-success')", timeout = 90)
+step("robust-intermediate: Yuen test graded correct", !is.na(checked), sprintf("%s s", checked))
+
+loaded <- wait_lesson("/de/regression-intermediate.html", "rg-i-interaction")
+step("regression-intermediate: webR, parameters, performance and modelbased ready", !is.na(loaded), sprintf("%s s", loaded))
+run_exercise("rg-i-interaction", paste(
+  "tam_c <- tam |> mutate(pu_c = pu - mean(pu), exp_c = experience - mean(experience))",
+  "fit <- lm(bi ~ pu_c * exp_c, data = tam_c)",
+  "model_parameters(fit)",
+  sep = "\n"
+))
+checked <- wait_for("!!document.querySelector('#ex-rg-i-interaction .exercise-grade.alert-success')", timeout = 90)
+step("regression-intermediate: centred interaction graded correct", !is.na(checked), sprintf("%s s", checked))
+
+loaded <- wait_lesson("/de/glm-intermediate.html", "gl-i-comparisons")
+step("glm-intermediate: webR, marginaleffects and sandwich ready", !is.na(loaded), sprintf("%s s", loaded))
+run_exercise("gl-i-comparisons", "avg_comparisons(fit, variables = \"prototype\")")
+hinted <- wait_for("(document.querySelector('#ex-gl-i-comparisons .exercise-grade.alert-danger')?.textContent || '').includes('vcov')", timeout = 90)
+step("glm-intermediate: missing vcov gets the hint", !is.na(hinted))
+run_exercise("gl-i-comparisons", "avg_comparisons(fit, variables = \"prototype\", vcov = ~participant)")
+checked <- wait_for("!!document.querySelector('#ex-gl-i-comparisons .exercise-grade.alert-success')", timeout = 90)
+step("glm-intermediate: cluster-robust comparisons graded correct", !is.na(checked), sprintf("%s s", checked))
+
 goto("/en/index.html")
 Sys.sleep(1)
 beginner <- c(

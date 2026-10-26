@@ -1,0 +1,90 @@
+id: gl-i-comparisons
+lesson: glm-intermediate
+order: 2
+title:
+  de: Prozentpunkte mit marginaleffects
+  en: Percentage points with marginaleffects
+kind: write
+required: true
+packages: [marginaleffects, sandwich]
+data: [usability]
+setup: |
+  library(marginaleffects)
+  fit <- glm(success ~ prototype + expertise, family = binomial, data = usability)
+prompt:
+  de: |
+    `fit` ist das logistische Modell aus der vorigen Übung. Für den Bericht an
+    das Produktteam sind Odds Ratios schwer zu lesen. Um wie viele
+    Prozentpunkte steigt die Erfolgsquote mit B bzw. C gegenüber A, gemittelt
+    über alle Aufgaben und Personen?
+
+    Rechne die Differenzen mit `avg_comparisons()` für die Variable
+    `prototype`. Weil jede Person 12 Aufgaben bearbeitet hat, sollen die
+    Standardfehler nach Person geclustert sein: `vcov = ~participant`. Gib das
+    Ergebnis von `avg_comparisons()` zurück.
+  en: |
+    `fit` is the logistic model from the previous exercise. For the report to
+    the product team, odds ratios are hard to read. By how many percentage
+    points does the success rate rise with B or C compared with A, averaged
+    over all tasks and participants?
+
+    Compute the differences with `avg_comparisons()` for the variable
+    `prototype`. Because each participant worked on 12 tasks, the standard
+    errors should be clustered by participant: `vcov = ~participant`. Return
+    the result of `avg_comparisons()`.
+starter: |
+  exp(coef(fit))
+solution: |
+  avg_comparisons(fit, variables = "prototype", vcov = ~participant)
+hints:
+  - de: "`avg_comparisons(fit, variables = \"prototype\")` sagt für jede Zeile den Erfolg mit A und mit B (bzw. C) vorher und mittelt die Differenzen."
+    en: "`avg_comparisons(fit, variables = \"prototype\")` predicts success with A and with B (or C) for every row and averages the differences."
+  - de: "Cluster-robuste Standardfehler bekommst du mit dem Argument `vcov = ~participant` (braucht das Paket sandwich, hier geladen)."
+    en: "You get cluster-robust standard errors with the argument `vcov = ~participant` (needs the sandwich package, loaded here)."
+  - de: "`avg_comparisons(fit, variables = \"prototype\", vcov = ~participant)`"
+    en: "`avg_comparisons(fit, variables = \"prototype\", vcov = ~participant)`"
+explanation:
+  de: |
+    B − A: +10.4 Prozentpunkte, 95-%-KI [−0.2, 21.0], p = .055; C − A: −6.7
+    [−21.7, 8.4], p = .385. Ohne Clustern wäre das KI für B − A enger
+    ([0.1, 20.7], p = .049) und knapp „signifikant“: Die 12 Aufgaben einer
+    Person sind keine unabhängigen Beobachtungen, und das Modell muss das
+    wissen. `avg_comparisons()` ist eine durchschnittliche marginale
+    Differenz: Für jede Zeile wird der Erfolg mit A und mit B vorhergesagt
+    (alles andere bleibt, wie es ist) und die Differenz gemittelt. So sind
+    Ergebnisse auf der Skala, die das Produktteam versteht. Bericht: „Mit
+    Prototyp B wurden 10.4 Prozentpunkte mehr Aufgaben gelöst als mit A,
+    95-%-KI [−0.2, 21.0] (cluster-robust nach Person), p = .055; der Effekt
+    ist plausibel, aber unsicher.“ Ein Mixed Model mit Zufallseffekten für
+    Personen und Aufgaben (`glmer()`) ist der nächste Schritt.
+  en: |
+    B − A: +10.4 percentage points, 95 % CI [−0.2, 21.0], p = .055; C − A:
+    −6.7 [−21.7, 8.4], p = .385. Without clustering, the CI for B − A would be
+    narrower ([0.1, 20.7], p = .049) and just "significant": the 12 tasks of
+    one participant are not independent observations, and the model must know
+    that. `avg_comparisons()` is an average marginal difference: for every row,
+    success is predicted with A and with B (everything else as it is) and the
+    difference is averaged. That puts results on the scale the product team
+    understands. Report: "With prototype B, 10.4 percentage points more tasks
+    were solved than with A, 95 % CI [−0.2, 21.0] (cluster-robust by
+    participant), p = .055; the effect is plausible but uncertain." A mixed
+    model with random effects for participants and tasks (`glmer()`) is the
+    next step.
+misconception:
+  de: "Odds Ratios und Prozentpunkte sagen dasselbe, und Aufgaben derselben Person sind unabhängige Beobachtungen."
+  en: "Odds ratios and percentage points say the same thing, and tasks of the same participant are independent observations."
+check:
+  type: value
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*vcov)[\\s\\S]*avg_comparisons"
+    message:
+      de: "Ohne `vcov = ~participant` behandelt das Modell die 12 Aufgaben jeder Person als unabhängig; die Standardfehler sind zu klein."
+      en: "Without `vcov = ~participant`, the model treats each participant's 12 tasks as independent; the standard errors are too small."
+  - pattern: "avg_predictions"
+    message:
+      de: "`avg_predictions()` gibt die Erfolgsquote je Prototyp. Gefragt sind die Differenzen zu A: `avg_comparisons()`."
+      en: "`avg_predictions()` gives the success rate per prototype. The task asks for the differences to A: `avg_comparisons()`."
+  - pattern: "comparison\\s*=\\s*\"(ratio|lnor|lnratio)"
+    message:
+      de: "Gefragt sind Differenzen in Prozentpunkten, der Standard von `avg_comparisons()`."
+      en: "The task asks for differences in percentage points, the default of `avg_comparisons()`."

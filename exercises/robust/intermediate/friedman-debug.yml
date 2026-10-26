@@ -1,0 +1,85 @@
+id: rb-i-friedman-debug
+lesson: robust-intermediate
+order: 4
+title:
+  de: Friedman-Test mit unvollständigen Personen
+  en: Friedman test with incomplete participants
+kind: debug
+required: false
+packages: [dplyr, rstatix]
+data: [usability]
+setup: |
+  library(dplyr)
+  library(rstatix)
+  errors_pp <- usability |>
+    summarise(errors = mean(errors), .by = c(participant, prototype))
+prompt:
+  de: |
+    `errors_pp` enthält die mittlere Fehlerzahl pro Person und Prototyp aus dem
+    Usability-Test. Der Friedman-Test im Feld bricht ab mit
+    „not an unreplicated complete block design“.
+
+    Finde die Ursache und repariere den Code: Behalte nur Personen, die alle
+    drei Prototypen bearbeitet haben, und rechne dann den Friedman-Test. Das
+    Ergebnis bleibt die Tabelle von `friedman_test()`.
+  en: |
+    `errors_pp` contains the mean number of errors per participant and
+    prototype from the usability test. The Friedman test in the box stops with
+    "not an unreplicated complete block design".
+
+    Find the cause and fix the code: keep only participants who worked through
+    all three prototypes, then run the Friedman test. The result stays the
+    table from `friedman_test()`.
+starter: |
+  errors_pp |>
+    friedman_test(errors ~ prototype | participant)
+solution: |
+  errors_pp |>
+    filter(n() == 3, .by = participant) |>
+    friedman_test(errors ~ prototype | participant)
+hints:
+  - de: "Der Friedman-Test braucht für jede Person (Block) genau einen Wert pro Prototyp. Zähle mit `count(errors_pp, participant)`, wer weniger als 3 Zeilen hat."
+    en: "The Friedman test needs exactly one value per prototype for every participant (block). Count with `count(errors_pp, participant)` who has fewer than 3 rows."
+  - de: "p07 hat Prototyp C nicht bearbeitet. Mit `filter(n() == 3, .by = participant)` bleiben nur vollständige Personen."
+    en: "p07 did not work through prototype C. `filter(n() == 3, .by = participant)` keeps only complete participants."
+  - de: "`errors_pp |> filter(n() == 3, .by = participant) |> friedman_test(...)`"
+    en: "`errors_pp |> filter(n() == 3, .by = participant) |> friedman_test(...)`"
+explanation:
+  de: |
+    p07 fehlt Prototyp C; der Friedman-Test rangiert die Werte innerhalb jeder
+    Person und braucht deshalb vollständige Blöcke. Ohne p07 bleiben 23
+    Personen: χ²(2) = 9.83, p = .007. Das ist wie bei der ANOVA mit
+    Messwiederholung (afex schließt p07 mit einer Meldung aus), nur dass du es
+    hier selbst tun und im Bericht nennen musst („n = 23; eine Person ohne
+    Prototyp C ausgeschlossen“). `filter(n() == 3, .by = participant)` ist
+    allgemeiner als `filter(participant != "p07")`: Es funktioniert auch, wenn
+    sich die Daten ändern. Den Fehler ignorieren und Werte auffüllen (z. B. mit
+    0 Fehlern) wäre falsch: Ein erfundener Wert ändert die Ränge. Ein Modell, das
+    unvollständige Personen nutzen kann, ist das Mixed Model (Lektion
+    Messwiederholung und Mixed Models), für Zählwerte als Poisson-GLMM.
+  en: |
+    p07 is missing prototype C; the Friedman test ranks the values within each
+    participant and therefore needs complete blocks. Without p07, 23
+    participants remain: χ²(2) = 9.83, p = .007. This is like the
+    repeated-measures ANOVA (afex excludes p07 with a message), except that you
+    have to do it yourself here and mention it in the report ("n = 23; one
+    participant without prototype C excluded"). `filter(n() == 3, .by =
+    participant)` is more general than `filter(participant != "p07")`: it also
+    works when the data change. Ignoring the error and filling in values (e.g.
+    0 errors) would be wrong: an invented value changes the ranks. A model that
+    can use incomplete participants is the mixed model (lesson Repeated
+    measures and mixed models), for counts as a Poisson GLMM.
+misconception:
+  de: "Ein Rangtest mit Messwiederholung kommt mit fehlenden Bedingungen einzelner Personen von selbst zurecht."
+  en: "A repeated-measures rank test copes with missing conditions of single participants by itself."
+check:
+  type: value
+common_mistakes:
+  - pattern: "replace_na|coalesce|ifelse\\(\\s*is\\.na"
+    message:
+      de: "Keine Werte erfinden: Ein aufgefüllter Wert für p07 ändert die Ränge. Schließe unvollständige Personen aus."
+      en: "Do not invent values: a filled-in value for p07 changes the ranks. Exclude incomplete participants."
+  - pattern: "kruskal_test"
+    message:
+      de: "Kruskal-Wallis ist für unabhängige Gruppen. Hier hat jede Person alle Prototypen bearbeitet: Friedman-Test."
+      en: "Kruskal-Wallis is for independent groups. Here every participant worked through all prototypes: Friedman test."

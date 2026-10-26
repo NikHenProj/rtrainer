@@ -1,0 +1,138 @@
+---
+title: "Korrelation und Regression"
+subtitle: "Intermediate · Multiple Regression, Interaktionen, Diagnostik mit performance"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, parameters, performance, effectsize, modelbased]
+resources:
+  - ../data/acceptance.csv
+---
+
+{{< include /_generated/de/regression-intermediate/runtime.qmd >}}
+
+{{< include /_generated/de/regression-intermediate/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R läuft hier direkt im Browser. Beim ersten Besuch lädt es 20–40 Sekunden (Anzeige unten rechts), danach geht es schneller.
+:::
+
+## Wozu? {#why}
+
+**Forschungsfrage:** Was bestimmt, ob Fahrerinnen und Fahrer ein Assistenzsystem nutzen wollen: Nützlichkeit, Bedienbarkeit oder Vertrauen? Und zählt die Nützlichkeit für Erfahrene mehr?
+
+Im Akzeptanzfragebogen (`acceptance`, n = 300) stehen vier Skalen nach dem Technology Acceptance Model, dazu Alter und Erfahrung mit Fahrerassistenz in Jahren. Im Beginner-Teil hattest du einen oder zwei Prädiktoren. Jetzt kommen mehrere zusammen ins Modell: Jeder Koeffizient wird zum Teileffekt, Modelle werden verglichen, und ein Effekt kann von einem anderen Prädiktor abhängen (Interaktion).
+
+## Konzept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 210" role="img" aria-labelledby="fig-rgi-title fig-rgi-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-rgi-title">Interaktion als unterschiedliche Steigungen</title>
+  <desc id="fig-rgi-desc">x-Achse Nützlichkeit, y-Achse Nutzungsabsicht. Drei Geraden für 0, 3 und 6 Jahre Erfahrung. Die Gerade für 0 Jahre ist flach, die für 3 Jahre mittel, die für 6 Jahre am steilsten. Alle drei schneiden sich ungefähr in der Mitte. Rechts der Text: Interaktion heißt, die Steigung der Nützlichkeit hängt von der Erfahrung ab; einfache Steigungen geben sie für ausgewählte Werte an.</desc>
+  <line x1="50" y1="180" x2="330" y2="180" class="rt-fig-axis" />
+  <line x1="50" y1="180" x2="50" y2="20" class="rt-fig-axis" />
+  <text x="190" y="202" text-anchor="middle" class="rt-fig-label">Nützlichkeit (pu)</text>
+  <text x="20" y="100" text-anchor="middle" class="rt-fig-label" transform="rotate(-90 20 100)">Absicht (bi)</text>
+  <line x1="60" y1="115" x2="320" y2="85" class="rt-fig-b" />
+  <line x1="60" y1="140" x2="320" y2="60" class="rt-fig-a" />
+  <line x1="60" y1="165" x2="320" y2="35" class="rt-fig-a" />
+  <text x="326" y="88" class="rt-fig-label rt-fig-muted">0 Jahre: 0.16</text>
+  <text x="326" y="63" class="rt-fig-label">3 Jahre: 0.37</text>
+  <text x="326" y="38" class="rt-fig-label">6 Jahre: 0.58</text>
+  <text x="326" y="130" class="rt-fig-label">Steigung von pu hängt</text>
+  <text x="326" y="148" class="rt-fig-label">von der Erfahrung ab:</text>
+  <text x="326" y="166" class="rt-fig-code">+0.07 pro Jahr</text>
+</svg>
+<figcaption>Eine Interaktion bedeutet unterschiedliche Steigungen. Der Haupteffekt im Modell ist die Steigung dort, wo der andere Prädiktor 0 ist; deshalb vorher zentrieren und einfache Steigungen berichten.</figcaption>
+</figure>
+```
+
+- **Teileffekte:** In `lm(bi ~ pu + peou + trust + age + experience)` ist jeder Koeffizient der Unterschied in `bi` pro Einheit des Prädiktors, wenn alle anderen Prädiktoren gleich sind. Darum ändert sich ein Koeffizient, wenn du Prädiktoren hinzunimmst.
+- **Vergleichen:** Standardisierte Koeffizienten (`effectsize::standardize_parameters()`) setzen alle Prädiktoren auf SD-Einheiten. Ob ein Block von Prädiktoren etwas beiträgt, prüft der Modellvergleich `anova(m1, m2)` (ΔR², F-Test); die Modelle müssen geschachtelt sein und auf denselben Zeilen beruhen.
+- **Interaktion** `a * b` = `a + b + a:b`: Der Effekt von `a` hängt von `b` ab. Prädiktoren vorher zentrieren (`mutate(a_c = a - mean(a))`), dann gilt der Haupteffekt für den Durchschnitt. Deuten über einfache Steigungen: `modelbased::estimate_slopes(fit, trend = "a_c", by = "b_c")`.
+- **Diagnostik am Modell** mit performance: `check_collinearity()` (VIF; ab etwa 5 genauer hinsehen), `check_heteroscedasticity()`, `check_normality()` (Residuen), `check_outliers()` (Cook-Distanz). `check_model()` zeigt alles als Grafiken (lokal, braucht see).
+- **Kausal deuten** darfst du die Koeffizienten hier nicht: Es ist eine Befragung, Nützlichkeit wurde nicht zugeteilt.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## Mehr dazu: Robuste Standardfehler, Faktoren, Modellwahl
+
+- **Robuste Standardfehler:** Bei ungleicher Fehlervarianz bleiben die Koeffizienten unverzerrt, die Standardfehler nicht. `model_parameters(fit, vcov = "HC3")` (braucht sandwich) gibt korrigierte SE, KIs und p-Werte.
+- **Faktor × kontinuierlich:** `lm(y ~ group * x_c)` gibt je Gruppe eine Steigung; `estimate_slopes(fit, trend = "x_c", by = "group")` zeigt sie direkt.
+- **Modellwahl:** `compare_performance(m1, m2)` zeigt R², AIC und BIC nebeneinander. Prädiktoren nach dem p-Wert schrittweise auswählen (stepwise) führt zu überschätzten Effekten; besser theoriegeleitet festlegen.
+- **Moderation vertieft** (Johnson-Neyman-Intervalle, interactions-Paket) und Mediation folgen in der Lektion Moderation und Mediation.
+:::
+
+## Beispiel {#example}
+
+Skalenwerte bilden (zwei umgepolte Items, `pu_5` lädt schwach und bleibt draußen, siehe Lektion Skalen) und alle Prädiktoren zusammen ins Modell:
+
+```{webr}
+tam <- acceptance |>
+  mutate(
+    across(c(peou_3, trust_4), \(x) 8 - x),
+    pu = rowMeans(pick(pu_1:pu_4)),
+    peou = rowMeans(pick(peou_1:peou_4)),
+    trust = rowMeans(pick(trust_1:trust_5)),
+    bi = rowMeans(pick(bi_1:bi_4))
+  )
+fit <- lm(bi ~ age + experience + pu + peou + trust, data = tam)
+model_parameters(fit)
+r2(fit)
+```
+
+Nützlichkeit (b = 0.27 [0.16, 0.38]), Bedienbarkeit (0.22 [0.11, 0.33]) und Vertrauen (0.21 [0.11, 0.31]) sagen die Absicht je für sich vorher; mit jedem Lebensjahrzehnt sinkt sie um 0.13 Punkte (b = −0.013 pro Jahr). Erfahrung hat neben den Skalen keinen eigenen Effekt (p = .955). Zusammen erklärt das Modell R² = .27 (korrigiert .26). Dann die Voraussetzungen:
+
+```{webr}
+check_collinearity(fit)
+check_heteroscedasticity(fit)
+check_normality(fit)
+```
+
+Alle VIF liegen zwischen 1.06 und 1.30, die Fehlervarianz ist gleichmäßig (p = .159), die Residuen sind annähernd normalverteilt (p = .310). Die Tests ersetzen keinen Blick auf die Residuen; lokal zeigt `check_model(fit)` alle Diagnoseplots auf einmal.
+
+**So berichtest du es:** Eine multiple Regression erklärte 27 % der Varianz der Nutzungsabsicht, R² = .27, F(5, 294) = 21.51, p < .001. Wahrgenommene Nützlichkeit, b = 0.27, 95-%-KI [0.16, 0.38], Bedienbarkeit, b = 0.22 [0.11, 0.33], und Vertrauen, b = 0.21 [0.11, 0.31], sagten die Absicht unabhängig voneinander vorher; ältere Befragte hatten eine etwas geringere Absicht, b = −0.013 pro Jahr [−0.024, −0.002].
+
+## Paketvergleich {#packages}
+
+| Aufgabe | Empfehlung | Alternative |
+|---|---|---|
+| Koeffizienten | **parameters** `model_parameters()` (KI, robuste SE mit `vcov`) | `summary()`, `broom::tidy(conf.int = TRUE)` |
+| Standardisieren | **effectsize** `standardize_parameters()` | `lm()` mit `scale()`-Variablen; `lm.beta` |
+| Modellvergleich | `anova(m1, m2)` + **performance** `compare_performance()`, `r2()` | `test_performance()` (auch nicht geschachtelte Modelle) |
+| Einfache Steigungen | **modelbased** `estimate_slopes()`, `estimate_relation()` | `emmeans::emtrends()`; `interactions::sim_slopes()` (Johnson-Neyman) |
+| Diagnostik | **performance** `check_collinearity()`, `check_heteroscedasticity()`, `check_normality()`, `check_outliers()`, `check_model()` | `car::vif()`, `plot(fit)` |
+
+## Übungen {#exercises}
+
+Drei Pflichtübungen und eine Zusatzübung. **Ausführen und prüfen** startet deinen Code und prüft ihn sofort. Hinweise deckst du einzeln auf (**Hinweis zeigen**), die Lösung erst danach.
+
+{{< include /_generated/de/regression-intermediate/exercises.qmd >}}
+
+## Wissenscheck {#check}
+
+{{< include /_generated/de/regression-intermediate/quiz.qmd >}}
+
+## Spickzettel {#cheatsheet}
+
+```r
+# Multiple Regression: Teileffekte, standardisiert
+fit <- lm(y ~ x1 + x2 + x3, data = d)
+model_parameters(fit); r2(fit)
+standardize_parameters(fit)
+
+# Hierarchisch: geschachtelte Modelle auf denselben Zeilen
+m1 <- lm(y ~ age + experience, data = d)
+m2 <- update(m1, . ~ . + x1 + x2)
+anova(m1, m2); compare_performance(m1, m2)
+
+# Interaktion mit zentrierten Prädiktoren
+d_c <- d |> mutate(x_c = x - mean(x), m_c = m - mean(m))
+fit <- lm(y ~ x_c * m_c, data = d_c)
+estimate_slopes(fit, trend = "x_c", by = "m_c")
+
+# Diagnostik am Modell
+check_collinearity(fit); check_heteroscedasticity(fit)
+check_normality(fit); check_outliers(fit)
+model_parameters(fit, vcov = "HC3")             # robuste SE (sandwich)
+```

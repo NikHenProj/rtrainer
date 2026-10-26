@@ -1,0 +1,90 @@
+id: rg-i-hierarchical
+lesson: regression-intermediate
+order: 1
+title:
+  de: Hierarchische Regression mit `anova()`
+  en: Hierarchical regression with `anova()`
+kind: write
+required: true
+packages: [dplyr]
+data: [acceptance]
+setup: |
+  library(dplyr)
+  tam <- acceptance |>
+    mutate(
+      across(c(peou_3, trust_4), \(x) 8 - x),
+      pu = rowMeans(pick(pu_1:pu_4)),
+      peou = rowMeans(pick(peou_1:peou_4)),
+      trust = rowMeans(pick(trust_1:trust_5)),
+      bi = rowMeans(pick(bi_1:bi_4))
+    )
+prompt:
+  de: |
+    `tam` enthält die Skalenwerte des Akzeptanzfragebogens (1–7): Nützlichkeit
+    `pu`, Bedienbarkeit `peou`, Vertrauen `trust` und Nutzungsabsicht `bi`,
+    dazu `age` und `experience` (Jahre mit Fahrerassistenz).
+
+    Erklären die drei Akzeptanzfaktoren die Nutzungsabsicht über Alter und
+    Erfahrung hinaus? Rechne zwei Modelle: `m1` mit `bi ~ age + experience`,
+    `m2` zusätzlich mit `pu`, `peou` und `trust`. Vergleiche sie mit
+    `anova(m1, m2)` und gib diese Tabelle zurück.
+  en: |
+    `tam` contains the scale scores of the acceptance questionnaire (1–7):
+    usefulness `pu`, ease of use `peou`, trust `trust` and intention to use
+    `bi`, plus `age` and `experience` (years with driver assistance).
+
+    Do the three acceptance factors explain intention beyond age and
+    experience? Fit two models: `m1` with `bi ~ age + experience`, `m2` with
+    `pu`, `peou` and `trust` added. Compare them with `anova(m1, m2)` and
+    return this table.
+starter: |
+  m2 <- lm(bi ~ age + experience + pu + peou + trust, data = tam)
+  summary(m2)
+solution: |
+  m1 <- lm(bi ~ age + experience, data = tam)
+  m2 <- lm(bi ~ age + experience + pu + peou + trust, data = tam)
+  anova(m1, m2)
+hints:
+  - de: "Hierarchisch heißt: Das zweite Modell enthält alle Prädiktoren des ersten plus die neuen. Beide müssen auf denselben Zeilen beruhen."
+    en: "Hierarchical means: the second model contains all predictors of the first plus the new ones. Both must rest on the same rows."
+  - de: "`anova(m1, m2)` testet mit F, ob die zusätzlichen Prädiktoren gemeinsam Varianz erklären. `update(m1, . ~ . + pu + peou + trust)` spart Tipparbeit."
+    en: "`anova(m1, m2)` tests with F whether the added predictors jointly explain variance. `update(m1, . ~ . + pu + peou + trust)` saves typing."
+  - de: "`m1 <- lm(bi ~ age + experience, data = tam)`, `m2 <- lm(bi ~ age + experience + pu + peou + trust, data = tam)`, dann `anova(m1, m2)`."
+    en: "`m1 <- lm(bi ~ age + experience, data = tam)`, `m2 <- lm(bi ~ age + experience + pu + peou + trust, data = tam)`, then `anova(m1, m2)`."
+explanation:
+  de: |
+    F(3, 294) = 28.36, p < .001: Die Akzeptanzfaktoren erklären zusätzliche
+    Varianz. R² steigt von .056 auf .268, ΔR² = .21 (`performance::r2()` je
+    Modell oder `compare_performance(m1, m2)`). Der F-Test vergleicht die
+    Restquadratsummen (RSS 538.95 → 417.99) relativ zu den drei verbrauchten
+    Freiheitsgraden. Fallstrick: Fehlen in einem der neuen Prädiktoren Werte,
+    rechnet `lm()` `m2` auf weniger Zeilen und `anova()` bricht ab („models
+    were not all fitted to the same size of dataset“); dann vorher auf
+    vollständige Fälle filtern. Bericht: „Nützlichkeit, Bedienbarkeit und
+    Vertrauen erklärten über Alter und Erfahrung hinaus 21 % der Varianz der
+    Nutzungsabsicht, ΔR² = .21, F(3, 294) = 28.36, p < .001.“
+  en: |
+    F(3, 294) = 28.36, p < .001: the acceptance factors explain additional
+    variance. R² rises from .056 to .268, ΔR² = .21 (`performance::r2()` per
+    model or `compare_performance(m1, m2)`). The F test compares the residual
+    sums of squares (RSS 538.95 → 417.99) relative to the three degrees of
+    freedom used. Pitfall: if one of the new predictors has missing values,
+    `lm()` fits `m2` on fewer rows and `anova()` stops ("models were not all
+    fitted to the same size of dataset"); then filter to complete cases first.
+    Report: "Usefulness, ease of use and trust explained 21 % of the variance
+    in intention beyond age and experience, ΔR² = .21, F(3, 294) = 28.36,
+    p < .001."
+misconception:
+  de: "Ob neue Prädiktoren etwas bringen, sieht man daran, dass ihre einzelnen Koeffizienten signifikant sind."
+  en: "Whether new predictors add anything can be seen from their individual coefficients being significant."
+check:
+  type: value
+common_mistakes:
+  - pattern: "anova\\(\\s*m2\\s*\\)|anova\\(\\s*m2\\s*,\\s*m1\\s*\\)"
+    message:
+      de: "`anova(m2)` allein gibt sequenzielle Tests der einzelnen Terme. Für den Modellvergleich beide Modelle übergeben, das kleinere zuerst: `anova(m1, m2)`."
+      en: "`anova(m2)` alone gives sequential tests of the single terms. For the model comparison pass both models, the smaller one first: `anova(m1, m2)`."
+  - pattern: "m2\\s*<-\\s*lm\\(\\s*bi\\s*~\\s*(pu|peou|trust)[^,]*\\+[^,]*(pu|peou|trust)[^,]*\\+[^,]*(pu|peou|trust)\\s*,"
+    message:
+      de: "`m2` muss die Prädiktoren von `m1` (`age`, `experience`) enthalten, sonst sind die Modelle nicht geschachtelt."
+      en: "`m2` must contain the predictors of `m1` (`age`, `experience`), otherwise the models are not nested."

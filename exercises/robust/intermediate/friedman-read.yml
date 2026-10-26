@@ -1,0 +1,141 @@
+id: rb-i-friedman-read
+lesson: robust-intermediate
+order: 3
+title:
+  de: Friedman-Test und Paarvergleiche deuten
+  en: Interpreting a Friedman test and pairwise comparisons
+kind: interpret
+required: true
+packages: []
+data: []
+setup: ""
+prompt:
+  de: |
+    Im Usability-Test hat jede Person alle drei Prototypen mit je vier Aufgaben
+    bearbeitet. `errors_pp` enthält die mittlere Fehlerzahl pro Person und
+    Prototyp, nur Personen mit allen drei Prototypen (p07 fehlt C). Die
+    Fehlerzahlen sind Zählwerte mit vielen Nullen, deshalb rechnet ein Rangtest:
+
+    ```
+    > errors_pp |> group_by(prototype) |> get_summary_stats(errors, type = "median_iqr")
+      prototype variable     n median   iqr
+    1 A         errors      23   0.75 0.75
+    2 B         errors      23   0.5  0.375
+    3 C         errors      23   0.75 1.25
+
+    > errors_pp |> friedman_test(errors ~ prototype | participant)
+      .y.        n statistic    df       p method
+    1 errors    23      9.83     2 0.00734 Friedman test
+
+    > errors_pp |> friedman_effsize(errors ~ prototype | participant)
+      .y.        n effsize method    magnitude
+    1 errors    23   0.214 Kendall W small
+
+    > errors_pp |> wilcox_test(errors ~ prototype, paired = TRUE, p.adjust.method = "holm")
+      .y.    group1 group2    n1    n2 statistic       p   p.adj p.adj.signif
+    1 errors A      B         23    23     227   0.00444 0.00888 **
+    2 errors A      C         23    23     111   0.476   0.476   ns
+    3 errors B      C         23    23      28.5 0.00113 0.00339 **
+    ```
+
+    Welche Aussagen stimmen?
+
+    1. Die Fehlerzahl unterscheidet sich zwischen den Prototypen, χ²(2) = 9.83, p = .007, Kendalls W = .21.
+    2. Mit Prototyp B entstehen weniger Fehler als mit A und als mit C (Holm-korrigiert); A und C unterscheiden sich nicht nachweisbar.
+    3. Weil der Friedman-Test Ränge nutzt, belegt er, dass sich die Mediane der drei Prototypen unterscheiden.
+    4. Die Holm-korrigierten p-Werte (`p.adj`) sind kleiner als die unkorrigierten, weil die Korrektur Power gewinnt.
+
+    Gib die Nummern der richtigen Aussagen aufsteigend als Vektor ein, z. B. `c(1, 3)`.
+  en: |
+    In the usability test, every participant worked through all three
+    prototypes with four tasks each. `errors_pp` contains the mean number of
+    errors per participant and prototype, only participants with all three
+    prototypes (p07 is missing C). The error counts are counts with many zeros,
+    so a rank test is used:
+
+    ```
+    > errors_pp |> group_by(prototype) |> get_summary_stats(errors, type = "median_iqr")
+      prototype variable     n median   iqr
+    1 A         errors      23   0.75 0.75
+    2 B         errors      23   0.5  0.375
+    3 C         errors      23   0.75 1.25
+
+    > errors_pp |> friedman_test(errors ~ prototype | participant)
+      .y.        n statistic    df       p method
+    1 errors    23      9.83     2 0.00734 Friedman test
+
+    > errors_pp |> friedman_effsize(errors ~ prototype | participant)
+      .y.        n effsize method    magnitude
+    1 errors    23   0.214 Kendall W small
+
+    > errors_pp |> wilcox_test(errors ~ prototype, paired = TRUE, p.adjust.method = "holm")
+      .y.    group1 group2    n1    n2 statistic       p   p.adj p.adj.signif
+    1 errors A      B         23    23     227   0.00444 0.00888 **
+    2 errors A      C         23    23     111   0.476   0.476   ns
+    3 errors B      C         23    23      28.5 0.00113 0.00339 **
+    ```
+
+    Which statements are true?
+
+    1. The number of errors differs between the prototypes, χ²(2) = 9.83, p = .007, Kendall's W = .21.
+    2. Prototype B leads to fewer errors than A and than C (Holm-corrected); A and C do not differ detectably.
+    3. Because the Friedman test uses ranks, it proves that the medians of the three prototypes differ.
+    4. The Holm-corrected p-values (`p.adj`) are smaller than the uncorrected ones because the correction gains power.
+
+    Enter the numbers of the true statements in ascending order as a vector, e.g. `c(1, 3)`.
+starter: |
+  # Nummern der richtigen Aussagen / numbers of the true statements, z. B. c(1, 3)
+solution: |
+  c(1, 2)
+hints:
+  - de: "Prüfe jede Aussage einzeln an der Ausgabe: Stimmen Kennwerte, Richtung und Korrektur?"
+    en: "Check each statement against the output: are the statistics, the direction and the correction right?"
+  - de: "Die Richtung der Paarvergleiche liest du an den Medianen ab (B: 0.5, A und C: 0.75). Ein Rangtest prüft, ob die Werte einer Bedingung systematisch höher liegen, nicht die Mediane selbst."
+    en: "Read the direction of the pairwise comparisons from the medians (B: 0.5, A and C: 0.75). A rank test checks whether the values of one condition are systematically higher, not the medians themselves."
+  - de: "Eine Korrektur für mehrere Tests macht p-Werte nie kleiner. Zwei Aussagen stimmen."
+    en: "A correction for multiple tests never makes p-values smaller. Two statements are true."
+explanation:
+  de: |
+    Richtig sind 1 und 2. Der Friedman-Test ist der Rangtest für
+    Messwiederholung: Er ordnet die drei Werte jeder Person (Rang 1–3) und prüft,
+    ob ein Prototyp systematisch bessere Ränge bekommt. Kendalls W = .21 heißt:
+    Die Personen sind sich nur wenig einig (rstatix: „small“), welcher Prototyp die wenigsten
+    Fehler bringt (W = 0 keine, 1 volle Übereinstimmung). Die Paarvergleiche
+    nutzen den Vorzeichen-Rang-Test (`paired = TRUE`); B unterscheidet sich von
+    A (p_Holm = .009) und von C (p_Holm = .003). Aussage 3 ist falsch: Rangtests
+    vergleichen Verteilungen bzw. Rangsummen; mit vielen Bindungen (hier gleiche
+    Mediane von A und C bei unterschiedlicher Streuung) sagen Mediane wenig.
+    Aussage 4 ist falsch: Holm multipliziert die p-Werte schrittweise und macht
+    sie größer; Power kostet die Korrektur, sie gewinnt keine. Bericht: „Die
+    Fehlerzahl unterschied sich zwischen den Prototypen, Friedman χ²(2) = 9.83,
+    p = .007, W = .21 (n = 23). Mit B traten weniger Fehler auf als mit A
+    (p_Holm = .009) und C (p_Holm = .003).“
+  en: |
+    Statements 1 and 2 are true. The Friedman test is the rank test for
+    repeated measures: it ranks the three values of each participant (rank
+    1–3) and tests whether one prototype systematically gets better ranks.
+    Kendall's W = .21 means the participants agree only a little (rstatix: "small") on which
+    prototype gives the fewest errors (W = 0 none, 1 complete agreement). The
+    pairwise comparisons use the signed-rank test (`paired = TRUE`); B differs
+    from A (p_Holm = .009) and from C (p_Holm = .003). Statement 3 is false:
+    rank tests compare distributions or rank sums; with many ties (here equal
+    medians of A and C with different spread) medians say little. Statement 4
+    is false: Holm multiplies the p-values step-wise and makes them larger; the
+    correction costs power, it does not gain any. Report: "The number of errors
+    differed between prototypes, Friedman χ²(2) = 9.83, p = .007, W = .21
+    (n = 23). Fewer errors occurred with B than with A (p_Holm = .009) and C
+    (p_Holm = .003)."
+misconception:
+  de: "Rangtests sind Mediantests, und eine Korrektur für multiples Testen macht Ergebnisse signifikanter."
+  en: "Rank tests are tests of medians, and a correction for multiple testing makes results more significant."
+check:
+  type: value
+common_mistakes:
+  - pattern: "^[\\s\\S]*?c\\(\\s*1\\s*,\\s*2\\s*,\\s*3\\s*\\)\\s*$|^[\\s\\S]*?c\\(\\s*1\\s*,\\s*3\\s*\\)\\s*$"
+    message:
+      de: "Aussage 3 stimmt nicht: Ein Rangtest vergleicht Ränge innerhalb der Personen, nicht die Mediane. A und C haben denselben Median, aber verschiedene Verteilungen."
+      en: "Statement 3 is false: a rank test compares ranks within participants, not the medians. A and C have the same median but different distributions."
+  - pattern: "^[\\s\\S]*?c\\([^)]*4\\s*\\)\\s*$"
+    message:
+      de: "Aussage 4 stimmt nicht: Holm macht p-Werte größer (oder lässt sie gleich), nie kleiner."
+      en: "Statement 4 is false: Holm makes p-values larger (or keeps them), never smaller."

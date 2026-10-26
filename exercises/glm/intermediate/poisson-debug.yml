@@ -1,0 +1,84 @@
+id: gl-i-poisson-debug
+lesson: glm-intermediate
+order: 3
+title:
+  de: Fehlerzahlen als Zählwerte modellieren
+  en: Modelling error counts as counts
+kind: debug
+required: true
+packages: [parameters]
+data: [usability]
+setup: |
+  library(parameters)
+prompt:
+  de: |
+    `errors` zählt die Bedienfehler pro Aufgabe (0, 1, 2, …). Wie stark
+    verringert Prototyp B die Fehlerrate gegenüber A? Der Code im Feld läuft
+    und liefert sogar „Raten“, aber das Modell ist falsch gewählt.
+
+    Finde den Fehler und repariere das Modell, sodass `model_parameters()` Rate
+    Ratios (IRR) einer Poisson-Regression zeigt.
+  en: |
+    `errors` counts the operating errors per task (0, 1, 2, …). How much does
+    prototype B reduce the error rate compared with A? The code in the box runs
+    and even gives "rates", but the model is the wrong choice.
+
+    Find the mistake and fix the model so that `model_parameters()` shows rate
+    ratios (IRR) of a Poisson regression.
+starter: |
+  fit <- glm(errors ~ prototype, data = usability)
+  model_parameters(fit, exponentiate = TRUE)
+solution: |
+  fit <- glm(errors ~ prototype, family = poisson, data = usability)
+  model_parameters(fit, exponentiate = TRUE)
+hints:
+  - de: "Welche Verteilung nimmt `glm()` an, wenn du keine `family` angibst?"
+    en: "Which distribution does `glm()` assume when you give no `family`?"
+  - de: "Ohne `family` ist es `gaussian`: ein lineares Modell. `exponentiate = TRUE` macht aus dessen Differenzen sinnlose Faktoren."
+    en: "Without `family` it is `gaussian`: a linear model. `exponentiate = TRUE` turns its differences into meaningless factors."
+  - de: "Zählwerte: `family = poisson` (Log-Link). Dann ist `exp(b)` ein Rate Ratio."
+    en: "Counts: `family = poisson` (log link). Then `exp(b)` is a rate ratio."
+explanation:
+  de: |
+    IRR für B = 0.41, 95-%-KI [0.28, 0.60], p < .001: Mit B entstehen 59 %
+    weniger Fehler pro Aufgabe als mit A; C unterscheidet sich nicht
+    nachweisbar (1.20 [0.91, 1.59]). Der Achsenabschnitt 0.96 ist die mittlere
+    Fehlerzahl pro Aufgabe mit A. Im Startercode war `family` weggelassen;
+    `glm()` rechnete dann ein lineares Modell (Differenz B − A = −0.56
+    Fehler), und `exp(−0.56) = 0.57` ist keine Rate. Die Poisson-Regression
+    modelliert den Logarithmus der erwarteten Zahl; Vorhersagen bleiben
+    positiv, und Effekte wirken multiplikativ. Sie nimmt an, dass Varianz und
+    Mittelwert gleich sind; prüfe das mit `check_overdispersion(fit)` (hier
+    1.55, also Überdispersion, siehe Zusatzübung). Bericht: „Mit Prototyp B
+    traten weniger Bedienfehler auf als mit A, IRR = 0.41, 95-%-KI
+    [0.28, 0.60], p < .001.“
+  en: |
+    IRR for B = 0.41, 95 % CI [0.28, 0.60], p < .001: with B, 59 % fewer
+    errors occur per task than with A; C does not differ detectably (1.20
+    [0.91, 1.59]). The intercept 0.96 is the mean number of errors per task
+    with A. In the starter code, `family` was left out; `glm()` then fitted a
+    linear model (difference B − A = −0.56 errors), and `exp(−0.56) = 0.57` is
+    not a rate. Poisson regression models the logarithm of the expected count;
+    predictions stay positive, and effects act multiplicatively. It assumes
+    that variance and mean are equal; check this with
+    `check_overdispersion(fit)` (here 1.55, i.e. overdispersion, see the extra
+    exercise). Report: "Fewer operating errors occurred with prototype B than
+    with A, IRR = 0.41, 95 % CI [0.28, 0.60], p < .001."
+misconception:
+  de: "`glm()` erkennt an den Daten selbst, welche Verteilung passt."
+  en: "`glm()` works out from the data which distribution fits."
+check:
+  type: value
+common_mistakes:
+  - pattern: "family\\s*=\\s*binomial"
+    message:
+      de: "`binomial` ist für 0/1-Werte. `errors` ist eine Zählung (0, 1, 2, …): `family = poisson`."
+      en: "`binomial` is for 0/1 values. `errors` is a count (0, 1, 2, …): `family = poisson`."
+  - pattern: "\\blm\\("
+    message:
+      de: "Ein lineares Modell sagt auch negative Fehlerzahlen voraus. Für Zählwerte `glm(..., family = poisson)`."
+      en: "A linear model also predicts negative error counts. For counts use `glm(..., family = poisson)`."
+  - pattern: "^(?![\\s\\S]*exponentiate)[\\s\\S]*poisson"
+    message:
+      de: "Ohne `exponentiate = TRUE` stehen Log-Raten in der Tabelle. Gefragt sind Rate Ratios."
+      en: "Without `exponentiate = TRUE`, the table shows log rates. The task asks for rate ratios."

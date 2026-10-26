@@ -1,0 +1,84 @@
+id: gl-i-overdispersion
+lesson: glm-intermediate
+order: 5
+title:
+  de: Überdispersion erkennen und absichern
+  en: Detecting and handling overdispersion
+kind: write
+required: false
+packages: [parameters, performance]
+data: [usability]
+setup: |
+  library(parameters)
+  library(performance)
+  fit <- glm(errors ~ prototype, family = poisson, data = usability)
+prompt:
+  de: |
+    `fit` ist das Poisson-Modell der Fehlerzahl. `check_overdispersion(fit)`
+    meldet eine Dispersion von 1.55: Die Fehlerzahlen streuen stärker, als die
+    Poisson-Verteilung erlaubt (manche Personen machen viel mehr Fehler als
+    andere). Dann sind die Standardfehler zu klein.
+
+    Rechne das Modell mit `family = quasipoisson` neu und gib
+    `model_parameters()` mit Rate Ratios (`exponentiate = TRUE`) zurück.
+  en: |
+    `fit` is the Poisson model of the error count. `check_overdispersion(fit)`
+    reports a dispersion of 1.55: the error counts vary more than the Poisson
+    distribution allows (some participants make many more errors than
+    others). Then the standard errors are too small.
+
+    Refit the model with `family = quasipoisson` and return
+    `model_parameters()` with rate ratios (`exponentiate = TRUE`).
+starter: |
+  check_overdispersion(fit)
+solution: |
+  fit_q <- glm(errors ~ prototype, family = quasipoisson, data = usability)
+  model_parameters(fit_q, exponentiate = TRUE)
+hints:
+  - de: "Quasipoisson schätzt dieselben Koeffizienten wie Poisson, multipliziert aber die Varianz mit einem geschätzten Faktor."
+    en: "Quasipoisson estimates the same coefficients as Poisson, but multiplies the variance by an estimated factor."
+  - de: "Ändere nur `family`; Formel und Daten bleiben gleich. Danach `model_parameters(..., exponentiate = TRUE)`."
+    en: "Change only `family`; formula and data stay the same. Then `model_parameters(..., exponentiate = TRUE)`."
+  - de: "`fit_q <- glm(errors ~ prototype, family = quasipoisson, data = usability)`"
+    en: "`fit_q <- glm(errors ~ prototype, family = quasipoisson, data = usability)`"
+explanation:
+  de: |
+    IRR für B = 0.41, 95-%-KI [0.25, 0.65], t(281) = −3.68, p < .001; für C
+    1.20 [0.85, 1.71]. Die Rate Ratios sind dieselben wie im Poisson-Modell,
+    nur die Intervalle sind breiter (B vorher [0.28, 0.60]): Die
+    Standardfehler wachsen um √1.55 ≈ 1.25. Ursache der Überdispersion ist hier
+    vor allem, dass manche Personen grundsätzlich mehr Fehler machen und ihre
+    12 Aufgaben zusammenhängen. Alternativen: Negativ-Binomial-Modell
+    (`MASS::glm.nb()`, gleiche IRR, KI [0.27, 0.63]) oder ein Mixed Model mit
+    Zufallseffekt pro Person (`glmmTMB(..., family = nbinom2)`), das den
+    Grund direkt modelliert. Der Test ist kein Freigabeschalter: Eine
+    Dispersion um 1 ist unkritisch, ab etwa 1.5 lohnt die Korrektur.
+  en: |
+    IRR for B = 0.41, 95 % CI [0.25, 0.65], t(281) = −3.68, p < .001; for C
+    1.20 [0.85, 1.71]. The rate ratios are the same as in the Poisson model,
+    only the intervals are wider (B before [0.28, 0.60]): the standard errors
+    grow by √1.55 ≈ 1.25. The cause of the overdispersion here is mainly that
+    some participants make more errors in general and their 12 tasks are
+    related. Alternatives: a negative binomial model (`MASS::glm.nb()`, same
+    IRR, CI [0.27, 0.63]) or a mixed model with a random effect per
+    participant (`glmmTMB(..., family = nbinom2)`), which models the reason
+    directly. The test is not a release switch: a dispersion around 1 is
+    harmless, from about 1.5 the correction pays off.
+misconception:
+  de: "Überdispersion verzerrt die Rate Ratios, deshalb muss man die Daten vor der Analyse bereinigen."
+  en: "Overdispersion biases the rate ratios, so the data have to be cleaned before the analysis."
+check:
+  type: value
+common_mistakes:
+  - pattern: "family\\s*=\\s*quasibinomial"
+    message:
+      de: "`quasibinomial` ist für 0/1-Daten. Für Zählwerte: `quasipoisson`."
+      en: "`quasibinomial` is for 0/1 data. For counts: `quasipoisson`."
+  - pattern: "filter\\([^)]*errors\\s*[<>]"
+    message:
+      de: "Keine Werte ausschließen: Hohe Fehlerzahlen sind echte Daten. Das Modell muss die zusätzliche Streuung abbilden."
+      en: "Do not exclude values: high error counts are real data. The model has to represent the extra spread."
+  - pattern: "^(?![\\s\\S]*exponentiate)[\\s\\S]*quasipoisson"
+    message:
+      de: "Ohne `exponentiate = TRUE` stehen Log-Raten in der Tabelle. Gefragt sind Rate Ratios."
+      en: "Without `exponentiate = TRUE`, the table shows log rates. The task asks for rate ratios."

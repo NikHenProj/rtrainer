@@ -1,0 +1,19 @@
+# Lesson metadata; exercises are the other *.yml files in this folder
+# (sorted by `order`), the knowledge check is quiz.yml.
+lesson: regression-intermediate
+minutes: 55
+prerequisites: [regression-beginner]
+langs: [de]
+packages: [dplyr, parameters, performance, effectsize, modelbased]
+data: [acceptance]
+goals:
+  de:
+    - Eine multiple Regression rechnen, Koeffizienten als Teileffekte deuten und standardisiert vergleichen
+    - Modelle hierarchisch vergleichen (ΔR², F-Test mit `anova()`)
+    - Interaktionen mit zentrierten Prädiktoren rechnen und über einfache Steigungen deuten
+    - Voraussetzungen und Kollinearität mit performance am Modell prüfen
+  en:
+    - Fit a multiple regression, read coefficients as partial effects and compare them standardised
+    - Compare models hierarchically (ΔR², F test with `anova()`)
+    - Fit interactions with centred predictors and interpret them through simple slopes
+    - Check assumptions and collinearity on the model with performance

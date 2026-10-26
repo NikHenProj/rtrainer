@@ -1,0 +1,104 @@
+id: rg-i-interaction
+lesson: regression-intermediate
+order: 2
+title:
+  de: Interaktion mit zentrierten Prädiktoren
+  en: Interaction with centred predictors
+kind: write
+required: true
+packages: [dplyr, parameters]
+data: [acceptance]
+setup: |
+  library(dplyr)
+  library(parameters)
+  tam <- acceptance |>
+    mutate(
+      across(c(peou_3, trust_4), \(x) 8 - x),
+      pu = rowMeans(pick(pu_1:pu_4)),
+      peou = rowMeans(pick(peou_1:peou_4)),
+      trust = rowMeans(pick(trust_1:trust_5)),
+      bi = rowMeans(pick(bi_1:bi_4))
+    )
+prompt:
+  de: |
+    Hängt der Einfluss der Nützlichkeit `pu` auf die Nutzungsabsicht `bi` von
+    der Erfahrung mit Fahrerassistenz ab (`experience`, 0–9 Jahre)? Der Code im
+    Feld rechnet die Interaktion mit den Rohwerten. Dann ist der Koeffizient von
+    `pu` der Effekt bei 0 Jahren Erfahrung, einem Randwert.
+
+    Zentriere beide Prädiktoren am Mittelwert in neuen Spalten `pu_c` und
+    `exp_c` (mit `mutate()`), rechne `lm(bi ~ pu_c * exp_c, ...)` und gib
+    `model_parameters()` des Modells zurück.
+  en: |
+    Does the effect of usefulness `pu` on intention `bi` depend on experience
+    with driver assistance (`experience`, 0–9 years)? The code in the box fits
+    the interaction with the raw values. Then the coefficient of `pu` is the
+    effect at 0 years of experience, an extreme value.
+
+    Centre both predictors at their mean in new columns `pu_c` and `exp_c`
+    (with `mutate()`), fit `lm(bi ~ pu_c * exp_c, ...)` and return
+    `model_parameters()` of the model.
+starter: |
+  fit <- lm(bi ~ pu * experience, data = tam)
+  model_parameters(fit)
+solution: |
+  tam_c <- tam |>
+    mutate(
+      pu_c = pu - mean(pu),
+      exp_c = experience - mean(experience)
+    )
+  fit <- lm(bi ~ pu_c * exp_c, data = tam_c)
+  model_parameters(fit)
+hints:
+  - de: "Zentrieren heißt: den Mittelwert abziehen. Dann ist 0 der Durchschnitt, und jeder Haupteffekt gilt für eine durchschnittliche Person."
+    en: "Centring means subtracting the mean. Then 0 is the average, and each main effect applies to an average person."
+  - de: "`mutate(pu_c = pu - mean(pu), exp_c = experience - mean(experience))`; `*` in der Formel ergibt beide Haupteffekte und die Interaktion."
+    en: "`mutate(pu_c = pu - mean(pu), exp_c = experience - mean(experience))`; `*` in the formula gives both main effects and the interaction."
+  - de: "`tam_c <- tam |> mutate(...)`, dann `fit <- lm(bi ~ pu_c * exp_c, data = tam_c)` und `model_parameters(fit)`."
+    en: "`tam_c <- tam |> mutate(...)`, then `fit <- lm(bi ~ pu_c * exp_c, data = tam_c)` and `model_parameters(fit)`."
+explanation:
+  de: |
+    Interaktion b = 0.07, 95-%-KI [0.01, 0.13], p = .019: Pro Jahr Erfahrung
+    wird der Effekt der Nützlichkeit um 0.07 Skalenpunkte stärker. Bei
+    durchschnittlicher Erfahrung (3 Jahre) steigt die Absicht um 0.37
+    [0.26, 0.48] pro Punkt Nützlichkeit; mit den Rohwerten war der Koeffizient
+    von `pu` 0.16 (p = .135), der Effekt bei 0 Jahren. Die Interaktion selbst
+    ändert sich durch das Zentrieren nicht (gleiches b, gleiches p), nur die
+    Haupteffekte bekommen eine sinnvolle Bedeutung, und die Kollinearität mit
+    dem Produktterm verschwindet (VIF ~ 1 statt bis 15). Zentrieren gehört in
+    `mutate()`; in der Formel bräuchtest du `I(pu - mean(pu))`. Bericht: „Der
+    Zusammenhang zwischen Nützlichkeit und Nutzungsabsicht war bei erfahrenen
+    Fahrern stärker, b = 0.07, 95-%-KI [0.01, 0.13], p = .019.“ Wie stark der
+    Effekt bei 0, 3 oder 6 Jahren ist, zeigen einfache Steigungen
+    (`modelbased::estimate_slopes()`).
+  en: |
+    Interaction b = 0.07, 95 % CI [0.01, 0.13], p = .019: per year of
+    experience, the effect of usefulness gets 0.07 scale points stronger. At
+    average experience (3 years), intention rises by 0.37 [0.26, 0.48] per
+    point of usefulness; with the raw values the coefficient of `pu` was 0.16
+    (p = .135), the effect at 0 years. The interaction itself does not change
+    with centring (same b, same p), only the main effects get a sensible
+    meaning, and the collinearity with the product term disappears (VIF ~ 1
+    instead of up to 15). Centring belongs in `mutate()`; in the formula you
+    would need `I(pu - mean(pu))`. Report: "The association between usefulness
+    and intention was stronger for experienced drivers, b = 0.07, 95 % CI
+    [0.01, 0.13], p = .019." Simple slopes (`modelbased::estimate_slopes()`)
+    show how strong the effect is at 0, 3 or 6 years.
+misconception:
+  de: "In einem Modell mit Interaktion ist der Koeffizient eines Prädiktors sein durchschnittlicher Effekt."
+  en: "In a model with an interaction, a predictor's coefficient is its average effect."
+check:
+  type: value
+common_mistakes:
+  - pattern: "scale\\("
+    message:
+      de: "`scale()` zentriert und standardisiert zugleich; gefragt ist nur Zentrieren, damit die Koeffizienten in Skalenpunkten und Jahren bleiben."
+      en: "`scale()` centres and standardises at once; the task asks only for centring, so the coefficients stay in scale points and years."
+  - pattern: "pu_c\\s*\\+\\s*exp_c(?!\\s*\\+\\s*pu_c\\s*:)"
+    message:
+      de: "`+` gibt nur die Haupteffekte. Für die Interaktion `pu_c * exp_c` (oder zusätzlich `pu_c:exp_c`)."
+      en: "`+` gives only the main effects. For the interaction use `pu_c * exp_c` (or add `pu_c:exp_c`)."
+  - pattern: "median\\("
+    message:
+      de: "Zentriere am Mittelwert (`mean()`), nicht am Median."
+      en: "Centre at the mean (`mean()`), not at the median."

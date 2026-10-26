@@ -1,0 +1,134 @@
+# Knowledge check: passed at >= `pass` share of correctly answered questions.
+lesson: glm-intermediate
+pass: 0.8
+questions:
+  - id: gl-i-q-family
+    prompt:
+      de: "Welche Kombination aus abhängiger Variable und `family` passt?"
+      en: "Which combination of outcome and `family` fits?"
+    options:
+      - text:
+          de: "Aufgabe gelöst ja/nein → `binomial`; Anzahl Bedienfehler → `poisson` (bei Überdispersion `quasipoisson` oder Negativ-Binomial)."
+          en: "Task solved yes/no → `binomial`; number of operating errors → `poisson` (with overdispersion `quasipoisson` or negative binomial)."
+        correct: true
+        explain:
+          de: "Richtig. Die Verteilung folgt aus der Art der Daten, nicht aus einem Test."
+          en: "Right. The distribution follows from the kind of data, not from a test."
+      - text:
+          de: "Aufgabe gelöst ja/nein → `poisson`, weil 0 und 1 auch Zählwerte sind."
+          en: "Task solved yes/no → `poisson`, because 0 and 1 are counts too."
+        correct: false
+        explain:
+          de: "Poisson erlaubt Werte über 1 und kann Wahrscheinlichkeiten über 100 % vorhersagen."
+          en: "Poisson allows values above 1 and can predict probabilities above 100 %."
+      - text:
+          de: "Beides mit `lm()`, weil es bei n > 30 egal ist."
+          en: "Both with `lm()`, because it does not matter with n > 30."
+        correct: false
+        explain:
+          de: "Das lineare Modell sagt Werte außerhalb des möglichen Bereichs vorher und hat ungleiche Fehlervarianz; die Stichprobengröße ändert daran nichts."
+          en: "The linear model predicts values outside the possible range and has unequal error variance; sample size does not change that."
+  - id: gl-i-q-logodds
+    prompt:
+      de: "Ohne `exponentiate` zeigt `model_parameters()` für Prototyp B den Koeffizienten 0.78. Was ist das?"
+      en: "Without `exponentiate`, `model_parameters()` shows the coefficient 0.78 for prototype B. What is that?"
+    options:
+      - text:
+          de: "Die Differenz der Log-Odds zu A; `exp(0.78) = 2.19` ist das Odds Ratio."
+          en: "The difference in log-odds to A; `exp(0.78) = 2.19` is the odds ratio."
+        correct: true
+        explain:
+          de: "Ja. Der Link der logistischen Regression ist der Logit; für die Deutung in Odds Ratios exponenzieren."
+          en: "Yes. The link of logistic regression is the logit; exponentiate to interpret it as odds ratios."
+      - text:
+          de: "Die Erfolgswahrscheinlichkeit mit B (78 %)."
+          en: "The probability of success with B (78 %)."
+        correct: false
+        explain:
+          de: "Koeffizienten sind Differenzen auf der Logit-Skala, keine Wahrscheinlichkeiten. Die vorhergesagte Quote mit B ist 89 %."
+          en: "Coefficients are differences on the logit scale, not probabilities. The predicted rate with B is 89 %."
+      - text:
+          de: "B erhöht die Erfolgswahrscheinlichkeit um 78 Prozentpunkte."
+          en: "B increases the probability of success by 78 percentage points."
+        correct: false
+        explain:
+          de: "Prozentpunkte gibt `avg_comparisons()`; hier sind es etwa 10."
+          en: "`avg_comparisons()` gives percentage points; here it is about 10."
+  - id: gl-i-q-irr
+    prompt:
+      de: "Eine Poisson-Regression ergibt für Prototyp B das Rate Ratio 0.41 gegenüber A (A: 0.96 Fehler pro Aufgabe). Was heißt das?"
+      en: "A Poisson regression gives a rate ratio of 0.41 for prototype B versus A (A: 0.96 errors per task). What does that mean?"
+    options:
+      - text:
+          de: "Mit B entstehen 59 % weniger Fehler, im Mittel etwa 0.40 statt 0.96 pro Aufgabe."
+          en: "With B, 59 % fewer errors occur, on average about 0.40 instead of 0.96 per task."
+        correct: true
+        explain:
+          de: "Richtig: 0.96 × 0.41 ≈ 0.39. Effekte sind multiplikativ."
+          en: "Right: 0.96 × 0.41 ≈ 0.39. Effects are multiplicative."
+      - text:
+          de: "Mit B entstehen 0.41 Fehler weniger pro Aufgabe."
+          en: "With B, 0.41 fewer errors occur per task."
+        correct: false
+        explain:
+          de: "Das wäre eine Differenz. Das Rate Ratio ist ein Faktor; die Differenz beträgt hier etwa 0.56 Fehler."
+          en: "That would be a difference. The rate ratio is a factor; the difference here is about 0.56 errors."
+      - text:
+          de: "41 % der Aufgaben mit B sind fehlerfrei."
+          en: "41 % of the tasks with B are error-free."
+        correct: false
+        explain:
+          de: "Das Rate Ratio sagt nichts über den Anteil der Nullen."
+          en: "The rate ratio says nothing about the share of zeros."
+  - id: gl-i-q-cluster
+    prompt:
+      de: "Jede Person hat 12 Aufgaben bearbeitet. Was bedeutet das für ein `glm()` über alle 284 Aufgaben?"
+      en: "Every participant worked on 12 tasks. What does this mean for a `glm()` over all 284 tasks?"
+    options:
+      - text:
+          de: "Die Aufgaben einer Person hängen zusammen; die Standardfehler sind ohne Korrektur zu klein. Abhilfe: cluster-robuste SE (`vcov = ~participant`) oder ein Mixed Model."
+          en: "A participant's tasks are related; without a correction the standard errors are too small. Remedy: cluster-robust SEs (`vcov = ~participant`) or a mixed model."
+        correct: true
+        explain:
+          de: "Genau. Die Koeffizienten bleiben meist ähnlich, die Unsicherheit wird ehrlicher."
+          en: "Exactly. The coefficients usually stay similar, the uncertainty becomes more honest."
+      - text:
+          de: "Nichts, weil logistische Regression keine Unabhängigkeit voraussetzt."
+          en: "Nothing, because logistic regression does not assume independence."
+        correct: false
+        explain:
+          de: "Doch: Alle GLMs nehmen unabhängige Beobachtungen an."
+          en: "It does: all GLMs assume independent observations."
+      - text:
+          de: "Man muss pro Person mitteln und dann eine logistische Regression auf die Mittelwerte rechnen."
+          en: "You have to average per participant and then fit a logistic regression on the means."
+        correct: false
+        explain:
+          de: "Mittelwerte von 0/1 sind Anteile, keine 0/1-Werte; dafür bräuchte es ein Binomialmodell mit Anzahl Versuche, und Aufgabeninformation ginge verloren."
+          en: "Means of 0/1 are proportions, not 0/1 values; that would need a binomial model with the number of trials, and task information would be lost."
+  - id: gl-i-q-overdispersion
+    prompt:
+      de: "`check_overdispersion()` meldet für ein Poisson-Modell eine Dispersion von 1.55, p < .001. Was folgt daraus?"
+      en: "`check_overdispersion()` reports a dispersion of 1.55, p < .001, for a Poisson model. What follows?"
+    options:
+      - text:
+          de: "Die Varianz ist größer als der Mittelwert; die Standardfehler sind zu klein. Quasipoisson oder Negativ-Binomial verwenden."
+          en: "The variance is larger than the mean; the standard errors are too small. Use quasipoisson or negative binomial."
+        correct: true
+        explain:
+          de: "Richtig. Die Rate Ratios bleiben gleich (quasipoisson) oder ähnlich (Negativ-Binomial), die KIs werden breiter."
+          en: "Right. The rate ratios stay the same (quasipoisson) or similar (negative binomial), the CIs get wider."
+      - text:
+          de: "Die Rate Ratios sind falsch und dürfen nicht berichtet werden."
+          en: "The rate ratios are wrong and must not be reported."
+        correct: false
+        explain:
+          de: "Die Punktschätzer sind unverzerrt; betroffen ist die Unsicherheit."
+          en: "The point estimates are unbiased; the uncertainty is affected."
+      - text:
+          de: "Man sollte auf `family = binomial` wechseln."
+          en: "You should switch to `family = binomial`."
+        correct: false
+        explain:
+          de: "Fehlerzahlen sind keine 0/1-Werte; binomial passt nicht."
+          en: "Error counts are not 0/1 values; binomial does not fit."

@@ -64,6 +64,10 @@ jobs:
             any::semTools
             any::afex
             any::emmeans
+            any::rstatix
+            any::WRS2
+            any::marginaleffects
+            any::sandwich
             any::chromote
             any::processx
 

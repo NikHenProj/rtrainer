@@ -1,0 +1,101 @@
+id: rb-i-mann-whitney
+lesson: robust-intermediate
+order: 1
+title:
+  de: Mann-Whitney-U mit Effektgröße
+  en: Mann-Whitney U with an effect size
+kind: write
+required: true
+packages: [dplyr, rstatix]
+data: [driving_sim]
+setup: |
+  library(dplyr)
+  library(rstatix)
+prompt:
+  de: |
+    Unterscheiden sich Fahrerinnen (`"female"`) und Fahrer (`"male"`) in der
+    Spurabweichung `lane_dev`? Die Werte sind schief und die Gruppen klein
+    (23 und 14 Personen), deshalb soll ein Rangtest rechnen. Die drei Personen
+    mit `"diverse"` bleiben außen vor, weil der Test genau zwei Gruppen braucht.
+
+    Der Code im Feld testet auf Ebene der Durchgänge. Mittle stattdessen pro
+    Person (`participant`, fehlende Werte auslassen), rechne den Mann-Whitney-U-Test mit
+    `rstatix::wilcox_test()` und die Effektgröße mit `wilcox_effsize()`. Gib
+    `c(W = ..., p = ..., r = ...)` zurück, auf 3 Stellen gerundet.
+  en: |
+    Do female (`"female"`) and male (`"male"`) drivers differ in lane deviation
+    `lane_dev`? The values are skewed and the groups small (23 and 14
+    participants), so a rank test should do the job. The three participants
+    with `"diverse"` are left out because the test needs exactly two groups.
+
+    The code in the box tests at the trial level. Instead, average per
+    participant (`participant`, leaving out missing values), run the Mann-Whitney U test with
+    `rstatix::wilcox_test()` and the effect size with `wilcox_effsize()`.
+    Return `c(W = ..., p = ..., r = ...)`, rounded to 3 decimals.
+starter: |
+  driving_sim |>
+    wilcox_test(lane_dev ~ gender)
+solution: |
+  per_person <- driving_sim |>
+    filter(gender %in% c("female", "male")) |>
+    summarise(lane = mean(lane_dev, na.rm = TRUE), .by = c(participant, gender))
+  res <- per_person |> wilcox_test(lane ~ gender)
+  eff <- per_person |> wilcox_effsize(lane ~ gender)
+  round(c(W = res$statistic[[1]], p = res$p, r = eff$effsize[[1]]), 3)
+hints:
+  - de: "Erst filtern und pro Person mitteln (`summarise(..., .by = c(participant, gender))`), dann testen. Unabhängig sind die Personen, nicht die Durchgänge."
+    en: "First filter and average per participant (`summarise(..., .by = c(participant, gender))`), then test. The participants are independent, not the trials."
+  - de: "`wilcox_test()` und `wilcox_effsize()` nehmen beide die Daten als erstes Argument und eine Formel `lane ~ gender`. W steht in der Spalte `statistic`, r in `effsize`."
+    en: "`wilcox_test()` and `wilcox_effsize()` both take the data as first argument and a formula `lane ~ gender`. W is in the column `statistic`, r in `effsize`."
+  - de: "`round(c(W = res$statistic[[1]], p = res$p, r = eff$effsize[[1]]), 3)`"
+    en: "`round(c(W = res$statistic[[1]], p = res$p, r = eff$effsize[[1]]), 3)`"
+explanation:
+  de: |
+    W = 146, p = .654, r = .08: Fahrerinnen und Fahrer unterscheiden sich nicht
+    nachweisbar. Mit `detailed = TRUE` gibt `wilcox_test()` zusätzlich die
+    Lageverschiebung nach Hodges-Lehmann mit KI aus: −0.005 m [−0.031, 0.020].
+    Unterschiede über etwa 3 cm sind damit unwahrscheinlich, Gleichheit ist aber
+    nicht bewiesen. Der U-Test vergleicht, wie oft ein Wert der einen Gruppe
+    größer ist als einer der anderen; das ist nur unter der Annahme gleich
+    geformter Verteilungen ein Medianvergleich. rstatix berechnet r = |z| / √N
+    (immer positiv); die Rang-biseriale Korrelation aus effectsize
+    (`rank_biserial()`, hier −.09 [−.45, .29]) hat ein Vorzeichen und ein KI.
+    Auf Durchgangsebene zählte jede Person zwölfmal (Pseudoreplikation). Bericht:
+    „Die Spurabweichung unterschied sich nicht zwischen Fahrerinnen (n = 23)
+    und Fahrern (n = 14), W = 146, p = .654, r = .08.“
+  en: |
+    W = 146, p = .654, r = .08: female and male drivers do not differ
+    detectably. With `detailed = TRUE`, `wilcox_test()` also gives the
+    Hodges-Lehmann location shift with a CI: −0.005 m [−0.031, 0.020].
+    Differences larger than about 3 cm are therefore unlikely, but equality is
+    not proven. The U test compares how often a value of one group is larger
+    than one of the other; it is a comparison of medians only if the
+    distributions have the same shape. rstatix computes r = |z| / √N (always
+    positive); the rank-biserial correlation from effectsize
+    (`rank_biserial()`, here −.09 [−.45, .29]) has a sign and a CI. At the trial
+    level, each participant counted twelve times (pseudoreplication). Report:
+    "Lane deviation did not differ between female (n = 23) and male drivers
+    (n = 14), W = 146, p = .654, r = .08."
+misconception:
+  de: "Der Mann-Whitney-Test vergleicht immer Mediane, und ein p > .05 belegt, dass kein Unterschied besteht."
+  en: "The Mann-Whitney test always compares medians, and p > .05 proves that there is no difference."
+check:
+  type: value
+  tolerance: 1.0e-6
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*(summarise|summarize)\\()[\\s\\S]*wilcox_test"
+    message:
+      de: "Der Test läuft auf Durchgangsebene: Jede Person zählt zwölfmal (Pseudoreplikation). Erst pro `participant` mitteln."
+      en: "The test runs at the trial level: each participant counts twelve times (pseudoreplication). Average per `participant` first."
+  - pattern: "^(?![\\s\\S]*[\"'](female|male|diverse)[\"'])[\\s\\S]*wilcox_test"
+    message:
+      de: "`gender` hat drei Ausprägungen, dann rechnet `wilcox_test()` alle Paare. Filtere auf `\"female\"` und `\"male\"`."
+      en: "`gender` has three levels, so `wilcox_test()` computes all pairs. Filter to `\"female\"` and `\"male\"`."
+  - pattern: "t_test\\(|t\\.test\\("
+    message:
+      de: "Gefragt ist der Rangtest `wilcox_test()`, nicht der t-Test."
+      en: "The task asks for the rank test `wilcox_test()`, not the t-test."
+  - pattern: "paired\\s*=\\s*(TRUE|T)\\b"
+    message:
+      de: "Fahrerinnen und Fahrer sind verschiedene Personen; gepaart wäre der Vorzeichen-Rang-Test für zwei Messungen derselben Person."
+      en: "Female and male drivers are different people; paired would be the signed-rank test for two measurements of the same person."

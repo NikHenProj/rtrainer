@@ -1,0 +1,89 @@
+id: rg-i-standardized
+lesson: regression-intermediate
+order: 4
+title:
+  de: Standardisierte Koeffizienten vergleichen
+  en: Comparing standardised coefficients
+kind: write
+required: false
+packages: [dplyr, effectsize]
+data: [acceptance]
+setup: |
+  library(dplyr)
+  library(effectsize)
+  tam <- acceptance |>
+    mutate(
+      across(c(peou_3, trust_4), \(x) 8 - x),
+      pu = rowMeans(pick(pu_1:pu_4)),
+      peou = rowMeans(pick(peou_1:peou_4)),
+      trust = rowMeans(pick(trust_1:trust_5)),
+      bi = rowMeans(pick(bi_1:bi_4))
+    )
+  fit <- lm(bi ~ age + experience + pu + peou + trust, data = tam)
+prompt:
+  de: |
+    `fit` sagt die Nutzungsabsicht aus Alter (Jahre), Erfahrung (Jahre) und den
+    drei Akzeptanzskalen (1–7) vorher. Welcher Prädiktor trägt am meisten bei?
+    Die Rohkoeffizienten haben verschiedene Einheiten (−0.01 pro Lebensjahr,
+    0.27 pro Skalenpunkt) und sind nicht vergleichbar.
+
+    Gib die standardisierten Koeffizienten mit `standardize_parameters(fit)`
+    aus effectsize zurück.
+  en: |
+    `fit` predicts intention from age (years), experience (years) and the
+    three acceptance scales (1–7). Which predictor contributes most? The raw
+    coefficients have different units (−0.01 per year of age, 0.27 per scale
+    point) and are not comparable.
+
+    Return the standardised coefficients with `standardize_parameters(fit)`
+    from effectsize.
+starter: |
+  coef(fit)
+solution: |
+  standardize_parameters(fit)
+hints:
+  - de: "Standardisiert heißt: Kriterium und Prädiktoren in SD-Einheiten. Ein Koeffizient von 0.26 bedeutet: +1 SD im Prädiktor geht mit +0.26 SD im Kriterium einher."
+    en: "Standardised means: outcome and predictors in SD units. A coefficient of 0.26 means: +1 SD in the predictor goes with +0.26 SD in the outcome."
+  - de: "`standardize_parameters()` nimmt das fertige Modell; es rechnet es mit standardisierten Variablen neu (`method = \"refit\"`)."
+    en: "`standardize_parameters()` takes the fitted model; it refits it with standardised variables (`method = \"refit\"`)."
+  - de: "`standardize_parameters(fit)`"
+    en: "`standardize_parameters(fit)`"
+explanation:
+  de: |
+    Nützlichkeit β = .26 [.15, .37], Bedienbarkeit .23 [.11, .34], Vertrauen
+    .21 [.11, .32], Alter −.12 [−.22, −.02], Erfahrung .00. Die drei
+    Akzeptanzskalen tragen ähnlich stark bei; ihre KIs überlappen weit, eine
+    Rangfolge lässt sich daraus nicht ablesen. Erfahrung hat neben ihnen keinen
+    eigenen Beitrag: Sie wirkt über die Bedienbarkeit (r = .23). Fallstricke:
+    Standardisierte Koeffizienten hängen von der Streuung in der Stichprobe ab
+    und sind bei Faktoren (0/1) schwer zu deuten; bei Interaktionen erst
+    zentrieren bzw. `method = "refit"` nutzen. Für den praktischen Nutzen sind
+    die Rohkoeffizienten oft besser („+1 Skalenpunkt Nützlichkeit, +0.27 Punkte
+    Absicht“). `performance::check_collinearity(fit)` zeigt VIF 1.06–1.30: Die
+    Prädiktoren überlappen kaum, die Teileffekte sind stabil geschätzt.
+  en: |
+    Usefulness β = .26 [.15, .37], ease of use .23 [.11, .34], trust .21
+    [.11, .32], age −.12 [−.22, −.02], experience .00. The three acceptance
+    scales contribute about equally; their CIs overlap widely, no ranking can
+    be read from them. Experience makes no contribution of its own next to
+    them: it works through ease of use (r = .23). Pitfalls: standardised
+    coefficients depend on the spread in the sample and are hard to interpret
+    for factors (0/1); with interactions centre first or use
+    `method = "refit"`. For practical use, raw coefficients are often better
+    ("+1 scale point usefulness, +0.27 points intention").
+    `performance::check_collinearity(fit)` shows VIF 1.06–1.30: the predictors
+    hardly overlap, the partial effects are estimated stably.
+misconception:
+  de: "Der Prädiktor mit dem größten Rohkoeffizienten ist der wichtigste."
+  en: "The predictor with the largest raw coefficient is the most important one."
+check:
+  type: value
+common_mistakes:
+  - pattern: "lm\\(\\s*scale\\(\\s*bi"
+    message:
+      de: "Selbst standardisieren geht, ist aber fehleranfällig. `standardize_parameters(fit)` rechnet das Modell standardisiert neu und gibt KIs dazu."
+      en: "Standardising by hand works, but is error-prone. `standardize_parameters(fit)` refits the model standardised and gives CIs."
+  - pattern: "standardize_parameters\\([^)]*method\\s*=\\s*\"(basic|posthoc|smart)\""
+    message:
+      de: "Gefragt ist die Standardmethode (`refit`); andere Methoden rechnen nicht neu und weichen bei Faktoren und Interaktionen ab."
+      en: "The task asks for the default method (`refit`); other methods do not refit and differ for factors and interactions."

@@ -1,0 +1,100 @@
+id: rb-i-yuen
+lesson: robust-intermediate
+order: 2
+title:
+  de: Getrimmte Mittel mit dem Yuen-Test
+  en: Trimmed means with Yuen's test
+kind: write
+required: true
+packages: [WRS2]
+data: [survey]
+setup: |
+  library(WRS2)
+prompt:
+  de: |
+    Im Fragebogen (`survey`) haben 160 Personen entweder die Touch- oder die
+    Sprachbedienung genutzt (`interface`). Ist die körperliche Beanspruchung
+    `tlx_physical` (NASA-TLX, 0–100) bei Touch höher? Die Werte sind schief, und
+    einzelne sehr hohe Angaben ziehen den Mittelwert.
+
+    Ersetze den Welch-Test durch den Yuen-Test für 20 % getrimmte Mittel:
+    `WRS2::yuen()` mit Formel und `data`. Gib die Differenz der getrimmten Mittel
+    (touch − voice), die KI-Grenzen und den p-Wert als
+    `c(diff = ..., ci_low = ..., ci_high = ..., p = ...)` zurück, auf 3 Stellen
+    gerundet. Die Werte stehen im Ergebnis in `diff`, `conf.int` und `p.value`.
+  en: |
+    In the questionnaire (`survey`), 160 people used either the touch or the
+    voice interface (`interface`). Is physical demand `tlx_physical` (NASA-TLX,
+    0–100) higher with touch? The values are skewed, and a few very high
+    answers pull the mean.
+
+    Replace the Welch test with Yuen's test for 20 % trimmed means:
+    `WRS2::yuen()` with a formula and `data`. Return the difference of the
+    trimmed means (touch − voice), the CI limits and the p-value as
+    `c(diff = ..., ci_low = ..., ci_high = ..., p = ...)`, rounded to 3
+    decimals. The values are in the result's `diff`, `conf.int` and `p.value`.
+starter: |
+  fit <- t.test(tlx_physical ~ interface, data = survey)
+  round(c(diff = unname(diff(rev(fit$estimate))), ci_low = fit$conf.int[1],
+          ci_high = fit$conf.int[2], p = fit$p.value), 3)
+solution: |
+  fit <- yuen(tlx_physical ~ interface, data = survey)
+  round(c(
+    diff = fit$diff, ci_low = fit$conf.int[1],
+    ci_high = fit$conf.int[2], p = fit$p.value
+  ), 3)
+hints:
+  - de: "`yuen()` nimmt dieselbe Formel wie `t.test()`; ohne `tr` trimmt es 20 % an jedem Ende."
+    en: "`yuen()` takes the same formula as `t.test()`; without `tr` it trims 20 % at each end."
+  - de: "Speichere das Ergebnis in `fit` und hole die Teile mit `fit$diff`, `fit$conf.int[1]`, `fit$conf.int[2]` und `fit$p.value`."
+    en: "Save the result in `fit` and extract the parts with `fit$diff`, `fit$conf.int[1]`, `fit$conf.int[2]` and `fit$p.value`."
+  - de: "`fit <- yuen(tlx_physical ~ interface, data = survey)`, dann `round(c(diff = fit$diff, ...), 3)`."
+    en: "`fit <- yuen(tlx_physical ~ interface, data = survey)`, then `round(c(diff = fit$diff, ...), 3)`."
+explanation:
+  de: |
+    Getrimmte Mittel: touch 32.1, voice 21.0; Differenz 11.07 Punkte, 95-%-KI
+    [4.96, 17.18], t(88.51) = 3.60, p < .001. Der Welch-Test kommt hier zum
+    selben Schluss (Differenz 9.27 [4.24, 14.30]); das ist der typische Fall:
+    Die robuste Analyse bestätigt das Ergebnis und schützt es gegen Ausreißer.
+    Getrimmt werden 20 % an jedem Ende jeder Gruppe; die Standardfehler beruhen
+    auf winsorisierten Varianzen, deshalb sind die Freiheitsgrade kleiner
+    (88.5 statt 149.7). Getrimmte Mittel sind kein Datenlöschen: Alle Werte
+    bestimmen, was getrimmt wird, und das Verfahren hält den α-Fehler auch bei
+    schiefen Verteilungen ein. WRS2 gibt zusätzlich ein „explanatory measure of
+    effect size“ (ξ = 0.43) aus; mit `yuen.effect.ci()` bekommst du dafür ein
+    Bootstrap-KI. Bericht: „Die körperliche Beanspruchung war mit Touch höher
+    als mit Sprache, Differenz der 20-%-getrimmten Mittel = 11.07, 95-%-KI
+    [4.96, 17.18], Yuen t(88.51) = 3.60, p < .001.“
+  en: |
+    Trimmed means: touch 32.1, voice 21.0; difference 11.07 points, 95 % CI
+    [4.96, 17.18], t(88.51) = 3.60, p < .001. The Welch test reaches the same
+    conclusion here (difference 9.27 [4.24, 14.30]); that is the typical case:
+    the robust analysis confirms the result and protects it against outliers.
+    20 % are trimmed at each end of each group; the standard errors rest on
+    winsorised variances, so the degrees of freedom are smaller (88.5 instead
+    of 149.7). Trimmed means are not deleting data: all values determine what
+    is trimmed, and the procedure keeps the α error even with skewed
+    distributions. WRS2 also reports an "explanatory measure of effect size"
+    (ξ = 0.43); `yuen.effect.ci()` gives a bootstrap CI for it. Report:
+    "Physical demand was higher with touch than with voice, difference of 20 %
+    trimmed means = 11.07, 95 % CI [4.96, 17.18], Yuen t(88.51) = 3.60,
+    p < .001."
+misconception:
+  de: "Getrimmte Mittel werfen unbequeme Daten weg und sind deshalb weniger ehrlich als das arithmetische Mittel."
+  en: "Trimmed means throw away inconvenient data and are therefore less honest than the arithmetic mean."
+check:
+  type: value
+  tolerance: 1.0e-6
+common_mistakes:
+  - pattern: "t\\.test\\("
+    message:
+      de: "Der Welch-Test vergleicht arithmetische Mittel. Gefragt ist `yuen()` aus WRS2 für getrimmte Mittel."
+      en: "The Welch test compares arithmetic means. The task asks for `yuen()` from WRS2 for trimmed means."
+  - pattern: "tr\\s*=\\s*0?\\.(1|25|5)\\b"
+    message:
+      de: "Gefragt sind 20 % Trimmung, der Standard von `yuen()` (`tr = 0.2`)."
+      en: "The task asks for 20 % trimming, the default of `yuen()` (`tr = 0.2`)."
+  - pattern: "trim\\s*=|filter\\([^)]*tlx_physical\\s*[<>]"
+    message:
+      de: "Nicht vorher selbst kürzen oder Werte ausschließen: `yuen()` trimmt selbst und rechnet die Standardfehler passend (winsorisiert)."
+      en: "Do not shorten or exclude values yourself beforehand: `yuen()` trims by itself and computes matching (winsorised) standard errors."

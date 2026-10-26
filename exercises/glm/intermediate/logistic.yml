@@ -1,0 +1,90 @@
+id: gl-i-logistic
+lesson: glm-intermediate
+order: 1
+title:
+  de: Logistische Regression mit Odds Ratios
+  en: Logistic regression with odds ratios
+kind: write
+required: true
+packages: [parameters]
+data: [usability]
+setup: |
+  library(parameters)
+prompt:
+  de: |
+    Im Usability-Test ist `success` 1, wenn eine Aufgabe gelöst wurde, und 0,
+    wenn nicht (auch bei Abbruch nach 180 s). Gelingen die Aufgaben mit
+    Prototyp B öfter als mit A, wenn man die Erfahrung (`expertise`: novice,
+    expert) berücksichtigt?
+
+    Der Code im Feld rechnet eine lineare Regression auf die 0/1-Werte. Rechne
+    stattdessen eine logistische Regression mit `glm()` und
+    `family = binomial`, Prädiktoren `prototype` und `expertise`. Gib
+    `model_parameters()` mit Odds Ratios zurück (`exponentiate = TRUE`).
+  en: |
+    In the usability test, `success` is 1 if a task was solved and 0 if not
+    (also when it was stopped after 180 s). Do tasks succeed more often with
+    prototype B than with A, taking experience into account (`expertise`:
+    novice, expert)?
+
+    The code in the box fits a linear regression on the 0/1 values. Instead,
+    fit a logistic regression with `glm()` and `family = binomial`, predictors
+    `prototype` and `expertise`. Return `model_parameters()` with odds ratios
+    (`exponentiate = TRUE`).
+starter: |
+  fit <- lm(success ~ prototype + expertise, data = usability)
+  model_parameters(fit)
+solution: |
+  fit <- glm(success ~ prototype + expertise, family = binomial, data = usability)
+  model_parameters(fit, exponentiate = TRUE)
+hints:
+  - de: "`glm()` nimmt dieselbe Formel wie `lm()`, dazu die Verteilung: `family = binomial` für 0/1-Werte."
+    en: "`glm()` takes the same formula as `lm()`, plus the distribution: `family = binomial` for 0/1 values."
+  - de: "Die Koeffizienten sind Log-Odds. `model_parameters(fit, exponentiate = TRUE)` rechnet sie mit `exp()` in Odds Ratios um, die KIs gleich mit."
+    en: "The coefficients are log-odds. `model_parameters(fit, exponentiate = TRUE)` turns them into odds ratios with `exp()`, CIs included."
+  - de: "`fit <- glm(success ~ prototype + expertise, family = binomial, data = usability)`"
+    en: "`fit <- glm(success ~ prototype + expertise, family = binomial, data = usability)`"
+explanation:
+  de: |
+    OR für B gegenüber A = 2.19, 95-%-KI [1.00, 5.02], p = .054; für C 0.69
+    [0.35, 1.36], p = .288; Expertinnen und Experten gegenüber Neulingen 1.99
+    [1.10, 3.67], p = .025. Die Chance (Odds = Erfolg : Misserfolg) auf Erfolg
+    ist mit B etwa doppelt so hoch wie mit A, das KI reicht aber bis 1. Der
+    Achsenabschnitt 2.62 ist die Chance für Neulinge mit A (etwa 72 %
+    Erfolg). Odds Ratios sind keine Wahrscheinlichkeitsverhältnisse: Bei hohen
+    Erfolgsquoten (78 % mit A) bedeutet OR = 2.19 nur etwa +10 Prozentpunkte;
+    das zeigt `avg_comparisons()` (nächste Übung). Das lineare Modell auf 0/1
+    kann Wahrscheinlichkeiten unter 0 oder über 1 vorhersagen und hat
+    ungleiche Fehlervarianz. Fallstrick: Jede Person bearbeitet 12 Aufgaben;
+    die Standardfehler unterschätzen die Unsicherheit, solange das Modell das
+    nicht berücksichtigt (Lösung: cluster-robuste SE oder ein Mixed Model).
+  en: |
+    OR for B versus A = 2.19, 95 % CI [1.00, 5.02], p = .054; for C 0.69
+    [0.35, 1.36], p = .288; experts versus novices 1.99 [1.10, 3.67],
+    p = .025. The odds of success (success : failure) are about twice as high
+    with B as with A, but the CI reaches down to 1. The intercept 2.62 is the
+    odds for novices with A (about 72 % success). Odds ratios are not ratios
+    of probabilities: with high success rates (78 % with A), OR = 2.19 means
+    only about +10 percentage points; `avg_comparisons()` shows this (next
+    exercise). The linear model on 0/1 can predict probabilities below 0 or
+    above 1 and has unequal error variance. Pitfall: each participant works
+    on 12 tasks; the standard errors understate the uncertainty as long as
+    the model ignores this (solution: cluster-robust SEs or a mixed model).
+misconception:
+  de: "Ein Odds Ratio von 2 heißt, dass der Erfolg doppelt so wahrscheinlich ist."
+  en: "An odds ratio of 2 means that success is twice as likely."
+check:
+  type: value
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*family)[\\s\\S]*glm\\("
+    message:
+      de: "Ohne `family` rechnet `glm()` eine Normalverteilung, also wieder ein lineares Modell. Für 0/1: `family = binomial`."
+      en: "Without `family`, `glm()` assumes a normal distribution, i.e. a linear model again. For 0/1: `family = binomial`."
+  - pattern: "family\\s*=\\s*(poisson|gaussian)"
+    message:
+      de: "`success` ist 0/1, keine Zählung: `family = binomial`."
+      en: "`success` is 0/1, not a count: `family = binomial`."
+  - pattern: "^(?![\\s\\S]*exponentiate)[\\s\\S]*glm\\("
+    message:
+      de: "Ohne `exponentiate = TRUE` stehen Log-Odds in der Tabelle. Gefragt sind Odds Ratios."
+      en: "Without `exponentiate = TRUE`, the table shows log-odds. The task asks for odds ratios."

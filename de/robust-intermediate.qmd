@@ -1,0 +1,136 @@
+---
+title: "Nichtparametrisch und robust"
+subtitle: "Intermediate · Rangtests mit rstatix, getrimmte Mittel mit WRS2"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, rstatix, effectsize, WRS2]
+resources:
+  - ../data/driving_sim.csv
+  - ../data/survey.csv
+  - ../data/usability.csv
+---
+
+{{< include /_generated/de/robust-intermediate/runtime.qmd >}}
+
+{{< include /_generated/de/robust-intermediate/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R läuft hier direkt im Browser. Beim ersten Besuch lädt es 20–40 Sekunden (Anzeige unten rechts), danach geht es schneller.
+:::
+
+## Wozu? {#why}
+
+**Forschungsfrage:** Frustriert die Sprachbedienung mehr als die Touch-Bedienung, auch wenn man ein paar extreme Antworten nicht den Ausschlag geben lässt?
+
+Im Fragebogen (`survey`) haben 160 Personen entweder Touch oder Sprache genutzt und danach den NASA-TLX ausgefüllt. Die Frustration (0–100) ist schief verteilt, viele Antworten liegen bei 20–50, einzelne bei 80 oder 90. t-Test und ANOVA vergleichen Mittelwerte, und die reagieren stark auf solche Werte. Rangtests und getrimmte Mittel sind die zwei Wege, das Ergebnis dagegen abzusichern. Sie beantworten aber leicht unterschiedliche Fragen.
+
+## Konzept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 200" role="img" aria-labelledby="fig-rbi-title fig-rbi-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-rbi-title">Mittelwert, getrimmtes Mittel und Ränge</title>
+  <desc id="fig-rbi-desc">Eine Zahlenreihe mit zehn Werten, zwei davon weit rechts (Ausreißer). Der Mittelwert liegt durch die Ausreißer rechts von der Mitte der meisten Werte. Das 20-%-getrimmte Mittel lässt die zwei kleinsten und zwei größten Werte weg und liegt in der Mitte der Hauptmasse. Darunter dieselben Werte als Ränge 1 bis 10: Die Ausreißer bekommen Rang 9 und 10, egal wie weit sie entfernt sind.</desc>
+  <line x1="30" y1="70" x2="530" y2="70" class="rt-fig-axis" />
+  <circle cx="60" cy="70" r="6" class="rt-fig-b" />
+  <circle cx="85" cy="70" r="6" class="rt-fig-b" />
+  <circle cx="110" cy="70" r="6" class="rt-fig-a" />
+  <circle cx="130" cy="70" r="6" class="rt-fig-a" />
+  <circle cx="150" cy="70" r="6" class="rt-fig-a" />
+  <circle cx="165" cy="70" r="6" class="rt-fig-a" />
+  <circle cx="185" cy="70" r="6" class="rt-fig-a" />
+  <circle cx="210" cy="70" r="6" class="rt-fig-a" />
+  <circle cx="440" cy="70" r="6" class="rt-fig-b" />
+  <circle cx="510" cy="70" r="6" class="rt-fig-b" />
+  <line x1="235" y1="40" x2="235" y2="100" class="rt-fig-mean" />
+  <text x="240" y="36" class="rt-fig-label">Mittelwert</text>
+  <line x1="158" y1="40" x2="158" y2="100" class="rt-fig-mean" />
+  <text x="40" y="36" class="rt-fig-label">getrimmtes Mittel</text>
+  <text x="380" y="100" class="rt-fig-label rt-fig-muted">hell: weggetrimmt (je 20 %)</text>
+  <text x="30" y="150" class="rt-fig-label">Ränge:</text>
+  <text x="100" y="150" class="rt-fig-code">1 2 3 4 5 6 7 8 9 10</text>
+  <text x="30" y="180" class="rt-fig-label rt-fig-muted">Ein Ausreißer zählt als Rang 10, egal wie weit er weg liegt.</text>
+</svg>
+<figcaption>Zwei Wege gegen Ausreißer: Getrimmte Mittel lassen die Ränder aus dem Mittel weg und bleiben auf der Skala der Daten. Rangtests ersetzen Werte durch Ränge und vergleichen, welche Gruppe systematisch höher liegt.</figcaption>
+</figure>
+```
+
+- **Rangtests** ersetzen jeden Wert durch seinen Rang. Mann-Whitney-U (zwei unabhängige Gruppen), Wilcoxon-Vorzeichen-Rang (zwei Messungen derselben Person), Kruskal-Wallis (mehrere unabhängige Gruppen), Friedman (mehrere Messungen derselben Person). In rstatix: `wilcox_test()`, `wilcox_test(paired = TRUE)`, `kruskal_test()`, `friedman_test()`, alle mit Formel und Pipe.
+- **Was sie vergleichen:** ob die Werte einer Gruppe systematisch höher liegen (Wahrscheinlichkeit, dass ein zufälliger Wert aus A größer ist als einer aus B). Ein Medianvergleich ist das nur, wenn beide Verteilungen dieselbe Form haben.
+- **Effektgrößen:** r = |z| / √N (`wilcox_effsize()`) oder die Rang-biseriale Korrelation mit KI (`effectsize::rank_biserial()`), η²[H] für Kruskal-Wallis (`kruskal_effsize()`), Kendalls W für Friedman (`friedman_effsize()`). Die Lageverschiebung nach Hodges-Lehmann (`detailed = TRUE`) gibt einen Unterschied in Skaleneinheiten mit KI.
+- **Getrimmte Mittel** (WRS2): `yuen()` vergleicht zwei unabhängige Gruppen über 20-%-getrimmte Mittel, `yuend()` zwei abhängige Messungen, `t1way()` mehrere Gruppen, `rmanova()` Messwiederholung. Das Ergebnis bleibt in Skalenpunkten deutbar.
+- **Ebene und Paarung** gelten wie beim t-Test: erst pro Person mitteln; Messwiederholung gepaart rechnen, mit vollständigen Personen.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## Mehr dazu: Wann robust, Bindungen, Bootstrap
+
+- **Vorab entscheiden:** Die Wahl gehört in den Analyseplan (Skalenniveau, erwartete Schiefe). Erst den t-Test rechnen und bei p > .05 zum Rangtest wechseln ist versteckte Mehrfachtestung.
+- **Bindungen:** Likert-Daten haben viele gleiche Werte. R rechnet dann mit Normalapproximation und meldet „cannot compute exact p-value with ties“; das ist eine Meldung, kein Fehler.
+- **Robust heißt nicht annahmefrei:** Rangtests setzen unabhängige Beobachtungen voraus, und die Personen müssen die Einheit sein. Bei Modellen mit Kovariaten helfen robuste Standardfehler (`parameters::model_parameters(fit, vcov = "HC3")`, Lektion Korrelation und Regression) oder Bootstrap (`WRS2::yuenbt()`).
+- **Ordinal mit vielen Stufen:** Für Einzelitems ist ein ordinales Modell (`ordinal::clm()`) die bessere Wahl; Skalenmittel aus mehreren Items darf man meist metrisch behandeln.
+:::
+
+## Beispiel {#example}
+
+Frustration nach Bedienart, erst als Rangtest mit Effektgröße:
+
+```{webr}
+survey |>
+  wilcox_test(tlx_frustration ~ interface, detailed = TRUE)
+survey |>
+  wilcox_effsize(tlx_frustration ~ interface)
+rank_biserial(tlx_frustration ~ interface, data = survey)
+```
+
+W = 2204, p = .006. Die Lageverschiebung (touch − voice) beträgt −10 Punkte, 95-%-KI [−15, −5]. Die Rang-biseriale Korrelation ist −.26 [−.42, −.08]: Ein zufällig gezogener Touch-Wert liegt mit deutlich größerer Wahrscheinlichkeit unter einem Sprach-Wert als darüber. Dieselbe Frage mit 20-%-getrimmten Mitteln:
+
+```{webr}
+yuen(tlx_frustration ~ interface, data = survey)
+```
+
+Die getrimmten Mittel unterscheiden sich um 8.76 Punkte, 95-%-KI [1.57, 15.94], t(83.69) = 2.42, p = .018. Beide robusten Verfahren bestätigen den Welch-Test (Differenz der Mittel 9.27, p = .002): Die Sprachbedienung frustriert stärker, vermutlich durch Erkennungsfehler.
+
+**So berichtest du es:** Mit Sprachbedienung war die Frustration höher als mit Touch, Mann-Whitney W = 2204, p = .006, Rang-biseriale r = −.26, 95-%-KI [−.42, −.08]; Hodges-Lehmann-Verschiebung = 10 Punkte [5, 15]. Ein Vergleich 20-%-getrimmter Mittel kam zum selben Ergebnis, Differenz = 8.76 [1.57, 15.94], Yuen t(83.69) = 2.42, p = .018.
+
+## Paketvergleich {#packages}
+
+| Aufgabe | Empfehlung | Alternative |
+|---|---|---|
+| Rangtests | **rstatix** `wilcox_test()`, `kruskal_test()`, `friedman_test()` (Pipe, tidy, Holm eingebaut) | Basis-R `wilcox.test()`, `kruskal.test()`, `friedman.test()` (gleiche Rechnung, `htest`-Objekt); `coin` für exakte Permutationstests |
+| Effektgröße Rangtests | **effectsize** `rank_biserial()`, `rank_epsilon_squared()`, `kendalls_w()` (mit KI) | **rstatix** `wilcox_effsize()`, `kruskal_effsize()`, `friedman_effsize()` (ohne KI, mit Größenetikett) |
+| Paarvergleiche | **rstatix** `wilcox_test(p.adjust.method = "holm")`, `dunn_test()` | `pairwise.wilcox.test()` |
+| Getrimmte Mittel | **WRS2** `yuen()`, `yuend()`, `t1way()`, `rmanova()` + `lincon()`/`rmmcp()` | Bootstrap: `yuenbt()`; robuste Regression: `MASS::rlm()`, `robustbase` |
+
+## Übungen {#exercises}
+
+Drei Pflichtübungen und eine Zusatzübung. **Ausführen und prüfen** startet deinen Code und prüft ihn sofort. Hinweise deckst du einzeln auf (**Hinweis zeigen**), die Lösung erst danach.
+
+{{< include /_generated/de/robust-intermediate/exercises.qmd >}}
+
+## Wissenscheck {#check}
+
+{{< include /_generated/de/robust-intermediate/quiz.qmd >}}
+
+## Spickzettel {#cheatsheet}
+
+```r
+# Erst pro Person mitteln, dann testen
+pp <- d |> summarise(y = mean(y, na.rm = TRUE), .by = c(participant, group))
+
+# Zwei unabhängige Gruppen
+pp |> wilcox_test(y ~ group, detailed = TRUE)    # W, Hodges-Lehmann + KI
+pp |> wilcox_effsize(y ~ group)                  # r = |z| / sqrt(N)
+rank_biserial(y ~ group, data = pp)              # mit Vorzeichen und KI
+yuen(y ~ group, data = pp)                       # 20-%-getrimmte Mittel (WRS2)
+
+# Mehrere unabhängige Gruppen
+pp |> kruskal_test(y ~ group); pp |> kruskal_effsize(y ~ group)
+pp |> wilcox_test(y ~ group, p.adjust.method = "holm")
+
+# Messwiederholung: nur vollständige Personen
+complete <- pp |> filter(n() == 3, .by = participant)
+complete |> friedman_test(y ~ condition | participant)
+complete |> friedman_effsize(y ~ condition | participant)   # Kendalls W
+complete |> wilcox_test(y ~ condition, paired = TRUE, p.adjust.method = "holm")
+```
