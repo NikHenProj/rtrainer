@@ -15,7 +15,7 @@ Stand (2026-10-26): Meilensteine 1-5 erledigt, 65 Paket-Aufgaben. Meilenstein 5,
 - Vignetten `vignettes/erste-schritte.Rmd` (Modi, Ablauf, Fortschritt/Leitner, Dashboard) und `vignettes/eigene-aufgaben.Rmd` (Felder, Arten, Check-Typen, `forbid`/`require`/`post`, Selbsttest, Registrieren, learnr-Export). Entscheidung: litedown-Engine statt `rmarkdown::html_vignette`, damit `R CMD check` ohne Pandoc läuft; litedown in Suggests.
 - `.github/workflows/R-CMD-check.yaml`: r-lib/actions v2, ubuntu/macOS/Windows, R release; gradethis über `extra-repositories` (r-universe); Pandoc (`setup-pandoc`) und Chrome (`browser-actions/setup-chrome` -> `CHROMOTE_CHROME`), `NOT_CRAN: true`. Badge im README mit Platzhalter `OWNER`.
 - shinytest2-Smoke-Test läuft jetzt: Er startet die App aus einem temporären `app.R` (vorher scheiterte er mit „no package called rtrainer“, und die Fortschritts-Option erreichte den App-Prozess nicht). Chrome bekommt ein eigenes TMPDIR und wird danach geschlossen (sonst NOTE „detritus in the temp directory“).
-- Lokaler Browser ohne Systeminstallation: Playwright-Chromium unter `~/.cache/ms-playwright/chromium-1243/chrome-linux64/chrome`. Für die Tests `CHROMOTE_CHROME` auf diesen Pfad setzen (noch nicht in `~/.Renviron`, sonst wird der Test lokal übersprungen) und `NOT_CRAN=true` (macht `devtools::test()` selbst).
+- Lokaler Browser ohne Systeminstallation: Playwright-Chromium unter `~/.cache/ms-playwright/chromium-1243/chrome-linux64/chrome`. `CHROMOTE_CHROME` zeigt seit 2026-10-26 per `~/.Renviron` auf diesen Pfad (bei einem Playwright-Update ändert sich `chromium-1243`, dann anpassen); `NOT_CRAN=true` setzt `devtools::test()` selbst.
 
 ## Meilenstein 5, Teil 1 (erledigt, Details: NEWS.md)
 - git-Repo angelegt (Branch `main`, `.gitignore` für R-Pakete; `.claude/launch.json` und `settings.local.json` nicht versioniert). Noch kein GitHub-Remote.
@@ -110,7 +110,7 @@ GitHub-Remote anlegen, `OWNER` im README-Badge ersetzen, pushen und den ersten C
 
 ## Bekannte Lücken
 - learnr-Export: 3 Checks scheitern in gradethis trotz richtiger Lösung (`allFit()` braucht das globale Environment; Datei-Seiteneffekte im Setup werden für die Lösung nicht wiederholt). Gerendert und im Browser angesehen wurde noch kein exportiertes Tutorial (kein Pandoc).
-- shinytest2-Smoke-Test läuft lokal nur mit gesetztem `CHROMOTE_CHROME` (Playwright-Chromium, siehe oben).
+- shinytest2-Smoke-Test hängt lokal am Playwright-Chromium-Pfad in `~/.Renviron` (siehe oben).
 - "Loading required package: shiny" erscheint in den Tests (harmlos, kommt aus einer Abhängigkeit beim `testServer`).
 - predict-Prompts zeigen Code als Markdown-Block; in der App noch nicht gegengeprüft, wie das aussieht und dass der Starter-Kommentar nicht verwirrt.
 - Timer im Prüfungsmodus zeigt nach dem Beenden 00:00 statt der Restzeit.
