@@ -1,0 +1,29 @@
+---
+title: "Kursplan"
+subtitle: "R für Human Factors und UX – von den Grundlagen bis zu Mixed Models"
+toc: false
+body-classes: rt-plan-page
+---
+
+```{=html}
+<section class="rt-today" aria-labelledby="rt-today-title" hidden>
+  <h2 id="rt-today-title" class="rt-today-title">Heute wiederholen</h2>
+  <p class="rt-today-text"></p>
+  <a class="btn btn-primary" href="review.html">Wiederholung starten</a>
+</section>
+```
+
+Empfohlener Weg: erst alle **Beginner**-Lektionen, dann Intermediate, dann Expert. Alle Lektionen sind frei zugänglich; Voraussetzungen stehen am Anfang jeder Lektion. Eine Lektion ist **abgeschlossen**, wenn alle Pflichtübungen gelöst sind und der Wissenscheck zu mindestens 80 % stimmt.
+
+```{=html}
+<ul class="rt-legend" aria-label="Legende">
+  <li><span class="rt-status" data-status="not-started"><span class="rt-status-icon" aria-hidden="true"></span><span class="rt-status-text">nicht begonnen</span></span></li>
+  <li><span class="rt-status" data-status="started"><span class="rt-status-icon" aria-hidden="true"></span><span class="rt-status-text">begonnen</span></span></li>
+  <li><span class="rt-status" data-status="done"><span class="rt-status-icon" aria-hidden="true"></span><span class="rt-status-text">abgeschlossen</span></span></li>
+  <li><span class="rt-status-text rt-muted">geplant</span> = noch nicht verfügbar</li>
+</ul>
+```
+
+{{< include /_generated/de/course-plan.qmd >}}
+
+Dein Fortschritt wird nur in diesem Browser gespeichert (localStorage). Export und Import als Datei folgen mit der Wiederholungsseite.

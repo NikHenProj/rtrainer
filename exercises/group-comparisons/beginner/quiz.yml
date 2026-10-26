@@ -1,0 +1,142 @@
+# Knowledge check: passed at >= `pass` share of correctly answered questions.
+lesson: group-comparisons-beginner
+pass: 0.8
+questions:
+  - id: gc-b-q-pvalue
+    prompt:
+      de: "Ausgabe des Welch-Tests: `t = 4.73, df = 37.3, p-value = 3.2e-05`. Welche Aussage stimmt?"
+      en: "Output of Welch's test: `t = 4.73, df = 37.3, p-value = 3.2e-05`. Which statement is correct?"
+    options:
+      - text:
+          de: "Wenn es keinen Unterschied gäbe, wäre ein so großer t-Wert sehr unwahrscheinlich."
+          en: "If there were no difference, a t-value this large would be very unlikely."
+        correct: true
+        explain:
+          de: "Genau: Der p-Wert ist die Wahrscheinlichkeit solcher (oder extremerer) Daten unter der Nullhypothese."
+          en: "Exactly: the p-value is the probability of such (or more extreme) data under the null hypothesis."
+      - text:
+          de: "Die Nullhypothese ist mit 0,003 % Wahrscheinlichkeit wahr."
+          en: "The null hypothesis is true with a probability of 0.003%."
+        correct: false
+        explain:
+          de: "Der p-Wert ist keine Wahrscheinlichkeit für Hypothesen, sondern für Daten unter der Nullhypothese."
+          en: "The p-value is not a probability of hypotheses but of data under the null hypothesis."
+      - text:
+          de: "Der Unterschied ist groß und praktisch bedeutsam."
+          en: "The difference is large and practically important."
+        correct: false
+        explain:
+          de: "Über die Größe sagt p nichts. Dafür brauchst du Differenz, Konfidenzintervall und Effektgröße."
+          en: "p says nothing about size. For that you need the difference, the confidence interval and the effect size."
+  - id: gc-b-q-cohens-d
+    prompt:
+      de: "`effectsize::cohens_d()` liefert `d = 1.50, 95% CI [0.78, 2.19]`. Was folgt daraus?"
+      en: "`effectsize::cohens_d()` returns `d = 1.50, 95% CI [0.78, 2.19]`. What follows?"
+    options:
+      - text:
+          de: "Die Gruppenmittelwerte liegen 1,5 Standardabweichungen auseinander; das KI ist breit, der Effekt aber sicher größer als 0."
+          en: "The group means are 1.5 standard deviations apart; the CI is wide, but the effect is clearly above 0."
+        correct: true
+        explain:
+          de: "Richtig. Bei 20 Personen pro Gruppe ist die Schätzung unsicher, das KI schließt 0 aber deutlich aus."
+          en: "Correct. With 20 participants per group the estimate is uncertain, but the CI clearly excludes 0."
+      - text:
+          de: "Erfahrene reagieren 1,5 Sekunden schneller."
+          en: "Experienced drivers react 1.5 seconds faster."
+        correct: false
+        explain:
+          de: "d ist standardisiert (in SD-Einheiten), nicht in Sekunden. Die Rohdifferenz liegt bei 161 ms."
+          en: "d is standardised (in SD units), not in seconds. The raw difference is 161 ms."
+      - text:
+          de: "Weil das KI breit ist, gibt es keinen Effekt."
+          en: "Because the CI is wide, there is no effect."
+        correct: false
+        explain:
+          de: "Breite heißt Unsicherheit über die Größe. Solange 0 nicht im KI liegt, spricht es für einen Effekt."
+          en: "Width means uncertainty about the size. As long as 0 is outside the CI, it supports an effect."
+  - id: gc-b-q-aggregate
+    prompt:
+      de: "Warum mittelst du `rt_ms` vor dem t-Test pro Person?"
+      en: "Why do you average `rt_ms` per participant before the t-test?"
+    options:
+      - text:
+          de: "Weil der t-Test unabhängige Beobachtungen annimmt und die Trials einer Person zusammenhängen."
+          en: "Because the t-test assumes independent observations, and one person's trials are correlated."
+        correct: true
+        explain:
+          de: "Richtig. Sonst zählt jede Person 12-mal, und der Standardfehler wird unterschätzt."
+          en: "Right. Otherwise each person counts 12 times and the standard error is underestimated."
+      - text:
+          de: "Weil `t.test()` höchstens 100 Zeilen verarbeiten kann."
+          en: "Because `t.test()` can handle at most 100 rows."
+        correct: false
+        explain:
+          de: "`t.test()` hat keine solche Grenze. Es geht um die Unabhängigkeit der Beobachtungen."
+          en: "`t.test()` has no such limit. The issue is independence of observations."
+      - text:
+          de: "Damit der p-Wert kleiner wird."
+          en: "To make the p-value smaller."
+        correct: false
+        explain:
+          de: "Im Gegenteil: Mit Trial-Daten wird p fälschlich zu klein. Das Mitteln macht die Unsicherheit ehrlich."
+          en: "On the contrary: with trial data p becomes wrongly small. Averaging makes the uncertainty honest."
+  - id: gc-b-q-paired
+    prompt:
+      de: "Du willst visuelle mit haptischen Warnungen vergleichen. Jede Person hat beide Bedingungen erlebt. Welcher Test passt?"
+      en: "You want to compare visual with haptic warnings. Every participant experienced both conditions. Which test fits?"
+    options:
+      - text:
+          de: "Ein gepaarter t-Test auf den Personenmittelwerten je Bedingung."
+          en: "A paired t-test on the participant means per condition."
+        correct: true
+        explain:
+          de: "Richtig: Die Werte stammen von denselben Personen, also abhängige Stichproben."
+          en: "Right: the values come from the same people, so the samples are dependent."
+      - text:
+          de: "Ein Welch-t-Test, weil die Varianzen ungleich sein könnten."
+          en: "Welch's t-test, because the variances might differ."
+        correct: false
+        explain:
+          de: "Welch ist für unabhängige Gruppen. Hier stammen beide Messungen von denselben Personen."
+          en: "Welch is for independent groups. Here both measurements come from the same people."
+      - text:
+          de: "Ein Welch-t-Test auf allen Trials."
+          en: "Welch's t-test on all trials."
+        correct: false
+        explain:
+          de: "Das ignoriert gleich zwei Abhängigkeiten: Paarung und Pseudoreplikation."
+          en: "This ignores two dependencies at once: pairing and pseudoreplication."
+  - id: gc-b-q-report
+    prompt:
+      de: "Welche Ergebnisangaben gehören in einen APA-Bericht dieses Vergleichs? (Mehrfachauswahl)"
+      en: "Which results belong in an APA report of this comparison? (Select all that apply)"
+    multiple: true
+    options:
+      - text:
+          de: "Mittelwerte und Standardabweichungen beider Gruppen"
+          en: "Means and standard deviations of both groups"
+        correct: true
+        explain:
+          de: "Ja, sie machen den Unterschied anschaulich."
+          en: "Yes, they make the difference concrete."
+      - text:
+          de: "t, Freiheitsgrade und p, z. B. t(37.3) = 4.73, p < .001"
+          en: "t, degrees of freedom and p, e.g. t(37.3) = 4.73, p < .001"
+        correct: true
+        explain:
+          de: "Ja, das ist der Testbefund."
+          en: "Yes, that is the test result."
+      - text:
+          de: "Effektgröße mit Konfidenzintervall, z. B. d = 1.50, 95 % KI [0.78, 2.19]"
+          en: "Effect size with confidence interval, e.g. d = 1.50, 95% CI [0.78, 2.19]"
+        correct: true
+        explain:
+          de: "Ja, sie beantwortet die Frage nach der Größe."
+          en: "Yes, it answers the question of size."
+      - text:
+          de: "Nur „signifikant“ oder „nicht signifikant“"
+          en: "Only “significant” or “not significant”"
+        correct: false
+        explain:
+          de: "Eine Ja/Nein-Aussage verschenkt die Information über Größe und Unsicherheit."
+          en: "A yes/no statement throws away information about size and uncertainty."

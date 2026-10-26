@@ -1,0 +1,639 @@
+/*-- scss:defaults --*/
+$font-family-sans-serif: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+$font-family-monospace: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+$font-size-root: 17px;
+$line-height-base: 1.6;
+$headings-font-weight: 600;
+$border-radius: 4px;
+$border-radius-sm: 3px;
+$border-radius-lg: 6px;
+$enable-shadows: false;
+$link-decoration: underline;
+$toc-color: inherit;
+
+/*-- scss:rules --*/
+// Swiss/minimal: text first, one accent, hairlines instead of shadows.
+
+html {
+  scroll-padding-top: 5rem; // focus and anchors never hide under the sticky navbar
+}
+
+body {
+  background: var(--rt-bg);
+  color: var(--rt-text);
+  font-feature-settings: "kern", "liga";
+}
+
+main.content {
+  max-width: 72ch;
+}
+
+a {
+  text-underline-offset: 0.18em;
+  text-decoration-thickness: 1px;
+}
+
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+:focus-visible {
+  outline: 3px solid var(--rt-accent) !important;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+h1, h2, h3, h4 {
+  letter-spacing: -0.01em;
+}
+
+h2 {
+  margin-top: 3rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--rt-border);
+  border-bottom: none;
+  font-size: 1.5rem;
+}
+
+.title {
+  font-size: 2.1rem;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  color: var(--rt-muted);
+  font-size: 1.1rem;
+}
+
+.rt-muted {
+  color: var(--rt-muted);
+}
+
+code {
+  font-size: 0.88em;
+}
+
+// ---- Navbar --------------------------------------------------------------
+
+.navbar {
+  border-bottom: 1px solid var(--rt-border);
+  box-shadow: none;
+}
+
+.navbar .nav-link {
+  font-weight: 500;
+}
+
+.navbar .nav-link.active {
+  color: var(--rt-accent) !important;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.45em;
+}
+
+.rt-due-badge {
+  display: inline-block;
+  min-width: 1.5em;
+  margin-left: 0.35em;
+  padding: 0 0.4em;
+  border-radius: 999px;
+  background: var(--rt-accent);
+  color: var(--rt-on-accent);
+  font-size: 0.78em;
+  font-weight: 600;
+  line-height: 1.5;
+  text-align: center;
+}
+
+// ---- Status (always icon + text) -----------------------------------------
+
+.rt-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  font-size: 0.9rem;
+}
+
+.rt-status-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 1.15em;
+  height: 1.15em;
+  border-radius: 50%;
+  border: 1.5px solid var(--rt-muted);
+  font-size: 0.85em;
+  line-height: 1;
+}
+
+.rt-status[data-status="started"] .rt-status-icon {
+  border-color: var(--rt-accent);
+  background: linear-gradient(90deg, var(--rt-accent) 50%, transparent 50%);
+}
+
+.rt-status[data-status="done"] .rt-status-icon {
+  border-color: var(--rt-success);
+  background: var(--rt-success);
+  color: var(--rt-bg);
+}
+
+.rt-status[data-status="done"] .rt-status-icon::before {
+  content: "✓";
+  font-weight: 700;
+}
+
+// ---- Course plan ----------------------------------------------------------
+
+.rt-plan-page main.content {
+  max-width: 64rem;
+}
+
+.rt-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  margin: 1.5rem 0 1rem;
+  padding: 0;
+  list-style: none;
+  color: var(--rt-muted);
+  font-size: 0.9rem;
+}
+
+.rt-plan-wrap {
+  overflow-x: auto;
+}
+
+.rt-plan {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+
+  th, td {
+    padding: 0.55rem 0.75rem;
+    border-bottom: 1px solid var(--rt-border);
+    text-align: left;
+    vertical-align: middle;
+  }
+
+  thead th {
+    border-bottom: 2px solid var(--rt-text);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  tbody th {
+    font-weight: 500;
+  }
+
+  .rt-topic-no {
+    display: inline-block;
+    width: 1.8em;
+    color: var(--rt-muted);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.rt-cell-none {
+  background: repeating-linear-gradient(
+    -45deg, transparent, transparent 6px, var(--rt-surface) 6px, var(--rt-surface) 7px
+  );
+}
+
+.rt-cell-planned {
+  color: var(--rt-muted);
+  font-size: 0.85rem;
+}
+
+.rt-cell-active {
+  padding: 0 !important;
+
+  a {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-height: 44px;
+    padding: 0.55rem 0.75rem;
+    border-left: 3px solid var(--rt-accent);
+    background: var(--rt-accent-soft);
+    color: var(--rt-text);
+    text-decoration: none;
+  }
+
+  a:hover {
+    background: var(--rt-surface);
+  }
+
+  .rt-due {
+    color: var(--rt-accent);
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+}
+
+.rt-today {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.5rem;
+  margin: 1.5rem 0;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--rt-border);
+  border-left: 3px solid var(--rt-accent);
+
+  .rt-today-title {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-size: 1.1rem;
+  }
+
+  p {
+    margin: 0;
+    flex: 1 1 12rem;
+  }
+}
+
+// ---- Lesson ---------------------------------------------------------------
+
+.rt-breadcrumb ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin: 0 0 1rem;
+  padding: 0;
+  list-style: none;
+  font-size: 0.9rem;
+
+  li + li::before {
+    content: "›";
+    margin-right: 0.35rem;
+    color: var(--rt-muted);
+  }
+
+  [aria-current] {
+    color: var(--rt-muted);
+  }
+}
+
+// Breadcrumb belongs above the title: lesson.js moves it there.
+#title-block-header .rt-breadcrumb {
+  margin-bottom: 0.5rem;
+}
+
+.rt-lesson-meta {
+  margin: 1.5rem 0;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--rt-border);
+  background: var(--rt-surface);
+  font-size: 0.92rem;
+
+  dl {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+    gap: 0.5rem 1.5rem;
+    margin: 0 0 0.75rem;
+  }
+
+  dt {
+    color: var(--rt-muted);
+    font-weight: 500;
+  }
+
+  dd {
+    margin: 0;
+  }
+
+  .rt-goals-title {
+    margin: 0 0 0.25rem;
+    color: var(--rt-muted);
+    font-weight: 500;
+  }
+
+  ul {
+    margin: 0;
+    padding-left: 1.2rem;
+  }
+}
+
+.rt-loading-note {
+  font-size: 0.92rem;
+}
+
+// Left column: sections of the lesson with check marks (built by lesson.js).
+.rt-sections {
+  position: sticky;
+  top: 5rem;
+  font-size: 0.9rem;
+
+  .rt-sections-position {
+    margin: 0 0 0.5rem;
+    color: var(--rt-muted);
+    font-weight: 500;
+  }
+
+  ol {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  li a {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.3rem 0.5rem;
+    border-left: 2px solid var(--rt-border);
+    color: var(--rt-text);
+    text-decoration: none;
+  }
+
+  li a[aria-current="true"] {
+    border-left-color: var(--rt-accent);
+    color: var(--rt-accent);
+    font-weight: 600;
+  }
+
+  .rt-check {
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    width: 1.1em;
+    height: 1.1em;
+    border: 1.5px solid var(--rt-muted);
+    border-radius: 50%;
+    font-size: 0.75em;
+  }
+
+  .rt-check[data-done="true"] {
+    border-color: var(--rt-success);
+    background: var(--rt-success);
+    color: var(--rt-bg);
+  }
+
+  .rt-check[data-done="true"]::before {
+    content: "✓";
+    font-weight: 700;
+  }
+}
+
+.rt-figure {
+  margin: 1.5rem 0;
+
+  svg {
+    width: 100%;
+    height: auto;
+    max-width: 560px;
+  }
+
+  figcaption {
+    color: var(--rt-muted);
+    font-size: 0.9rem;
+  }
+
+  .rt-fig-a, .rt-fig-b {
+    fill: none;
+    stroke-width: 2.5;
+  }
+
+  .rt-fig-a { stroke: var(--rt-accent); }
+  .rt-fig-b { stroke: var(--rt-muted); stroke-dasharray: 6 4; }
+  .rt-fig-axis { stroke: var(--rt-text); stroke-width: 1; }
+  .rt-fig-mean { stroke: var(--rt-muted); stroke-width: 1; stroke-dasharray: 2 3; }
+  .rt-fig-arrow { stroke: var(--rt-text); stroke-width: 1.5; }
+  .rt-fig-arrowhead { fill: var(--rt-text); }
+  .rt-fig-label { fill: var(--rt-text); font-size: 14px; font-family: inherit; }
+  .rt-fig-muted { fill: var(--rt-muted); }
+}
+
+table {
+  font-size: 0.93rem;
+}
+
+// ---- Exercises ------------------------------------------------------------
+
+.rt-exercise {
+  margin: 2rem 0 2.5rem;
+  padding-top: 0.5rem;
+
+  .rt-exercise-title {
+    margin-bottom: 0.4rem;
+  }
+}
+
+.rt-exercise-status {
+  margin-left: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  vertical-align: middle;
+}
+
+.rt-tag {
+  display: inline-block;
+  margin-right: 0.35rem;
+  padding: 0.05rem 0.5rem;
+  border: 1px solid var(--rt-border);
+  border-radius: 999px;
+  color: var(--rt-muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.rt-tag-required {
+  border-color: var(--rt-accent);
+  color: var(--rt-accent);
+}
+
+// quarto-live feedback: colour plus symbol, never colour alone.
+.exercise-grade.alert-success::before { content: "✓ "; font-weight: 700; }
+.exercise-grade.alert-danger::before { content: "✗ "; font-weight: 700; }
+.exercise-grade.alert-warning::before { content: "! "; font-weight: 700; }
+
+.exercise-grade.alert-success {
+  border-color: var(--rt-success);
+  background: var(--rt-success-soft);
+  color: var(--rt-text);
+}
+
+.exercise-grade.alert-danger {
+  border-color: var(--rt-error);
+  background: var(--rt-error-soft);
+  color: var(--rt-text);
+}
+
+.exercise-hint, .exercise-solution {
+  margin-top: 0.75rem;
+}
+
+// ---- Knowledge check ------------------------------------------------------
+
+.rt-quiz {
+  margin: 1rem 0 2rem;
+}
+
+.rt-quiz-intro {
+  color: var(--rt-muted);
+}
+
+.rt-quiz-question {
+  margin: 0 0 1.75rem;
+  padding: 0;
+  border: 0;
+
+  legend {
+    float: none;
+    width: auto;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+    font-weight: 500;
+  }
+}
+
+.rt-quiz-count {
+  display: block;
+  color: var(--rt-muted);
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+.rt-quiz-note {
+  margin: 0 0 0.5rem;
+  color: var(--rt-muted);
+  font-size: 0.88rem;
+}
+
+.rt-quiz-options {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rt-quiz-option {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0 0.65rem;
+  align-items: start;
+  margin-bottom: 0.4rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--rt-border);
+  border-radius: $border-radius;
+
+  input {
+    margin-top: 0.35em;
+    accent-color: var(--rt-accent);
+    width: 1.05rem;
+    height: 1.05rem;
+  }
+
+  label {
+    cursor: pointer;
+  }
+
+  .rt-quiz-explain {
+    grid-column: 2;
+    margin-top: 0.35rem;
+    font-size: 0.9rem;
+  }
+
+  &[data-result="right"] {
+    border-color: var(--rt-success);
+    background: var(--rt-success-soft);
+  }
+
+  &[data-result="wrong"] {
+    border-color: var(--rt-error);
+    background: var(--rt-error-soft);
+  }
+
+  &[data-result="missed"] {
+    border-color: var(--rt-warning);
+    background: var(--rt-warning-soft);
+  }
+}
+
+.rt-quiz-explain::before {
+  font-weight: 700;
+}
+
+[data-result="right"] .rt-quiz-explain::before { content: "✓ "; color: var(--rt-success); }
+[data-result="wrong"] .rt-quiz-explain::before { content: "✗ "; color: var(--rt-error); }
+[data-result="missed"] .rt-quiz-explain::before { content: "! "; color: var(--rt-warning); }
+
+.rt-quiz-feedback {
+  font-size: 0.92rem;
+  font-weight: 500;
+}
+
+.rt-quiz-result {
+  margin-top: 1rem;
+  font-weight: 600;
+}
+
+.rt-quiz-result[data-passed="true"] { color: var(--rt-success); }
+.rt-quiz-result[data-passed="false"] { color: var(--rt-text); }
+
+// ---- Pager ----------------------------------------------------------------
+
+.rt-pager {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin: 3rem 0 1rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--rt-border);
+
+  > * {
+    display: flex;
+    flex-direction: column;
+    min-height: 44px;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--rt-border);
+    text-decoration: none;
+  }
+
+  .rt-pager-next {
+    text-align: right;
+  }
+
+  .rt-pager-label {
+    color: var(--rt-muted);
+    font-size: 0.85rem;
+  }
+
+  .rt-pager-title {
+    font-weight: 600;
+  }
+
+  .rt-pager-disabled {
+    color: var(--rt-muted);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+// Left column of lesson pages (lesson.js inserts it into Quarto's grid).
+.rt-sections-col {
+  display: none;
+}
+
+@media (min-width: 1200px) {
+  .rt-sections-col {
+    display: block;
+    grid-column: screen-start-inset / body-start-outset;
+    grid-row: 1 / span 200;
+    padding: 1.5rem 1.5rem 0 0;
+    justify-self: end;
+    width: min(100%, 15rem);
+  }
+}
+
+.rt-lesson-progress {
+  margin: 0.75rem 0 0;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--rt-border);
+  font-weight: 500;
+}

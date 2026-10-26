@@ -1,0 +1,68 @@
+# Self-test of all exercises, tool tests, render (DE + EN), deploy to GitHub Pages.
+name: site
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          packages: |
+            any::yaml
+            any::jsonlite
+            any::testthat
+            any::withr
+            any::dplyr
+            any::tidyr
+            any::tibble
+            any::effectsize
+            any::parameters
+
+      - name: Exercise self-test (solution passes, starter fails)
+        run: Rscript tools/selftest.R
+
+      - name: Tool tests (generator, checks, self-test)
+        run: Rscript -e 'testthat::test_dir("tools/tests", stop_on_failure = TRUE)'
+
+      - uses: quarto-dev/quarto-actions/setup@v2
+        with:
+          version: 1.10.19
+
+      - name: Render site
+        run: quarto render
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

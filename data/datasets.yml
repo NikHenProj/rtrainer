@@ -1,0 +1,19 @@
+# Course datasets: file in data/ and the R code that loads it.
+# The same code runs in the browser (webR) and in the self-test.
+driving_sim:
+  file: driving_sim.csv
+  script: data-raw/driving_sim.R
+  description:
+    de: >-
+      Fahrsimulator, Übernahmeaufforderungen: 40 Personen (20 novice, 20 experienced),
+      je 3 Warnmodalitäten (condition) x 4 Durchgänge (trial). Reaktionszeit rt_ms,
+      Spurabweichung lane_dev; einige fehlende Werte.
+    en: >-
+      Driving simulator, take-over requests: 40 participants (20 novice, 20 experienced),
+      3 warning modalities (condition) x 4 trials each. Reaction time rt_ms,
+      lane deviation lane_dev; some missing values.
+  load: |
+    driving_sim <- read.csv("data/driving_sim.csv")
+    driving_sim$experience <- factor(driving_sim$experience, levels = c("novice", "experienced"))
+    driving_sim$condition <- factor(driving_sim$condition, levels = c("visual", "auditory", "haptic"))
+    driving_sim <- tibble::as_tibble(driving_sim)

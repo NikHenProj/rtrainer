@@ -1,0 +1,150 @@
+---
+title: "Gruppenvergleiche"
+subtitle: "Beginner · Zwei unabhängige Gruppen vergleichen"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, effectsize, parameters]
+resources:
+  - ../data/driving_sim.csv
+---
+
+{{< include /_generated/de/group-comparisons-beginner/runtime.qmd >}}
+
+{{< include /_generated/de/group-comparisons-beginner/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R läuft hier direkt im Browser. Beim ersten Besuch lädt es 10–30 Sekunden (Fortschritt oben rechts), danach geht es schneller.
+:::
+
+## Wozu? {#wozu}
+
+**Forschungsfrage:** Reagieren erfahrene Fahrerinnen und Fahrer schneller auf eine Übernahmeaufforderung als Fahranfänger?
+
+In einer Fahrsimulator-Studie (`driving_sim`) übernahmen 40 Personen nach einer Warnung das Steuer, je 12-mal. 20 Personen sind Fahranfänger (`novice`), 20 erfahren (`experienced`). Gemessen wurde die Reaktionszeit `rt_ms` in Millisekunden. Für das Design eines Übernahmekonzepts ist entscheidend, ob und *wie stark* sich die Gruppen unterscheiden.
+
+## Konzept {#konzept}
+
+Zwei **unabhängige Gruppen** (verschiedene Personen) vergleichst du mit einem t-Test. Er setzt die Mittelwertdifferenz ins Verhältnis zu ihrer Unsicherheit:
+
+$$t = \frac{\bar{x}_1 - \bar{x}_2}{SE_{\text{Differenz}}}$$
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 200" role="img" aria-labelledby="fig-gc-title fig-gc-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-gc-title">Zwei überlappende Verteilungen</title>
+  <desc id="fig-gc-desc">Die Verteilung der erfahrenen Gruppe liegt links, die der Fahranfänger rechts. Der Abstand der Mittelwerte ist die Differenz; Cohen's d drückt ihn in Standardabweichungen aus.</desc>
+  <path d="M30 170 C 120 170, 150 40, 210 40 C 270 40, 300 170, 390 170" class="rt-fig-a" />
+  <path d="M150 170 C 240 170, 270 40, 330 40 C 390 40, 420 170, 510 170" class="rt-fig-b" />
+  <line x1="20" y1="170" x2="540" y2="170" class="rt-fig-axis" />
+  <line x1="210" y1="40" x2="210" y2="170" class="rt-fig-mean" />
+  <line x1="330" y1="40" x2="330" y2="170" class="rt-fig-mean" />
+  <line x1="214" y1="24" x2="326" y2="24" class="rt-fig-arrow" marker-start="url(#rt-arrow)" marker-end="url(#rt-arrow)" />
+  <defs><marker id="rt-arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="rt-fig-arrowhead" /></marker></defs>
+  <text x="270" y="16" text-anchor="middle" class="rt-fig-label">Differenz ≈ 160 ms</text>
+  <text x="120" y="120" text-anchor="middle" class="rt-fig-label">experienced</text>
+  <text x="440" y="120" text-anchor="middle" class="rt-fig-label">novice</text>
+  <text x="280" y="192" text-anchor="middle" class="rt-fig-label rt-fig-muted">Reaktionszeit (ms) →</text>
+</svg>
+<figcaption>Je weiter die Mittelwerte im Verhältnis zur Streuung auseinanderliegen, desto größer sind t und Cohen's d.</figcaption>
+</figure>
+```
+
+- **Welch-t-Test:** Standard in R (`t.test()`), nimmt keine gleichen Varianzen an. Nutze ihn immer für unabhängige Gruppen.
+- **p-Wert:** Wie überraschend wären solche Daten, wenn es keinen Unterschied gäbe? Er sagt nichts über die Größe.
+- **Effektgröße:** Cohen's *d* = Differenz in Standardabweichungen; Faustregel 0.2 klein, 0.5 mittel, 0.8 groß. Immer mit 95 %-Konfidenzintervall berichten.
+- **Eine Zeile pro Person:** Der Test nimmt unabhängige Beobachtungen an. Messwiederholungen fasst du vorher pro Person zusammen.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## Mehr dazu: dieselben Personen in zwei Bedingungen
+
+Hat *jede* Person beide Bedingungen erlebt (z. B. visuelle und haptische Warnung), sind die Werte gepaart. Dann rechnest du einen gepaarten t-Test auf den Personenmittelwerten, z. B. mit `t.test(Pair(visual, haptic) ~ 1, data = wide)`. Mehr als zwei Bedingungen oder Gruppen: ANOVA (Stufe Intermediate).
+:::
+
+## Beispiel {#beispiel}
+
+Zuerst eine Zeile pro Person: die mittlere Reaktionszeit über alle 12 Durchgänge. Klicke auf **Ausführen**; du kannst den Code ändern und neu ausführen.
+
+```{webr}
+rt_by_person <- driving_sim |>
+  summarise(rt_ms = mean(rt_ms, na.rm = TRUE), .by = c(participant, experience))
+rt_by_person
+```
+
+Dann der Welch-t-Test. Die Formel `rt_ms ~ experience` liest sich „Reaktionszeit in Abhängigkeit von der Gruppe“:
+
+```{webr}
+t.test(rt_ms ~ experience, data = rt_by_person)
+```
+
+Und die Effektgröße mit Konfidenzintervall aus **effectsize**:
+
+```{webr}
+cohens_d(rt_ms ~ experience, data = rt_by_person)
+```
+
+**So berichtest du es (APA):** Fahranfänger reagierten langsamer (*M* = 1084 ms, *SD* = 115) als Erfahrene (*M* = 923 ms, *SD* = 100), *t*(37.3) = 4.73, *p* < .001, *d* = 1.50, 95 % KI [0.78, 2.19].
+
+## Paketvergleich {#paketvergleich}
+
+| Weg | Stärke | Wann |
+|---|---|---|
+| `t.test()` + `effectsize::cohens_d()` | Basis-R, überall verständlich, Effektgröße separat | **Empfehlung zum Lernen** und für einzelne Tests |
+| `parameters::parameters(t.test(...))` | Saubere Tabelle mit Differenz, KI, t, df, p | Für Tabellen und Berichte |
+| `rstatix::t_test()` | Pipe-freundlich, liefert einen Data Frame, viele Gruppen auf einmal | Wenn du viele Vergleiche in einer Pipeline rechnest |
+| `report::report()` | Schreibt einen ganzen APA-Satz | Als Entwurf; Werte immer prüfen |
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## Mehr dazu: Ausgaben von rstatix und report
+
+`rstatix` lädt im Browser lange (viele Abhängigkeiten); probiere es lokal aus.
+
+```r
+rt_by_person |> rstatix::t_test(rt_ms ~ experience)
+#>   .y.   group1 group2         n1    n2 statistic    df         p
+#> 1 rt_ms novice experienced    20    20      4.73  37.3 0.0000317
+```
+
+`report()` schätzt *d* aus t, wenn es die Daten nicht findet; deshalb weicht es leicht von `cohens_d()` ab (1.55 statt 1.50):
+
+```r
+report::report(t.test(rt_ms ~ experience, data = rt_by_person))
+#> The Welch Two Sample t-test testing the difference of rt_ms by experience
+#> (mean in group novice = 1084.12, mean in group experienced = 923.13)
+#> suggests that the effect is positive, statistically significant, and large
+#> (difference = 160.98, 95% CI [92.06, 229.90], t(37.31) = 4.73, p < .001;
+#> Cohen's d = 1.55, 95% CI [0.81, 2.27])
+```
+:::
+
+## Übungen {#uebungen}
+
+Drei Pflichtübungen mit steigender Schwierigkeit. **Ausführen** startet deinen Code und prüft ihn sofort. Hinweise deckst du einzeln auf (**Hinweis zeigen**), die Lösung erst danach.
+
+{{< include /_generated/de/group-comparisons-beginner/exercises.qmd >}}
+
+## Wissenscheck {#wissenscheck}
+
+{{< include /_generated/de/group-comparisons-beginner/quiz.qmd >}}
+
+## Spickzettel {#spickzettel}
+
+```r
+# 1. Eine Zeile pro Person
+rt_by_person <- driving_sim |>
+  summarise(rt_ms = mean(rt_ms, na.rm = TRUE), .by = c(participant, experience))
+
+# 2. Beschreiben
+rt_by_person |>
+  summarise(n = n(), mean_rt = mean(rt_ms), sd_rt = sd(rt_ms), .by = experience)
+
+# 3. Testen (Welch ist Standard) und Effektgröße
+t.test(rt_ms ~ experience, data = rt_by_person)
+effectsize::cohens_d(rt_ms ~ experience, data = rt_by_person)
+```
+
+- Unabhängige Gruppen → Welch-t-Test; dieselben Personen → gepaarter t-Test.
+- Berichte *M*, *SD*, *t*(df), *p* **und** *d* mit 95 %-KI.
+- Trials nie als unabhängige Fälle zählen (Pseudoreplikation).
+
+{{< include /_generated/de/group-comparisons-beginner/footer.qmd >}}

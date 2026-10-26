@@ -1,0 +1,8 @@
+---
+title: "rtrainer"
+toc: false
+include-in-header:
+  - text: '<meta http-equiv="refresh" content="0; url=de/index.html">'
+---
+
+Weiter zum [Kursplan (Deutsch)](de/index.html) · [Course plan (English)](en/index.html)

@@ -1,0 +1,62 @@
+id: gc-b-ttest
+lesson: group-comparisons-beginner
+order: 2
+title:
+  de: Welch-t-Test rechnen
+  en: Run Welch's t-test
+kind: complete
+required: true
+packages: [dplyr]
+data: [driving_sim]
+setup: |
+  library(dplyr)
+  rt_by_person <- driving_sim |>
+    summarise(rt_ms = mean(rt_ms, na.rm = TRUE), .by = c(participant, experience))
+prompt:
+  de: |
+    Unterscheiden sich Novizen und Erfahrene in der mittleren Reaktionszeit?
+    Ersetze die Lücken `______`, sodass `t.test()` einen Welch-t-Test von `rt_ms`
+    zwischen den Gruppen von `experience` in `rt_by_person` rechnet.
+  en: |
+    Do novices and experienced drivers differ in mean reaction time?
+    Replace the gaps `______` so that `t.test()` runs Welch's t-test of `rt_ms`
+    between the groups of `experience` in `rt_by_person`.
+starter: |
+  t.test(______ ~ ______, data = ______)
+solution: |
+  t.test(rt_ms ~ experience, data = rt_by_person)
+hints:
+  - de: "Die Formel lautet `abhängige Variable ~ Gruppierungsvariable`."
+    en: "The formula reads `outcome ~ grouping variable`."
+  - de: "Links steht die Reaktionszeit, rechts die Gruppe, `data` ist die Tabelle pro Person."
+    en: "Reaction time goes on the left, the group on the right; `data` is the per-person table."
+  - de: "`t.test(rt_ms ~ ______, data = rt_by_person)`"
+    en: "`t.test(rt_ms ~ ______, data = rt_by_person)`"
+explanation:
+  de: |
+    `t.test()` rechnet ohne weitere Angaben den Welch-Test: Er nimmt keine gleichen
+    Varianzen an und ist deshalb der sichere Standard. Ergebnis: t(37.3) = 4.73,
+    p < .001; Novizen reagieren im Mittel 161 ms langsamer, 95 %-KI [92, 230] ms.
+    Der p-Wert sagt nur, dass der Unterschied kaum Zufall ist; wie groß er ist,
+    zeigen Differenz, KI und Effektgröße.
+  en: |
+    Without further options, `t.test()` runs Welch's test: it does not assume equal
+    variances and is therefore the safe default. Result: t(37.3) = 4.73, p < .001;
+    novices react 161 ms slower on average, 95% CI [92, 230] ms. The p-value only
+    says the difference is unlikely to be chance; its size is shown by the
+    difference, the CI and the effect size.
+check:
+  type: value
+common_mistakes:
+  - pattern: "var\\.equal\\s*=\\s*(TRUE|T)\\b"
+    message:
+      de: "`var.equal = TRUE` erzwingt den Student-t-Test. Lass die Option weg: Welch ist robuster und der Standard."
+      en: "`var.equal = TRUE` forces Student's t-test. Drop the option: Welch is more robust and the default."
+  - pattern: "paired\\s*=\\s*(TRUE|T)\\b"
+    message:
+      de: "Novizen und Erfahrene sind verschiedene Personen, also unabhängige Gruppen: kein `paired = TRUE`."
+      en: "Novices and experienced drivers are different people, so the groups are independent: no `paired = TRUE`."
+  - pattern: "data\\s*=\\s*driving_sim"
+    message:
+      de: "Nimm `rt_by_person`, nicht `driving_sim`: Jede Person soll genau einmal eingehen."
+      en: "Use `rt_by_person`, not `driving_sim`: each participant should count exactly once."

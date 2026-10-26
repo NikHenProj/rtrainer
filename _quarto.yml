@@ -1,0 +1,70 @@
+project:
+  type: website
+  output-dir: _site
+  pre-render: Rscript tools/generate.R
+  render:
+    - index.qmd
+    - de/*.qmd
+    - en/*.qmd
+  resources:
+    - data/*.csv
+    - assets/review-cards.json
+    - assets/*.js
+
+lang: de-DE
+
+website:
+  title: "rtrainer"
+  site-url: https://nikhenproj.github.io/rtrainer/
+  repo-url: https://github.com/NikHenProj/rtrainer
+  search:
+    location: navbar
+    type: overlay
+  page-navigation: false
+  reader-mode: false
+  navbar:
+    title: "rtrainer"
+    href: de/index.qmd
+    left:
+      - text: Kursplan
+        href: de/index.qmd
+      - text: Wiederholen
+        href: de/review.qmd
+        id: rt-nav-review
+      - text: Pakete
+        href: de/packages.qmd
+      - text: Glossar
+        href: de/glossary.qmd
+    right:
+      - text: EN
+        href: en/index.qmd
+        aria-label: "English version"
+        id: rt-nav-lang
+  page-footer:
+    left: "rtrainer · R-Kurs für Human Factors und UX"
+    right:
+      - text: Quellcode
+        href: https://github.com/NikHenProj/rtrainer
+
+format:
+  live-html:
+    theme:
+      light: [cosmo, assets/rtrainer.scss, assets/rtrainer-light.scss]
+      dark: [cosmo, assets/rtrainer.scss, assets/rtrainer-dark.scss]
+    respect-user-color-scheme: true
+    toc: true
+    toc-depth: 3
+    toc-title: "Auf dieser Seite"
+    smooth-scroll: false
+    anchor-sections: true
+    code-copy: true
+    highlight-style: a11y
+    include-in-header:
+      - text: |
+          <link rel="preconnect" href="https://fonts.googleapis.com">
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+          <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+    include-after-body:
+      - text: |
+          <script src="../assets/progress.js"></script>
+          <script src="../assets/lesson.js"></script>

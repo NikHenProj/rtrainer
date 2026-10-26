@@ -1,0 +1,33 @@
+# Topics x levels of the course (docs/SPEC.md, "Struktur").
+# A lesson exists when exercises/<slug>/<level>/lesson.yml exists.
+levels:
+  - id: beginner
+    title: {de: Beginner, en: Beginner}
+  - id: intermediate
+    title: {de: Intermediate, en: Intermediate}
+  - id: expert
+    title: {de: Expert, en: Expert}
+topics:
+  - {slug: working-with-r, levels: [beginner], title: {de: Arbeiten mit R, en: Working with R}}
+  - {slug: import, levels: [beginner, intermediate], title: {de: Daten einlesen, en: Importing data}}
+  - {slug: cleaning, levels: [beginner, intermediate], title: {de: Daten bereinigen, en: Cleaning data}}
+  - {slug: reshaping, levels: [beginner, intermediate, expert], title: {de: Umformen und zusammenführen, en: Reshaping and joining}}
+  - {slug: missing, levels: [intermediate, expert], title: {de: Fehlende Werte, en: Missing data}}
+  - {slug: visualisation, levels: [beginner, intermediate, expert], title: {de: Visualisieren, en: Visualisation}}
+  - {slug: descriptives, levels: [beginner, intermediate], title: {de: "Deskriptive Statistik, Tabelle 1", en: "Descriptives, Table 1"}}
+  - {slug: scales, levels: [beginner, intermediate, expert], title: {de: Fragebögen und Skalen, en: Questionnaires and scales}}
+  - {slug: sem, levels: [intermediate, expert], title: {de: CFA und SEM, en: CFA and SEM}}
+  - {slug: group-comparisons, levels: [beginner, intermediate, expert], title: {de: Gruppenvergleiche, en: Group comparisons}}
+  - {slug: robust, levels: [intermediate, expert], title: {de: Nichtparametrisch und robust, en: Nonparametric and robust}}
+  - {slug: regression, levels: [beginner, intermediate, expert], title: {de: Korrelation und Regression, en: Correlation and regression}}
+  - {slug: glm, levels: [intermediate, expert], title: {de: Kategoriale Daten und GLM, en: Categorical data and GLMs}}
+  - {slug: mixed-models, levels: [intermediate, expert], title: {de: Messwiederholung und Mixed Models, en: Repeated measures and mixed models}}
+  - {slug: moderation-mediation, levels: [intermediate, expert], title: {de: Moderation und Mediation, en: Moderation and mediation}}
+  - {slug: power, levels: [intermediate, expert], title: {de: Power und Stichprobenplanung, en: Power analysis}}
+  - {slug: bayes, levels: [expert], title: {de: Bayes, en: Bayesian statistics}}
+  - {slug: signals, levels: [expert], title: {de: Zeitverläufe und Signale, en: Time courses and signals}}
+  - {slug: text, levels: [intermediate, expert], title: {de: Textdaten, en: Text data}}
+  - {slug: machine-learning, levels: [expert], title: {de: Maschinelles Lernen, en: Machine learning basics}}
+  - {slug: reporting, levels: [beginner, intermediate, expert], title: {de: Ergebnisse berichten, en: Reporting results}}
+  - {slug: reproducibility, levels: [intermediate, expert], title: {de: Reproduzierbar arbeiten, en: Reproducible workflows}}
+  - {slug: programming, levels: [intermediate, expert], title: {de: R-Programmierung für Analysen, en: Programming for analysis}}

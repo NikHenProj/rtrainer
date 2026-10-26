@@ -12,7 +12,7 @@
 - CLAUDE.md – Dauerregeln (kurz), STATUS.md – Stand/Übergabe zwischen Sitzungen
 - docs/SPEC.md – vollständige Anforderungen inkl. Lernförderung
 - .claude/skills/ – Projekt-Skills rtrainer-write-exercise, rtrainer-verify; .claude/agents/rtrainer-verifier.md – Verifikations-Subagent (Modell: haiku)
-- Bis Meilenstein 6 liegt noch der alte Paketstand im Repo (DESCRIPTION, R/, tests/, inst/), danach Quarto-Projekt (siehe SPEC.md „Repository“)
+- Quarto-Projekt (siehe README.md und SPEC.md „Repository“); alter Paketstand im Tag `v0-shiny`
 
 ## Token sparen
 `/usage` prüfen, `/clear` zwischen Meilensteinen, `/compact` mit Fokus (Ziel, geänderte Dateien, echte Testergebnisse, nächster Schritt), ungenutzte MCP-Server per `/mcp` abschalten, Sonnet als Standard, Opus nur für Architekturentscheidungen.

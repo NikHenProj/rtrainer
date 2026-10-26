@@ -1,0 +1,10 @@
+---
+title: "Wiederholen"
+toc: false
+---
+
+::: {.callout-note appearance="simple"}
+**In Vorbereitung.** Hier wiederholst du bald fällige Übungen nach dem Leitner-System (Boxen 1–5, Abstände 0/1/3/7/21 Tage). Übungen abgeschlossener Lektionen werden schon jetzt vorgemerkt.
+:::
+
+[Zurück zum Kursplan](index.qmd)

@@ -1,0 +1,70 @@
+id: gc-b-describe
+lesson: group-comparisons-beginner
+order: 1
+title:
+  de: Gruppen beschreiben
+  en: Describe the groups
+kind: write
+required: true
+packages: [dplyr]
+data: [driving_sim]
+setup: |
+  library(dplyr)
+  rt_by_person <- driving_sim |>
+    summarise(rt_ms = mean(rt_ms, na.rm = TRUE), .by = c(participant, experience))
+prompt:
+  de: |
+    `rt_by_person` enthält pro Person die mittlere Reaktionszeit (`rt_ms`) und die
+    Gruppe (`experience`). Berechne je Gruppe die Anzahl `n`, den Mittelwert `mean_rt`
+    und die Standardabweichung `sd_rt` von `rt_ms`. Runde `mean_rt` und `sd_rt` auf
+    eine Nachkommastelle.
+  en: |
+    `rt_by_person` contains each participant's mean reaction time (`rt_ms`) and
+    group (`experience`). For each group, compute the count `n`, the mean `mean_rt`
+    and the standard deviation `sd_rt` of `rt_ms`. Round `mean_rt` and `sd_rt` to
+    one decimal place.
+starter: |
+  rt_by_person |>
+    summarise(
+      # your code
+    )
+solution: |
+  rt_by_person |>
+    summarise(
+      n = n(),
+      mean_rt = round(mean(rt_ms), 1),
+      sd_rt = round(sd(rt_ms), 1),
+      .by = experience
+    )
+hints:
+  - de: "`summarise()` fasst jede Gruppe zu einer Zeile zusammen; die Gruppen legst du mit `.by` fest."
+    en: "`summarise()` reduces each group to one row; set the groups with `.by`."
+  - de: "Du brauchst drei Kennwerte: `n()` zählt Zeilen, dazu `mean()` und `sd()`."
+    en: "You need three statistics: `n()` counts rows, plus `mean()` and `sd()`."
+  - de: "Muster: `summarise(n = n(), mean_rt = round(mean(rt_ms), 1), ..., .by = experience)`."
+    en: "Pattern: `summarise(n = n(), mean_rt = round(mean(rt_ms), 1), ..., .by = experience)`."
+explanation:
+  de: |
+    `summarise(.by = experience)` gruppiert nur für diesen einen Schritt, danach ist
+    die Tabelle wieder ungruppiert. Vor jedem Test lohnt der Blick auf n, M und SD:
+    Erfahrene reagieren im Mittel rund 160 ms schneller, die Streuung ist in beiden
+    Gruppen ähnlich. Im Bericht: *Novizen: M = 1084.1 ms, SD = 114.7; Erfahrene:
+    M = 923.1 ms, SD = 100.0.*
+  en: |
+    `summarise(.by = experience)` groups for this one step only; afterwards the table
+    is ungrouped again. Look at n, M and SD before every test: experienced drivers
+    react about 160 ms faster on average, and the spread is similar in both groups.
+    In a report: *novices: M = 1084.1 ms, SD = 114.7; experienced: M = 923.1 ms,
+    SD = 100.0.*
+check:
+  type: value
+  ignore_row_order: true
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*(\\.by|group_by))"
+    message:
+      de: "Ohne `.by = experience` (oder `group_by()`) fasst `summarise()` alle Personen zu einer Zeile zusammen."
+      en: "Without `.by = experience` (or `group_by()`), `summarise()` collapses all participants into one row."
+  - pattern: "^(?![\\s\\S]*round\\()"
+    message:
+      de: "Runde `mean_rt` und `sd_rt` mit `round(..., 1)`; sonst weichen die Werte in den hinteren Stellen ab."
+      en: "Round `mean_rt` and `sd_rt` with `round(..., 1)`; otherwise the trailing digits differ."

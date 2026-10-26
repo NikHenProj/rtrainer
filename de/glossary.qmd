@@ -1,0 +1,10 @@
+---
+title: "Glossar"
+toc: false
+---
+
+::: {.callout-note appearance="simple"}
+**In Vorbereitung.** Fachbegriffe Deutsch ↔ Englisch.
+:::
+
+[Zurück zum Kursplan](index.qmd)

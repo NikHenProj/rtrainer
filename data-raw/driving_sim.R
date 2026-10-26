@@ -1,44 +1,76 @@
 # Simulated driving-simulator study: take-over requests (TOR) with three
-# warning modalities, 40 participants, 4 repeated trials per condition.
-# Run from the package root: Rscript data-raw/driving_sim.R
+# warning modalities (within), two experience groups (between),
+# 40 participants, 4 repeated trials per condition.
+# Run from the project root: Rscript data-raw/driving_sim.R
+#
+# Built-in effects (population values):
+# - condition: visual +180 ms, auditory 0 ms, haptic -70 ms (reaction time)
+# - experience: experienced -120 ms vs. novice (about d = 0.9 on person means)
+# - trial: -25 ms per trial (learning), random slopes per participant
+# - age: +4 ms per year
+# - lane_dev rises with reaction time and for visual warnings
+# Missing values: 12 rt_ms (sensor dropouts), 9 lane_dev, age of p17.
 
-set.seed(20261025)
+set.seed(20261026)
 
-n_vp <- 40
-conditions <- c("visuell", "auditiv", "haptisch")
-n_trial <- 4
+n_participants <- 40
+conditions <- c("visual", "auditory", "haptic")
+n_trials <- 4
 
-vp <- data.frame(
-  vp_id = sprintf("vp%02d", seq_len(n_vp)),
-  age = round(stats::runif(n_vp, 19, 68)),
-  gender = sample(c("w", "m", "d"), n_vp, replace = TRUE, prob = c(0.48, 0.48, 0.04)),
-  u0 = stats::rnorm(n_vp, 0, 120), # random intercept RT (ms)
-  u1 = stats::rnorm(n_vp, 0, 12), # random slope over trials (ms per trial)
-  v0 = stats::rnorm(n_vp, 0, 0.04) # random intercept lane deviation (m)
+participants <- tibble::tibble(
+  participant = sprintf("p%02d", seq_len(n_participants)),
+  experience = rep(c("novice", "experienced"), each = n_participants / 2),
+  age = round(stats::runif(n_participants, 19, 68)),
+  gender = sample(
+    c("female", "male", "diverse"),
+    n_participants,
+    replace = TRUE,
+    prob = c(0.48, 0.48, 0.04)
+  ),
+  u0 = stats::rnorm(n_participants, 0, 110),
+  u1 = stats::rnorm(n_participants, 0, 12),
+  v0 = stats::rnorm(n_participants, 0, 0.04)
 )
 
-d <- expand.grid(trial = seq_len(n_trial), condition = conditions,
-                 vp_id = vp$vp_id, stringsAsFactors = FALSE)
-d <- merge(d, vp, by = "vp_id", sort = FALSE)
-d <- d[order(d$vp_id, match(d$condition, conditions), d$trial), ]
+effect_rt <- c(visual = 180, auditory = 0, haptic = -70)
+effect_lane <- c(visual = 0.06, auditory = 0, haptic = -0.02)
 
-cond_rt <- c(visuell = 180, auditiv = 0, haptisch = -70)
-cond_ld <- c(visuell = 0.06, auditiv = 0, haptisch = -0.02)
+driving_sim <- tidyr::expand_grid(
+  participant = participants$participant,
+  condition = conditions,
+  trial = seq_len(n_trials)
+) |>
+  dplyr::left_join(participants, by = "participant") |>
+  dplyr::mutate(
+    rt_ms = round(
+      1050 +
+        effect_rt[condition] +
+        ifelse(experience == "experienced", -120, 0) +
+        4 * (age - 40) +
+        (-25 + u1) * (trial - 1) +
+        u0 +
+        stats::rnorm(dplyr::n(), 0, 110)
+    ),
+    lane_dev = round(
+      0.25 +
+        effect_lane[condition] +
+        0.0015 * (age - 40) +
+        0.00006 * (rt_ms - 1050) +
+        v0 +
+        stats::rnorm(dplyr::n(), 0, 0.05),
+      3
+    ),
+    lane_dev = pmax(lane_dev, 0.02)
+  )
 
-d$rt_ms <- round(1050 + cond_rt[d$condition] + 4 * (d$age - 40) +
-                   (-25 + d$u1) * (d$trial - 1) + d$u0 + stats::rnorm(nrow(d), 0, 110))
-d$lane_dev <- round(0.25 + cond_ld[d$condition] + 0.0015 * (d$age - 40) +
-                      0.0006 * (d$rt_ms - 1050) / 10 + d$v0 +
-                      stats::rnorm(nrow(d), 0, 0.05), 3)
-d$lane_dev <- pmax(d$lane_dev, 0.02)
+driving_sim$rt_ms[sample(nrow(driving_sim), 12)] <- NA
+driving_sim$lane_dev[sample(nrow(driving_sim), 9)] <- NA
+driving_sim$age[driving_sim$participant == "p17"] <- NA
 
-# Some missing values: sensor dropouts and one participant without age
-d$rt_ms[sample(nrow(d), 12)] <- NA
-d$lane_dev[sample(nrow(d), 9)] <- NA
-d$age[d$vp_id == "vp17"] <- NA
+driving_sim <- driving_sim |>
+  dplyr::select(
+    participant, experience, age, gender, condition, trial, rt_ms, lane_dev
+  )
 
-driving_sim <- d[c("vp_id", "age", "gender", "condition", "trial", "rt_ms", "lane_dev")]
-rownames(driving_sim) <- NULL
-
-dir.create("inst/extdata", recursive = TRUE, showWarnings = FALSE)
-utils::write.csv(driving_sim, "inst/extdata/driving_sim.csv", row.names = FALSE)
+dir.create("data", showWarnings = FALSE)
+utils::write.csv(driving_sim, "data/driving_sim.csv", row.names = FALSE)

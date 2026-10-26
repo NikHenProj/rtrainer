@@ -1,0 +1,11 @@
+---
+title: "Course plan"
+lang: en-GB
+toc: false
+---
+
+::: {.callout-note appearance="simple"}
+**The English version is in preparation.** The course is written in German first; English follows after review.
+:::
+
+[Zum deutschen Kursplan / German course plan](../de/index.qmd)

@@ -1,0 +1,10 @@
+---
+title: "Pakete"
+toc: false
+---
+
+::: {.callout-note appearance="simple"}
+**In Vorbereitung.** Steckbriefe zu den Paketen des Kurses (wofür, Kernfunktionen mit Minibeispiel, Stolperfallen, Lektionen, Dokumentation) entstehen zusammen mit den Lektionen.
+:::
+
+[Zurück zum Kursplan](index.qmd)

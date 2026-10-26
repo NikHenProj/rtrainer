@@ -8,8 +8,8 @@ description: Use when creating, editing, reviewing or migrating rtrainer course 
 Grundlage: docs/SPEC.md, Abschnitte „Übungen (Single Source)“, „Paket-Standard“, „Daten“, „Lernförderung“.
 Das YAML-Schema wird in Meilenstein 6 finalisiert; maßgeblich ist dann das Beispiel `exercises/group-comparisons/beginner/` und die Validierung in `tools/generate.R`.
 
-## Schema (Entwurf)
-`id, lesson (<slug>-<level>), title{de,en}, kind, required, packages, data, setup, starter, solution, hints[{de,en}], explanation{de,en}, misconception{de,en}, check{type, …}, common_mistakes[{pattern, message{de,en}}]`.
+## Schema (final seit M6; Lektion: lesson.yml, Wissenscheck: quiz.yml)
+`id, lesson (<slug>-<level>), order, title{de,en}, kind, required, packages, data, setup, prompt{de,en}, starter, solution, hints[{de,en}], explanation{de,en}, misconception{de,en}, check{type, …}, common_mistakes[{pattern, message{de,en}}]`.
 Jeder Text DE **und** EN; Code, Daten, Spaltennamen nur Englisch.
 
 ## Was eine gute Übung ist

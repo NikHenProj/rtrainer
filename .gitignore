@@ -4,24 +4,13 @@
 .RData
 .Ruserdata
 .Rapp.history
-*.Rcheck/
-rtrainer_*.tar.gz
-src/*.o
-src/*.so
-src/*.dll
 
-# Build artefacts
-docs/reference/
-inst/doc/
-/doc/
-/Meta/
-vignettes/*.html
-vignettes/*.R
-!vignettes/*.Rmd
-
-# Tests
-tests/testthat/_snaps/**/*.new.md
-tests/testthat/_snaps/**/*.new.png
+# Quarto (generated)
+/_site/
+/.quarto/
+/_generated/
+/assets/review-cards.json
+**/*.quarto_ipynb
 
 # Local/editor
 .DS_Store
@@ -29,6 +18,3 @@ tests/testthat/_snaps/**/*.new.png
 .idea/
 .claude/settings.local.json
 .claude/launch.json
-
-# testthat problem reports of failed runs
-tests/testthat/_problems/

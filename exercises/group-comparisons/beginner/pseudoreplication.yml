@@ -1,0 +1,62 @@
+id: gc-b-pseudoreplication
+lesson: group-comparisons-beginner
+order: 3
+title:
+  de: Zu viele Freiheitsgrade
+  en: Too many degrees of freedom
+kind: debug
+required: true
+packages: [dplyr]
+data: [driving_sim]
+setup: |
+  library(dplyr)
+prompt:
+  de: |
+    Ein Kollege testet den Gruppenunterschied direkt auf Trial-Ebene und berichtet
+    stolz t(466) = 9.6. Jede Person hat aber 12 Durchgänge (3 Bedingungen x 4 Trials).
+    Korrigiere den Code: Mittle `rt_ms` zuerst pro Person (`participant`, `experience`;
+    fehlende Werte ignorieren) und rechne dann den Welch-t-Test.
+  en: |
+    A colleague tests the group difference directly at trial level and proudly
+    reports t(466) = 9.6. But every participant has 12 trials (3 conditions x 4 trials).
+    Fix the code: first average `rt_ms` per participant (`participant`, `experience`;
+    ignore missing values), then run Welch's t-test.
+starter: |
+  driving_sim |>
+    t.test(rt_ms ~ experience, data = _)
+solution: |
+  driving_sim |>
+    summarise(rt_ms = mean(rt_ms, na.rm = TRUE), .by = c(participant, experience)) |>
+    t.test(rt_ms ~ experience, data = _)
+hints:
+  - de: "Wie viele unabhängige Beobachtungen gibt es wirklich? Die Freiheitsgrade sollten etwa zur Personenzahl passen."
+    en: "How many independent observations are there really? The degrees of freedom should roughly match the number of participants."
+  - de: "Schiebe vor `t.test()` einen `summarise()`-Schritt mit `.by = c(participant, experience)` ein."
+    en: "Insert a `summarise()` step with `.by = c(participant, experience)` before `t.test()`."
+  - de: "`summarise(rt_ms = mean(rt_ms, na.rm = TRUE), .by = ______)`"
+    en: "`summarise(rt_ms = mean(rt_ms, na.rm = TRUE), .by = ______)`"
+misconception:
+  de: "Mehr Messungen sind nicht mehr Fälle: Die Durchgänge einer Person hängen zusammen (Pseudoreplikation). Wer sie als unabhängig zählt, unterschätzt den Standardfehler und erhält zu kleine p-Werte."
+  en: "More measurements are not more cases: one person's trials are correlated (pseudoreplication). Counting them as independent underestimates the standard error and yields p-values that are too small."
+explanation:
+  de: |
+    Nach dem Mitteln bleiben 40 Personen, und der Test hat rund 37 statt 466
+    Freiheitsgrade: t(37.3) = 4.73. Der Effekt bleibt deutlich, aber die Unsicherheit
+    ist jetzt ehrlich geschätzt. Später im Kurs nutzt du dafür Mixed Models, die alle
+    Trials verwenden und trotzdem die Abhängigkeit berücksichtigen.
+  en: |
+    After averaging, 40 participants remain and the test has about 37 instead of 466
+    degrees of freedom: t(37.3) = 4.73. The effect is still clear, but the uncertainty
+    is now estimated honestly. Later in the course you will use mixed models, which
+    use all trials and still account for the dependency.
+check:
+  type: value
+common_mistakes:
+  - pattern: "mean\\(rt_ms\\)"
+    message:
+      de: "`mean()` ohne `na.rm = TRUE` liefert `NA`, sobald ein Trial fehlt; diese Personen fallen dann aus dem Test."
+      en: "`mean()` without `na.rm = TRUE` returns `NA` as soon as one trial is missing; those participants then drop out of the test."
+  - pattern: "\\.by\\s*=\\s*c?\\(?\\s*experience\\s*\\)?\\s*\\)"
+    message:
+      de: "Gruppiere nach Person (`participant`) und Gruppe, nicht nur nach `experience`: Sonst bleiben nur zwei Mittelwerte übrig."
+      en: "Group by participant (`participant`) and group, not only by `experience`; otherwise only two means remain."

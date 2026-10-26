@@ -1,4 +1,22 @@
-# rtrainer 0.0.0.9000
+# rtrainer (Quarto course)
+
+## Milestone 6: skeleton + prototype "Gruppenvergleiche – Beginner" (DE)
+
+- R package removed (R/, man/, tests/, vignettes/, DESCRIPTION, NAMESPACE); old exercises in `legacy/exercises/`, old dataset and script in `legacy/driving_sim_v0.*` (tag `v0-shiny` keeps everything).
+- Decision: lesson pages are hand-written `.qmd` text; `tools/generate.R` (Quarto `pre-render`) writes only the generated parts into `_generated/<lang>/<lesson>/` (runtime, header with breadcrumb/meta, exercises, quiz, footer pager) plus `_generated/<lang>/course-plan.qmd` and `assets/review-cards.json`. Lesson pages include them with `{{< include >}}`.
+- Decision: YAML schema = SPEC draft + `order` and `prompt{de,en}`; lesson metadata in `lesson.yml` (minutes, prerequisites, packages, data, goals), knowledge check in `quiz.yml` (`pass`, questions with `multiple`, explanation per option). Validation lists all problems at once; also checks that the lesson page lists the packages/resources and uses `engine: markdown`.
+- Decision: checks via our own `options(webr.exercise.checker = rt_checker)` instead of gradethis (quarto-live has no default checker; gradethis would add a package download). `tools/checks.R` is base R and inlined into every lesson, so browser and self-test run the identical code. Check types: value (numbers, data frames incl. row order/factors, `htest` incl. df hint), object, output; `common_mistakes` regex wins over the generic message.
+- Decision: quarto-live grades on every "Run Code" (no separate submit). The solution for grading must be a `{webr}` block with `solution: true`; the generator puts it in the solution box.
+- Decision: `engine: markdown` on lesson pages (otherwise Quarto picks Jupyter for `{webr}` blocks); `lang: de-DE` (plain `de` collides with the folder `de/` and becomes `../de`).
+- Decision: datasets load via `data/datasets.yml` (`load` code, same in browser and self-test); CSV shipped as page resource into the webR file system.
+- `driving_sim` regenerated with English names: `participant, experience (novice/experienced, between), age, gender, condition (visual/auditory/haptic), trial, rt_ms, lane_dev`; built-in effects documented in `data-raw/driving_sim.R` (experience −120 ms).
+- Lesson group-comparisons-beginner: research question, concept with SVG figure, live example (t.test, cohens_d, APA sentence), package comparison (base/parameters/rstatix/report, rstatix not loaded in the browser because of its heavy dependencies), 3 required exercises (write, complete, debug: pseudoreplication), 5-question knowledge check, cheat sheet.
+- Progress (`assets/progress.js`): localStorage key `rtrainer.progress`, version 1 (`exercises, quizzes, lessons, sections, review`). Exercise results are read from quarto-live's feedback DOM (MutationObserver), hints counted. Completed = required exercises solved + quiz ≥ 80 % → exercises enter review box 1, due the next day. Navbar shows "Wiederholen" with due count; course plan shows status per cell.
+- UX (wayfinding + ui-ux-pro-max): same navbar on every page (Kursplan · Wiederholen · Pakete · Glossar · EN · Hell/Dunkel · Suche), breadcrumb above the lesson title, left column "Abschnitt x von 7" with check marks, right table of contents, pager (next = next topic of the same level, "geplant" if missing). The design-system search suggested claymorphism/teal/gamification; rejected in favour of the fixed Swiss/minimal decision. Applied: visible 3 px focus ring, `scroll-padding-top` so focus is not hidden under the sticky navbar, 44 px targets for cells/pager, status always icon + text, reduced motion, contrast checked in light and dark (all ≥ 6:1).
+- quarto-live's English button labels are translated on German pages by `lesson.js` (Ausführen, Neu beginnen, Hinweis zeigen, Lösung zeigen).
+- CI: `.github/workflows/site.yaml` (self-test, tool tests, quarto render, deploy to GitHub Pages on `main`) replaces R-CMD-check.
+
+# rtrainer 0.0.0.9000 (Shiny package, tag v0-shiny)
 
 - Decision: own Shiny app instead of learnr (progress, repetition logic and YAML exercises are easier to control); learnr only as export.
 - Decision: progress stored as JSON (jsonlite is already imported; human readable; no system dependency).
