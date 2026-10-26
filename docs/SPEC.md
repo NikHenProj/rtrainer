@@ -1,131 +1,145 @@
-# rtrainer – Spezifikation
+# rtrainer – Spezifikation (Kurs-Neuausrichtung, ab 2026-10-26)
 
-## Rolle und Ziel
-Erfahrener R-Paketentwickler und Didaktiker baut **rtrainer**: lokale, offline nutzbare, interaktive Lernumgebung für fortgeschrittenes R. Oberfläche Deutsch, Code/Funktionsnamen Englisch.
-`rtrainer::start()` startet eine Shiny-App mit: (1) Aufgaben, Editor, echte R-Ausführung lokal; (2) automatische Auswertung mit deutschem Feedback; (3) stufenweise Hinweise, Musterlösung mit Erklärung; (4) Fortschritt + Spaced Repetition (Leitner, optional SM-2); (5) Erweiterbarkeit über YAML-Aufgaben (auch eigene Datensätze).
+Vorgänger: lokale Shiny-App als R-Paket, Stand im Tag `v0-shiny` (nicht weitergepflegt).
+Entscheidungen hier stammen aus einer Grilling-Sitzung mit Nick (2026-10-26) und gelten als fest.
+
+## Ziel
+Ein zweisprachiger (DE/EN) R-Kurs als **Quarto-Website mit quarto-live/webR**: R läuft im Browser, keine Installation. Erst erklären, dann üben, dann verteilt wiederholen. Schwerpunkt: Datenanalyse für Human Factors, UX und Psychologie mit aktuellen Werkzeugen (tidyverse + easystats), von Beginner bis Expert. Öffentlich auf GitHub Pages (`NikHenProj/rtrainer`), lokal per `quarto preview` nutzbar.
 
 ## Zielperson
-Nick, Human-Factors-/UX-Forscher (Master), Linux, täglich R/Tidyverse/R Markdown, wertet Fahrsimulator- und Nutzerstudien aus. Gezieltes Training für Fortgeschrittene: Datenaufbereitung, funktionale Programmierung, Inferenzstatistik, LMMs (lme4), ggplot2, reproduzierbare Pipelines. Klare Aufgaben, schnelles Feedback, sichtbarer Fortschritt, kompakte Lösungen.
+Nick, Human-Factors-/UX-Forscher, Linux, R-Praxis (Tidyverse, lme4, ggplot2). Der Kurs soll aber auch für Kolleg:innen und Studierende ab Beginner taugen. Kompakte, praxisnahe Inhalte; keine Nachbauten von Basisfunktionen (z. B. eigene `sd()`), sondern echte Werkzeuge an realistischen Daten.
 
-## Technische Vorgaben
-- R >= 4.3, Linux-first, plattformunabhängig, keine Systemabhängigkeiten außer R-Paketen.
-- usethis/devtools-Konventionen, roxygen2, testthat 3e, lintr/styler-konform, GitHub Actions für `R CMD check`.
-- Imports: shiny, bslib, shinyAce, yaml, evaluate, callr, cli, jsonlite, rlang. Suggests: dplyr, tidyr, purrr, stringr, ggplot2, lme4, lmerTest, learnr, gradethis, testthat, knitr, rmarkdown, shinytest2, withr, bench, here, renv, targets.
-- Frontend: eigene Shiny-App (bslib, Dark/Light), Editor shinyAce. README begründet Shiny statt learnr. Zusätzlich `export_learnr()` (learnr-`.Rmd` mit gradethis-Checks).
-- Nutzercode in isoliertem Prozess (`callr::r()`), Timeout 10 s, Fehler/Warnungen/Ausgaben abfangen (`evaluate`), Arbeitsverzeichnis tempdir. Kein Sicherheits-Sandbox – Grenzen ehrlich dokumentieren.
-- Fortschritt: JSON in `tools::R_user_dir("rtrainer","data")`.
+## Struktur: Themen × Stufen
+Matrix aus 23 Themen (Zeilen) × 3 Stufen (Spalten: Beginner, Intermediate, Expert). Nicht jede Zelle existiert. Empfohlener Pfad **stufenweise** (alle Beginner-Lektionen, dann Intermediate, dann Expert); alles frei zugänglich, Voraussetzungen werden pro Lektion angezeigt und verlinkt. Mini-Projekt (vollständige Analyse) am Ende jeder Stufe.
 
-## Dateistruktur (Ziel)
-```
-rtrainer/
-├── DESCRIPTION, NAMESPACE, LICENSE, README.md, NEWS.md
-├── R/ start.R, app_ui.R, app_server.R, exercise_load.R, exercise_run.R,
-│      check_engine.R, feedback.R, progress.R, scheduler.R, content_tools.R,
-│      export_learnr.R, data.R, utils.R, rtrainer-package.R
-├── inst/exercises/{01-basics,02-dplyr,03-tidyr,04-purrr,05-programming,
-│                   06-statistics,07-mixed-models,08-ggplot2,09-reproducibility}/*.yml
-├── inst/datasets/driving_sim.csv      (erzeugt durch data-raw/driving_sim.R)
-├── inst/app/www/
-├── tests/testthat/
-└── vignettes/ getting-started.Rmd, write-your-own-exercises.Rmd
-```
+| # | Slug | Thema (DE / EN) | Kernpakete | Stufen |
+|---|---|---|---|---|
+| 1 | working-with-r | Arbeiten mit R / Working with R | Projekte, Hilfe, Fehlermeldungen, Quarto | B |
+| 2 | import | Daten einlesen / Importing data | readr, readxl, haven (Qualtrics/LimeSurvey) | B, I |
+| 3 | cleaning | Daten bereinigen / Cleaning data | janitor, forcats, lubridate, stringr | B, I |
+| 4 | reshaping | Umformen und zusammenführen / Reshaping and joining | tidyr, dplyr | B, I, E |
+| 5 | missing | Fehlende Werte / Missing data | naniar, mice | I, E |
+| 6 | visualisation | Visualisieren / Visualisation | ggplot2, patchwork, see | B, I, E |
+| 7 | descriptives | Deskriptive Statistik, Tabelle 1 / Descriptives, Table 1 | dplyr, datawizard, gtsummary | B, I |
+| 8 | scales | Fragebögen und Skalen / Questionnaires and scales | datawizard, psych | B, I, E |
+| 9 | sem | CFA und SEM / CFA and SEM | lavaan, semTools | I, E |
+| 10 | group-comparisons | Gruppenvergleiche / Group comparisons | rstatix, effectsize, afex, modelbased, emmeans | B, I, E |
+| 11 | robust | Nichtparametrisch und robust / Nonparametric and robust | rstatix, WRS2 | I, E |
+| 12 | regression | Korrelation und Regression / Correlation and regression | correlation, parameters, performance | B, I, E |
+| 13 | glm | Kategoriale Daten und GLM / Categorical data and GLMs | glm, marginaleffects, effectsize | I, E |
+| 14 | mixed-models | Messwiederholung und Mixed Models / Repeated measures and mixed models | lme4, lmerTest, glmmTMB, modelbased | I, E |
+| 15 | moderation-mediation | Moderation und Mediation | interactions, lavaan | I, E |
+| 16 | power | Power und Stichprobenplanung / Power analysis | pwr, Superpower, simr | I, E |
+| 17 | bayes | Bayes / Bayesian statistics | bayestestR (brms lokal) | E |
+| 18 | signals | Zeitverläufe und Signale / Time courses and signals | signal, mgcv, itsadug, eyetrackingR | E |
+| 19 | text | Textdaten / Text data | tidytext | I, E |
+| 20 | machine-learning | Maschinelles Lernen / Machine learning basics | tidymodels | E |
+| 21 | reporting | Ergebnisse berichten / Reporting results | report, gtsummary, modelsummary, flextable, rempsyc, apaquarto | B, I, E |
+| 22 | reproducibility | Reproduzierbar arbeiten / Reproducible workflows | Quarto, renv, git | I, E |
+| 23 | programming | R-Programmierung für Analysen / Programming for analysis | Funktionen, purrr | I, E |
 
-## Aufgabenformat (YAML)
-Felder: id, topic, title, level (1-3), kind (write|predict|debug|complete), tags, packages, seed, prompt, setup, starter, solution, hints[], explanation, misconception, check{type, ...}, common_mistakes[{pattern, message}].
-Check-Typen: value | output | object | function | regex | ast | plot. Beispiel: `inst/exercises/02-dplyr/group-summarise.yml`. `validate_exercise()` meldet Fehler mit `cli::cli_abort()`.
+Lektions-ID: `<slug>-<level>` mit level ∈ {beginner, intermediate, expert}.
 
-## Check-Engine (`check_exercise(exercise, user_code)` -> list(correct, message, details))
-1. value: letzter Wert vs. Musterlösung; Zahlen mit tolerance; Data Frames getrennt nach Spaltennamen, Typen, Zeilenanzahl, Werten; Optionen ignore_row_order/ignore_col_order/ignore_attributes; konkrete Meldungen.
-2. output: Konsolenausgabe mit normalisierten Leerzeichen (Diff bis zur ersten Abweichung).
-3. object: Objekt mit Name/Klasse im Nutzer-Environment.
-4. function: Testfälle `tests: [{args, expect}]` inkl. Randfälle (NA, leerer Vektor).
-5. regex/ast: Funktionen gefordert/verboten (`getParseData()`).
-6. plot: ggplot strukturell (Geoms, Mappings, Facets, Theme), nicht Pixel.
-Zusätzlich: deutsche Übersetzung häufiger R-Fehler, `common_mistakes` als gezielte Hinweise, deterministisch via `seed`.
+## Paket-Standard (Hauptweg)
+- **tidyverse + easystats** als Rückgrat (parameters, effectsize, performance, modelbased, see, report, datawizard, correlation).
+- rstatix für Tests auf Data Frames; afex für (RM-)ANOVA; modelbased zuerst, emmeans für komplexe Kontraste; psych für Skalen/EFA; lavaan für CFA/SEM.
+- Base R nur, wo es dem Verständnis dient oder in fremdem Code ständig vorkommt (`t.test()`, `aov()`, Formeln).
+- **Berichtskette** (zieht sich durch alle Lektionen): Modell → `parameters`/`effectsize` → `report()` (APA-Text) → `gtsummary`/`modelsummary` (Tabelle) → Word (`flextable`/`rempsyc::nice_table()`) oder Quarto.
+- Paketvergleich in Lektionen nur, wo sinnvoll; mit klarer Empfehlung.
+- **Nicht im Browser** (Stand webR 4.6): brms, rstanarm, BayesFactor, ggstatsplot, apaTables, DHARMa; Pandoc/LaTeX (Word-Render, papaja). Umgang: Kasten „Lokal ausführen / Run locally“ mit Code und erwartetem Ergebnis; im Browser Ersatz (bayestestR auf vorab gerechneten Modellen, `performance::check_model()`, ggplot2 + rstatix), Word-Dateien per Download-Knopf.
+- Browser-Grenzen: single-threaded, Simulationen klein halten (50–100), Datensätze KB bis wenige MB, Paketversionen pinnen.
 
-## Oberfläche (Shiny)
-- Seitenleiste: Themen mit Fortschrittsbalken, Filter (Level, Tags, "nur fällige Wiederholungen"), "Zufallsaufgabe" (nur nicht gemeisterte).
-- Hauptbereich: Titel, Aufgabentext (Markdown), Editor; Buttons Ausführen (Strg+Enter), Prüfen, Hinweis (stufenweise), Lösung (erst nach Versuch oder Bestätigung), Zurücksetzen, Weiter.
-- Ausgabe: Konsole, Plots, Tabellen, Feedback-Box grün/rot/gelb mit Symbolen (✓ ✗ !).
-- Nach der Lösung: Erklärung + "Wie schwer war das?" (Leicht/Okay/Schwer).
-- Dashboard: Streak, Aufgaben/Woche, Erfolgsquote pro Thema, Aktivitäts-Heatmap (ggplot2), schwächste Tags, Kalibrierung, Fehlerjournal.
-- Barrierefreiheit: Tastaturbedienung, Kontraste, keine reine Farbcodierung.
+## Lektion (Aufbau)
+1. Wozu? – Forschungsfrage (HF/UX oder passender Kontext)
+2. Konzept – knapp, mit Abbildung
+3. Durchgerechnetes Beispiel – live editier- und ausführbar
+4. Paketvergleich – wo sinnvoll, mit Empfehlung
+5. Übungen – steigende Schwierigkeit, Hinweise gestuft, Lösung
+6. Wissenscheck – Ausgabe deuten, Mehrfachauswahl, Erklärung je Option
+7. Spickzettel – Zusammenfassung
+Expert-Lektionen beginnen mit einer kurzen Herausforderung („Versuch es erst selbst“), Erklärung danach, überspringbar. Lange Inhalte: „Mehr dazu“-Kästen (Progressive Disclosure).
+**Abgeschlossen** = alle Pflichtübungen gelöst (automatisch geprüft) + Wissenscheck ≥ 80 %; optionale Vertiefungsübungen zählen nicht. Danach Übungen der Lektion in die Wiederholung (Leitner Box 1, erster Termin am Folgetag).
 
-## Lernlogik
-- Leitner: 5 Boxen, Intervalle 0/1/3/7/21 Tage. Richtig+leicht: +1; richtig+okay: gleich; richtig+schwer: -1; falsch: Box 1. "Leicht" mit >= 2 Hinweisen zählt als "Okay".
-- SM-2 optional (`scheduler = "sm2"`), einheitliche Schnittstelle `next_due(state, result)`, beide getestet.
-- `start(mode = "daily")`: 10 Aufgaben (fällige + neue, Level und Themen gemischt). `start(mode = "exam", n = 15, time_limit = 30)`: keine Hinweise, Gesamtauswertung.
+## Übungen (Single Source)
+Jede Übung eine YAML-Datei in `exercises/<slug>/<level>/<id>.yml`; ein R-Skript erzeugt daraus quarto-live-Blöcke für die Lektion **und** Karten für die Wiederholungsseite. Entwurf (wird im Prototyp finalisiert):
+`id, lesson, title{de,en}, kind (write|interpret|debug|complete|predict), required (bool), packages, data, setup, starter, solution, hints[{de,en}], explanation{de,en}, misconception{de,en}, check{type, …}, common_mistakes[{pattern, message{de,en}}]`.
+- Gute Übung: echtes Werkzeug, realistische Daten, Ergebnis interpretieren. Arten: Code schreiben, Ausgabe deuten (`interpret`), zwischen Paketen übersetzen, Fehler finden (`debug`), Lücken (`complete`) bei neuen Themen.
+- Checks laufen im Browser als R-Code (quarto-live `check`), gemeinsame Hilfsfunktionen in `tools/checks.R` (value/object/output; später function/plot).
+- Alte 65 Aufgaben (Tag `v0-shiny`, `inst/exercises/`): gute einsortieren und anpassen, schwache streichen – Liste zur Freigabe durch Nick.
 
-## Lernförderung (evidenzbasiert)
-Grundlage: Dunlosky et al. (2013) bewerten Abrufübung (Practice Testing) und verteiltes Üben als besonders nützlich; Interleaving, Elaboration und Feedback ergänzen. Die Zielperson ist fortgeschritten, daher gilt "Problem zuerst" (Expertise-Reversal-Effekt: ausgearbeitete Beispiele helfen Novizen, Fortgeschrittenen oft weniger).
+## Daten
+Simuliert, dokumentiert, mit bekannten eingebauten Effekten, **englische Spaltennamen und Faktorstufen** (Code in beiden Sprachen identisch). Skripte in `data-raw/`, Dateien in `data/`.
+1. Fahrsimulator (Messwiederholung; `driving_sim` umbenannt: `participant`, `condition = visual/auditory/haptic`, `rt_ms`, …)
+2. Fragebogenstudie (Likert, SUS, NASA-TLX, umgepolte Items, fehlende Werte)
+3. Usability-Test (Erfolg, Zeit, Fehler je Person × Prototyp)
+4. Unordentlicher Rohexport (Excel/CSV mit Kopfzeilenmüll, Datumsformaten, Freitext)
+Weitere bei Bedarf, auch außerhalb von HF/UX (z. B. für komplexere Analysen).
 
+## Lernförderung
 | Prinzip | Umsetzung |
 |---|---|
-| Abrufübung | Aufgabe zuerst, Hinweise nur auf Abruf, Lösung erst nach Versuch; `predict`-Aufgaben prüfen mentale Modelle |
-| Verteiltes Üben | Leitner/SM-2; Box-1-Wiederholung noch in derselben Sitzung, danach 1/3/7/21 Tage |
-| Interleaving | `pick_session()` mischt Themen (`interleave_topics()`), Daily-Modus nie blockweise |
-| Sicherheits-Rating (Hypercorrection) | Optional vor "Prüfen" 1-3; sicherer Fehler -> hervorgehobenes, elaboriertes Feedback (Erwartung vs. Ergebnis, `misconception`, Erklärung) + erneute Vorlage in der Sitzung |
-| Kalibrierung | Dashboard zeigt Trefferquote je Sicherheitsstufe (`progress_stats()$calibration`) |
-| Faded Examples | `kind: complete` mit Lücken nur bei neuen/schweren Themen (Mixed Models, targets, tidy eval); Lücken über 2-3 Aufgaben ausblenden |
-| Fehler lernen | `kind: debug` + `misconception` + `common_mistakes` mit Begründung; Fehlerjournal im Dashboard |
-| Selbsterklärung | Optionales "In einem Satz: warum?" nach der Lösung (Notiz, ohne Bewertung) |
-| Transfer | Pro Konzept mindestens eine Variante im anderen Kontext (`driving_sim.csv`) |
-| Ehrliche Schwierigkeit | Hinweise drücken Bewertung ("Leicht" gedeckelt); Prüfungsmodus ohne Hilfen |
-Nicht überversprechen: Hypercorrection und Kalibrierung sind für Wissensfragen gut belegt, für Programmieraufgaben weniger; als Option anbieten und per Logdaten prüfen.
+| Erst erklären (Novizen, Expertise-Reversal beachten) | Lektionen: Erklärung → Beispiel → Übung; Expert: Herausforderung zuerst |
+| Abrufübung | Wiederholung: Aufgabe zuerst, Hinweise auf Abruf, Link zurück zur Lektion |
+| Verteiltes Üben | Leitner Boxen 1–5, Intervalle 0/1/3/7/21 Tage; falsch → Box 1; Leicht +1, Okay =, Schwer −1; „Leicht“ nur bei < 2 Hinweisen |
+| Sicherheits-Rating | nur auf der Wiederholungsseite (1–3 vor dem Prüfen); sicherer Fehler → ausführliches Feedback |
+| Interleaving | Wiederholungsseite mischt Themen |
+| Fehler lernen | `debug`, `misconception`, `common_mistakes` mit Begründung |
+| Transfer | Paketvergleich, Mini-Projekte je Stufe |
+Keine Punkte, Abzeichen, Ranglisten; dezenter Fortschritt, Serie (Streak) nur auf der Wiederholungsseite.
 
-## Inhalte (mindestens 60 Aufgaben, jeweils Hinweise + Erklärung, steigende Schwierigkeit)
-- Basics (6), dplyr (10), tidyr (6), purrr (7), Programmierung (8), Statistik (10), Mixed Models (8), ggplot2 (6), Reproduzierbarkeit (4) – Themen wie im Aufgaben-Skill `rtrainer-write-exercise`:
-  - Basics: Vektoren, Indizierung, Listen, Faktoren, Funktionen, Kontrollstrukturen.
-  - dplyr: filter/select, mutate/case_when, group_by/summarise, across, joins, Window-Funktionen, slice_max, count.
-  - tidyr: pivot_longer/wider, separate_wider_*, drop_na, complete, nest/unnest.
-  - purrr: map-Familie, map2, reduce, Modelle pro Gruppe, safely/possibly.
-  - Programmierung: Funktionen, Defaults und `...`, tryCatch, Environments, tidy evaluation, stringr-Regex, Vektorisierung vs. Schleife, bench.
-  - Statistik: Deskriptiv, Welch-t, Mann-Whitney, ANOVA, Tukey, Effektstärken, Voraussetzungstests, Korrelation, lm, p.adjust.
-  - Mixed Models: Random Intercept, Random Slope, Modellvergleich, ICC, Konvergenz (allFit), Diagnostik, Interpretation, Messwiederholung (Bedingung × Zeit, vp_id).
-  - ggplot2: aes/Geoms, Facets, Skalen, Themes, Fehlerbalken, ggsave.
-  - Reproduzierbarkeit: R-Projekte, here, renv, R-Markdown-Parameter, einfache targets-Pipeline.
-- Mindestens je 10 % `predict`, `debug`, `complete` (nur in neuen Themen).
-- Datensatz `driving_sim.csv`: 40 Versuchspersonen, 3 Bedingungen zur Übernahmeaufforderung, Reaktionszeit, Spurabweichung, Alter, Geschlecht, wiederholte Messungen, einige NA; `data-raw/driving_sim.R` (Seed), Doku in `R/data.R`.
+## Wiederholung und Fortschritt
+- Fortschritt in **localStorage** (versioniertes JSON), Export/Import als Datei.
+- quarto-live meldet Prüfergebnisse nicht per API: Ergebnis aus dem Feedback-DOM mitlesen (MutationObserver), danach Knöpfe Leicht/Okay/Schwer.
+- Wiederholungsseite: eine Karte pro Übung, Pakete der Karte erst bei Bedarf laden. Prüfungsmodus entfällt.
 
-## Erweiterbarkeit
-`add_exercise_dir()`, `new_exercise()`, `check_all_solutions()`, `export_learnr(topics, path)`.
+## Oberfläche und Navigation
+Wayfinding (Skill `cognitive-accessibility:wayfinding-navigation`): jederzeit klar „Wo bin ich, wohin kann ich, wie zurück?“.
+- Kopfzeile auf jeder Seite gleich: Kursplan · Wiederholen (n fällig) · Pakete · Glossar · Suche · DE/EN · Hell/Dunkel.
+- Startseite **Kursplan**: Themen×Stufen-Matrix, Status je Zelle (nicht begonnen / begonnen / abgeschlossen) + „x fällig“; Kasten „Heute wiederholen (n)“.
+- Lektion: Breadcrumb „Kursplan › Stufe › Thema“, links Abschnitte mit Häkchen, „Abschnitt x von 7“, rechts Inhaltsverzeichnis, unten Zurück/Weiter (Weiter = nächstes Thema derselben Stufe).
+- **Paket-Steckbriefe**: wofür, 5–10 Kernfunktionen mit Minibeispiel, Stolperfallen, Lektionen, Doku-Link; entstehen mit den Lektionen.
+- **Glossar** DE↔EN.
+- Optik (Skill `ui-ux-pro-max`): Swiss/minimal, inhaltsorientiert, Lesebreite ~70 Zeichen; IBM Plex Sans + JetBrains Mono; eine Akzentfarbe (Indigo), Grün/Rot/Gelb nur für Status, immer mit Symbol; Hell + Dunkel (Systemstandard); WCAG AA (Kontrast 4,5:1, Tastatur, sichtbarer Fokus, reduced motion).
+- Ladezeit: Ladeanzeige mit Text beim ersten Start (10–30 s), Pakete nur pro Lektion.
 
-## Qualitätssicherung
-Unit-Tests: YAML-Validierung (inkl. kind), jede Check-Art, Scheduler, Fortschritt (inkl. Confidence/Kalibrierung, Interleaving, Hint-Cap), sichere Ausführung (Timeout, Endlosschleife, `stop()`, `q()`). Jede Aufgabe besteht mit Musterlösung und besteht mit Starter nicht. shinytest2-Smoke-Test. README: Screenshot-Platzhalter, Linux-Installation, Schnellstart, eigene Aufgaben, Troubleshooting.
+## Zweisprachigkeit
+Zwei Seitenbäume `/de/` und `/en/` aus einem Quarto-Projekt; Umschalter führt zur gleichen Stelle. Gleiche Übungs-IDs, Fortschritt sprachübergreifend. Deutsch zuerst, nach Abnahme durch Nick Englisch übersetzen und prüfen. Code, Daten und Ausgaben identisch; Fachbegriffe im Glossar.
+
+## Repository
+Tag `v0-shiny` sichert den alten Stand. Umbau im selben Repo: R-Paket (R/, man/, tests/, DESCRIPTION, NAMESPACE, inst/, vignettes/) entfällt. Ziel:
+`_quarto.yml`, `de/`, `en/`, `exercises/`, `data/`, `data-raw/`, `tools/` (Generator, Selbsttest, Checks), `assets/` (CSS, JS: Fortschritt, Wiederholung, Quiz, Sprache), `tests/` (Browser-Rauchtest), `_extensions/` (quarto-live).
+
+## Qualitätssicherung (GitHub Actions bei jedem Push)
+1. Selbsttest aller Übungen in normalem R: Lösung besteht, Starter scheitert.
+2. `quarto render` (beide Sprachen).
+3. Browser-Rauchtest einer Lektion mit webR (Playwright/Chrome): Übung lösen, prüfen, Fortschritt gespeichert.
+4. Bei Erfolg auf `main`: Deploy auf GitHub Pages.
+Lokal: Verifikation über den Subagenten `rtrainer-verifier`.
 
 ## Meilensteine
-1. Gerüst, Check-Engine, Ausführung, Scheduler (geschrieben, ungetestet)
-2. Progress (JSON), Feedback/Diff, check_all_solutions, new_exercise, Lern-Grundlagen im Code (geschrieben, ungetestet)
-3. Shiny-App, start(), Modi daily/exam, Dashboard, Lernförderungs-UI
-4. 60+ Aufgaben, driving_sim.csv
-5. export_learnr, Vignetten, README, GitHub Actions, shinytest2
-Nach jedem Meilenstein: lauffähig, Tests grün (echte Ausgabe), kurze Zusammenfassung, STATUS.md aktualisieren.
-
-## Bekannte Risiken (zuerst prüfen)
-1. `run_code()`: Signatur des `value`-Handlers von `evaluate::new_output_handler()` ist versionsabhängig; letzter Wert und Konsolenausgabe müssen zuverlässig erfasst werden (Plots beachten).
-2. Timeout-Erkennung per Textvergleich der callr-Meldung ist fragil -> Fehlerklasse oder Laufzeit prüfen.
-3. `getParseData()` braucht `keep.source = TRUE`; testen mit `stringr::str_detect` und `pkg::fun`.
-4. `compare_df()`: Faktoren, integer vs. double, tibble vs. data.frame absichern.
-5. `pick_session()`/`interleave_topics()`: Randfälle (weniger Aufgaben als n, leeres Log, ein Level/Thema).
-6. `withr` in Suggests (Tests nutzen `local_progress_dir()`).
-7. Starter mit Syntaxfehler (endet auf Pipe) muss als "nicht bestanden" gelten.
-8. `common_mistakes`-Regex der Beispielaufgabe (Negative Lookahead, `perl = TRUE`) testen.
-
-## Skill-Einsatz
-| Phase | Skill/Agent |
-|---|---|
-| M1/M2 Fix und Tests | r-package-development, r-testthat, rtrainer-verifier |
-| M3 App | shiny-bslib, rtrainer-shiny-app, webapp-testing (oder shinytest2) |
-| M4 Inhalte | rtrainer-write-exercise, rtrainer-verifier; skill-creator zum Verfeinern |
-| M5 Export/Doku/Release | r-package-development, r-tidyverse-style, create-release-checklist |
-Projektregeln haben Vorrang vor allgemeinen Skills.
+6. Grundgerüst + **Prototyp „Gruppenvergleiche – Beginner“ (DE)**: Quarto-Projekt, quarto-live, Theme, Kopfzeile/Navigation, Kursplan-Matrix (eine aktive Zelle), Lektion mit 3 Übungen aus YAML, Wissenscheck, Fortschritt (localStorage), Selbsttest, CI (Selbsttest + Render + Pages). Datensatz Fahrsimulator (umbenannt). → Abnahme durch Nick (Optik, Aufbau), erst dann weiter.
+7. Wiederholungsseite (Leitner, Rating, Streak), Export/Import, Paket-Steckbrief- und Glossar-Vorlage, EN-Fassung des Prototyps + Sprachumschalter, Browser-Rauchtest in CI.
+8. Datensätze 2–4; Triage der alten 65 Aufgaben (Liste zur Freigabe); Beginner-Pfad (Themen 1–4, 6–8, 10, 12, 21) DE, nach Abnahme EN; Mini-Projekt Beginner.
+9. Intermediate-Stufe. 10. Expert-Stufe. 11. Spezialthemen (18–20), Feinschliff.
+Nach jedem Meilenstein: Selbsttest + Render grün (echte Ausgabe), kurze Zusammenfassung, STATUS.md aktualisieren.
 
 ## Abnahmekriterien
-- `rtrainer::start()` öffnet die App, Aufgabe lösbar, Feedback < 2 s.
-- Fortschritt bleibt nach Neustart erhalten.
-- >= 60 Aufgaben, alle Selbsttests grün.
-- `R CMD check` ohne Errors und Warnings.
-- Neue Aufgabe in < 5 Minuten als YAML hinzufügbar.
+- Seite läuft auf GitHub Pages und lokal (`quarto preview`); erste Lektion nutzbar nach ≤ 30 s Erstladen, ≤ 5 s bei erneutem Besuch; Prüfen ≤ 3 s (außer schwere Modelle, dann Hinweis).
+- Fortschritt bleibt nach Neuladen und Browser-Neustart; Export/Import funktioniert.
+- Alle Übungen: Selbsttest grün in CI.
+- Jede veröffentlichte Lektion in DE und EN; Umschalter landet an gleicher Stelle.
+- Wayfinding-Checkliste erfüllt; WCAG AA (Kontrast, Tastatur, Fokus).
+- Neue Übung als YAML in < 10 Minuten hinzufügbar.
+
+## Skill-Einsatz
+| Bereich | Skill/Agent |
+|---|---|
+| Navigation, Informationsarchitektur | cognitive-accessibility:wayfinding-navigation |
+| Optik, Komponenten, Barrierefreiheit | ui-ux-pro-max:ui-ux-pro-max, frontend-design |
+| Übungen schreiben | rtrainer-write-exercise |
+| Verifikation | rtrainer-verify / Subagent rtrainer-verifier |
+| R-Code-Stil | r-tidyverse-style |
+Projektregeln haben Vorrang vor allgemeinen Skills.
 
 ## Ausgabeformat pro Meilenstein
 (1) Entscheidungen, (2) geänderte Dateien, (3) Befehle zum Testen, (4) ehrlicher Status, (5) nächster Schritt.

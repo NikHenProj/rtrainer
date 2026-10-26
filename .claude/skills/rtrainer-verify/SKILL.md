@@ -1,21 +1,20 @@
 ---
 name: rtrainer-verify
-description: Use after changing any R code, test, or exercise in rtrainer, or when asked to verify, test, check, or validate the package. Runs document, tests, the exercise self-check and R CMD check in order and reports real output.
+description: Use after changing exercises, lessons, tools (generator, checks, self-test), assets or the Quarto config of the rtrainer course, or when asked to verify, test, check, or validate it. Runs the exercise self-test, tool tests, render and browser smoke test in order and reports real output.
 ---
 
-# Verify rtrainer
+# Verify rtrainer (Quarto-Kurs)
 
-Bevorzugt über den Subagenten `rtrainer-verifier` ausführen (spart Hauptkontext). Allgemeine devtools/testthat-Praxis: Skills `r-package-development`, `r-testthat`.
+Bevorzugt über den Subagenten `rtrainer-verifier` ausführen (spart Hauptkontext). Die Befehle entstehen in Meilenstein 6; fehlt ein Skript, das ausdrücklich melden statt es zu überspringen.
 
 Reihenfolge, beim ersten Fehler stoppen, beheben, bei 1 neu beginnen:
-1. `Rscript -e 'devtools::document()'`
-2. `Rscript -e 'devtools::test(reporter = "check")'`
-3. `Rscript -e 'devtools::load_all(); res <- check_all_solutions(verbose = FALSE); print(res[!res$solution_ok | isFALSE(res$starter_fails), ])'` – muss leer sein.
-4. `Rscript -e 'devtools::check(error_on = "warning")'`
-5. Optional: `lintr::lint_package()`, `styler::style_pkg()`.
+1. `Rscript tools/selftest.R` – alle Übungen: Lösung besteht, Starter scheitert.
+2. Tests der Werkzeuge (Generator, Checks): `Rscript -e 'testthat::test_dir("tools/tests")'`.
+3. `quarto render` – ohne Fehler/Warnungen, beide Sprachen.
+4. Browser-Rauchtest (sobald vorhanden, `tests/`): eine Lektion laden, Übung lösen, prüfen, Fortschritt gespeichert.
 
 ## Regeln
 - Gekürzte echte Ausgabe zeigen (Fehlerzeilen, nicht das ganze Log).
 - Fehler: Ursache benennen, minimal fixen, Regressionstest ergänzen.
-- Aufgaben > 5 s: klären, ob `run_code()` oder die Aufgabe langsam ist.
-- Ist R nicht ausführbar, das ausdrücklich melden.
+- Übungen > 5 s im normalen R: im Browser deutlich langsamer, Aufgabe verkleinern.
+- Sind R oder Quarto nicht ausführbar, das ausdrücklich melden.

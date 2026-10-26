@@ -79,3 +79,9 @@
 - Fix: the exam timer keeps the remaining time after "Prüfung beenden" instead of showing 00:00 (`exam_time_left()`); the "Zeit" in the result box is also frozen at the end instead of growing with every re-render.
 - Change: debug exercises say "mindestens einen Fehler" by default; the new optional YAML field `bugs` (whole number >= 1, validated) names the count ("zwei Fehler … behebe alle"). Set to 2 for `ggplot2-mapping-setting-debug`. Instruction text moved to `kind_help()` in `R/app_logic.R`.
 - Fix: `export_learnr.R` defined `kind_labels` a second time and, collated later, silently overrode the app badge (debug showed "Reparieren" instead of "Fehler finden"). The duplicate is removed; app and export now share one definition.
+
+## Redesign decision (2026-10-26)
+
+- Decision (grilling session with Nick): rtrainer becomes a bilingual (DE/EN) R course built as a Quarto website with quarto-live/webR instead of a Shiny app in an R package. Reasons: explanation-first lessons need prose with live code, the hierarchy should follow research tasks × three levels (Beginner/Intermediate/Expert) with packages as a second layer, exercises should use current tools (tidyverse + easystats) instead of re-implementing basics, and the old interface's interaction architecture did not fit. Full decision record: docs/SPEC.md.
+- The last Shiny state is tagged `v0-shiny` (milestones 1-5, 65 exercises, all checks green, CI green on three OSs). It is not maintained further; good exercises will be migrated.
+- Package availability in webR checked against the 4.6 binary index (incl. hard dependencies): all core packages available; brms, rstanarm, BayesFactor, ggstatsplot, apaTables and DHARMa are not loadable and get "run locally" boxes or in-browser substitutes.

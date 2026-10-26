@@ -1,37 +1,32 @@
 ---
 name: rtrainer-write-exercise
-description: Use when creating, editing, or reviewing rtrainer exercises (YAML in inst/exercises or user directories), including kinds (write, predict, debug, complete), hints, explanations, checks, misconceptions, and datasets such as driving_sim.csv.
+description: Use when creating, editing, reviewing or migrating rtrainer course exercises (YAML in exercises/<topic>/<level>/), including kinds (write, interpret, debug, complete, predict), bilingual texts, hints, explanations, checks, misconceptions, datasets, and triage of the legacy exercises from tag v0-shiny.
 ---
 
-# Aufgaben schreiben
+# Übungen schreiben (Quarto-Kurs)
 
-## Schema
-Pflicht: id, topic, title, level (1-3), prompt, solution, check. Empfohlen: kind, tags, packages, setup, starter, hints (2-3), explanation, misconception, seed, common_mistakes.
-Vorlage: `rtrainer::new_exercise(topic, id, dir)`. Beispiel: `inst/exercises/02-dplyr/group-summarise.yml`.
+Grundlage: docs/SPEC.md, Abschnitte „Übungen (Single Source)“, „Paket-Standard“, „Daten“, „Lernförderung“.
+Das YAML-Schema wird in Meilenstein 6 finalisiert; maßgeblich ist dann das Beispiel `exercises/group-comparisons/beginner/` und die Validierung in `tools/generate.R`.
 
-## Aufgabenarten (`kind`)
-- `write` (Standard): Code schreiben; Starter nur Gerüst/Kommentar.
-- `predict`: Code steht im Prompt (Setup erzeugt die Objekte), Nutzer tippt den erwarteten Wert als R-Literal (`c(4, NA, 7)`); Check `type: value`, Code-Antworten werden abgelehnt. Starter nur Kommentar. Prüft mentales Modell, z. B. Recycling, NA-Verhalten, Lazy Evaluation, Gruppierung nach `summarise()`.
-- `debug`: Starter enthält einen typischen Fehler; Nutzer repariert ihn. `misconception` benennt die Fehlvorstellung. Bei mehr als einem Fehler `bugs: <n>` setzen (die App zeigt sonst „mindestens einen Fehler“).
-- `complete`: Lösung mit Lücken (`___`); nur für neue/schwere Themen (Mixed Models, targets, tidy evaluation), Lücken über 2-3 Aufgaben ausblenden (Fading). Bekannte Themen: nicht `complete`, sondern `write`.
+## Schema (Entwurf)
+`id, lesson (<slug>-<level>), title{de,en}, kind, required, packages, data, setup, starter, solution, hints[{de,en}], explanation{de,en}, misconception{de,en}, check{type, …}, common_mistakes[{pattern, message{de,en}}]`.
+Jeder Text DE **und** EN; Code, Daten, Spaltennamen nur Englisch.
 
-## Qualitätsregeln
-- Ein Lernziel pro Aufgabe; Niveau fortgeschritten. Problem zuerst: kein ausgearbeitetes Beispiel vor dem Versuch (Expertise-Reversal).
+## Was eine gute Übung ist
+- Echtes Werkzeug aus dem Paket-Standard (tidyverse + easystats, rstatix, afex, modelbased, psych, lavaan …), realistische Daten, Ergebnis **interpretieren** lassen. Keine Nachbauten von Basisfunktionen (eigene `sd()`, Schleifen statt Vektorisierung als Selbstzweck).
+- Ein Lernziel pro Übung; passt zur Stufe der Lektion; steigende Schwierigkeit innerhalb der Lektion.
+- Arten: `write` (Code schreiben), `interpret` (Ausgabe deuten, z. B. `report()`/`parameters()`), `debug` (typischer Fehler, `misconception` benennt die Fehlvorstellung), `complete` (Lücken `______`, nur bei neuen Themen), `predict` (Ergebnis vorhersagen).
 - Prompt konkret: Ausgabeform, Spaltennamen, Rundung eindeutig.
-- Hinweise stufenweise: grob, konkret, fast Lösung; nie der vollständige Code.
-- Erklärung (elaboriert): warum die Lösung funktioniert, ein typischer Fallstrick, bei Statistik Interpretation mit Effektgröße und Konfidenzintervall (nicht nur p-Wert). 2-5 Sätze.
-- `misconception`: eine Zeile zur häufigen Fehlvorstellung hinter dem Fehler; `common_mistakes` (2-4) mit Regex und gezielter Rückmeldung, die erklärt, WARUM es falsch ist.
-- Transfer: Pro Konzept mindestens eine Variante in anderem Kontext (z. B. `driving_sim.csv` statt `mtcars`), gleiche Tags.
-- Starter darf NICHT bestehen. Deterministisch: `seed` setzen. `packages:` setzen; lme4/ggplot2-Tests mit `skip_if_not_installed()`.
-- Praxisnah: bevorzugt `driving_sim.csv` (`driving_sim <- read.csv(rtrainer_data("driving_sim.csv"))` im `setup`; Spalten: vp_id, age, gender, condition (visuell/auditiv/haptisch), trial 1-4, rt_ms, lane_dev).
-- Check-Typ passend: value, object, function (mit Randfällen NA, leerer Vektor), ast, plot, output.
-- `plot` (ggplot2, Vergleich mit der Musterlösung, kein Pixelvergleich): `name` (sonst letzter Wert), `geoms: [point, smooth]` (Klasse, `geom_histogram` = `bar`, `geom_jitter` = `point`), `mapping: {x: a, y: b}`, `facet: [var]`, `scales: [x]` (Transformation, Reihenfolge, Breaks), `layers: {errorbar: [x, ymin, ymax]}` (gebaute Layer-Daten, fängt falsche Statistik), `theme: [legend.position]`, `tolerance`. Beispiel: `inst/exercises/08-ggplot2/`.
-- `post` (jeder Check-Typ): R-Code im Worker nach dem Nutzercode, Wert muss dem der Lösung entsprechen (z. B. PNG-Größe nach `ggsave()` in `tempdir()`); `post_message` als Meldung.
+- Hinweise gestuft: grob, konkret, fast Lösung; nie der vollständige Code.
+- Erklärung: warum es funktioniert, ein Fallstrick, bei Statistik Effektgröße + KI + APA-Formulierung (nicht nur p).
+- `common_mistakes` (2–4) mit Regex und Begründung, WARUM es falsch ist.
+- Nur Pakete aus dem webR-Index; sonst Abschnitt „Lokal ausführen“ statt Übung.
+- Browser-tauglich: Laufzeit klein (Simulationen 50–100 Wiederholungen), Daten KB bis wenige MB.
 
-## Abschluss je Aufgabe
-1. `read_exercise(path)` ohne Fehler.
-2. `check_exercise(ex, ex$solution)$correct` TRUE, mit `ex$starter` FALSE.
-3. Laufzeit < 5 s. Dann `rtrainer-verifier`.
+## Abschluss je Übung
+1. Generator validiert ohne Fehler.
+2. Selbsttest: Lösung besteht, Starter scheitert (`Rscript tools/selftest.R`).
+3. Dann `rtrainer-verifier`.
 
-## Verteilung (Soll)
-Basics 6, dplyr 10, tidyr 6, purrr 7, Programmierung 8, Statistik 10, Mixed Models 8, ggplot2 6, Reproduzierbarkeit 4. Mindestens 10 % `predict`, 10 % `debug`, 10 % `complete` (nur in neuen Themen).
+## Alte Aufgaben (Tag `v0-shiny`, `inst/exercises/`)
+Bei der Triage je Aufgabe: behalten (in welche Lektion, was anpassen) oder streichen (Grund). Liste Nick zur Freigabe vorlegen, nichts ungefragt migrieren.

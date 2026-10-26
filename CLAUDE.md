@@ -1,43 +1,48 @@
 # rtrainer
 
-Lokales R-Lernpaket (Shiny-App, YAML-Aufgaben, Leitner/SM-2). Nutzertexte Deutsch; Code, Kommentare, Funktionsnamen Englisch.
-Spezifikation: docs/SPEC.md – NICHT komplett lesen, nur den jeweils relevanten Abschnitt (grep/Zeilenbereich).
+Zweisprachiger R-Kurs (DE/EN) als Quarto-Website mit quarto-live/webR: Lektionen (erst erklären, dann üben) + Leitner-Wiederholung im Browser. Öffentlich auf GitHub Pages (`NikHenProj/rtrainer`).
+Kurstexte Deutsch und Englisch; Code, Kommentare, Funktionsnamen, Datenspalten Englisch.
+Spezifikation: docs/SPEC.md – NICHT komplett lesen, nur den relevanten Abschnitt (`grep -n "^## " docs/SPEC.md`).
 Aktueller Stand und nächster Schritt: STATUS.md (zuerst lesen).
+Alter Stand (Shiny-App als R-Paket): Tag `v0-shiny`, nicht weiterpflegen.
 
 ## Zielperson
-Nick, Human-Factors-/UX-Forscher, Linux, fortgeschrittenes R (Tidyverse, lme4, ggplot2). Kein Anfängerniveau. Kompakte, direkt umsetzbare Lösungen.
+Nick, Human-Factors-/UX-Forscher, Linux, R-Praxis (Tidyverse, lme4, ggplot2). Kurs reicht aber von Beginner bis Expert. Kompakte, praxisnahe Inhalte, echte Werkzeuge an realistischen Daten, keine Nachbauten von Basisfunktionen.
 
-## Feste Entscheidungen (nicht neu diskutieren)
-- Eigene Shiny-App (bslib, shinyAce); learnr nur als Export (`export_learnr()`).
-- Fortschritt als JSON (`tools::R_user_dir("rtrainer","data")`), atomar geschrieben; Pfad per `options(rtrainer.data_dir=)` überschreibbar.
-- Ausführung per `callr::r()` + `evaluate::evaluate()`, Timeout 10 s. Kein Sicherheits-Sandbox; im README ehrlich benennen.
-- Leitner: Boxen 1-5, Intervalle 0/1/3/7/21 Tage; richtig+leicht = +1, okay = gleich, schwer = -1, falsch = Box 1. "Leicht" zählt nur bei < 2 Hinweisen. SM-2 über dieselbe Schnittstelle `next_due()`.
-- Lernförderung (Details: SPEC.md, Abschnitt "Lernförderung"): Problem zuerst (Expertise-Reversal), Abrufübung, verteiltes Üben, Themen-Mischung (Interleaving), Sicherheits-Rating vor dem Prüfen, elaboriertes Feedback bei sicheren Fehlern, Aufgabenarten write/predict/debug/complete.
-- Imports minimal: shiny, bslib, shinyAce, yaml, evaluate, callr, cli, jsonlite, rlang.
+## Feste Entscheidungen (Grilling 2026-10-26, nicht neu diskutieren)
+- Quarto-Website + quarto-live/webR, online, Pakete pro Lektion; nicht Lauffähiges im Browser → Kasten „Lokal ausführen“.
+- Struktur: 23 Themen × Stufen Beginner/Intermediate/Expert; empfohlener Pfad stufenweise, alles frei zugänglich, Voraussetzungen anzeigen.
+- Lektion: Forschungsfrage → Konzept → live Beispiel → Paketvergleich → Übungen → Wissenscheck → Spickzettel. Abgeschlossen = Pflichtübungen + Wissenscheck ≥ 80 %.
+- Hauptweg tidyverse + easystats; rstatix, afex, modelbased/emmeans, psych, lavaan; Berichtskette bis APA-Text/Tabelle/Word.
+- Übungen als YAML (Single Source) → Generator erzeugt Lektionsblöcke und Wiederholungskarten; Selbsttest: Lösung besteht, Starter scheitert.
+- Wiederholung: Leitner Boxen 1–5, 0/1/3/7/21 Tage; richtig+leicht +1, okay =, schwer −1, falsch → Box 1; „Leicht“ nur bei < 2 Hinweisen. Sicherheits-Rating nur auf der Wiederholungsseite. Kein Prüfungsmodus.
+- Fortschritt in localStorage, Export/Import als Datei.
+- DE und EN komplett (`/de/`, `/en/`), gleiche Übungs-IDs; Deutsch zuerst, nach Abnahme Englisch.
+- Daten simuliert, englische Spaltennamen/Faktorstufen.
+- Optik: Swiss/minimal, IBM Plex Sans + JetBrains Mono, eine Akzentfarbe, Hell/Dunkel, WCAG AA, keine Gamification außer dezentem Fortschritt/Streak.
 
 ## Skills und Agenten
-Extern: `r-package-development`, `r-testthat`, `shiny-bslib`, `r-tidyverse-style`, `create-release-checklist`, `webapp-testing`, `skill-creator` (Installation: SETUP.md).
-Projekt: `rtrainer-verify`, `rtrainer-write-exercise`, `rtrainer-shiny-app`; Subagent `rtrainer-verifier` (günstig, liefert nur Kurzbericht).
+UX: `cognitive-accessibility:wayfinding-navigation`, `ui-ux-pro-max:ui-ux-pro-max`, `frontend-design`. Projekt: `rtrainer-write-exercise`, `rtrainer-verify`; Subagent `rtrainer-verifier` (günstig, liefert nur Kurzbericht). Stil: `r-tidyverse-style`.
 Bei Konflikt gilt: projektspezifische Regeln vor allgemeinen Skills.
 
 ## Token-Disziplin
-- Verifikation (Tests, check, Selbsttest) immer über Subagent `rtrainer-verifier`; Logs nie komplett ausgeben.
+- Verifikation (Selbsttest, Render, Rauchtest) immer über Subagent `rtrainer-verifier`; Logs nie komplett ausgeben.
 - Gezielt lesen: Dateien/Zeilenbereiche nennen statt ganzer Verzeichnisse.
-- Eine Sitzung pro Meilenstein bzw. Aufgaben-Thema. Am Ende STATUS.md aktualisieren, dann `/clear` empfehlen.
-- Aufgaben-YAML in Themenpaketen (max. ~10 pro Durchgang) schreiben, danach verifizieren.
+- Eine Sitzung pro Meilenstein bzw. Lektionspaket. Am Ende STATUS.md aktualisieren, Start-Prompt für die nächste Sitzung ausgeben, `/clear` empfehlen.
+- Lektionen in Paketen (max. ~3 pro Durchgang) schreiben, danach verifizieren.
 
-## Befehle
-- `Rscript -e 'devtools::document()'`
-- `Rscript -e 'devtools::test()'`
-- `Rscript -e 'devtools::load_all(); print(check_all_solutions(verbose = FALSE))'`
-- `Rscript -e 'devtools::check()'`
+## Befehle (ab Meilenstein 6; bis dahin noch nicht vorhanden)
+- `quarto preview` – lokale Vorschau
+- `Rscript tools/selftest.R` – alle Übungen: Lösung besteht, Starter scheitert
+- `Rscript tools/generate.R` – YAML-Übungen → quarto-live-Blöcke/Wiederholungskarten
+- `quarto render` – ganze Seite (DE + EN)
 
 ## Stil
-- `|>`, roxygen2 mit Markdown, testthat 3e, lintr/styler-konform.
-- Neue Abhängigkeiten nur mit Begründung in NEWS.md.
-- Jede Verhaltensänderung bekommt Tests (richtig, falsch, Randfall).
+- R: `|>`, tidyverse-Stil, lintr/styler-konform. JS/CSS: klein, ohne Build-Schritt, Farben als CSS-Variablen.
+- Neue Pakete im Kurs nur, wenn im webR-Index vorhanden oder als „Lokal ausführen“ markiert.
+- Jede Verhaltensänderung an Generator/Checks/Fortschritt bekommt Tests (richtig, falsch, Randfall).
 
 ## Arbeitsweise
-- Meilensteine laut SPEC.md; nach jedem: Tests grün, kurze Zusammenfassung, nächster Schritt.
-- Nie behaupten, Tests seien grün, ohne sie ausgeführt zu haben; echte (gekürzte) Ausgabe zeigen.
-- Entscheidungen in NEWS.md notieren; nur bei echter Blockade nachfragen.
+- Meilensteine laut SPEC.md; nach jedem: Selbsttest + Render grün, kurze Zusammenfassung, nächster Schritt.
+- Nie behaupten, etwas sei grün, ohne es ausgeführt zu haben; echte (gekürzte) Ausgabe zeigen.
+- Entscheidungen in NEWS.md notieren; nur bei echter Blockade nachfragen. Push nur nach Rückfrage.
