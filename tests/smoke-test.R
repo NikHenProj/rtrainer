@@ -217,6 +217,55 @@ run_import(paste(
 checked <- wait_for("!!document.querySelector('#ex-pj-b-import .exercise-grade.alert-success')", timeout = 60)
 step("project: import from the CSV graded correct", !is.na(checked), sprintf("%s s", checked))
 
+# 8. Intermediate: linked in the course plan; exercises that write files to the
+# webR file system (possibly() over CSV files, an SPSS file read with haven).
+goto("/de/index.html")
+linked <- wait_for("!!document.querySelector('a[href*=\"import-intermediate\"]')", timeout = 15)
+step("intermediate: import-intermediate linked in the German course plan", !is.na(linked))
+goto("/de/import-intermediate.html")
+loaded <- wait_for(
+  "document.querySelectorAll('#ex-imp-i-haven-labels .exercise-editor-btn-run-code').length > 0 &&
+   document.querySelectorAll('.exercise-editor-btn-run-code.disabled').length === 0",
+  timeout = 300
+)
+step("intermediate: webR and 8 packages ready", !is.na(loaded), sprintf("%s s", loaded))
+run_exercise <- function(id, code) {
+  invisible(js(sprintf("(() => {
+    const ex = document.querySelector('#ex-%s');
+    ex.querySelector('.exercise-grade')?.remove();
+    const v = ex.querySelector('.cm-content').cmView.view;
+    v.dispatch({changes: {from: 0, to: v.state.doc.length, insert: %s}});
+    ex.querySelector('.exercise-editor-btn-run-code').click();
+    return true;
+  })()", id, jsonlite::toJSON(code, auto_unbox = TRUE))))
+}
+run_exercise("imp-i-possibly-read", paste(
+  "read_maybe <- possibly(read_csv, otherwise = NULL)",
+  "paths |>",
+  "  set_names(basename) |>",
+  "  map(\\(path) read_maybe(path, show_col_types = FALSE)) |>",
+  "  list_rbind(names_to = \"file\")",
+  sep = "\n"
+))
+checked <- wait_for("!!document.querySelector('#ex-imp-i-possibly-read .exercise-grade.alert-success')", timeout = 90)
+step("intermediate: possibly() over CSV files graded correct", !is.na(checked), sprintf("%s s", checked))
+run_exercise("imp-i-haven-labels", paste(
+  "read_sav(survey_sav) |>",
+  "  mutate(interface = factor(interface, levels = c(1, 2), labels = c(\"touch\", \"voice\"))) |>",
+  "  summarise(n = n(), frustration = round(mean(tlx_frustration, na.rm = TRUE), 1), .by = interface)",
+  sep = "\n"
+))
+hinted <- wait_for("(document.querySelector('#ex-imp-i-haven-labels .exercise-grade.alert-danger')?.textContent || '').includes('count(interface)')", timeout = 90)
+step("intermediate: guessed SPSS labels get the hint", !is.na(hinted))
+run_exercise("imp-i-haven-labels", paste(
+  "read_sav(survey_sav) |>",
+  "  mutate(interface = as_factor(interface)) |>",
+  "  summarise(n = n(), frustration = round(mean(tlx_frustration, na.rm = TRUE), 1), .by = interface)",
+  sep = "\n"
+))
+checked <- wait_for("!!document.querySelector('#ex-imp-i-haven-labels .exercise-grade.alert-success')", timeout = 90)
+step("intermediate: SPSS file read with haven graded correct", !is.na(checked), sprintf("%s s", checked))
+
 goto("/en/index.html")
 Sys.sleep(1)
 beginner <- c(

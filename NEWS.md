@@ -1,5 +1,13 @@
 # rtrainer (Quarto course)
 
+## Milestone 9, package P1: intermediate lessons import, cleaning, reshaping (DE)
+
+- Lessons (German, `langs: [de]`): `import-intermediate` (many files with `read_csv(files, id = "file")`, expected vs. existing files, `possibly()`/`safely()`, SPSS value labels with haven, Excel columns mixing dates and text via `janitor::convert_to_datetime()`), `cleaning-intermediate` (`separate_wider_delim()` with `too_few`, `separate_wider_regex()`, anchored regular expressions with `str_match()`, `difftime` units, forcats + `tabyl()`/`adorn_*()`, `get_dupes()`), `reshaping-intermediate` (window functions in sorted groups, `first()` for a learning effect in `usability`, joins safeguarded with `relationship`/`unmatched`, `reduce()` over a list of tables). Each 3 required + 1 optional exercise, at least one `debug`, 5 knowledge-check questions.
+- Migrated from legacy (triage 10, 13, 18, 23, 24, 26): lag-predict, window-cumsum, separate-delim (now `cl-i-separate-key`), possibly-read, reduce-join, regex-filenames; ids, columns and levels in English (`participant`, `visual/auditory/haptic`, `n_critical`), `.by` instead of `group_by()`. The legacy `forbid`/`require` options do not exist in the new checks; the self-test still covers "solution passes, starter fails". New: `imp-i-read-files`, `imp-i-haven-labels` (debug: codes mapped to levels by hand), `imp-i-excel-dates`, `cl-i-duration-units` (debug: `as.numeric(end - start)` returns minutes once the 50 s test answers are removed), `cl-i-device-levels`, `rs-i-join-duplicates` (debug: duplicated demographics rows, many-to-many warning).
+- Decision: exercises that need files (one CSV per participant, an SPSS file) write them in `setup` to `tempdir()`; this works in webR's virtual file system, so no extra data files are needed. Each exercise uses its own folder so that exercises on one page do not affect each other.
+- Decision: `rs-i-join-duplicates` asks for `relationship = "many-to-one"` but checks only the result, since value checks cannot see arguments; the prompt says so.
+- Tests: generator test for the recommended path across levels (beginner first, then intermediate; planned lessons not on the path). Smoke test section 8: import-intermediate linked in the course plan, `possibly()` over CSV files and the haven exercise run in webR (hint for guessed labels, solution passes).
+
 ## Publication and M9 plan
 
 - GitHub Pages enabled with source "GitHub Actions"; `main` pushed, first deploy green. Site: https://nikhenproj.github.io/rtrainer/. All asset and data paths are relative, so the `/rtrainer/` subpath needs no change.

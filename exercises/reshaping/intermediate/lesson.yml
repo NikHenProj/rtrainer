@@ -1,0 +1,17 @@
+# Lesson metadata; exercises are the other *.yml files in this folder
+# (sorted by `order`), the knowledge check is quiz.yml.
+lesson: reshaping-intermediate
+minutes: 50
+prerequisites: [reshaping-beginner]
+langs: [de]
+packages: [dplyr, tidyr, purrr]
+data: [driving_sim, usability]
+goals:
+  de:
+    - Fensterfunktionen (`lag()`, `cumsum()`, `first()`) pro Person in der richtigen Reihenfolge anwenden
+    - Joins absichern und doppelte Schlüssel als Ursache vermehrter Zeilen erkennen
+    - Mehrere Tabellen mit `reduce()` zu einer verbinden
+  en:
+    - Apply window functions (`lag()`, `cumsum()`, `first()`) per participant in the right order
+    - Safeguard joins and recognise duplicated keys as the cause of extra rows
+    - Combine several tables into one with `reduce()`

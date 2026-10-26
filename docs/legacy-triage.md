@@ -1,6 +1,6 @@
 # Triage der 65 alten Aufgaben (freigegeben)
 
-Stand 2026-10-26. Quelle: `legacy/exercises/` (Tag `v0-shiny`). Migriert: 16 von 54 (markiert).
+Stand 2026-10-26. Quelle: `legacy/exercises/` (Tag `v0-shiny`). Migriert: 24 von 54 (markiert).
 
 **Freigegeben von Nick am 2026-10-26: 54 behalten, 11 streichen.** 18 der behaltenen gehören in den Beginner-Pfad (M8), markiert mit **B**.
 
@@ -24,23 +24,23 @@ Stand 2026-10-26. Quelle: `legacy/exercises/` (Tag `v0-shiny`). Migriert: 16 von
 | 7 | 02-dplyr/count-units | write | descriptives-beginner **B** | Unverändert (Person statt Zeile zählen); gut für Tabelle 1. | **Migriert (M8.2b).**
 | 8 | 02-dplyr/filter-select | write | cleaning-beginner **B** | Englische Stufen. | **Migriert (M8.2a).**
 | 9 | 02-dplyr/join | write | reshaping-beginner **B** | `anti_join()` zur Kontrolle der nicht verknüpften Personen ergänzen. | **Migriert (M8.2b).**
-| 10 | 02-dplyr/lag-predict | predict | reshaping-intermediate | Unverändert. |
+| 10 | 02-dplyr/lag-predict | predict | reshaping-intermediate | Unverändert. | **Migriert (M9 P1).**
 | 11 | 02-dplyr/slice-max | write | cleaning-beginner **B** | Kontext: auffällige Durchgänge vor dem Bereinigen sichten. | **Migriert (M8.2a).**
 | 12 | 02-dplyr/summarise-regroup | debug | descriptives-beginner **B** | Unverändert (Gruppierung nach `summarise()`, `.groups`). | **Migriert (M8.2b).**
-| 13 | 02-dplyr/window-cumsum | write | reshaping-intermediate | Unverändert. |
+| 13 | 02-dplyr/window-cumsum | write | reshaping-intermediate | Unverändert. | **Migriert (M9 P1).**
 | 14 | 03-tidyr/complete-trials | complete | missing-intermediate | Implizit fehlende Zeilen; Bezug zu `naniar` herstellen. |
 | 15 | 03-tidyr/drop-na-debug | debug | missing-intermediate | Unverändert. |
 | 16 | 03-tidyr/pivot-longer-predict | predict | reshaping-beginner **B** | Englische Stufen. | **Migriert (M8.2b).**
 | 17 | 03-tidyr/pivot-wider | write | reshaping-beginner **B** | Englische Stufen. | **Migriert (M8.2b).**
-| 18 | 03-tidyr/separate-delim | write | cleaning-intermediate | Kontext Logging-Schlüssel bleibt; Stufen englisch. |
+| 18 | 03-tidyr/separate-delim | write | cleaning-intermediate | Kontext Logging-Schlüssel bleibt; Stufen englisch. | **Migriert (M9 P1).**
 | 19 | 04-purrr/map2-cutoff-debug | debug | programming-intermediate | Unverändert. |
 | 20 | 04-purrr/map-extract-predict | predict | programming-intermediate | Unverändert. |
 | 21 | 04-purrr/nest-map-models | write | programming-intermediate | Steigung mit `parameters::model_parameters()` holen statt `coef()[[...]]`. Ersetzt auch `03-tidyr/nest-models` (Streichliste Nr. 4). |
 | 22 | 04-purrr/pmap-specs | complete | programming-expert | Rahmen: Sensitivitäts- oder Multiversum-Analyse. |
-| 23 | 04-purrr/possibly-read | complete | import-intermediate | Erst `readr::read_csv(files, id = "file")` zeigen; `possibly()` nur für die fehlerhafte Datei. |
-| 24 | 04-purrr/reduce-join | write | reshaping-intermediate | Unverändert. |
+| 23 | 04-purrr/possibly-read | complete | import-intermediate | Erst `readr::read_csv(files, id = "file")` zeigen; `possibly()` nur für die fehlerhafte Datei. | **Migriert (M9 P1).**
+| 24 | 04-purrr/reduce-join | write | reshaping-intermediate | Unverändert. | **Migriert (M9 P1).**
 | 25 | 05-programming/dots-center | write | programming-intermediate | Unverändert (`...` weiterreichen). |
-| 26 | 05-programming/regex-filenames | write | cleaning-intermediate | Unverändert (stringr). |
+| 26 | 05-programming/regex-filenames | write | cleaning-intermediate | Unverändert (stringr). | **Migriert (M9 P1).**
 | 27 | 05-programming/tidyeval-data-pronoun | complete | programming-expert | Unverändert. |
 | 28 | 05-programming/tidyeval-embrace | complete | programming-intermediate | Unverändert. |
 | 29 | 05-programming/trycatch-slope | write | programming-intermediate | Unverändert; Bezug zu `possibly()` (Nr. 23). |

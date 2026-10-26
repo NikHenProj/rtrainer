@@ -1,0 +1,105 @@
+id: imp-i-possibly-read
+lesson: import-intermediate
+order: 2
+title:
+  de: Eine fehlende Datei abfangen mit possibly()
+  en: Catching a missing file with possibly()
+kind: complete
+required: true
+packages: [readr, dplyr, purrr]
+data: [driving_sim]
+setup: |
+  library(readr)
+  library(dplyr)
+  library(purrr)
+  crash_dir <- file.path(tempdir(), "sim_logs_crash")
+  dir.create(crash_dir, showWarnings = FALSE)
+  for (id in c("p01", "p02", "p04", "p05", "p06")) {
+    driving_sim |>
+      filter(participant == id) |>
+      select(condition, trial, rt_ms, lane_dev) |>
+      write_csv(file.path(crash_dir, paste0("sim_", id, ".csv")))
+  }
+  participants <- sprintf("p%02d", 1:6)
+  paths <- file.path(crash_dir, paste0("sim_", participants, ".csv"))
+prompt:
+  de: |
+    Laut Teilnehmerliste (`participants`) sollte es sechs Dateien geben; `paths`
+    enthält die erwarteten Pfade. Bei einer Person ist der Simulator abgestürzt, ihre
+    Datei fehlt. `read_csv(paths)` bricht deshalb ab.
+
+    Ergänze die Lücken `______`: Lies jede vorhandene Datei ein, überspringe die
+    fehlende und gib eine Tabelle mit der ersten Spalte `file` (Dateiname, z. B.
+    `"sim_p01.csv"`) und danach `condition`, `trial`, `rt_ms`, `lane_dev` zurück.
+  en: |
+    According to the participant list (`participants`) there should be six files;
+    `paths` holds the expected paths. For one participant the simulator crashed and
+    the file is missing. `read_csv(paths)` therefore stops with an error.
+
+    Fill in the gaps `______`: read each existing file, skip the missing one and
+    return a table with the first column `file` (the file name, e.g.
+    `"sim_p01.csv"`), followed by `condition`, `trial`, `rt_ms`, `lane_dev`.
+starter: |
+  read_maybe <- ______(read_csv, otherwise = ______)
+  paths |>
+    set_names(basename) |>
+    map(\(path) ______(path, show_col_types = FALSE)) |>
+    list_rbind(names_to = "file")
+solution: |
+  read_maybe <- possibly(read_csv, otherwise = NULL)
+  paths |>
+    set_names(basename) |>
+    map(\(path) read_maybe(path, show_col_types = FALSE)) |>
+    list_rbind(names_to = "file")
+hints:
+  - de: "Gesucht ist eine Funktion, die `read_csv` nimmt und eine neue Funktion zurückgibt, die bei einem Fehler einen Ersatzwert liefert statt abzubrechen."
+    en: "You need a function that takes `read_csv` and returns a new function that returns a fallback value on error instead of stopping."
+  - de: "Welcher Ersatzwert wird von `list_rbind()` einfach übergangen: `NA`, `NULL` oder eine leere Zeichenkette?"
+    en: "Which fallback value does `list_rbind()` simply skip: `NA`, `NULL` or an empty string?"
+  - de: "`possibly(read_csv, otherwise = NULL)`; in `map()` rufst du dann die neue Funktion `read_maybe` auf."
+    en: "`possibly(read_csv, otherwise = NULL)`; inside `map()` you then call the new function `read_maybe`."
+explanation:
+  de: |
+    `possibly()` umhüllt `read_csv()`: Tritt ein Fehler auf, kommt statt des Abbruchs
+    `otherwise` zurück. `NULL` passt, weil `list_rbind()` `NULL`-Elemente übergeht;
+    `NA` ist kein Data Frame und bricht das Zusammenfügen ab. `set_names(basename)`
+    benennt die Liste mit den Dateinamen, `names_to = "file"` macht daraus eine
+    Spalte. Warum nicht einfach `list.files()`? Dann fiele die fehlende Datei gar
+    nicht auf. Hier ist die erwartete Liste der Maßstab, und die Lücke lässt sich
+    benennen: `paths[!file.exists(paths)]` oder `safely()`, das pro Datei `result`
+    und `error` liefert. Im Methodenteil gehört der Ausfall dazu („Für eine Person
+    fehlen die Simulatordaten wegen eines Programmabsturzes“).
+  en: |
+    `possibly()` wraps `read_csv()`: when an error occurs, `otherwise` is returned
+    instead of stopping. `NULL` fits because `list_rbind()` skips `NULL` elements;
+    `NA` is not a data frame and stops the binding. `set_names(basename)` names the
+    list with the file names, `names_to = "file"` turns them into a column. Why not
+    simply `list.files()`? Then the missing file would go unnoticed. Here the
+    expected list is the yardstick, and the gap can be named:
+    `paths[!file.exists(paths)]` or `safely()`, which returns `result` and `error`
+    per file. The dropout belongs in the methods section ("Simulator data for one
+    participant are missing due to a software crash").
+misconception:
+  de: "Ein Fehler bei einem Element lässt sich in `map()` nicht abfangen; dafür braucht es eine Schleife mit `tryCatch()`."
+  en: "An error in one element cannot be caught inside `map()`; that needs a loop with `tryCatch()`."
+check:
+  type: value
+  ignore_row_order: true
+  ignore_col_order: false
+common_mistakes:
+  - pattern: "______"
+    message:
+      de: "Es sind noch Lücken `______` offen."
+      en: "There are still gaps `______` to fill."
+  - pattern: "otherwise\\s*=\\s*NA\\b"
+    message:
+      de: "`list_rbind()` akzeptiert nur Data Frames oder `NULL`; `NA` als Ersatzwert bricht das Zusammenfügen ab."
+      en: "`list_rbind()` only accepts data frames or `NULL`; `NA` as a fallback stops the binding."
+  - pattern: "safely\\("
+    message:
+      de: "`safely()` liefert pro Datei eine Liste mit `result` und `error`, keinen Data Frame. Hier passt `possibly()`."
+      en: "`safely()` returns a list with `result` and `error` per file, not a data frame. `possibly()` fits here."
+  - pattern: "map\\(\\s*\\\\\\(path\\)\\s*read_csv\\("
+    message:
+      de: "Mit `read_csv` direkt bricht `map()` bei der fehlenden Datei ab. Rufe die umhüllte Funktion `read_maybe` auf."
+      en: "With `read_csv` directly, `map()` stops at the missing file. Call the wrapped function `read_maybe`."

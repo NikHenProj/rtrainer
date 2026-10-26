@@ -1,0 +1,92 @@
+id: imp-i-read-files
+lesson: import-intermediate
+order: 1
+title:
+  de: Eine Datei pro Person einlesen
+  en: Reading one file per participant
+kind: write
+required: true
+packages: [readr, dplyr, stringr]
+data: [driving_sim]
+setup: |
+  library(readr)
+  library(dplyr)
+  library(stringr)
+  logs_dir <- file.path(tempdir(), "sim_logs")
+  dir.create(logs_dir, showWarnings = FALSE)
+  for (id in sprintf("p%02d", 1:6)) {
+    driving_sim |>
+      filter(participant == id) |>
+      select(condition, trial, rt_ms, lane_dev) |>
+      write_csv(file.path(logs_dir, paste0("sim_", id, ".csv")))
+  }
+  writeLines("Session notes: p04 restarted once.", file.path(logs_dir, "notes.txt"))
+prompt:
+  de: |
+    Der Fahrsimulator schreibt pro Person eine Datei `sim_p01.csv`, `sim_p02.csv`, …
+    in den Ordner `logs_dir`. In den Dateien steht die Person nicht, nur `condition`,
+    `trial`, `rt_ms` und `lane_dev`. Im Ordner liegt außerdem `notes.txt`.
+
+    Lies alle `.csv`-Dateien des Ordners in **einem** Aufruf von `read_csv()` ein und
+    gib eine Tabelle mit den Spalten `participant` (z. B. `"p01"`, aus dem
+    Dateinamen), `condition`, `trial`, `rt_ms` und `lane_dev` zurück.
+  en: |
+    The driving simulator writes one file per participant, `sim_p01.csv`,
+    `sim_p02.csv`, …, into the folder `logs_dir`. The files do not contain the
+    participant, only `condition`, `trial`, `rt_ms` and `lane_dev`. The folder also
+    contains `notes.txt`.
+
+    Read all `.csv` files in the folder in **one** call to `read_csv()` and return a
+    table with the columns `participant` (e.g. `"p01"`, from the file name),
+    `condition`, `trial`, `rt_ms` and `lane_dev`.
+starter: |
+  list.files(logs_dir)
+solution: |
+  files <- list.files(logs_dir, pattern = "\\.csv$", full.names = TRUE)
+  read_csv(files, id = "file", show_col_types = FALSE) |>
+    mutate(participant = str_extract(basename(file), "p\\d+"), .before = 1) |>
+    select(-file)
+hints:
+  - de: "Führe den Startcode aus. Was brauchst du, damit `read_csv()` die Dateien findet, und welche Datei gehört nicht dazu?"
+    en: "Run the starter code. What do you need so that `read_csv()` finds the files, and which file does not belong?"
+  - de: "`list.files()` hat die Argumente `pattern` (regulärer Ausdruck) und `full.names`. `read_csv()` nimmt einen Vektor von Pfaden; `id = \"file\"` legt den Pfad als Spalte an."
+    en: "`list.files()` has the arguments `pattern` (a regular expression) and `full.names`. `read_csv()` takes a vector of paths; `id = \"file\"` adds the path as a column."
+  - de: "`mutate(participant = str_extract(basename(file), ______), .before = 1) |> select(-file)`"
+    en: "`mutate(participant = str_extract(basename(file), ______), .before = 1) |> select(-file)`"
+explanation:
+  de: |
+    `read_csv()` liest einen ganzen Vektor von Dateien und stapelt sie, solange die
+    Spalten gleich heißen. `id = "file"` hält fest, aus welcher Datei jede Zeile
+    stammt; das ist hier die einzige Stelle, an der die Person steht.
+    `full.names = TRUE` liefert Pfade statt bloßer Namen, `pattern = "\\.csv$"`
+    lässt `notes.txt` weg (der Punkt ist maskiert, `$` verankert am Ende).
+    `str_extract(basename(file), "p\\d+")` holt die Personennummer aus dem
+    Dateinamen. Fallstrick: `list.files()` findet nur, was da ist. Ob eine Person
+    fehlt, merkst du erst beim Abgleich mit der Teilnehmerliste (nächste Übung).
+  en: |
+    `read_csv()` reads a whole vector of files and stacks them as long as the
+    columns have the same names. `id = "file"` records which file each row comes
+    from; here that is the only place the participant appears.
+    `full.names = TRUE` returns paths instead of bare names, `pattern = "\\.csv$"`
+    leaves out `notes.txt` (the dot is escaped, `$` anchors at the end).
+    `str_extract(basename(file), "p\\d+")` pulls the participant number from the
+    file name. Pitfall: `list.files()` only finds what is there. Whether a
+    participant is missing only shows when you compare with the participant list
+    (next exercise).
+check:
+  type: value
+  ignore_row_order: true
+  ignore_col_order: false
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*full\\.names)[\\s\\S]*list\\.files"
+    message:
+      de: "Ohne `full.names = TRUE` liefert `list.files()` nur Dateinamen; `read_csv()` sucht sie dann im Arbeitsverzeichnis statt in `logs_dir`."
+      en: "Without `full.names = TRUE`, `list.files()` returns only file names; `read_csv()` then looks for them in the working directory instead of `logs_dir`."
+  - pattern: "^(?![\\s\\S]*pattern)[\\s\\S]*list\\.files"
+    message:
+      de: "Ohne `pattern` kommt auch `notes.txt` mit. Beschränke die Liste mit `pattern = \"\\\\.csv$\"` auf CSV-Dateien."
+      en: "Without `pattern`, `notes.txt` comes along. Restrict the list to CSV files with `pattern = \"\\\\.csv$\"`."
+  - pattern: "^(?![\\s\\S]*\\bid\\s*=)[\\s\\S]*read_csv\\("
+    message:
+      de: "Ohne `id = \"file\"` geht beim Stapeln verloren, aus welcher Datei (also von welcher Person) eine Zeile stammt."
+      en: "Without `id = \"file\"`, stacking loses which file (that is, which participant) a row comes from."

@@ -1,0 +1,134 @@
+# Knowledge check: passed at >= `pass` share of correctly answered questions.
+lesson: import-intermediate
+pass: 0.8
+questions:
+  - id: imp-i-q-id
+    prompt:
+      de: "Du liest 24 Logdateien mit `read_csv(files)` ein. Die Dateien enthalten keine Personenkennung. Was fehlt?"
+      en: "You read 24 log files with `read_csv(files)`. The files contain no participant ID. What is missing?"
+    options:
+      - text:
+          de: "`id = \"file\"`, damit jede Zeile den Pfad ihrer Datei trägt; daraus lässt sich die Person ableiten."
+          en: "`id = \"file\"`, so that each row carries the path of its file; the participant can be derived from it."
+        correct: true
+        explain:
+          de: "Genau. Ohne `id` sind die Zeilen gestapelt, aber niemand weiß mehr, von wem sie stammen."
+          en: "Exactly. Without `id` the rows are stacked, but nobody knows any more whom they belong to."
+      - text:
+          de: "Nichts, `read_csv()` legt automatisch eine Spalte mit dem Dateinamen an."
+          en: "Nothing, `read_csv()` adds a column with the file name automatically."
+        correct: false
+        explain:
+          de: "Das tut es nur mit `id = ...`."
+          en: "It only does so with `id = ...`."
+      - text:
+          de: "Eine Schleife, weil `read_csv()` nur eine Datei auf einmal liest."
+          en: "A loop, because `read_csv()` only reads one file at a time."
+        correct: false
+        explain:
+          de: "Seit readr 2.0 liest `read_csv()` einen Vektor von Pfaden in einem Aufruf."
+          en: "Since readr 2.0, `read_csv()` reads a vector of paths in one call."
+  - id: imp-i-q-listfiles
+    prompt:
+      de: "Warum ist `list.files(dir, pattern = \"\\\\.csv$\")` allein kein guter Weg, um fehlende Dateien zu bemerken?"
+      en: "Why is `list.files(dir, pattern = \"\\\\.csv$\")` alone not a good way to notice missing files?"
+    options:
+      - text:
+          de: "Es listet nur, was vorhanden ist. Eine fehlende Datei fällt erst beim Abgleich mit der erwarteten Liste (z. B. Teilnehmerliste) auf."
+          en: "It only lists what exists. A missing file only shows when you compare with the expected list (e.g. the participant list)."
+        correct: true
+        explain:
+          de: "Richtig. Die erwartete Liste ist der Maßstab; `setdiff()` oder `file.exists()` benennt die Lücke."
+          en: "Right. The expected list is the yardstick; `setdiff()` or `file.exists()` names the gap."
+      - text:
+          de: "`list.files()` bricht bei fehlenden Dateien mit einem Fehler ab."
+          en: "`list.files()` stops with an error when files are missing."
+        correct: false
+        explain:
+          de: "Im Gegenteil: Es meldet gar nichts, die Datei fehlt einfach in der Liste."
+          en: "On the contrary: it reports nothing, the file is simply absent from the list."
+      - text:
+          de: "Das Muster `\\\\.csv$` findet keine Dateien mit großgeschriebener Endung `.CSV`."
+          en: "The pattern `\\\\.csv$` does not find files with an upper-case `.CSV` extension."
+        correct: false
+        explain:
+          de: "Das stimmt zwar (dafür `ignore.case = TRUE`), erklärt aber nicht, warum fehlende Dateien unbemerkt bleiben."
+          en: "That is true (use `ignore.case = TRUE`), but it does not explain why missing files go unnoticed."
+  - id: imp-i-q-possibly
+    prompt:
+      de: "`map(paths, possibly(read_csv, otherwise = NULL)) |> list_rbind()` läuft durch. Was solltest du zusätzlich tun?"
+      en: "`map(paths, possibly(read_csv, otherwise = NULL)) |> list_rbind()` runs through. What should you do in addition?"
+    options:
+      - text:
+          de: "Festhalten, welche Dateien übersprungen wurden (z. B. `paths[!file.exists(paths)]` oder `safely()`), und das berichten."
+          en: "Record which files were skipped (e.g. `paths[!file.exists(paths)]` or `safely()`) and report it."
+        correct: true
+        explain:
+          de: "Ja. `possibly()` verhindert den Abbruch, aber es verschweigt den Ausfall."
+          en: "Yes. `possibly()` prevents the stop, but it keeps quiet about the dropout."
+      - text:
+          de: "Nichts, `possibly()` warnt automatisch bei jeder übersprungenen Datei."
+          en: "Nothing, `possibly()` warns automatically for each skipped file."
+        correct: false
+        explain:
+          de: "Standardmäßig ist `possibly()` still (`quiet = TRUE`)."
+          en: "By default `possibly()` is silent (`quiet = TRUE`)."
+      - text:
+          de: "`otherwise = NA` setzen, damit die fehlende Person als Zeile mit `NA` erscheint."
+          en: "Set `otherwise = NA` so that the missing participant appears as a row of `NA`."
+        correct: false
+        explain:
+          de: "`list_rbind()` bricht mit `NA` ab, weil `NA` kein Data Frame ist."
+          en: "`list_rbind()` stops with `NA` because `NA` is not a data frame."
+  - id: imp-i-q-haven
+    prompt:
+      de: "Nach `read_sav()` zeigt `count(sav, gender)` die Werte `1 [female]`, `2 [male]`, `3 [diverse]`. Was liefert `mean(sav$gender)`?"
+      en: "After `read_sav()`, `count(sav, gender)` shows the values `1 [female]`, `2 [male]`, `3 [diverse]`. What does `mean(sav$gender)` return?"
+    options:
+      - text:
+          de: "Einen Mittelwert der Codes, der inhaltlich nichts bedeutet; vor der Auswertung `as_factor()` anwenden."
+          en: "A mean of the codes that means nothing; apply `as_factor()` before the analysis."
+        correct: true
+        explain:
+          de: "Genau. `haven_labelled` ist im Kern eine Zahl, R rechnet ohne Warnung damit."
+          en: "Exactly. `haven_labelled` is a number at its core; R computes with it without a warning."
+      - text:
+          de: "Einen Fehler, weil `gender` ein Faktor ist."
+          en: "An error, because `gender` is a factor."
+        correct: false
+        explain:
+          de: "Es ist (noch) kein Faktor, sondern eine Zahl mit Labels; deshalb rechnet R."
+          en: "It is not a factor (yet), but a number with labels; that is why R computes."
+      - text:
+          de: "Den Anteil der Frauen."
+          en: "The share of women."
+        correct: false
+        explain:
+          de: "Das wäre `mean(as_factor(gender) == \"female\")`."
+          en: "That would be `mean(as_factor(gender) == \"female\")`."
+  - id: imp-i-q-excel
+    prompt:
+      de: "In einer Excel-Spalte `start_date` stehen echte Datumswerte und Text gemischt. Was liefert `read_excel()` ohne `col_types`?"
+      en: "An Excel column `start_date` mixes real dates and text. What does `read_excel()` return without `col_types`?"
+    options:
+      - text:
+          de: "Eine Textspalte, in der die echten Datumswerte als Excel-Zahl stehen (z. B. `\"46083.84\"`)."
+          en: "A text column in which the real dates appear as Excel numbers (e.g. `\"46083.84\"`)."
+        correct: true
+        explain:
+          de: "Richtig. Text gewinnt, die Zahl zählt die Tage seit dem 30.12.1899; `janitor::convert_to_datetime()` rettet beide Arten."
+          en: "Right. Text wins, and the number counts days since 30 Dec 1899; `janitor::convert_to_datetime()` rescues both kinds."
+      - text:
+          de: "Eine Datumsspalte; die Texteinträge werden automatisch erkannt."
+          en: "A date column; the text entries are recognised automatically."
+        correct: false
+        explain:
+          de: "readxl erkennt keine Datumsformate in Text, dafür braucht es lubridate."
+          en: "readxl does not recognise date formats in text; that takes lubridate."
+      - text:
+          de: "Eine Datumsspalte, in der die Texteinträge `NA` sind."
+          en: "A date column in which the text entries are `NA`."
+        correct: false
+        explain:
+          de: "Das passiert mit `col_types = \"date\"`, nicht bei der automatischen Erkennung."
+          en: "That happens with `col_types = \"date\"`, not with automatic guessing."

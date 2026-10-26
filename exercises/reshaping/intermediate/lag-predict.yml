@@ -1,0 +1,82 @@
+id: rs-i-lag-predict
+lesson: reshaping-intermediate
+order: 1
+title:
+  de: lag() in gruppierten Daten
+  en: lag() in grouped data
+kind: predict
+required: true
+packages: []
+data: []
+setup: ""
+prompt:
+  de: |
+    Was liefert der folgende Code? Führe ihn nicht aus, sondern gib das Ergebnis als
+    R-Wert ein, z. B. `c(1, 2)`.
+
+    ```r
+    d <- tibble(
+      participant = c("p01", "p01", "p01", "p02", "p02"),
+      rt = c(500, 650, 600, 700, 720)
+    )
+    d |>
+      mutate(diff = rt - lag(rt), .by = participant) |>
+      pull(diff)
+    ```
+  en: |
+    What does the following code return? Do not run it; type the result as an R
+    value, e.g. `c(1, 2)`.
+
+    ```r
+    d <- tibble(
+      participant = c("p01", "p01", "p01", "p02", "p02"),
+      rt = c(500, 650, 600, 700, 720)
+    )
+    d |>
+      mutate(diff = rt - lag(rt), .by = participant) |>
+      pull(diff)
+    ```
+starter: |
+  # Deine Vorhersage als Wert, z. B. c(1, 2)
+solution: |
+  c(NA, 150, -50, NA, 20)
+hints:
+  - de: "`lag(rt)` verschiebt den Vektor um eine Position nach hinten. Was steht an erster Stelle?"
+    en: "`lag(rt)` shifts the vector back by one position. What is in the first place?"
+  - de: "Mit `.by = participant` wird `lag()` für jede Person getrennt berechnet."
+    en: "With `.by = participant`, `lag()` is computed separately for each participant."
+  - de: "Der erste Wert jeder Person hat keinen Vorgänger, die Differenz ist dort `NA`. `mutate()` behält alle 5 Zeilen."
+    en: "The first value of each participant has no predecessor, so the difference is `NA` there. `mutate()` keeps all 5 rows."
+explanation:
+  de: |
+    Fensterfunktionen wie `lag()`, `lead()` und `cumsum()` arbeiten in `mutate()`
+    innerhalb jeder Gruppe. Für `p02` ist der Vorgänger von 700 also nicht 600 aus
+    `p01`, sondern fehlt: `NA`. Ohne `.by` erhielte man `c(NA, 150, -50, 100, 20)`
+    und zöge Werte verschiedener Personen voneinander ab. Die Zeilenfolge bestimmt
+    den Vorgänger; bei ungeordneten Daten vorher `arrange()` oder
+    `lag(rt, order_by = trial)`.
+  en: |
+    Window functions such as `lag()`, `lead()` and `cumsum()` work within each group
+    inside `mutate()`. For `p02`, the predecessor of 700 is therefore not 600 from
+    `p01`; it is missing: `NA`. Without `.by` you would get `c(NA, 150, -50, 100, 20)`
+    and subtract values of different participants from each other. The row order
+    determines the predecessor; for unordered data use `arrange()` first or
+    `lag(rt, order_by = trial)`.
+misconception:
+  de: "`lag()` ignoriert die Gruppierung und schaut immer auf die vorherige Zeile der Tabelle."
+  en: "`lag()` ignores the grouping and always looks at the previous row of the table."
+check:
+  type: value
+common_mistakes:
+  - pattern: "\\b100\\b"
+    message:
+      de: "Die Personen werden getrennt: Der erste Wert von `p02` hat keinen Vorgänger, also `NA`."
+      en: "The participants are kept separate: the first value of `p02` has no predecessor, so `NA`."
+  - pattern: "^\\s*c\\(\\s*150\\s*,\\s*-50\\s*,\\s*20\\s*\\)\\s*$"
+    message:
+      de: "`mutate()` behält alle Zeilen; die fehlenden Vorgänger stehen als `NA` im Ergebnis."
+      en: "`mutate()` keeps all rows; the missing predecessors appear as `NA` in the result."
+  - pattern: "-150"
+    message:
+      de: "Prüfe das Vorzeichen: `rt - lag(rt)` ist aktueller minus vorheriger Wert."
+      en: "Check the sign: `rt - lag(rt)` is the current minus the previous value."

@@ -233,3 +233,28 @@ test_that("course plan numbers topics but not project rows", {
   expect_match(plan, "data-lesson=\"project-beginner\"", fixed = TRUE)
   expect_equal(level_sequence(curriculum, "beginner"), c("toy-beginner", "project-beginner", "next-beginner"))
 })
+
+test_that("the recommended path runs level by level across all existing lessons", {
+  curriculum <- list(
+    levels = list(
+      list(id = "beginner", title = list(de = "Beginner", en = "Beginner")),
+      list(id = "intermediate", title = list(de = "Intermediate", en = "Intermediate"))
+    ),
+    topics = list(
+      list(slug = "toy", levels = list("beginner", "intermediate"), title = list(de = "Spielzeug", en = "Toy")),
+      list(slug = "next", levels = list("beginner", "intermediate"), title = list(de = "Danach", en = "Next"))
+    )
+  )
+  lesson <- function(id) list(meta = list(lesson = id), exercises = list())
+  # next-intermediate is planned but not written yet; it must not be on the path.
+  lessons <- list(
+    `toy-intermediate` = lesson("toy-intermediate"),
+    `next-beginner` = lesson("next-beginner"),
+    `toy-beginner` = lesson("toy-beginner")
+  )
+  plan <- render_course_plan(curriculum, lessons, "de")
+  json <- sub("(?s).*<script type=\"application/json\" id=\"rt-course\">(.*?)</script>.*", "\\1", plan, perl = TRUE)
+  expect_equal(jsonlite::fromJSON(json)$order, c("toy-beginner", "next-beginner", "toy-intermediate"))
+  expect_match(plan, "data-lesson=\"toy-intermediate\"", fixed = TRUE)
+  expect_match(plan, "rt-cell-planned", fixed = TRUE)
+})

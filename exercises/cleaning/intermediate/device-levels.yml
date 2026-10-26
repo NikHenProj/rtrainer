@@ -1,0 +1,93 @@
+id: cl-i-device-levels
+lesson: cleaning-intermediate
+order: 4
+title:
+  de: Geräteangaben bündeln und auszählen
+  en: Bundling and tabulating device entries
+kind: write
+required: false
+packages: [readr, dplyr, stringr, forcats, janitor]
+data: [raw_export]
+setup: |
+  library(dplyr)
+  library(stringr)
+  library(forcats)
+  library(janitor)
+  header <- readr::read_delim(raw_export_csv, delim = ";", skip = 3, n_max = 0, show_col_types = FALSE)
+  responses <- readr::read_delim(
+    raw_export_csv,
+    delim = ";",
+    skip = 5,
+    col_names = names(header),
+    locale = readr::locale(decimal_mark = ","),
+    na = c("", "NA", "n/a", "-99"),
+    show_col_types = FALSE
+  ) |>
+    clean_names() |>
+    filter(status != "Survey Preview") |>
+    distinct()
+prompt:
+  de: |
+    In `q3_device` stehen Angaben wie `iPhone`, `iphone`, `iPhone 15`, `Android`,
+    `android phone`, `Desktop` und `desktop PC`. Bilde daraus den Faktor `device`
+    mit den Stufen `ios`, `android` und `desktop`, geordnet nach Häufigkeit (die
+    häufigste zuerst). Gib dann `tabyl(device)` zurück (Anzahl und Anteil je
+    Stufe).
+  en: |
+    `q3_device` contains entries such as `iPhone`, `iphone`, `iPhone 15`,
+    `Android`, `android phone`, `Desktop` and `desktop PC`. Create the factor
+    `device` with the levels `ios`, `android` and `desktop`, ordered by frequency
+    (most frequent first). Then return `tabyl(device)` (count and share per level).
+starter: |
+  responses |>
+    tabyl(q3_device)
+solution: |
+  responses |>
+    mutate(
+      device = str_extract(str_to_lower(q3_device), "iphone|android|desktop"),
+      device = fct_recode(device, ios = "iphone"),
+      device = fct_infreq(device)
+    ) |>
+    tabyl(device)
+hints:
+  - de: "Alle Varianten enthalten eines von drei Wörtern, wenn man sie kleinschreibt. Welche stringr-Funktion zieht das passende Wort heraus?"
+    en: "All variants contain one of three words once lower-cased. Which stringr function pulls out the matching word?"
+  - de: "`str_extract(str_to_lower(q3_device), \"iphone|android|desktop\")`; danach benennt `fct_recode()` eine Stufe um, `fct_infreq()` ordnet nach Häufigkeit."
+    en: "`str_extract(str_to_lower(q3_device), \"iphone|android|desktop\")`; then `fct_recode()` renames a level and `fct_infreq()` orders by frequency."
+  - de: "`fct_recode(device, ios = ______)`, dann `fct_infreq(device)` und `tabyl(device)`."
+    en: "`fct_recode(device, ios = ______)`, then `fct_infreq(device)` and `tabyl(device)`."
+explanation:
+  de: |
+    Statt jede Schreibweise einzeln aufzuzählen, sucht `str_extract()` das
+    gemeinsame Stichwort; neue Varianten (`iPhone 16`) landen so automatisch richtig.
+    `fct_recode(neu = "alt")` benennt Stufen um, `fct_collapse()` würde mehrere
+    Stufen zu einer bündeln, `fct_lump_n()` seltene zu „Other“. `fct_infreq()` ordnet
+    nach Häufigkeit, das ist die übliche Reihenfolge für Tabellen und
+    Balkendiagramme. `tabyl()` zählt wie `count()`, ergänzt aber den Anteil und lässt
+    sich mit `adorn_pct_formatting()` gleich als Prozent formatieren. Prüfe danach,
+    ob eine Zeile `NA` hat: Das wäre eine Angabe ohne Stichwort, etwa `tablet`.
+  en: |
+    Instead of listing each spelling, `str_extract()` looks for the shared keyword;
+    new variants (`iPhone 16`) then land in the right place automatically.
+    `fct_recode(new = "old")` renames levels, `fct_collapse()` would bundle several
+    levels into one, `fct_lump_n()` rare ones into "Other". `fct_infreq()` orders by
+    frequency, the usual order for tables and bar charts. `tabyl()` counts like
+    `count()`, but adds the share and can be formatted as percentages right away
+    with `adorn_pct_formatting()`. Then check whether a row is `NA`: that would be
+    an entry without a keyword, such as `tablet`.
+check:
+  type: value
+  check_types: true
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*(str_to_lower|tolower|ignore_case|\\(\\?i\\)))[\\s\\S]*str_extract"
+    message:
+      de: "`iPhone` und `iphone` unterscheiden sich in der Schreibweise. Schreibe zuerst klein oder nutze `regex(..., ignore_case = TRUE)`."
+      en: "`iPhone` and `iphone` differ in case. Lower-case first or use `regex(..., ignore_case = TRUE)`."
+  - pattern: "fct_rev\\("
+    message:
+      de: "`fct_rev()` dreht die Reihenfolge um; gesucht ist die häufigste Stufe zuerst, also `fct_infreq()` allein."
+      en: "`fct_rev()` reverses the order; the most frequent level should come first, so `fct_infreq()` alone."
+  - pattern: "^(?![\\s\\S]*fct_infreq)[\\s\\S]*tabyl\\(device"
+    message:
+      de: "Ohne `fct_infreq()` stehen die Stufen alphabetisch. Ordne sie nach Häufigkeit."
+      en: "Without `fct_infreq()` the levels are alphabetical. Order them by frequency."

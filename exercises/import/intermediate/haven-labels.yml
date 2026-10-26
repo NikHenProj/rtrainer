@@ -1,0 +1,97 @@
+id: imp-i-haven-labels
+lesson: import-intermediate
+order: 3
+title:
+  de: Wertelabels aus einer SPSS-Datei
+  en: Value labels from an SPSS file
+kind: debug
+required: true
+packages: [haven, dplyr]
+data: [survey]
+setup: |
+  library(haven)
+  library(dplyr)
+  survey_sav <- file.path(tempdir(), "survey.sav")
+  survey |>
+    transmute(
+      respondent,
+      interface = labelled(if_else(interface == "voice", 1, 2), c(voice = 1, touch = 2)),
+      tlx_frustration
+    ) |>
+    write_sav(survey_sav)
+prompt:
+  de: |
+    Das Umfragetool hat den Fragebogen als SPSS-Datei exportiert (`survey_sav`).
+    Die Bedienung `interface` ist dort als Zahl mit Wertelabels gespeichert. Ein
+    Kollege hat die Codes von Hand in Stufen übersetzt. Seine Tabelle zeigt bei
+    Touch mehr Frustration als bei Sprache, im Bericht des Umfragetools ist es
+    umgekehrt.
+
+    Finde den Fehler. Gib pro Bedienung `n` und die mittlere Frustration
+    `frustration` (`tlx_frustration`, auf 1 Stelle gerundet) zurück, mit den Stufen,
+    die in der Datei stehen.
+  en: |
+    The survey tool exported the questionnaire as an SPSS file (`survey_sav`). The
+    interface `interface` is stored there as a number with value labels. A colleague
+    translated the codes into levels by hand. Their table shows more frustration
+    for touch than for voice; the survey tool's report says the opposite.
+
+    Find the error. Return `n` and the mean frustration `frustration`
+    (`tlx_frustration`, rounded to 1 decimal) per interface, with the levels stored
+    in the file.
+starter: |
+  read_sav(survey_sav) |>
+    mutate(interface = factor(interface, levels = c(1, 2), labels = c("touch", "voice"))) |>
+    summarise(n = n(), frustration = round(mean(tlx_frustration, na.rm = TRUE), 1), .by = interface)
+solution: |
+  read_sav(survey_sav) |>
+    mutate(interface = as_factor(interface)) |>
+    summarise(n = n(), frustration = round(mean(tlx_frustration, na.rm = TRUE), 1), .by = interface)
+hints:
+  - de: "Lies die Datei und sieh dir `interface` an: `read_sav(survey_sav) |> count(interface)`. Was steht in eckigen Klammern?"
+    en: "Read the file and look at `interface`: `read_sav(survey_sav) |> count(interface)`. What is shown in square brackets?"
+  - de: "Die Datei kennt die Zuordnung von Code und Stufe. haven hat eine Funktion, die Wertelabels in Faktorstufen umwandelt."
+    en: "The file knows which code belongs to which level. haven has a function that turns value labels into factor levels."
+  - de: "Ersetze das `factor(...)` durch `as_factor(interface)`."
+    en: "Replace the `factor(...)` with `as_factor(interface)`."
+explanation:
+  de: |
+    `read_sav()` liest Zahlen mit Wertelabels als `haven_labelled` ein, angezeigt
+    als `1 [voice]`. Die Codes sind beliebig: Hier ist 1 = voice, der Kollege hat 1
+    für touch angenommen. Weil beide Gruppen 80 Personen haben, fällt die
+    Vertauschung an `n` nicht auf, nur am Inhalt. `as_factor()` liest die Labels aus
+    der Datei und macht daraus Stufen in der Reihenfolge der Codes; `zap_labels()`
+    würde die Labels dagegen wegwerfen. Auch fehlende Werte stehen in SPSS oft als
+    Code (`99 = keine Angabe`, „user missing“): `read_sav()` macht sie
+    standardmäßig zu `NA`, mit `user_na = TRUE` bleiben sie als Code erhalten.
+    Prüfe nach dem Einlesen mit `count()`, ob Codes und Labels zum Codebuch passen.
+  en: |
+    `read_sav()` reads numbers with value labels as `haven_labelled`, shown as
+    `1 [voice]`. The codes are arbitrary: here 1 = voice, while the colleague
+    assumed 1 meant touch. Because both groups have 80 participants, the swap does
+    not show in `n`, only in the content. `as_factor()` reads the labels from the
+    file and turns them into levels in the order of the codes; `zap_labels()` would
+    instead throw the labels away. Missing values are often stored as codes in SPSS
+    too (`99 = no answer`, "user missing"): `read_sav()` turns them into `NA` by
+    default, with `user_na = TRUE` they stay as codes. After reading, check with
+    `count()` that codes and labels match the codebook.
+misconception:
+  de: "Codes in SPSS-Dateien folgen einer festen Ordnung (z. B. alphabetisch), deshalb kann man die Stufen aus dem Gedächtnis zuordnen."
+  en: "Codes in SPSS files follow a fixed order (e.g. alphabetical), so you can assign the levels from memory."
+check:
+  type: value
+  ignore_row_order: true
+  ignore_col_order: false
+common_mistakes:
+  - pattern: "labels\\s*=\\s*c\\(\\s*[\"']touch"
+    message:
+      de: "Die Zuordnung `1 = touch` ist geraten. Sieh mit `count(interface)` nach, welches Label zu Code 1 gehört, oder lass `as_factor()` die Labels lesen."
+      en: "The mapping `1 = touch` is a guess. Check with `count(interface)` which label belongs to code 1, or let `as_factor()` read the labels."
+  - pattern: "zap_labels"
+    message:
+      de: "`zap_labels()` entfernt die Labels; übrig bleiben die Zahlen 1 und 2. Gesucht sind die Stufen aus der Datei."
+      en: "`zap_labels()` removes the labels and leaves the numbers 1 and 2. You need the levels from the file."
+  - pattern: "as\\.factor\\("
+    message:
+      de: "`as.factor()` (Basis-R, mit Punkt) macht aus den Codes die Stufen `1` und `2`. Gemeint ist `haven::as_factor()` mit Unterstrich."
+      en: "`as.factor()` (base R, with a dot) turns the codes into the levels `1` and `2`. You need `haven::as_factor()` with an underscore."

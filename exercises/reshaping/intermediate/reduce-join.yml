@@ -1,0 +1,94 @@
+id: rs-i-reduce-join
+lesson: reshaping-intermediate
+order: 4
+title:
+  de: Mehrere Tabellen mit reduce() verbinden
+  en: Joining several tables with reduce()
+kind: write
+required: false
+packages: [dplyr, purrr]
+data: [driving_sim]
+setup: |
+  library(dplyr)
+  library(purrr)
+  parts <- list(
+    demo = distinct(driving_sim, participant, age, gender),
+    rt = summarise(driving_sim, rt_mean = mean(rt_ms, na.rm = TRUE), .by = participant),
+    lane = driving_sim |>
+      filter(!any(is.na(lane_dev)), .by = participant) |>
+      summarise(lane_mean = mean(lane_dev), .by = participant)
+  )
+prompt:
+  de: |
+    `parts` ist eine Liste mit drei Tabellen auf Personenebene, jeweils mit
+    `participant`: `demo` (Alter, Geschlecht; alle 40 Personen), `rt` (mittlere
+    Reaktionszeit) und `lane` (mittlere Spurabweichung, nur Personen ohne fehlende
+    `lane_dev`). Verbinde alle Tabellen der Liste zu einer, sodass **alle 40
+    Personen** erhalten bleiben (fehlende Werte als `NA`). Spalten in der
+    Reihenfolge der Liste: `participant`, `age`, `gender`, `rt_mean`, `lane_mean`.
+
+    Verwende `reduce()`, sodass der Code auch für eine längere Liste unverändert
+    funktioniert.
+  en: |
+    `parts` is a list of three participant-level tables, each with `participant`:
+    `demo` (age, gender; all 40 participants), `rt` (mean reaction time) and `lane`
+    (mean lane deviation, only participants without missing `lane_dev`). Join all
+    tables of the list into one so that **all 40 participants** are kept (missing
+    values as `NA`). Columns in the order of the list: `participant`, `age`,
+    `gender`, `rt_mean`, `lane_mean`.
+
+    Use `reduce()` so that the code works unchanged for a longer list too.
+starter: |
+  parts$demo |>
+    inner_join(parts$rt, by = join_by(participant)) |>
+    inner_join(parts$lane, by = join_by(participant))
+solution: |
+  reduce(parts, \(x, y) left_join(x, y, by = join_by(participant)))
+hints:
+  - de: "`reduce()` wendet eine Funktion mit zwei Argumenten wiederholt an: erst auf Element 1 und 2, dann auf das Ergebnis und Element 3."
+    en: "`reduce()` applies a two-argument function repeatedly: first to elements 1 and 2, then to the result and element 3."
+  - de: "Der Startcode verliert Personen. Welcher Join behält alle Zeilen der linken Tabelle?"
+    en: "The starter loses participants. Which join keeps all rows of the left table?"
+  - de: "`reduce(parts, \\(x, y) ______(x, y, by = join_by(participant)))`"
+    en: "`reduce(parts, \\(x, y) ______(x, y, by = join_by(participant)))`"
+explanation:
+  de: |
+    `reduce(parts, f)` berechnet `f(f(demo, rt), lane)`. Weil `demo` links steht und
+    alle Personen enthält, hält `left_join()` die 40 Zeilen; Personen ohne
+    `lane_mean` bekommen `NA`. Mit `inner_join()` fielen die 9 Personen mit einem
+    fehlenden Spurwert still aus der ganzen Tabelle, auch aus Alter und
+    Reaktionszeit. `reduce(parts, left_join)` funktioniert auch, nutzt aber alle
+    gemeinsamen Spalten als Schlüssel (mit Meldung); `by` ausdrücklich ist robuster,
+    falls zwei Tabellen eine weitere Spalte gemeinsam haben.
+  en: |
+    `reduce(parts, f)` computes `f(f(demo, rt), lane)`. Because `demo` is on the
+    left and contains all participants, `left_join()` keeps the 40 rows;
+    participants without `lane_mean` get `NA`. With `inner_join()`, the 9
+    participants with a missing lane value would silently drop out of the whole
+    table, including age and reaction time. `reduce(parts, left_join)` works too,
+    but uses all shared columns as keys (with a message); giving `by` explicitly is
+    more robust in case two tables share another column.
+misconception:
+  de: "Beim Verbinden mehrerer Tabellen ist die Join-Art egal, solange der Schlüssel stimmt."
+  en: "When joining several tables, the type of join does not matter as long as the key is right."
+check:
+  type: value
+  ignore_row_order: true
+  ignore_col_order: false
+common_mistakes:
+  - pattern: "inner_join"
+    message:
+      de: "`inner_join()` behält nur Personen, die in allen Tabellen vorkommen; in `lane` fehlen 9 Personen."
+      en: "`inner_join()` keeps only participants present in all tables; 9 participants are missing from `lane`."
+  - pattern: "\\bbind_rows|\\brbind\\(|bind_cols"
+    message:
+      de: "Anhängen stapelt die Tabellen bzw. setzt sie blind nebeneinander; gesucht ist ein Join über `participant`."
+      en: "Binding stacks the tables or puts them side by side blindly; you need a join on `participant`."
+  - pattern: "right_join"
+    message:
+      de: "`right_join()` behält die Zeilen der rechten Tabelle; im letzten Schritt ist das `lane` mit nur 31 Personen."
+      en: "`right_join()` keeps the rows of the right table; in the last step that is `lane` with only 31 participants."
+  - pattern: "^(?![\\s\\S]*\\breduce\\()"
+    message:
+      de: "Verwende `reduce()`, damit der Code für beliebig viele Tabellen in `parts` funktioniert."
+      en: "Use `reduce()` so that the code works for any number of tables in `parts`."

@@ -1,0 +1,104 @@
+id: cl-i-regex-filenames
+lesson: cleaning-intermediate
+order: 2
+title:
+  de: Metadaten aus Dateinamen mit stringr
+  en: Metadata from file names with stringr
+kind: write
+required: true
+packages: [dplyr, stringr]
+data: []
+setup: |
+  library(dplyr)
+  library(stringr)
+  files <- c(
+    "P01_visual_t1.csv", "p01-visual-T2.CSV", "p12_auditory_t3.csv",
+    "notes_p03.txt", "p7_haptic_t4.csv", "P40_haptic_t10.csv",
+    "p05_auditory_t2.csv.bak", "backup_p05_auditory_t2.csv"
+  )
+prompt:
+  de: |
+    Die Videodateien des Fahrsimulators wurden von Hand umbenannt; `files` enthält
+    die Namen. Gültig ist ein Name der Form `p<Nummer>_<bedingung>_t<Trial>.csv`,
+    wobei die Trennzeichen `_` oder `-` sein können und Groß-/Kleinschreibung egal
+    ist.
+
+    Gib eine Tabelle mit einer Zeile pro **gültigem** Namen zurück (Reihenfolge wie
+    in `files`) und den Spalten `participant` (zweistellig wie im Datensatz:
+    `"p01"`, `"p07"`), `condition` (kleingeschrieben) und `trial` (integer).
+    Ungültige Namen fallen weg.
+  en: |
+    The driving simulator's video files were renamed by hand; `files` holds the
+    names. A valid name has the form `p<number>_<condition>_t<trial>.csv`, where the
+    separators can be `_` or `-` and case does not matter.
+
+    Return a table with one row per **valid** name (in the order of `files`) and the
+    columns `participant` (two digits as in the dataset: `"p01"`, `"p07"`),
+    `condition` (lower case) and `trial` (integer). Invalid names are dropped.
+starter: |
+  tibble(file = files) |>
+    filter(str_detect(file, "p\\d+_[a-z]+_t\\d+.csv"))
+solution: |
+  parts <- str_match(
+    files,
+    regex("^p(\\d+)[_-]([a-z]+)[_-]t(\\d+)\\.csv$", ignore_case = TRUE)
+  )
+  tibble(number = parts[, 2], condition = parts[, 3], trial = parts[, 4]) |>
+    filter(!is.na(number)) |>
+    transmute(
+      participant = sprintf("p%02d", as.integer(number)),
+      condition = str_to_lower(condition),
+      trial = as.integer(trial)
+    )
+hints:
+  - de: "`str_match()` liefert eine Matrix: Spalte 1 ist der ganze Treffer, danach je eine Spalte pro Klammergruppe `( )`; ohne Treffer steht überall `NA`."
+    en: "`str_match()` returns a matrix: column 1 is the whole match, then one column per bracket group `( )`; without a match every entry is `NA`."
+  - de: "Verankere das Muster mit `^` und `$`, sonst passen auch `.bak`-Dateien und `backup_…`. Ein echter Punkt ist `\\\\.`, eine oder mehr Ziffern `\\\\d+`, `[_-]` erlaubt beide Trennzeichen."
+    en: "Anchor the pattern with `^` and `$`, otherwise `.bak` files and `backup_…` match too. A literal dot is `\\\\.`, one or more digits `\\\\d+`, `[_-]` allows both separators."
+  - de: "`regex(\"^p(\\\\d+)[_-]([a-z]+)[_-]t(\\\\d+)\\\\.csv$\", ignore_case = TRUE)`; danach `sprintf(\"p%02d\", as.integer(...))` für die zweistellige Nummer."
+    en: "`regex(\"^p(\\\\d+)[_-]([a-z]+)[_-]t(\\\\d+)\\\\.csv$\", ignore_case = TRUE)`; then `sprintf(\"p%02d\", as.integer(...))` for the two-digit number."
+explanation:
+  de: |
+    `str_match()` gibt pro Eingabe den Gesamttreffer und die Gruppen zurück, so
+    passieren Prüfen und Zerlegen in einem Schritt. `^` und `$` verankern das Muster
+    an Anfang und Ende, sonst gelten `backup_p05…` und `….csv.bak` als Treffer;
+    `\\.` maskiert den Punkt, der sonst für ein beliebiges Zeichen steht. `\\d+`
+    statt `\\d` erfasst auch zweistellige Trials wie `t10`. `ignore_case = TRUE`
+    ersetzt Klassen wie `[Pp]`, deshalb muss `condition` danach kleingeschrieben
+    werden. `sprintf("p%02d", 7)` ergibt `"p07"`, so passt der Schlüssel wieder zu
+    `driving_sim`. Gleich gut: `separate_wider_regex()` mit benannten Teilmustern.
+  en: |
+    `str_match()` returns the whole match and the groups for each input, so
+    validating and splitting happen in one step. `^` and `$` anchor the pattern at
+    the start and end, otherwise `backup_p05…` and `….csv.bak` count as matches;
+    `\\.` escapes the dot, which otherwise stands for any character. `\\d+` instead
+    of `\\d` also catches two-digit trials such as `t10`. `ignore_case = TRUE`
+    replaces classes like `[Pp]`, which is why `condition` must be lower-cased
+    afterwards. `sprintf("p%02d", 7)` gives `"p07"`, so the key matches
+    `driving_sim` again. Just as good: `separate_wider_regex()` with named
+    sub-patterns.
+misconception:
+  de: "Ein regulärer Ausdruck muss nur irgendwo im Text passen, um den ganzen Namen als gültig zu erkennen."
+  en: "A regular expression only needs to match somewhere in the text to recognise the whole name as valid."
+check:
+  type: value
+  ignore_row_order: false
+  ignore_col_order: false
+  check_types: true
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*[\"']\\^)[\\s\\S]*(str_match|str_detect|str_extract)"
+    message:
+      de: "Ohne Anker `^` am Anfang passt das Muster auch mitten im Namen (`backup_p05_…`)."
+      en: "Without the anchor `^` at the start, the pattern also matches in the middle of a name (`backup_p05_…`)."
+  - pattern: "[^\\\\]\\.csv"
+    message:
+      de: "Ein unmaskierter `.` passt auf jedes Zeichen; für einen echten Punkt braucht es `\\\\.`."
+      en: "An unescaped `.` matches any character; a literal dot needs `\\\\.`."
+  - pattern: "^(?![\\s\\S]*(ignore_case|\\(\\?i\\)))[\\s\\S]*str_(match|detect)"
+    message:
+      de: "Groß-/Kleinschreibung variiert (`P01`, `.CSV`, `T2`); nutze `regex(..., ignore_case = TRUE)` und schreibe `condition` danach klein."
+      en: "Case varies (`P01`, `.CSV`, `T2`); use `regex(..., ignore_case = TRUE)` and lower-case `condition` afterwards."
+  - pattern: "^(?![\\s\\S]*(sprintf|str_pad|formatC))[\\s\\S]*str_match"
+    message:
+      de: "`p7` soll `p07` heißen, wie im Datensatz. `sprintf(\"p%02d\", as.integer(number))` füllt mit Nullen auf."
+      en: "`p7` should read `p07`, as in the dataset. `sprintf(\"p%02d\", as.integer(number))` pads with zeros."

@@ -1,0 +1,113 @@
+id: cl-i-duration-units
+lesson: cleaning-intermediate
+order: 3
+title:
+  de: Bearbeitungsdauer aus Start- und Endzeit
+  en: Completion time from start and end time
+kind: debug
+required: true
+packages: [readr, dplyr, lubridate, janitor]
+data: [raw_export]
+setup: |
+  library(dplyr)
+  library(lubridate)
+  header <- readr::read_delim(raw_export_csv, delim = ";", skip = 3, n_max = 0, show_col_types = FALSE)
+  responses <- readr::read_delim(
+    raw_export_csv,
+    delim = ";",
+    skip = 5,
+    col_names = names(header),
+    locale = readr::locale(decimal_mark = ","),
+    na = c("", "NA", "n/a", "-99"),
+    show_col_types = FALSE
+  ) |>
+    janitor::clean_names() |>
+    filter(status != "Survey Preview") |>
+    distinct() |>
+    mutate(
+      start = parse_date_time(start_date, orders = c("Ymd HMS", "dmY HM", "mdY IMp"), tz = "UTC"),
+      end = parse_date_time(end_date, orders = c("Ymd HMS", "dmY HM", "mdY IMp"), tz = "UTC")
+    )
+prompt:
+  de: |
+    `responses` enthält die 78 echten Antworten (ohne Tests und Duplikate) mit den
+    Datum-Zeit-Spalten `start` und `end`. Zur Kontrolle soll die Dauer aus den
+    Zeitstempeln mit der Spalte `duration_in_seconds` des Umfragetools verglichen
+    werden. Der Code liefert einen Median von 5.55 und meldet, dass alle 78
+    Antworten abweichen.
+
+    Finde den Fehler. Gib eine Zeile mit `median_s` (Median der Dauer aus `end`
+    minus `start` in Sekunden) und `n_off` (Anzahl der Antworten, deren Dauer mehr
+    als 60 Sekunden von `duration_in_seconds` abweicht) zurück.
+  en: |
+    `responses` holds the 78 real answers (without tests and duplicates) with the
+    date-time columns `start` and `end`. As a check, the duration computed from the
+    time stamps is to be compared with the survey tool's column
+    `duration_in_seconds`. The code returns a median of 5.55 and reports that all 78
+    answers differ.
+
+    Find the error. Return one row with `median_s` (median duration from `end` minus
+    `start` in seconds) and `n_off` (number of answers whose duration differs from
+    `duration_in_seconds` by more than 60 seconds).
+starter: |
+  responses |>
+    mutate(duration_s = as.numeric(end - start)) |>
+    summarise(
+      median_s = median(duration_s),
+      n_off = sum(abs(duration_s - duration_in_seconds) > 60)
+    )
+solution: |
+  responses |>
+    mutate(duration_s = as.numeric(end - start, units = "secs")) |>
+    summarise(
+      median_s = median(duration_s),
+      n_off = sum(abs(duration_s - duration_in_seconds) > 60)
+    )
+hints:
+  - de: "5.55 Sekunden für eine Umfrage? Sieh dir `end - start` ohne `as.numeric()` an: Welche Einheit steht dabei?"
+    en: "5.55 seconds for a survey? Look at `end - start` without `as.numeric()`: which unit is shown?"
+  - de: "Die Differenz zweier Zeitpunkte ist ein `difftime`. R wählt die Einheit selbst, passend zu den Daten; `as.numeric()` wirft sie dann weg."
+    en: "The difference of two time points is a `difftime`. R picks the unit itself to suit the data; `as.numeric()` then throws it away."
+  - de: "`as.numeric(end - start, units = ______)`; gleichwertig: `time_length(end - start, \"second\")`."
+    en: "`as.numeric(end - start, units = ______)`; equivalent: `time_length(end - start, \"second\")`."
+explanation:
+  de: |
+    `end - start` ergibt ein `difftime`-Objekt, und R wählt die Einheit danach, wie
+    groß der kleinste Abstand ist: unter einer Minute Sekunden, sonst Minuten oder
+    Stunden. Mit den Testantworten (50 s) wären es zufällig Sekunden, ohne sie sind
+    es Minuten. `as.numeric()` entfernt die Einheit, und 5.55 Minuten sehen aus wie
+    5.55 Sekunden. `as.numeric(x, units = "secs")`, `difftime(end, start, units =
+    "secs")` oder `time_length(x, "second")` legen die Einheit fest, unabhängig von
+    den Daten. Mit 333 s im Median und `n_off = 0` passen Zeitstempel und
+    Tool-Angabe zusammen; die zweite Welle hat keine Sekunden in den Zeitstempeln,
+    daher Abweichungen bis knapp 60 s. Mit 60 multiplizieren wäre hier zufällig
+    richtig und bricht, sobald die Daten eine andere Einheit nahelegen.
+  en: |
+    `end - start` gives a `difftime` object, and R picks the unit according to the
+    smallest gap: seconds below one minute, otherwise minutes or hours. With the
+    test responses (50 s) it would happen to be seconds, without them it is
+    minutes. `as.numeric()` removes the unit, and 5.55 minutes look like 5.55
+    seconds. `as.numeric(x, units = "secs")`, `difftime(end, start, units = "secs")`
+    or `time_length(x, "second")` fix the unit regardless of the data. With a median
+    of 333 s and `n_off = 0`, time stamps and the tool's value agree; the second
+    wave has no seconds in its time stamps, hence differences of up to almost 60 s.
+    Multiplying by 60 would happen to be right here and breaks as soon as the data
+    suggest a different unit.
+misconception:
+  de: "Die Differenz zweier Zeitpunkte ist in R immer in Sekunden."
+  en: "The difference between two time points in R is always in seconds."
+check:
+  type: value
+common_mistakes:
+  - pattern: "\\*\\s*60\\b"
+    message:
+      de: "Mit 60 multiplizieren stimmt nur, solange R Minuten wählt. Lege die Einheit fest: `units = \"secs\"`."
+      en: "Multiplying by 60 only works as long as R picks minutes. Fix the unit: `units = \"secs\"`."
+  - pattern: "units\\s*=\\s*[\"']mins"
+    message:
+      de: "Gefragt ist die Dauer in Sekunden, wie in `duration_in_seconds`."
+      en: "The duration is needed in seconds, as in `duration_in_seconds`."
+  - pattern: "duration_in_seconds\\s*/\\s*60"
+    message:
+      de: "Damit vergleichst du in Minuten, `median_s` soll aber in Sekunden sein. Rechne die Zeitdifferenz in Sekunden um."
+      en: "This compares in minutes, but `median_s` should be in seconds. Convert the time difference to seconds."

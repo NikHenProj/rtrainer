@@ -1,0 +1,142 @@
+# Knowledge check: passed at >= `pass` share of correctly answered questions.
+lesson: cleaning-intermediate
+pass: 0.8
+questions:
+  - id: cl-i-q-too-few
+    prompt:
+      de: "`separate_wider_delim(key, delim = \"_\", names = c(\"participant\", \"condition\", \"trial\"))` bricht ab: „Expected 3 pieces in each element of `key`“. Was ist der beste nächste Schritt?"
+      en: "`separate_wider_delim(key, delim = \"_\", names = c(\"participant\", \"condition\", \"trial\"))` stops: \"Expected 3 pieces in each element of `key`\". What is the best next step?"
+    options:
+      - text:
+          de: "Mit `too_few = \"debug\"` die betroffenen Zeilen ansehen und dann entscheiden, ob `align_start` passt oder die Daten falsch sind."
+          en: "Look at the affected rows with `too_few = \"debug\"`, then decide whether `align_start` fits or the data are wrong."
+        correct: true
+        explain:
+          de: "Genau. Der Abbruch ist eine Chance, Randfälle zu verstehen, statt sie still zu überdecken."
+          en: "Exactly. The stop is a chance to understand edge cases instead of covering them up silently."
+      - text:
+          de: "Auf `separate()` ausweichen, das nur warnt."
+          en: "Switch to `separate()`, which only warns."
+        correct: false
+        explain:
+          de: "Dann läuft der Code, aber die Ursache bleibt unbekannt, und die Warnung geht leicht unter."
+          en: "Then the code runs, but the cause stays unknown and the warning is easily missed."
+      - text:
+          de: "Immer `too_few = \"align_end\"` setzen."
+          en: "Always set `too_few = \"align_end\"`."
+        correct: false
+        explain:
+          de: "Fehlt der letzte Teil, verschiebt `align_end` alle Teile nach rechts: Die Person landet in `condition`."
+          en: "If the last piece is missing, `align_end` shifts all pieces to the right: the participant ends up in `condition`."
+  - id: cl-i-q-anchor
+    prompt:
+      de: "Welche Namen passen auf `str_detect(x, \"p\\\\d+_[a-z]+\\\\.csv\")`?"
+      en: "Which names match `str_detect(x, \"p\\\\d+_[a-z]+\\\\.csv\")`?"
+    multiple: true
+    options:
+      - text:
+          de: "`\"p01_visual.csv\"`"
+          en: "`\"p01_visual.csv\"`"
+        correct: true
+        explain:
+          de: "Ja, der Name entspricht dem Muster."
+          en: "Yes, the name follows the pattern."
+      - text:
+          de: "`\"backup_p01_visual.csv\"`"
+          en: "`\"backup_p01_visual.csv\"`"
+        correct: true
+        explain:
+          de: "Ja, ohne `^` reicht ein Treffer mitten im Text."
+          en: "Yes, without `^` a match in the middle of the text is enough."
+      - text:
+          de: "`\"p01_visual.csv.bak\"`"
+          en: "`\"p01_visual.csv.bak\"`"
+        correct: true
+        explain:
+          de: "Ja, ohne `$` darf hinter `.csv` noch etwas stehen."
+          en: "Yes, without `$` something may follow `.csv`."
+      - text:
+          de: "`\"P01_visual.csv\"`"
+          en: "`\"P01_visual.csv\"`"
+        correct: false
+        explain:
+          de: "Nein, reguläre Ausdrücke unterscheiden Groß- und Kleinschreibung, außer mit `regex(..., ignore_case = TRUE)`."
+          en: "No, regular expressions are case-sensitive unless you use `regex(..., ignore_case = TRUE)`."
+  - id: cl-i-q-difftime
+    prompt:
+      de: "`end - start` zeigt `Time differences in mins`. Was liefert `as.numeric(end - start)`?"
+      en: "`end - start` shows `Time differences in mins`. What does `as.numeric(end - start)` return?"
+    options:
+      - text:
+          de: "Die Dauer in Minuten; die Einheit hängt von den Daten ab, deshalb `units = \"secs\"` angeben."
+          en: "The duration in minutes; the unit depends on the data, so give `units = \"secs\"`."
+        correct: true
+        explain:
+          de: "Richtig. Mit anderen Daten (z. B. einer sehr kurzen Antwort) wählt R Sekunden, und dein Code rechnet plötzlich anders."
+          en: "Right. With other data (e.g. one very short answer) R picks seconds, and your code suddenly computes differently."
+      - text:
+          de: "Immer die Dauer in Sekunden."
+          en: "Always the duration in seconds."
+        correct: false
+        explain:
+          de: "Nein, `as.numeric()` nimmt die angezeigte Einheit, hier Minuten."
+          en: "No, `as.numeric()` takes the displayed unit, here minutes."
+      - text:
+          de: "Sekunden seit 1970."
+          en: "Seconds since 1970."
+        correct: false
+        explain:
+          de: "Das wäre `as.numeric(start)`, ein einzelner Zeitpunkt, keine Differenz."
+          en: "That would be `as.numeric(start)`, a single time point, not a difference."
+  - id: cl-i-q-forcats
+    prompt:
+      de: "Du willst Geräte nach Häufigkeit ordnen und alles außer den drei häufigsten als `Other` zusammenfassen. Welche Kombination passt?"
+      en: "You want to order devices by frequency and combine everything except the three most frequent into `Other`. Which combination fits?"
+    options:
+      - text:
+          de: "`fct_lump_n(device, n = 3) |> fct_infreq()`"
+          en: "`fct_lump_n(device, n = 3) |> fct_infreq()`"
+        correct: true
+        explain:
+          de: "Ja. `fct_lump_n()` bündelt seltene Stufen zu `Other`, `fct_infreq()` ordnet danach. Für eine Grafik `fct_relevel(\"Other\", after = Inf)` anhängen."
+          en: "Yes. `fct_lump_n()` bundles rare levels into `Other`, `fct_infreq()` orders afterwards. For a chart, add `fct_relevel(\"Other\", after = Inf)`."
+      - text:
+          de: "`fct_recode(device, Other = \"rest\")`"
+          en: "`fct_recode(device, Other = \"rest\")`"
+        correct: false
+        explain:
+          de: "`fct_recode()` benennt eine bestehende Stufe um; eine Stufe `rest` gibt es nicht."
+          en: "`fct_recode()` renames an existing level; there is no level `rest`."
+      - text:
+          de: "`factor(device, levels = sort(unique(device)))`"
+          en: "`factor(device, levels = sort(unique(device)))`"
+        correct: false
+        explain:
+          de: "Das ordnet alphabetisch und fasst nichts zusammen."
+          en: "That orders alphabetically and combines nothing."
+  - id: cl-i-q-dupes
+    prompt:
+      de: "`get_dupes(responses, response_id)` zeigt zwei IDs mit je zwei Zeilen, die sich in `end_date` unterscheiden. Was folgt daraus?"
+      en: "`get_dupes(responses, response_id)` shows two IDs with two rows each that differ in `end_date`. What follows?"
+    options:
+      - text:
+          de: "`distinct()` über alle Spalten entfernt sie nicht; eine Regel festlegen (z. B. erste vollständige Einsendung behalten) und berichten."
+          en: "`distinct()` over all columns does not remove them; set a rule (e.g. keep the first complete submission) and report it."
+        correct: true
+        explain:
+          de: "Genau. Nur identische Zeilen sind echte Duplikate; bei Abweichungen ist es eine inhaltliche Entscheidung."
+          en: "Exactly. Only identical rows are true duplicates; with differences it is a decision about content."
+      - text:
+          de: "`distinct()` entfernt sie zuverlässig."
+          en: "`distinct()` removes them reliably."
+        correct: false
+        explain:
+          de: "`distinct()` ohne Spalten vergleicht ganze Zeilen; unterschiedliche `end_date` bleiben beide stehen."
+          en: "`distinct()` without columns compares whole rows; different `end_date` values both stay."
+      - text:
+          de: "Nichts, unterschiedliche Endzeiten bedeuten verschiedene Personen."
+          en: "Nothing, different end times mean different people."
+        correct: false
+        explain:
+          de: "Die `response_id` ist dieselbe; meist hat jemand die Umfrage zweimal abgeschickt."
+          en: "The `response_id` is the same; usually someone submitted the survey twice."

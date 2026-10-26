@@ -1,0 +1,97 @@
+id: rs-i-window-cumsum
+lesson: reshaping-intermediate
+order: 2
+title:
+  de: Laufende Kennwerte pro Person
+  en: Running values per participant
+kind: write
+required: true
+packages: [dplyr]
+data: [driving_sim]
+setup: |
+  library(dplyr)
+  set.seed(1)
+  driving_sim <- slice_sample(driving_sim, prop = 1)
+prompt:
+  de: |
+    Die Zeilen von `driving_sim` liegen in zufälliger Reihenfolge vor. Berechne pro
+    Person und Bedingung, in der Reihenfolge der Durchgänge (`trial`):
+
+    - `diff_rt`: `rt_ms` minus `rt_ms` des vorherigen Durchgangs,
+    - `n_critical`: laufende Anzahl der Durchgänge mit `lane_dev > 0.4` (fehlende
+      `lane_dev` zählen als nicht kritisch).
+
+    Behalte die Spalten `participant`, `condition`, `trial`, `rt_ms`, `diff_rt`,
+    `n_critical`.
+  en: |
+    The rows of `driving_sim` are in random order. For each participant and
+    condition, in the order of the trials (`trial`), compute:
+
+    - `diff_rt`: `rt_ms` minus `rt_ms` of the previous trial,
+    - `n_critical`: running count of trials with `lane_dev > 0.4` (missing
+      `lane_dev` count as not critical).
+
+    Keep the columns `participant`, `condition`, `trial`, `rt_ms`, `diff_rt`,
+    `n_critical`.
+starter: |
+  driving_sim |>
+    mutate(
+      diff_rt = rt_ms - lag(rt_ms),
+      n_critical = cumsum(lane_dev > 0.4),
+      .by = c(participant, condition)
+    ) |>
+    select(participant, condition, trial, rt_ms, diff_rt, n_critical)
+solution: |
+  driving_sim |>
+    arrange(participant, condition, trial) |>
+    mutate(
+      diff_rt = rt_ms - lag(rt_ms),
+      n_critical = cumsum(coalesce(lane_dev > 0.4, FALSE)),
+      .by = c(participant, condition)
+    ) |>
+    select(participant, condition, trial, rt_ms, diff_rt, n_critical)
+hints:
+  - de: "Fensterfunktionen hängen von der Zeilenfolge ab. Was ist hier die vorherige Zeile?"
+    en: "Window functions depend on the row order. What is the previous row here?"
+  - de: "Sortiere zuerst mit `arrange()`. Sieh dir dann eine Person mit fehlender `lane_dev` an: Was macht `cumsum()` ab dem ersten `NA`?"
+    en: "Sort first with `arrange()`. Then look at a participant with a missing `lane_dev`: what does `cumsum()` do from the first `NA` on?"
+  - de: "`cumsum(coalesce(lane_dev > 0.4, ______))` setzt fehlende Vergleiche auf „nicht kritisch“."
+    en: "`cumsum(coalesce(lane_dev > 0.4, ______))` sets missing comparisons to \"not critical\"."
+explanation:
+  de: |
+    `lag()` nimmt die vorherige Zeile, nicht den vorherigen Durchgang; ohne
+    `arrange()` (oder `lag(rt_ms, order_by = trial)`) rechnet man mit
+    Zufallspartnern. `cumsum()` über einen logischen Vektor zählt die `TRUE`, gibt
+    aber ab dem ersten `NA` bis zum Gruppenende nur noch `NA` aus. `coalesce(x,
+    FALSE)` setzt die fehlenden Vergleiche gezielt auf „nicht kritisch“; ob das
+    inhaltlich passt, ist eine Entscheidung, die in den Methodenteil gehört.
+    `.by = c(participant, condition)` sorgt dafür, dass Differenz und Zähler an
+    jedem Gruppenanfang neu beginnen.
+  en: |
+    `lag()` takes the previous row, not the previous trial; without `arrange()` (or
+    `lag(rt_ms, order_by = trial)`) you compute with random partners. `cumsum()`
+    over a logical vector counts the `TRUE` values, but from the first `NA` to the
+    end of the group it returns only `NA`. `coalesce(x, FALSE)` deliberately sets the
+    missing comparisons to "not critical"; whether that fits is a decision that
+    belongs in the methods section. `.by = c(participant, condition)` makes the
+    difference and the counter start afresh at the beginning of each group.
+misconception:
+  de: "`lag()` bezieht sich automatisch auf den vorherigen Messzeitpunkt, unabhängig von der Zeilenfolge."
+  en: "`lag()` automatically refers to the previous measurement, regardless of the row order."
+check:
+  type: value
+  ignore_row_order: true
+  ignore_col_order: false
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*(arrange|order_by))[\\s\\S]*lag\\("
+    message:
+      de: "Die Zeilen sind gemischt. Ohne `arrange()` oder `order_by` ist die vorherige Zeile nicht der vorherige Durchgang."
+      en: "The rows are shuffled. Without `arrange()` or `order_by`, the previous row is not the previous trial."
+  - pattern: "^(?![\\s\\S]*(coalesce|is\\.na|replace_na|%in%|isTRUE|!!?is))[\\s\\S]*cumsum\\(\\s*lane_dev\\s*>"
+    message:
+      de: "Ein `NA` in `lane_dev` macht `cumsum()` ab dort `NA`. Fehlende Werte sollen als nicht kritisch zählen."
+      en: "An `NA` in `lane_dev` makes `cumsum()` `NA` from there on. Missing values should count as not critical."
+  - pattern: "lead\\("
+    message:
+      de: "`lead()` liefert den nächsten Wert; gesucht ist die Differenz zum vorherigen Durchgang."
+      en: "`lead()` returns the next value; you need the difference to the previous trial."

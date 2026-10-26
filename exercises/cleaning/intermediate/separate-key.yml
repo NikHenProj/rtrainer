@@ -1,0 +1,92 @@
+id: cl-i-separate-key
+lesson: cleaning-intermediate
+order: 1
+title:
+  de: Einen zusammengesetzten Schlüssel zerlegen
+  en: Splitting a composite key
+kind: write
+required: true
+packages: [dplyr, tidyr]
+data: [driving_sim]
+setup: |
+  library(dplyr)
+  library(tidyr)
+  log <- driving_sim |>
+    filter(participant %in% c("p01", "p02")) |>
+    transmute(key = paste(participant, condition, trial, sep = "_"), rt_ms) |>
+    bind_rows(tibble(key = c("p41_auditory", "p42_haptic"), rt_ms = c(1310L, 980L)))
+prompt:
+  de: |
+    Aus dem Logging-System kommt `log` mit einem zusammengesetzten Schlüssel `key`
+    wie `"p01_visual_3"` und der Spalte `rt_ms`. Bei zwei Einträgen fehlt die
+    Trial-Nummer (`"p41_auditory"`, `"p42_haptic"`).
+
+    Zerlege `key` mit `separate_wider_delim()` in die Spalten `participant`,
+    `condition` und `trial`. Fehlt die Trial-Nummer, soll `trial` `NA` sein (kein
+    Fehler). `trial` soll ganzzahlig (`integer`) sein. Ergebnis: Spalten
+    `participant`, `condition`, `trial`, `rt_ms`.
+  en: |
+    The logging system delivers `log` with a composite key `key` such as
+    `"p01_visual_3"` and the column `rt_ms`. Two entries lack the trial number
+    (`"p41_auditory"`, `"p42_haptic"`).
+
+    Split `key` with `separate_wider_delim()` into the columns `participant`,
+    `condition` and `trial`. If the trial number is missing, `trial` should be `NA`
+    (no error). `trial` should be a whole number (`integer`). Result: columns
+    `participant`, `condition`, `trial`, `rt_ms`.
+starter: |
+  log |>
+    separate_wider_delim(key, delim = "_", names = c("participant", "condition", "trial"))
+solution: |
+  log |>
+    separate_wider_delim(
+      key,
+      delim = "_",
+      names = c("participant", "condition", "trial"),
+      too_few = "align_start"
+    ) |>
+    mutate(trial = as.integer(trial))
+hints:
+  - de: "Führe den Startcode aus und lies die Fehlermeldung: Welche Zeilen haben zu wenige Teile, und welches Argument schlägt sie vor?"
+    en: "Run the starter and read the error message: which rows have too few pieces, and which argument does it suggest?"
+  - de: "`too_few` legt fest, wohin fehlende Teile kommen: `\"align_start\"` füllt rechts mit `NA` auf, `\"align_end\"` links."
+    en: "`too_few` sets where missing pieces go: `\"align_start\"` fills with `NA` on the right, `\"align_end\"` on the left."
+  - de: "Die Teile sind immer Text. Hänge `mutate(trial = ______(trial))` an."
+    en: "The pieces are always text. Add `mutate(trial = ______(trial))`."
+explanation:
+  de: |
+    `separate_wider_delim()` zerlegt an einem festen Trennzeichen und ist absichtlich
+    streng: Hat ein Wert zu wenige oder zu viele Teile, bricht es mit einer Meldung
+    ab, die die betroffenen Zeilen nennt (`too_few = "debug"` zeigt sie als
+    Spalten). So fallen Randfälle auf, statt still falsch zerlegt zu werden.
+    `too_few = "align_start"` füllt fehlende Teile rechts mit `NA` auf. Das Ergebnis
+    sind immer Zeichenketten; anders als das alte `separate(convert = TRUE)` setzt
+    du den Typ selbst. Für Muster ohne festes Trennzeichen (`"p01visual3"`) gibt es
+    `separate_wider_regex()`, für einen Teil allein `str_extract()`.
+  en: |
+    `separate_wider_delim()` splits at a fixed delimiter and is strict on purpose:
+    if a value has too few or too many pieces, it stops with a message naming the
+    affected rows (`too_few = "debug"` shows them as columns). That way edge cases
+    show up instead of being split wrongly without a word. `too_few =
+    "align_start"` fills missing pieces with `NA` on the right. The result is always
+    character; unlike the old `separate(convert = TRUE)`, you set the type yourself.
+    For patterns without a fixed delimiter (`"p01visual3"`) there is
+    `separate_wider_regex()`, for a single piece `str_extract()`.
+check:
+  type: value
+  ignore_row_order: true
+  ignore_col_order: false
+  check_types: true
+common_mistakes:
+  - pattern: "too_few\\s*=\\s*[\"']align_end"
+    message:
+      de: "`align_end` füllt links auf: Dann landet `NA` in `participant` und die Person in `condition`. Fehlt der letzte Teil, brauchst du `align_start`."
+      en: "`align_end` fills on the left: then `NA` ends up in `participant` and the participant in `condition`. If the last piece is missing, you need `align_start`."
+  - pattern: "^(?![\\s\\S]*(as\\.integer|parse_integer))[\\s\\S]*separate_wider_delim"
+    message:
+      de: "Die Teile sind Zeichenketten, und `trial` soll `integer` sein. Wandle mit `as.integer()` um (`as.numeric()` liefert `double`)."
+      en: "The pieces are character strings, and `trial` should be `integer`. Convert with `as.integer()` (`as.numeric()` returns `double`)."
+  - pattern: "\\bseparate\\("
+    message:
+      de: "`separate()` ist abgelöst und füllt fehlende Teile nur mit Warnung auf. Nutze `separate_wider_delim()` mit `too_few`."
+      en: "`separate()` is superseded and fills missing pieces with only a warning. Use `separate_wider_delim()` with `too_few`."

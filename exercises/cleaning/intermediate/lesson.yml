@@ -1,0 +1,19 @@
+# Lesson metadata; exercises are the other *.yml files in this folder
+# (sorted by `order`), the knowledge check is quiz.yml.
+lesson: cleaning-intermediate
+minutes: 50
+prerequisites: [cleaning-beginner]
+langs: [de]
+packages: [readr, dplyr, tidyr, stringr, forcats, lubridate, janitor]
+data: [driving_sim, raw_export]
+goals:
+  de:
+    - Zusammengesetzte Schlüssel zerlegen und Randfälle (fehlende Teile) kontrolliert behandeln
+    - Mit regulären Ausdrücken prüfen und herausziehen, was in Text steckt
+    - Zeitdifferenzen in einer festen Einheit berechnen
+    - Kategorien mit forcats bündeln, ordnen und mit janitor auszählen
+  en:
+    - Split composite keys and handle edge cases (missing parts) deliberately
+    - Use regular expressions to validate and extract what is inside text
+    - Compute time differences in a fixed unit
+    - Bundle and order categories with forcats and tabulate them with janitor

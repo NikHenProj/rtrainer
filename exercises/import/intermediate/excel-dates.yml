@@ -1,0 +1,93 @@
+id: imp-i-excel-dates
+lesson: import-intermediate
+order: 4
+title:
+  de: Excel-Datum und Text in einer Spalte
+  en: Excel dates and text in one column
+kind: write
+required: false
+packages: [readxl, dplyr, lubridate, janitor]
+data: [raw_export_xlsx]
+setup: |
+  library(readxl)
+  library(dplyr)
+  library(lubridate)
+  library(janitor)
+  responses_xlsx <- read_excel(raw_export_xlsx, sheet = "Export", range = "A4:N86") |>
+    clean_names()
+prompt:
+  de: |
+    In der Excel-Datei ist `start_date` für die erste Welle ein echtes Excel-Datum,
+    für die Testantworten und die zweite Welle Text (`2026-03-01 17:02:11`,
+    `13.03.2026 15:25`, `3/14/2026 05:19 PM`). Weil die Spalte gemischt ist, liest
+    `read_excel()` alles als Text; die Excel-Daten erscheinen als Zahl wie
+    `"46083.8439930556"`.
+
+    Wandle `start_date` in die Datum-Zeit-Spalte `start` um (Zeitzone UTC). Gib
+    eine Zeile mit `n_missing` (nicht erkannte Werte), `first` und `last` (früheste
+    und späteste Startzeit) zurück.
+  en: |
+    In the Excel file, `start_date` is a real Excel date for the first wave and text
+    for the test responses and the second wave (`2026-03-01 17:02:11`,
+    `13.03.2026 15:25`, `3/14/2026 05:19 PM`). Because the column is mixed,
+    `read_excel()` reads everything as text; the Excel dates show up as a number
+    such as `"46083.8439930556"`.
+
+    Convert `start_date` into the date-time column `start` (time zone UTC). Return
+    one row with `n_missing` (values not recognised), `first` and `last` (earliest
+    and latest start time).
+starter: |
+  responses_xlsx |>
+    mutate(start = parse_date_time(start_date, orders = c("Ymd HMS", "dmY HM", "mdY IMp"))) |>
+    summarise(n_missing = sum(is.na(start)), first = min(start, na.rm = TRUE), last = max(start, na.rm = TRUE))
+solution: |
+  responses_xlsx |>
+    mutate(start = convert_to_datetime(
+      start_date,
+      character_fun = \(x, tz) parse_date_time(x, orders = c("Ymd HMS", "dmY HM", "mdY IMp"), tz = tz),
+      tz = "UTC"
+    )) |>
+    summarise(n_missing = sum(is.na(start)), first = min(start), last = max(start))
+hints:
+  - de: "Der Startcode erkennt die Textformate, aber nicht die Zahlen. Eine Excel-Zahl zählt die Tage seit dem 30.12.1899, der Nachkommaanteil ist die Uhrzeit."
+    en: "The starter recognises the text formats but not the numbers. An Excel number counts the days since 30 Dec 1899; the decimal part is the time of day."
+  - de: "`janitor::convert_to_datetime()` wandelt Excel-Zahlen (auch als Text) um und reicht alles andere an eine Funktion `character_fun` weiter."
+    en: "`janitor::convert_to_datetime()` converts Excel numbers (also as text) and passes everything else to a function `character_fun`."
+  - de: "`convert_to_datetime(start_date, character_fun = \\(x, tz) parse_date_time(x, orders = ______, tz = tz), tz = \"UTC\")`"
+    en: "`convert_to_datetime(start_date, character_fun = \\(x, tz) parse_date_time(x, orders = ______, tz = tz), tz = \"UTC\")`"
+explanation:
+  de: |
+    Excel speichert ein Datum als Zahl: Tage seit dem 30.12.1899, die Uhrzeit als
+    Bruchteil eines Tages. Steht in einer Spalte Datum und Text gemischt, nimmt
+    `read_excel()` Text, und das Datum wird zur Zahl als Zeichenkette.
+    `convert_to_datetime()` erkennt diese Zahlen, rechnet sie um und gibt die
+    übrigen Einträge an `character_fun` weiter, hier `parse_date_time()` mit den drei
+    Textformaten. `col_types = "date"` hilft nicht: Dann werden alle Texteinträge
+    `NA`. Fallstrick: Excel-Zahlen haben keine Zeitzone; was in der Datei
+    20:15 Uhr heißt, ist hier 20:15 UTC. Prüfe danach `first` und `last`: Der früheste
+    Start ist eine Testantwort vom 1. März, vor Studienbeginn.
+  en: |
+    Excel stores a date as a number: days since 30 Dec 1899, with the time as a
+    fraction of a day. When a column mixes dates and text, `read_excel()` uses text
+    and the date becomes a number in a string. `convert_to_datetime()` recognises
+    these numbers, converts them and passes the remaining entries to
+    `character_fun`, here `parse_date_time()` with the three text formats.
+    `col_types = "date"` does not help: then all text entries become `NA`. Pitfall:
+    Excel numbers have no time zone; what reads 20:15 in the file is 20:15 UTC
+    here. Then check `first` and `last`: the earliest start is a test response from
+    1 March, before the study began.
+check:
+  type: value
+common_mistakes:
+  - pattern: "col_types\\s*=\\s*[\"']date"
+    message:
+      de: "Mit `col_types = \"date\"` werden alle Texteinträge zu `NA`; die Spalte ist ja gemischt."
+      en: "With `col_types = \"date\"`, all text entries become `NA`; the column is mixed."
+  - pattern: "as\\.numeric\\(start_date\\)\\s*\\*\\s*86400(?![\\s\\S]*(origin|1899|1970|25569))"
+    message:
+      de: "Excel zählt Tage ab dem 30.12.1899, R Sekunden ab 1970. Ohne Verschiebung des Ursprungs landest du im Jahr 2096."
+      en: "Excel counts days from 30 Dec 1899, R counts seconds from 1970. Without shifting the origin you end up in the year 2096."
+  - pattern: "na\\.rm\\s*=\\s*TRUE"
+    message:
+      de: "`na.rm = TRUE` versteckt nicht erkannte Werte. Alle Einträge lassen sich umwandeln; `n_missing` soll 0 sein."
+      en: "`na.rm = TRUE` hides values that were not recognised. All entries can be converted; `n_missing` should be 0."

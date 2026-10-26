@@ -1,0 +1,19 @@
+# Lesson metadata; exercises are the other *.yml files in this folder
+# (sorted by `order`), the knowledge check is quiz.yml.
+lesson: import-intermediate
+minutes: 50
+prerequisites: [import-beginner]
+langs: [de]
+packages: [readr, readxl, haven, purrr, dplyr, stringr, lubridate, janitor]
+data: [driving_sim, survey, usability, raw_export_xlsx]
+goals:
+  de:
+    - Viele Dateien gleichen Aufbaus in einem Schritt einlesen und die Herkunft festhalten
+    - Fehlende oder defekte Dateien gezielt abfangen, ohne sie zu übersehen
+    - SPSS-Dateien mit Wertelabels lesen und Labels statt Codes verwenden
+    - Excel-Spalten mit gemischten Datumsformaten retten
+  en:
+    - Read many files with the same layout in one step and keep track of their origin
+    - Catch missing or broken files deliberately without overlooking them
+    - Read SPSS files with value labels and use the labels instead of codes
+    - Rescue Excel columns with mixed date formats

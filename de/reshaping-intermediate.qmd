@@ -1,0 +1,152 @@
+---
+title: "Umformen und zusammenführen"
+subtitle: "Intermediate · Fensterfunktionen, abgesicherte Joins, viele Tabellen"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, tidyr, purrr]
+resources:
+  - ../data/driving_sim.csv
+  - ../data/usability.csv
+---
+
+{{< include /_generated/de/reshaping-intermediate/runtime.qmd >}}
+
+{{< include /_generated/de/reshaping-intermediate/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R läuft hier direkt im Browser. Beim ersten Besuch lädt es 10–30 Sekunden (Anzeige unten rechts), danach geht es schneller.
+:::
+
+## Wozu? {#why}
+
+**Forschungsfrage:** Werden die Teilnehmenden im Usability-Test von Prototyp zu Prototyp schneller (Lerneffekt), und gleicht die ausbalancierte Reihenfolge das aus?
+
+Für solche Fragen brauchst du Werte relativ zu einer anderen Zeile derselben Person: die Zeit beim ersten Prototyp, den vorherigen Durchgang, eine laufende Summe. Dazu kommen Tabellen, die zusammengehören, aber getrennt vorliegen (Demografie, Aufgabenliste, Kennwerte). Fensterfunktionen und Joins sind schnell geschrieben, aber ihre Fehler sind leise: falsche Reihenfolge, doppelte Schlüssel, verlorene Personen. Diese Lektion zeigt, wie du sie absicherst.
+
+## Konzept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 200" role="img" aria-labelledby="fig-rsi-title fig-rsi-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-rsi-title">Fensterfunktionen innerhalb einer Gruppe</title>
+  <desc id="fig-rsi-desc">Eine Tabelle mit zwei Personen, p01 mit drei Durchgängen und p02 mit zwei. Pfeile zeigen, dass lag für jede Zeile den Wert der vorherigen Zeile derselben Person nimmt. Die erste Zeile jeder Person hat keinen Vorgänger und erhält NA. Daneben die laufende Summe cumsum, die bei jeder Person neu beginnt.</desc>
+  <rect x="20" y="20" width="330" height="28" class="rt-fig-box-accent" />
+  <text x="28" y="39" class="rt-fig-code">participant trial rt  lag(rt) cumsum</text>
+  <rect x="20" y="48" width="330" height="72" class="rt-fig-box" />
+  <text x="28" y="67" class="rt-fig-code">p01         1     500 NA      500</text>
+  <text x="28" y="91" class="rt-fig-code">p01         2     650 500     1150</text>
+  <text x="28" y="115" class="rt-fig-code">p01         3     600 650     1750</text>
+  <rect x="20" y="128" width="330" height="48" class="rt-fig-box" />
+  <text x="28" y="147" class="rt-fig-code">p02         1     700 NA      700</text>
+  <text x="28" y="171" class="rt-fig-code">p02         2     720 700     1420</text>
+  <text x="365" y="67" class="rt-fig-label">kein Vorgänger</text>
+  <text x="365" y="103" class="rt-fig-label">Vorgänger = vorherige Zeile</text>
+  <text x="365" y="147" class="rt-fig-label">neue Gruppe: neu beginnen</text>
+  <text x="20" y="196" class="rt-fig-label rt-fig-muted">Voraussetzung: sortiert (arrange) und gruppiert (.by)</text>
+</svg>
+<figcaption>Fensterfunktionen rechnen innerhalb jeder Gruppe und hängen von der Zeilenfolge ab.</figcaption>
+</figure>
+```
+
+- **Fensterfunktionen** liefern so viele Werte, wie sie bekommen, und rechnen pro Gruppe (`.by`): `lag()`/`lead()` (vorherige/nächste Zeile), `cumsum()`, `cummax()`, `first()`, `last()`, `row_number()`.
+- **Reihenfolge:** Der Vorgänger ist die vorherige *Zeile*. Erst `arrange()` (oder `order_by = trial`) macht daraus den vorherigen Durchgang.
+- **`NA` breitet sich aus:** `cumsum()` ist ab dem ersten `NA` unbekannt. Vorher festlegen, was `NA` heißt (`coalesce(x, FALSE)`).
+- **Joins absichern:** Jede passende Kombination ergibt eine Zeile. `relationship = "many-to-one"` bricht ab, wenn rechts ein Schlüssel doppelt ist; `unmatched = "error"`, wenn links ein Schlüssel keinen Partner hat.
+- **Viele Tabellen:** `purrr::reduce(tabellen, \(x, y) left_join(x, y, by = ...))` verbindet eine Liste beliebiger Länge. Die erste Tabelle bestimmt die Zeilen.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## Mehr dazu: weitere Joins mit `join_by()`
+
+- **Ungleichungen:** `join_by(participant, start <= time, end >= time)` ordnet Ereignisse einem Zeitfenster zu (z. B. Blickdaten einer Aufgabe).
+- **Nächster Wert:** `join_by(participant, closest(time >= event_time))` nimmt das letzte Ereignis vor jedem Messpunkt (rolling join).
+- **Prüfen nach dem Join:** `nrow()` vorher und nachher, `anti_join()` in beide Richtungen.
+:::
+
+## Beispiel {#example}
+
+Wie viel schneller ist jede Person bei einem Prototyp im Vergleich zu ihrem ersten? `first()` nimmt pro Person und Aufgabe den Wert an Position 1, deshalb vorher nach `position` sortieren:
+
+```{webr}
+learning <- usability |>
+  arrange(participant, task, position) |>
+  mutate(
+    time_vs_first = time_s - first(time_s),
+    .by = c(participant, task)
+  )
+learning |>
+  summarise(mean_change = round(mean(time_vs_first), 1), n = n(), .by = position)
+```
+
+Ein Lerneffekt würde mit der Position wachsen. Weil die Reihenfolge der Prototypen ausbalanciert ist (lateinisches Quadrat), verteilt er sich gleichmäßig auf A, B und C. Laufende Summe der Fehler pro Person, sortiert nach Position und Aufgabe:
+
+```{webr}
+usability |>
+  arrange(participant, position, task) |>
+  mutate(errors_so_far = cumsum(errors), .by = participant) |>
+  filter(participant == "p01") |>
+  select(participant, position, prototype, task, errors, errors_so_far)
+```
+
+Ein Join mit Absicherung: Die erwartete Zeit pro Aufgabe steht in einer eigenen Tabelle. `relationship = "many-to-one"` und `unmatched = "error"` lassen R abbrechen, wenn eine Aufgabe doppelt oder gar nicht in `targets` steht:
+
+```{webr}
+targets <- tibble(
+  task = c("search", "filter", "compare", "checkout"),
+  target_s = c(30, 45, 60, 90)
+)
+usability |>
+  left_join(targets, by = join_by(task), relationship = "many-to-one", unmatched = "error") |>
+  summarise(within_target = mean(time_s <= target_s), .by = c(prototype, task)) |>
+  pivot_wider(names_from = prototype, values_from = within_target)
+```
+
+Nimm im letzten Block `"checkout"` aus `targets` heraus und führe ihn erneut aus: Statt still `NA` zu liefern, nennt der Fehler die betroffenen Zeilen.
+
+**So berichtest du es (Ergebnisteil, deskriptiv):** Gegenüber dem ersten getesteten Prototyp waren die Teilnehmenden an zweiter und dritter Position im Mittel rund 10 Sekunden schneller (−9,8 s bzw. −10,3 s pro Aufgabe), ein Lerneffekt vor allem vom ersten zum zweiten Prototyp. Die ausbalancierte Reihenfolge verteilt diesen Positionseffekt gleichmäßig auf die Prototypen; im Modell lässt er sich zusätzlich als Prädiktor `position` aufnehmen (Lektion „Mixed Models“).
+
+## Paketvergleich {#packages}
+
+| Aufgabe | Empfehlung | Alternative |
+|---|---|---|
+| Vorheriger/nächster Wert | **dplyr** `lag()`, `lead()` mit `.by` | `data.table::shift()`; Basis-R mit `c(NA, head(x, -1))` pro Gruppe (fehleranfällig) |
+| Laufende Kennwerte | `cumsum()`, `cummax()`, `cummean()` | `slider::slide_dbl()` für gleitende Fenster (z. B. Mittel der letzten 3 Durchgänge) |
+| Joins absichern | **dplyr** `relationship`, `unmatched` | Vorher doppelte Schlüssel mit `janitor::get_dupes(y, key)` suchen, nachher `nrow()` vergleichen |
+| Viele Tabellen | **purrr** `reduce()` | Basis-R `Reduce(merge, liste)`; mehrere `left_join()` von Hand |
+
+## Übungen {#exercises}
+
+Drei Pflichtübungen und eine Zusatzübung. **Ausführen und prüfen** startet deinen Code und prüft ihn sofort. Hinweise deckst du einzeln auf (**Hinweis zeigen**), die Lösung erst danach.
+
+{{< include /_generated/de/reshaping-intermediate/exercises.qmd >}}
+
+## Wissenscheck {#check}
+
+{{< include /_generated/de/reshaping-intermediate/quiz.qmd >}}
+
+## Spickzettel {#cheatsheet}
+
+```r
+# Fensterfunktionen: erst sortieren, dann gruppiert rechnen
+d |>
+  arrange(participant, trial) |>
+  mutate(
+    diff = rt_ms - lag(rt_ms),
+    n_critical = cumsum(coalesce(lane_dev > 0.4, FALSE)),
+    vs_first = rt_ms - first(rt_ms),
+    .by = participant
+  )
+
+# Joins absichern
+count(y, key) |> filter(n > 1)
+left_join(x, y, by = join_by(key), relationship = "many-to-one", unmatched = "error")
+
+# Viele Tabellen
+reduce(tables, \(x, y) left_join(x, y, by = join_by(participant)))
+```
+
+- Vorgänger = vorherige Zeile: immer `arrange()` oder `order_by`.
+- Nach jedem Join `nrow()` prüfen; mehr Zeilen heißt doppelte Schlüssel.
+- In `reduce()` steht die vollständigste Tabelle vorn.
+
+{{< include /_generated/de/reshaping-intermediate/footer.qmd >}}

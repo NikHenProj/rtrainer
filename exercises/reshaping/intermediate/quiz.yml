@@ -1,0 +1,134 @@
+# Knowledge check: passed at >= `pass` share of correctly answered questions.
+lesson: reshaping-intermediate
+pass: 0.8
+questions:
+  - id: rs-i-q-order
+    prompt:
+      de: "`mutate(diff = rt_ms - lag(rt_ms), .by = participant)` auf Daten, die nach `rt_ms` sortiert sind. Was misst `diff`?"
+      en: "`mutate(diff = rt_ms - lag(rt_ms), .by = participant)` on data sorted by `rt_ms`. What does `diff` measure?"
+    options:
+      - text:
+          de: "Den Abstand zur nächstkleineren Reaktionszeit derselben Person, nicht die Veränderung über die Durchgänge."
+          en: "The gap to the next smaller reaction time of the same participant, not the change across trials."
+        correct: true
+        explain:
+          de: "Genau. `lag()` nimmt die vorherige Zeile; erst `arrange(participant, trial)` oder `order_by = trial` macht daraus den vorherigen Durchgang."
+          en: "Exactly. `lag()` takes the previous row; only `arrange(participant, trial)` or `order_by = trial` turns it into the previous trial."
+      - text:
+          de: "Die Veränderung zum vorherigen Durchgang; `lag()` kennt die Spalte `trial`."
+          en: "The change from the previous trial; `lag()` knows the column `trial`."
+        correct: false
+        explain:
+          de: "`lag()` weiß nichts von `trial`, es sei denn, du gibst `order_by = trial` an."
+          en: "`lag()` knows nothing about `trial` unless you give `order_by = trial`."
+      - text:
+          de: "Nichts, `lag()` funktioniert nur in sortierten Zeitreihen und liefert sonst `NA`."
+          en: "Nothing; `lag()` only works in sorted time series and otherwise returns `NA`."
+        correct: false
+        explain:
+          de: "`lag()` liefert immer Werte, auch wenn die Reihenfolge inhaltlich keinen Sinn ergibt. Das macht den Fehler so unauffällig."
+          en: "`lag()` always returns values, even if the order makes no sense. That is what makes the error so inconspicuous."
+  - id: rs-i-q-cumsum
+    prompt:
+      de: "Was liefert `cumsum(c(TRUE, NA, TRUE, FALSE))`?"
+      en: "What does `cumsum(c(TRUE, NA, TRUE, FALSE))` return?"
+    options:
+      - text:
+          de: "`1 NA NA NA`"
+          en: "`1 NA NA NA`"
+        correct: true
+        explain:
+          de: "Richtig: Ab dem ersten `NA` ist die laufende Summe unbekannt. `coalesce(x, FALSE)` oder `replace_na()` vorher entscheiden, was `NA` bedeutet."
+          en: "Right: from the first `NA` on, the running sum is unknown. Decide beforehand with `coalesce(x, FALSE)` or `replace_na()` what `NA` means."
+      - text:
+          de: "`1 1 2 2`"
+          en: "`1 1 2 2`"
+        correct: false
+        explain:
+          de: "Das wäre das Ergebnis, wenn `NA` als `FALSE` zählte; das musst du ausdrücklich festlegen."
+          en: "That would be the result if `NA` counted as `FALSE`; you have to set that explicitly."
+      - text:
+          de: "`NA NA NA NA`"
+          en: "`NA NA NA NA`"
+        correct: false
+        explain:
+          de: "Der erste Wert ist bekannt (1); nur ab dem `NA` wird es unbekannt."
+          en: "The first value is known (1); it only becomes unknown from the `NA` on."
+  - id: rs-i-q-rows
+    prompt:
+      de: "`trials` hat 480 Zeilen. Nach `left_join(trials, demographics, by = join_by(participant))` sind es 504. Was ist die wahrscheinlichste Ursache?"
+      en: "`trials` has 480 rows. After `left_join(trials, demographics, by = join_by(participant))` there are 504. What is the most likely cause?"
+    options:
+      - text:
+          de: "In `demographics` kommen Personen mehrfach vor; jede passende Kombination ergibt eine Zeile."
+          en: "Some participants appear more than once in `demographics`; every matching combination gives a row."
+        correct: true
+        explain:
+          de: "Ja. `count(demographics, participant) |> filter(n > 1)` zeigt sie, `relationship = \"many-to-one\"` verhindert es künftig."
+          en: "Yes. `count(demographics, participant) |> filter(n > 1)` shows them, `relationship = \"many-to-one\"` prevents it in future."
+      - text:
+          de: "`demographics` enthält Personen, die nicht in `trials` sind."
+          en: "`demographics` contains participants who are not in `trials`."
+        correct: false
+        explain:
+          de: "Die fügt `left_join()` gar nicht hinzu; das täte `full_join()`."
+          en: "`left_join()` does not add them at all; `full_join()` would."
+      - text:
+          de: "`left_join()` fügt fehlende Durchgänge als `NA`-Zeilen hinzu."
+          en: "`left_join()` adds missing trials as rows of `NA`."
+        correct: false
+        explain:
+          de: "Nein, fehlende Kombinationen macht erst `complete()` sichtbar."
+          en: "No, missing combinations are only made visible by `complete()`."
+  - id: rs-i-q-relationship
+    prompt:
+      de: "Was bewirkt `left_join(trials, demographics, by = join_by(participant), relationship = \"many-to-one\")`?"
+      en: "What does `left_join(trials, demographics, by = join_by(participant), relationship = \"many-to-one\")` do?"
+    options:
+      - text:
+          de: "Es bricht mit einem Fehler ab, wenn eine Person in `demographics` mehrfach vorkommt."
+          en: "It stops with an error if a participant appears more than once in `demographics`."
+        correct: true
+        explain:
+          de: "Genau. Es prüft deine Erwartung an die Daten, statt still mehr Zeilen zu erzeugen."
+          en: "Exactly. It checks your expectation about the data instead of silently creating extra rows."
+      - text:
+          de: "Es entfernt doppelte Personen in `demographics` automatisch."
+          en: "It automatically removes duplicated participants in `demographics`."
+        correct: false
+        explain:
+          de: "`relationship` ändert keine Daten; Duplikate entfernst du selbst, z. B. mit `distinct()`."
+          en: "`relationship` does not change data; you remove duplicates yourself, e.g. with `distinct()`."
+      - text:
+          de: "Es behält pro Person nur die erste passende Zeile."
+          en: "It keeps only the first matching row per participant."
+        correct: false
+        explain:
+          de: "Das wäre `multiple = \"first\"`, das Duplikate aber nur versteckt."
+          en: "That would be `multiple = \"first\"`, which merely hides duplicates."
+  - id: rs-i-q-reduce
+    prompt:
+      de: "`reduce(list(a, b, c), \\(x, y) left_join(x, y, by = \"participant\"))` – was wird berechnet?"
+      en: "`reduce(list(a, b, c), \\(x, y) left_join(x, y, by = \"participant\"))` – what is computed?"
+    options:
+      - text:
+          de: "`left_join(left_join(a, b), c)`; alle Personen aus `a` bleiben erhalten."
+          en: "`left_join(left_join(a, b), c)`; all participants in `a` are kept."
+        correct: true
+        explain:
+          de: "Richtig. Die erste Tabelle bestimmt die Zeilen, deshalb gehört die vollständigste nach vorn."
+          en: "Right. The first table determines the rows, so the most complete one belongs first."
+      - text:
+          de: "Drei getrennte Joins `a`–`b`, `b`–`c`, `a`–`c`, deren Ergebnis eine Liste ist."
+          en: "Three separate joins `a`–`b`, `b`–`c`, `a`–`c`, returned as a list."
+        correct: false
+        explain:
+          de: "Das wäre eher `map()` über Paare; `reduce()` faltet die Liste zu einem einzigen Ergebnis."
+          en: "That would be closer to `map()` over pairs; `reduce()` folds the list into a single result."
+      - text:
+          de: "`left_join(a, left_join(b, c))`; alle Personen aus `c` bleiben erhalten."
+          en: "`left_join(a, left_join(b, c))`; all participants in `c` are kept."
+        correct: false
+        explain:
+          de: "`reduce()` arbeitet von links; mit `.dir = \"backward\"` ginge es von rechts."
+          en: "`reduce()` works from the left; with `.dir = \"backward\"` it would go from the right."

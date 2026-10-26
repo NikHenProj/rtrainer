@@ -1,0 +1,83 @@
+id: rs-i-join-duplicates
+lesson: reshaping-intermediate
+order: 3
+title:
+  de: Mehr Zeilen nach dem Join
+  en: More rows after the join
+kind: debug
+required: true
+packages: [dplyr]
+data: [driving_sim]
+setup: |
+  library(dplyr)
+  trials <- select(driving_sim, participant, condition, trial, rt_ms)
+  demographics <- distinct(driving_sim, participant, age, gender)
+  demographics <- bind_rows(demographics, filter(demographics, participant %in% c("p05", "p18")))
+prompt:
+  de: |
+    `trials` hat 480 Zeilen (40 Personen × 12 Durchgänge), `demographics` Alter und
+    Geschlecht pro Person. Der Join unten liefert aber 504 Zeilen und eine Warnung.
+    Bei zwei Personen wurde der Demografie-Bogen versehentlich zweimal importiert
+    (identische Zeilen).
+
+    Finde die Ursache und gib die korrekt verbundene Tabelle mit 480 Zeilen und
+    den Spalten `participant`, `condition`, `trial`, `rt_ms`, `age`, `gender`
+    zurück. Sichere den Join außerdem so ab, dass er bei doppelten Personen künftig
+    abbricht (geprüft wird nur das Ergebnis).
+  en: |
+    `trials` has 480 rows (40 participants × 12 trials), `demographics` holds age
+    and gender per participant. The join below, however, returns 504 rows and a
+    warning. For two participants the demographics form was accidentally imported
+    twice (identical rows).
+
+    Find the cause and return the correctly joined table with 480 rows and the
+    columns `participant`, `condition`, `trial`, `rt_ms`, `age`, `gender`. Safeguard
+    the join so that it stops in future if a participant appears twice (only the
+    result is checked).
+starter: |
+  trials |>
+    left_join(demographics, by = join_by(participant))
+solution: |
+  trials |>
+    left_join(distinct(demographics), by = join_by(participant), relationship = "many-to-one")
+hints:
+  - de: "Lies die Warnung: Welche Zeile in `trials` passt zu mehreren Zeilen in `demographics`? `count(demographics, participant) |> filter(n > 1)` zeigt es."
+    en: "Read the warning: which row in `trials` matches several rows in `demographics`? `count(demographics, participant) |> filter(n > 1)` shows it."
+  - de: "Die doppelten Zeilen sind identisch, `distinct()` entfernt sie. Mit dem Argument `relationship` sagst du `left_join()`, was du erwartest."
+    en: "The duplicated rows are identical; `distinct()` removes them. With the argument `relationship` you tell `left_join()` what you expect."
+  - de: "`left_join(distinct(demographics), by = join_by(participant), relationship = ______)`"
+    en: "`left_join(distinct(demographics), by = join_by(participant), relationship = ______)`"
+explanation:
+  de: |
+    Ein Join erzeugt für jede passende Kombination eine Zeile. Steht `p05` zweimal in
+    `demographics`, wird jeder der 12 Durchgänge von `p05` verdoppelt: 2 Personen ×
+    12 = 24 Zeilen zu viel. Das fällt in Mittelwerten kaum auf, gewichtet die beiden
+    Personen aber doppelt. `distinct()` entfernt identische Zeilen; unterscheiden
+    sich die Doppelten (z. B. korrigiertes Alter), musst du eine Regel festlegen.
+    `relationship = "many-to-one"` ist die Absicherung: Viele Durchgänge passen zu
+    genau einer Person, sonst bricht der Join mit einer Fehlermeldung ab, statt nur zu
+    warnen. Prüfe nach jedem Join `nrow()`.
+  en: |
+    A join creates one row for every matching combination. If `p05` appears twice in
+    `demographics`, each of the 12 trials of `p05` is doubled: 2 participants × 12 =
+    24 extra rows. That barely shows in means, but it weights the two participants
+    twice. `distinct()` removes identical rows; if the duplicates differ (e.g. a
+    corrected age), you need to set a rule. `relationship = "many-to-one"` is the
+    safeguard: many trials match exactly one participant, otherwise the join stops
+    with an error instead of only warning. Check `nrow()` after every join.
+misconception:
+  de: "`left_join()` behält immer genau die Zeilenzahl der linken Tabelle."
+  en: "`left_join()` always keeps exactly the number of rows of the left table."
+check:
+  type: value
+  ignore_row_order: true
+  ignore_col_order: false
+common_mistakes:
+  - pattern: "inner_join|semi_join"
+    message:
+      de: "Die Join-Art ist nicht das Problem; auch `inner_join()` verdoppelt die Zeilen. Die Ursache liegt in `demographics`."
+      en: "The type of join is not the problem; `inner_join()` doubles the rows too. The cause lies in `demographics`."
+  - pattern: "multiple\\s*="
+    message:
+      de: "`multiple = \"first\"` versteckt doppelte Personen, statt sie zu beheben. Entferne die Duplikate und setze `relationship`."
+      en: "`multiple = \"first\"` hides duplicated participants instead of fixing them. Remove the duplicates and set `relationship`."
