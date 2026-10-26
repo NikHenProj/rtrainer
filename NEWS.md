@@ -1,6 +1,6 @@
 # rtrainer (Quarto course)
 
-## Milestone 9, package P4: intermediate lessons robust, regression, glm (DE) (in review)
+## Milestone 9, package P4: intermediate lessons robust, regression, glm (DE) (accepted, merged into main)
 
 - Dataset check: `usability` already has `success` (0/1; the 4 timeouts at 180 s are all failures) and `errors` (Poisson counts, B halves the rate, dispersion ratio 1.55 in `errors ~ prototype`). Enough for logistic and Poisson regression, so no new column.
 - Lessons (German, `langs: [de]`): `robust-intermediate` (rank tests with rstatix: Mann-Whitney, signed-rank, Kruskal-Wallis, Friedman, effect sizes r / rank-biserial / Kendall's W, Hodges-Lehmann shift; 20 % trimmed means with WRS2 `yuen()`; what rank tests compare), `regression-intermediate` (multiple regression on the `acceptance` scale scores, standardised coefficients, hierarchical comparison with `anova(m1, m2)`, interaction usefulness × experience with centred predictors and simple slopes, diagnostics with performance), `glm-intermediate` (logistic regression on `success` with odds ratios, `avg_predictions()`/`avg_comparisons()` from marginaleffects with cluster-robust SEs by participant, Poisson regression on `errors` with rate ratios, overdispersion and quasipoisson). 3 required + 1–2 optional exercises each, at least one `interpret` or `debug`, 5 knowledge-check questions.
