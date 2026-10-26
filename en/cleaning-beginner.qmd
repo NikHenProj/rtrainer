@@ -1,0 +1,161 @@
+---
+title: "Cleaning data"
+subtitle: "Beginner · Selecting, recoding, removing test responses and duplicates"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, stringr, forcats, lubridate, readr, janitor]
+resources:
+  - ../data/driving_sim.csv
+  - ../data/raw_export.csv
+---
+
+{{< include /_generated/en/cleaning-beginner/runtime.qmd >}}
+
+{{< include /_generated/en/cleaning-beginner/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R runs directly in your browser. On the first visit it takes 10–30 seconds to load (status at the bottom right); after that it is faster.
+:::
+
+## Why? {#why}
+
+**Research question:** How many valid responses does the feedback survey have, and how are they distributed across genders?
+
+The imported export (lesson "Importing data") is not ready for analysis yet: two test responses from the preview, two duplicate submissions, `female`, `Female`, `F` and `woman` for the same answer. Cleaning means finding such problems, fixing them traceably and reporting them in the methods section. For the basic tools the lesson also uses the driving simulator data `driving_sim`.
+
+## Concept {#concept}
+
+Almost every cleaning job consists of a few dplyr verbs, chained with `|>`:
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 170" role="img" aria-labelledby="fig-cl-title fig-cl-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-cl-title">Cleaning pipeline</title>
+  <desc id="fig-cl-desc">Four steps in a row: filter keeps rows, select picks columns, mutate creates new or recoded columns, distinct removes duplicate rows. Below, the row counts for the export: 82, after filter 80, after distinct 78.</desc>
+  <rect x="10" y="30" width="120" height="50" rx="6" class="rt-fig-box-accent" />
+  <rect x="150" y="30" width="120" height="50" rx="6" class="rt-fig-box" />
+  <rect x="290" y="30" width="120" height="50" rx="6" class="rt-fig-box" />
+  <rect x="430" y="30" width="120" height="50" rx="6" class="rt-fig-box-accent" />
+  <text x="70" y="52" text-anchor="middle" class="rt-fig-code">filter()</text>
+  <text x="70" y="70" text-anchor="middle" class="rt-fig-label rt-fig-muted">rows</text>
+  <text x="210" y="52" text-anchor="middle" class="rt-fig-code">select()</text>
+  <text x="210" y="70" text-anchor="middle" class="rt-fig-label rt-fig-muted">columns</text>
+  <text x="350" y="52" text-anchor="middle" class="rt-fig-code">mutate()</text>
+  <text x="350" y="70" text-anchor="middle" class="rt-fig-label rt-fig-muted">new values</text>
+  <text x="490" y="52" text-anchor="middle" class="rt-fig-code">distinct()</text>
+  <text x="490" y="70" text-anchor="middle" class="rt-fig-label rt-fig-muted">duplicates</text>
+  <line x1="130" y1="55" x2="148" y2="55" class="rt-fig-arrow" />
+  <line x1="270" y1="55" x2="288" y2="55" class="rt-fig-arrow" />
+  <line x1="410" y1="55" x2="428" y2="55" class="rt-fig-arrow" />
+  <text x="10" y="120" class="rt-fig-label">Export: 82 rows</text>
+  <text x="10" y="145" class="rt-fig-label rt-fig-muted">− 2 test responses (filter) − 2 duplicates (distinct) = 78 responses</text>
+</svg>
+<figcaption>Each step creates a new table; the raw data stay unchanged. Check the row count after every step.</figcaption>
+</figure>
+```
+
+- **`filter()`** keeps rows for which all conditions are `TRUE`. `NA` does not count as `TRUE`; such rows are dropped.
+- **`select()`** picks, orders and renames columns (`select(id = response_id, ...)`).
+- **`mutate()`** creates new columns or overwrites existing ones. With **`case_when()`** you recode by rules, from top to bottom.
+- **Standardise text** with stringr: `str_trim()` (spaces at the edges), `str_to_lower()`, `str_detect()`.
+- **Factors** with forcats: fixed levels and their order (`factor(x, levels = ...)`, `fct_relevel()`).
+- **`distinct()`** removes identical rows. Check first whether "duplicate" really means identical.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## More: cleaning traceably
+
+- Never overwrite the raw data: the cleaned table gets its own name (`responses_clean`).
+- Every exclusion rule as code, not as manual work in Excel. Then it can be checked and repeated.
+- Record the row count after every step; this becomes the flow diagram in the methods section ("82 exported, 2 tests, 2 duplicates, 78 analysed").
+- Control tables such as `count(q2_gender, gender)` show whether every raw answer was recoded correctly.
+:::
+
+## Example {#example}
+
+The export, read as in the lesson "Importing data":
+
+```{webr}
+header <- read_delim(raw_export_csv, delim = ";", skip = 3, n_max = 0, show_col_types = FALSE)
+responses <- read_delim(
+  raw_export_csv, delim = ";", skip = 5, col_names = names(header),
+  locale = locale(decimal_mark = ","), na = c("", "NA", "n/a", "-99"),
+  show_col_types = FALSE
+) |>
+  clean_names()
+count(responses, status)
+```
+
+Remove test responses and duplicates, drop the empty column `x`, and check the row count:
+
+```{webr}
+responses_clean <- responses |>
+  filter(status != "Survey Preview") |>
+  distinct() |>
+  select(-x)
+nrow(responses_clean)
+```
+
+Age is stored as text in `q1_age` (`34 years`, `230`). `parse_number()` extracts the number; implausible values become `NA`:
+
+```{webr}
+responses_clean |>
+  mutate(
+    age = parse_number(q1_age),
+    age = if_else(age >= 18 & age <= 99, age, NA)
+  ) |>
+  count(q1_age, age) |>
+  filter(is.na(age) | q1_age != as.character(age))
+```
+
+**How to report it (methods section):** Of 82 exported records, 2 test responses and 2 duplicate submissions were excluded; 78 responses were analysed. One implausible age (230) was treated as missing.
+
+## Package comparison {#packages}
+
+| Task | Recommended | Alternative |
+|---|---|---|
+| Rows, columns, new values | **dplyr** (`filter`, `select`, `mutate`, `case_when`) | Base R with `[ ]` and `ifelse()`: shorter for single cases, harder to read |
+| Column names | **janitor** `clean_names()` | `dplyr::rename()` for single names |
+| Text | **stringr** (`str_trim`, `str_to_lower`, `str_detect`) | Base R `trimws()`, `tolower()`, `grepl()` (same result) |
+| Categories | **forcats** (`fct_relevel`, `fct_collapse`, `fct_lump`) | `factor(x, levels = ...)` |
+| Date and time | **lubridate** (`ymd_hms`, `parse_date_time`) | `as.POSIXct(x, format = ...)`, only one format per call |
+| Checking duplicates | `janitor::get_dupes()` | `filter(n() > 1, .by = id)` |
+
+## Exercises {#exercises}
+
+Four required exercises and three optional exercises. **Run and check** runs your code and checks it right away. Reveal hints one at a time (**Show Hint**), the solution only after that.
+
+{{< include /_generated/en/cleaning-beginner/exercises.qmd >}}
+
+## Knowledge check {#check}
+
+{{< include /_generated/en/cleaning-beginner/quiz.qmd >}}
+
+## Cheat sheet {#cheatsheet}
+
+```r
+responses_clean <- responses |>
+  filter(status != "Survey Preview") |>            # rows
+  distinct() |>                                    # identical rows
+  select(-x) |>                                    # columns
+  mutate(
+    gender = str_to_lower(str_trim(q2_gender)),    # standardise text
+    gender = case_when(
+      gender %in% c("female", "f", "woman") ~ "female",
+      gender %in% c("male", "m") ~ "male",
+      gender == "diverse" ~ "diverse"
+    ),
+    gender = factor(gender, levels = c("female", "male", "diverse")),
+    age = parse_number(q1_age),
+    start = parse_date_time(start_date, orders = c("Ymd HMS", "dmY HM", "mdY IMp"))
+  )
+
+count(responses_clean, q2_gender, gender)          # check
+```
+
+- Several allowed values: `%in%`, not `==`.
+- `case_when()` without a fallback if `NA` should stay `NA`.
+- Reorder levels with `fct_relevel()`, never with `levels(x) <-`.
+- Check the row count after every step and record it for the methods section.
+
+{{< include /_generated/en/cleaning-beginner/footer.qmd >}}

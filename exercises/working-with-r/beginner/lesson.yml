@@ -3,7 +3,6 @@
 lesson: working-with-r-beginner
 minutes: 30
 prerequisites: []
-langs: [de]
 packages: [dplyr]
 data: [driving_sim]
 goals:

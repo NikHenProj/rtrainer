@@ -1,6 +1,12 @@
 # rtrainer (Quarto course)
 
-## Milestone 8, part 2c: beginner lessons scales, regression, reporting (DE) (awaiting acceptance)
+## Milestone 8, part 3a: English beginner lessons working-with-r, import, cleaning (awaiting acceptance)
+
+- English pages `en/working-with-r-beginner.qmd`, `en/import-beginner.qmd`, `en/cleaning-beginner.qmd`, translated from the accepted German lessons with identical code, data, figures (SVG labels and descriptions translated) and exercise IDs; `langs: [de]` removed from their `lesson.yml`, so the English course plan links them.
+- Proofread the English texts of the 18 exercises and 3 quizzes; two wording fixes ("run `library(janitor)`", `as.numeric()` on `34 years` gives `NA` with only a warning).
+- Smoke test: the English course-plan step now expects `cleaning-beginner` linked and the still German-only `reshaping-beginner` not linked.
+
+## Milestone 8, part 2c: beginner lessons scales, regression, reporting (DE) (accepted, merged into main)
 
 - Lessons (German, `langs: [de]`): `scales-beginner` (reverse keying `8 - x`, SUS score as 25 × mean of contributions, `datawizard::row_means(min_valid = 5)`, attention-check exclusions, `psych::alpha()` with negative α from unreversed items; 4 required + 1 optional), `regression-beginner` (correlation at the participant level with `correlation()`, `lm()` with centred and scaled predictor read via `model_parameters()`, factor coefficients as reference-level differences, two predictors; 3 + 1), `reporting-beginner` (`tbl_summary()` Table 1 and its `type`/`statistic`, `report()` on `lm()`, reading a `report()` t-test text incl. sign and p-value, `tbl_regression()`; 4 + 1). Each with 5 knowledge-check questions. "Run locally" box for Word export via flextable.
 - Migrated from legacy: correlation (now `debug`, `correlation()` instead of `cor.test()`), lm-centered (`model_parameters()`; values recomputed for the new `driving_sim`: 997 ms at 40, +27 ms per decade, CI [−4, 59]). All 18 beginner legacy exercises of the triage are now migrated.

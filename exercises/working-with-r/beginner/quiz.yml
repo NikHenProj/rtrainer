@@ -39,7 +39,7 @@ questions:
         correct: true
         explain:
           de: "Richtig: `library(janitor)` laden oder `janitor::clean_names()` schreiben."
-          en: "Right: load `library(janitor)` or write `janitor::clean_names()`."
+          en: "Right: run `library(janitor)` or write `janitor::clean_names()`."
       - text:
           de: "In den Daten fehlt eine Spalte `clean_names`."
           en: "The data lack a column `clean_names`."

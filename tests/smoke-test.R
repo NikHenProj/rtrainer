@@ -186,7 +186,7 @@ step("reporting: gtsummary table graded correct", !is.na(checked), sprintf("%s s
 
 goto("/en/index.html")
 Sys.sleep(1)
-step("en: German-only lesson not linked in course plan", js("!document.querySelector('a[href*=\"cleaning-beginner\"]')"))
+step("en: translated lesson linked, German-only lesson not", js("!!document.querySelector('a[href*=\"cleaning-beginner\"]') && !document.querySelector('a[href*=\"reshaping-beginner\"]')"))
 
 cat(sprintf("\n%d failure(s)\n", length(failures)))
 if (length(failures) > 0) quit(status = 1)

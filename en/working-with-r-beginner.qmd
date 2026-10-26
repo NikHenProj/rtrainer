@@ -1,0 +1,158 @@
+---
+title: "Working with R"
+subtitle: "Beginner · Objects, functions, missing values, error messages"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr]
+resources:
+  - ../data/driving_sim.csv
+---
+
+{{< include /_generated/en/working-with-r-beginner/runtime.qmd >}}
+
+{{< include /_generated/en/working-with-r-beginner/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R runs directly in your browser. On the first visit it takes 10–30 seconds to load (status at the bottom right); after that it is faster.
+:::
+
+## Why? {#why}
+
+**Research question:** How fast do drivers respond to a take-over request on average, and how many measurements are missing?
+
+Before you compare groups or fit models, you look at the data: What is in it, which values are missing, what does R say when something goes wrong? This lesson shows the building blocks that appear in every later lesson. It uses the driving simulator study `driving_sim`: 40 participants, 12 take-overs each, reaction time `rt_ms`.
+
+## Concept {#concept}
+
+R code consists of a few building blocks:
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 150" role="img" aria-labelledby="fig-wr-title fig-wr-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-wr-title">Anatomy of a line of R code</title>
+  <desc id="fig-wr-desc">The line mean_rt gets mean of driving_sim dollar rt_ms, na.rm equals TRUE. Labelled are: the object left of the assignment arrow, the function, a column of a table and an argument.</desc>
+  <text x="20" y="80" class="rt-fig-code">mean_rt &lt;- mean(driving_sim$rt_ms, na.rm = TRUE)</text>
+  <rect x="14" y="62" width="64" height="26" rx="4" class="rt-fig-box-accent" />
+  <rect x="102" y="62" width="38" height="26" rx="4" class="rt-fig-box" />
+  <rect x="141" y="62" width="140" height="26" rx="4" class="rt-fig-box" />
+  <rect x="289" y="62" width="101" height="26" rx="4" class="rt-fig-box" />
+  <text x="46" y="45" text-anchor="middle" class="rt-fig-label">object</text>
+  <text x="121" y="45" text-anchor="middle" class="rt-fig-label">function</text>
+  <text x="211" y="120" text-anchor="middle" class="rt-fig-label">table$column</text>
+  <text x="339" y="120" text-anchor="middle" class="rt-fig-label">argument</text>
+  <text x="90" y="120" text-anchor="middle" class="rt-fig-label rt-fig-muted">&lt;- stores</text>
+</svg>
+<figcaption>Left of the arrow is the name, right of it the calculation. Arguments control how a function computes.</figcaption>
+</figure>
+```
+
+- **Objects** store results: `mean_rt <- ...`. Without `<-` the result is only shown, not stored.
+- **Functions** compute: `mean(x)`. Their **arguments** are listed in the help (`?mean`), with defaults such as `na.rm = FALSE`.
+- **Vectors and tables:** a column is a vector (`driving_sim$rt_ms`); a table (data frame, tibble) is a list of columns of equal length.
+- **Missing values** are called `NA` ("not available"). Computing with `NA` gives `NA` until you explicitly say otherwise.
+- **Text in quotes, names without:** `condition == "visual"` compares the column `condition` with the text `"visual"`.
+- **The pipe `|>`** passes the result on the left as the first argument to the right. Read it as "and then".
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## More: reading error messages
+
+R messages are short but precise. The most common ones:
+
+| Message | Usually means |
+|---|---|
+| `object 'x' not found` | Typo, missing quotes, or code not run yet |
+| `could not find function "f"` | Package not loaded (`library(pkg)` or `pkg::f()`) |
+| `unexpected symbol` / `unexpected ')'` | A bracket or comma is missing or one too many |
+| `argument "x" is missing, with no default` | A required argument was left out |
+| `Warning: NAs introduced by coercion` | Text could not be converted to numbers; check the values |
+
+A **warning** does not stop the code but deserves a look. An **error** stops it.
+:::
+
+## Example {#example}
+
+A first look at the data: columns, types and the first values. Click **Run Code**; you can change the code and run it again.
+
+```{webr}
+glimpse(driving_sim)
+```
+
+How many reaction times are missing? `is.na()` returns `TRUE` or `FALSE` for every value, `sum()` counts the `TRUE`s:
+
+```{webr}
+sum(is.na(driving_sim$rt_ms))
+```
+
+That is why the mean is `NA` at first; with `na.rm = TRUE` it uses the available values:
+
+```{webr}
+mean(driving_sim$rt_ms)
+mean(driving_sim$rt_ms, na.rm = TRUE)
+```
+
+The same as a **dplyr** pipeline, per warning modality:
+
+```{webr}
+driving_sim |>
+  summarise(mean_rt = mean(rt_ms, na.rm = TRUE), n_missing = sum(is.na(rt_ms)), .by = condition)
+```
+
+**How to report it:** The mean reaction time was 1004 ms; 12 of 480 measurements (2.5%) were missing due to sensor dropouts.
+
+## Package comparison {#packages}
+
+| Approach | Strength | When |
+|---|---|---|
+| Base R: `mean(driving_sim$rt_ms, na.rm = TRUE)` | Short, no packages, found everywhere in other people's code | Single statistics, quick checks |
+| dplyr: `driving_sim |> summarise(...)` | Reads top to bottom, groups with `.by`, result is a table | **Recommended** for anything beyond a single value |
+| `glimpse()` / `str()` / `summary()` | Overview of columns, types, missing values | Always right after reading data |
+
+::: {.callout-note appearance="simple"}
+## Run locally
+
+In the browser everything is set up. Locally, this works best:
+
+1. **Create a project:** in RStudio *File → New Project*, in Positron open a folder. The project folder is then the working directory, and paths like `"data/driving_sim.csv"` work on every computer.
+2. **Quarto document instead of loose scripts:** *File → New File → Quarto Document*. Text, code and results stay together and can be rendered to HTML or Word.
+3. **Install packages once, load them in every session:**
+
+```r
+install.packages(c("tidyverse", "easystats"))
+library(dplyr)
+```
+:::
+
+## Exercises {#exercises}
+
+Three required exercises and one optional exercise. **Run and check** runs your code and checks it right away. Reveal hints one at a time (**Show Hint**), the solution only after that.
+
+{{< include /_generated/en/working-with-r-beginner/exercises.qmd >}}
+
+## Knowledge check {#check}
+
+{{< include /_generated/en/working-with-r-beginner/quiz.qmd >}}
+
+## Cheat sheet {#cheatsheet}
+
+```r
+# Overview
+glimpse(driving_sim)
+summary(driving_sim$rt_ms)
+
+# Count missing values and leave them out on purpose
+sum(is.na(driving_sim$rt_ms))
+mean_rt <- round(mean(driving_sim$rt_ms, na.rm = TRUE), 1)
+
+# Compare text: column without, value with quotes
+driving_sim |> filter(condition == "visual")
+
+# Help
+?quantile
+```
+
+- `<-` stores; without `<-` the result is only shown.
+- `NA` is contagious: computing with `NA` gives `NA`. Count first, then choose `na.rm = TRUE` on purpose.
+- Read the error message first: which name, which function, which line?
+
+{{< include /_generated/en/working-with-r-beginner/footer.qmd >}}

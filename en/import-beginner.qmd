@@ -1,0 +1,154 @@
+---
+title: "Importing data"
+subtitle: "Beginner · CSV and Excel exports from survey tools"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [readr, readxl, janitor]
+resources:
+  - ../data/raw_export.csv
+  - ../data/raw_export.xlsx
+---
+
+{{< include /_generated/en/import-beginner/runtime.qmd >}}
+
+{{< include /_generated/en/import-beginner/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R runs directly in your browser. On the first visit it takes 10–30 seconds to load (status at the bottom right); after that it is faster.
+:::
+
+## Why? {#why}
+
+**Research question:** How satisfied were the participants of the remote study with the app?
+
+The responses come as an export from the survey tool, once as CSV and once as an Excel file. Neither looks like a clean table: info lines above the header, a second header row with the question text, decimal commas, `-99` for "no answer", a totals row. If you read this carelessly, you later compute with wrong numbers, often without any error message.
+
+## Concept {#concept}
+
+Reading a file means telling R four things about it:
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 190" role="img" aria-labelledby="fig-imp-title fig-imp-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-imp-title">Structure of the CSV export</title>
+  <desc id="fig-imp-desc">Lines 1 to 3 are export info and are skipped, line 4 is the header with the column names, line 5 the question text, from line 6 on follow the responses with semicolon as delimiter and comma as decimal mark.</desc>
+  <rect x="20" y="10" width="330" height="44" rx="4" class="rt-fig-box" />
+  <text x="32" y="28" class="rt-fig-code rt-fig-muted">Survey export: App feedback …</text>
+  <text x="32" y="46" class="rt-fig-code rt-fig-muted">Exported: 2026-03-24 …</text>
+  <rect x="20" y="62" width="330" height="24" rx="4" class="rt-fig-box-accent" />
+  <text x="32" y="79" class="rt-fig-code">"Response ID";"Start Date";…</text>
+  <rect x="20" y="94" width="330" height="24" rx="4" class="rt-fig-box" />
+  <text x="32" y="111" class="rt-fig-code rt-fig-muted">"Response ID";"How old are…</text>
+  <rect x="20" y="126" width="330" height="52" rx="4" class="rt-fig-box-accent" />
+  <text x="32" y="144" class="rt-fig-code">"R_0001";…;"308,0";…</text>
+  <text x="32" y="166" class="rt-fig-code">"R_0002";…;"-99";…</text>
+  <text x="365" y="37" class="rt-fig-label">skip (lines 1–3)</text>
+  <text x="365" y="79" class="rt-fig-label">column names</text>
+  <text x="365" y="111" class="rt-fig-label">question text: skip</text>
+  <text x="365" y="144" class="rt-fig-label">delim = ";"</text>
+  <text x="365" y="166" class="rt-fig-label">decimal_mark, na</text>
+</svg>
+<figcaption>Look at the file first, then specify the delimiter, lines to skip, number format and missing-value codes.</figcaption>
+</figure>
+```
+
+- **Delimiter (`delim`):** `;` in German and many other European exports, because the comma is the decimal mark.
+- **Skip lines (`skip`), limit length (`n_max`):** for info lines at the top and totals rows at the bottom.
+- **Number format (`locale`):** `locale(decimal_mark = ",")`. Without it, `308,0` silently becomes 3080.
+- **Missing-value codes (`na`):** `-99`, `n/a` or `999` are valid values for R until you declare them missing.
+- **Check afterwards:** types (`<dbl>`, `<chr>`, `<lgl>`), number of rows, value ranges. A text column where numbers should be almost always points to a problem in the data.
+
+## Example {#example}
+
+Before reading, look at the raw file line by line:
+
+```{webr}
+readLines(raw_export_csv, n = 6)
+```
+
+Then read it. The column names are in line 4, the responses start in line 6:
+
+```{webr}
+header <- read_delim(raw_export_csv, delim = ";", skip = 3, n_max = 0, show_col_types = FALSE)
+raw <- read_delim(
+  raw_export_csv,
+  delim = ";",
+  skip = 5,
+  col_names = names(header),
+  locale = locale(decimal_mark = ","),
+  na = c("", "NA", "n/a", "-99"),
+  show_col_types = FALSE
+)
+raw
+```
+
+Which types did readr detect? `spec()` shows them; text columns (`col_character()`) containing numbers are candidates for cleaning:
+
+```{webr}
+spec(raw)
+```
+
+The same responses from Excel. `excel_sheets()` lists the sheets, `range` sets the table area, `clean_names()` makes the names R-friendly:
+
+```{webr}
+excel_sheets(raw_export_xlsx)
+read_excel(raw_export_xlsx, sheet = "Export", range = "A4:N86") |>
+  clean_names()
+```
+
+**How to report it (methods section):** Of 82 exported records, 2 were test responses and 2 were duplicate submissions; 78 responses were analysed. Missing-value codes (`-99`) were treated as missing. (Removing them follows in the lesson "Cleaning data".)
+
+## Package comparison {#packages}
+
+| Approach | Strength | When |
+|---|---|---|
+| `readr::read_delim()` / `read_csv()` / `read_csv2()` | Fast, no automatic factors, reports types and problems (`problems()`) | **Recommended** for CSV and text |
+| `utils::read.csv()` / `read.csv2()` | No packages; common in older code | When no packages are allowed; column names get changed (`Response.ID`) |
+| `readxl::read_excel()` | Reads `.xls` and `.xlsx` without Excel, specific ranges and sheets | **Recommended** for Excel |
+| `haven::read_sav()` | SPSS files with value labels (Qualtrics, LimeSurvey, SoSci Survey) | When the tool exports SPSS: labels are kept |
+
+::: {.callout-note appearance="simple"}
+## Run locally
+
+In the browser the files are already in place. Locally, you read from the project folder, e.g. `read_delim("data/raw_export.csv", ...)`. For SPSS exports:
+
+```r
+survey <- haven::read_sav("data/export.sav")
+haven::as_factor(survey)   # value labels as factor levels
+```
+:::
+
+## Exercises {#exercises}
+
+Three required exercises and one optional exercise. **Run and check** runs your code and checks it right away. Reveal hints one at a time (**Show Hint**), the solution only after that.
+
+{{< include /_generated/en/import-beginner/exercises.qmd >}}
+
+## Knowledge check {#check}
+
+{{< include /_generated/en/import-beginner/quiz.qmd >}}
+
+## Cheat sheet {#cheatsheet}
+
+```r
+# Look first
+readLines("data/raw_export.csv", n = 6)
+
+# CSV with ; and decimal comma, info lines and missing-value codes
+header <- read_delim(file, delim = ";", skip = 3, n_max = 0)
+raw <- read_delim(file, delim = ";", skip = 5, col_names = names(header),
+                  locale = locale(decimal_mark = ","), na = c("", "NA", "-99"))
+
+# Excel: sheet and range
+read_excel(file, sheet = "Export", range = "A4:N86") |> janitor::clean_names()
+
+# Check afterwards
+spec(raw); problems(raw); nrow(raw); tail(raw)
+```
+
+- Decimal comma → `locale(decimal_mark = ",")` or `read_csv2()`.
+- Declare missing-value codes when reading with `na = ...` (keep the defaults `""` and `"NA"`).
+- After reading, always check types, number of rows and the end of the table.
+
+{{< include /_generated/en/import-beginner/footer.qmd >}}

@@ -3,7 +3,6 @@
 lesson: cleaning-beginner
 minutes: 50
 prerequisites: [import-beginner]
-langs: [de]
 packages: [dplyr, stringr, forcats, lubridate, readr, janitor]
 data: [driving_sim, raw_export]
 goals:

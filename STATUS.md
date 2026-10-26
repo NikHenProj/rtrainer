@@ -1,11 +1,11 @@
 # STATUS
 
-Stand (2026-10-26): **M6 bis M8 Teil 2b abgenommen und in `main`.** **M8 Teil 2c fertig, wartet auf Abnahme:** Beginner-Lektionen scales, regression, reporting (nur DE); Wertvergleich wertet bei falschem quarto-live-`last_value` den Code neu aus; gtsummary-Tabellen vergleichbar. Damit ist der Beginner-Pfad (DE) vollständig. Nichts gepusht (`main` ist `origin/main` voraus). Entscheidungen: NEWS.md.
+Stand (2026-10-26): **M6 bis M8 Teil 2c abgenommen und in `main`.** **M8 Teil 3a fertig, wartet auf Abnahme:** EN-Fassung der Beginner-Lektionen working-with-r, import, cleaning (Übungs- und Quiztexte EN gegengelesen). Nichts gepusht (`main` ist `origin/main` voraus). Entscheidungen: NEWS.md.
 
 ## Was steht
 - **Gerüst (M6):** Quarto-Website mit quarto-live/webR, Theme hell/dunkel (IBM Plex Sans, JetBrains Mono, Indigo), Kopfzeile Kursplan · Wiederholen (n fällig) · Pakete · Glossar · DE/EN · Hell/Dunkel · Suche.
 - **Kursplan** (`de/index.qmd`, `en/index.qmd`): Matrix 23 Themen × 3 Stufen, Status je Zelle, „Weitermachen mit / Als Nächstes“, „Heute wiederholen (n)“.
-- **Lektionen:** `working-with-r-beginner`, `import-beginner`, `cleaning-beginner`, `reshaping-beginner`, `visualisation-beginner`, `descriptives-beginner`, `scales-beginner`, `regression-beginner`, `reporting-beginner` (nur DE, `langs: [de]`; 33 Pflicht- + 13 Zusatzübungen, je 5 Fragen Wissenscheck) und `group-comparisons-beginner` in DE und EN: Breadcrumb, Lektionskasten mit Fortschritt, links „Abschnitt x von 7“ (ab 1200 px), rechts Inhaltsverzeichnis, 3 Pflichtübungen (YAML), Wissenscheck (5 Fragen, ≥ 80 %), Spickzettel, Zurück/Weiter.
+- **Lektionen:** `working-with-r-beginner`, `import-beginner`, `cleaning-beginner`, `reshaping-beginner`, `visualisation-beginner`, `descriptives-beginner`, `scales-beginner`, `regression-beginner`, `reporting-beginner` (33 Pflicht- + 13 Zusatzübungen, je 5 Fragen Wissenscheck). In DE und EN: `working-with-r`, `import`, `cleaning`, `group-comparisons` (je `-beginner`); die übrigen 6 nur DE (`langs: [de]`). Aufbau: Breadcrumb, Lektionskasten mit Fortschritt, links „Abschnitt x von 7“ (ab 1200 px), rechts Inhaltsverzeichnis, 3 Pflichtübungen (YAML), Wissenscheck (5 Fragen, ≥ 80 %), Spickzettel, Zurück/Weiter.
 - **Wiederholung** (`review.qmd`): Leitner Boxen 1–5 (0/1/3/7/21 Tage), Sicherheits-Rating vor dem Prüfen, Leicht/Okay/Schwer, Serie, Mischen nach Lektionen; R lädt erst beim Start. Export/Import des Fortschritts (`#backup`).
 - **Pakete und Glossar** aus YAML (`content/packages/*.yml`, `content/glossary.yml`), Vorlagen für weitere Einträge.
 - **Sprachen:** `/de/` und `/en/`; Umschalter führt zur gleichen Seite und zum gleichen Abschnitt; Fortschritt sprachübergreifend.
@@ -15,14 +15,14 @@ Stand (2026-10-26): **M6 bis M8 Teil 2b abgenommen und in `main`.** **M8 Teil 2c
 - **Triage** `docs/legacy-triage.md`: 54 behalten (18 im Beginner-Pfad), 11 streichen, freigegeben. Migriert: 18 (markiert), damit alle Beginner-Aufgaben der Triage.
 - Alt: `legacy/exercises/` (65 Aufgaben), `legacy/driving_sim_v0.*`.
 
-## Geprüft (2026-10-26, M8 Teil 2c)
-Über `rtrainer-verifier` (echte Ausgabe, gekürzt; zweiter Lauf nach dem Fix):
+## Geprüft (2026-10-26, M8 Teil 3a)
+Über Verifier-Subagent (echte Ausgabe, gekürzt):
 - `Rscript tools/selftest.R`: 49/49 exercises ok
-- `testthat::test_dir("tools/tests")`: FAIL 0 | WARN 4 | SKIP 0 | PASS 190 (WARN: erwartete Meldungen der scheiternden Starter: `ymd_hms` in cleaning/dates, psych-Hinweis „negatively correlated“ in sc-b-alpha); `node --test tests/js`: 12 pass, 0 fail
-- `quarto render`: Exit 0, 20 Seiten, 0 Warnungen
-- `Rscript tests/smoke-test.R`: 19/19 ok, 0 failure(s). Reporting (neu): webR + gtsummary + report + broom.helpers 15,2 s (Visualisierung zum Vergleich 10,6 s), Tabellenlösung korrekt in 4,6 s.
-- Erster Lauf scheiterte (Rauchtest Reporting): quarto-live gab `knit_asis` statt gtsummary-Objekt weiter; außerdem `NULL` bei `report()` und `1L` beim ersten psych-Aufruf (im Browser gefunden). Behoben in `rt_check()`.
-- Manuell im Browser (in-app, `_site`): alle 5 Reporting-, 4 Skalen- und 4 Regressionsübungen mit Lösung „Richtig!“, Starter von sc-b-alpha, sc-b-scale-score, rp-b-table1, rp-b-report-lm mit passender Meldung.
+- `testthat::test_dir("tools/tests")`: FAIL 0 | WARN 4 | SKIP 0 | PASS 190 (WARN: erwartete Meldungen der scheiternden Starter, `ymd_hms` in cleaning/dates, psych-Hinweis in sc-b-alpha); `node --test tests/js`: 12 pass, 0 fail
+- `quarto render`: Exit 0, 23 Seiten, 0 Warnungen
+- `Rscript tests/smoke-test.R`: 19/19 ok, 0 failure(s); EN-Kursplan verlinkt cleaning, nicht reshaping.
+- Statisch: die drei EN-Seiten existieren, keine deutschen UI-Texte („Ausführen“, „Hinweis zeigen“) im HTML.
+- Nicht manuell im Browser geprüft (EN-Seiten 3a).
 
 ## Offen / bekannte Lücken
 - Beginner-Lektionen 1–6 nicht manuell im Browser durchgeklickt (7–9 nur die Übungen, nicht Wissenscheck/Optik), nur Rauchtest (je eine Übung in cleaning und visualisation); Beispiel-Plots und SVG-Abbildungen von reshaping/visualisation/descriptives optisch nicht geprüft.
@@ -35,8 +35,8 @@ Stand (2026-10-26): **M6 bis M8 Teil 2b abgenommen und in `main`.** **M8 Teil 2c
 - Kursplan: „nicht vorgesehen“-Zellen werden vom Screenreader einzeln vorgelesen (19×); ggf. kürzen.
 
 ## Als Nächstes
-1. Abnahme M8 Teil 2c durch Nick (Lektionen scales, regression, reporting im Browser ansehen; SVG-Abbildungen, Texte, Wissenscheck).
-2. Danach EN-Fassung aller Beginner-Lektionen (`langs` entfernen, `en/<slug>-beginner.qmd` schreiben; Übungs-YAML ist schon zweisprachig), in Paketen von ca. 3 Lektionen.
+1. Abnahme M8 Teil 3a durch Nick (EN-Seiten working-with-r, import, cleaning im Browser ansehen).
+2. M8 Teil 3b: EN-Fassung reshaping, visualisation, descriptives (`langs` entfernen, `en/<slug>-beginner.qmd`, EN-Texte im Übungs-YAML gegenlesen; Rauchtest-Schritt „translated lesson linked, German-only lesson not“ auf eine noch deutsche Lektion umstellen, z. B. scales). Danach 3c: scales, regression, reporting (Schritt dann entfernen oder umdrehen).
 3. Mini-Projekt Beginner (vollständige Analyse `survey` oder `usability`: Import → Bereinigung → Skalen → Vergleich → Bericht).
 4. Pages einrichten, pushen (nur nach Rückfrage).
 

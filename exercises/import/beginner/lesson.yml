@@ -3,7 +3,6 @@
 lesson: import-beginner
 minutes: 40
 prerequisites: [working-with-r-beginner]
-langs: [de]
 packages: [readr, readxl, janitor]
 data: [raw_export, raw_export_xlsx]
 goals:

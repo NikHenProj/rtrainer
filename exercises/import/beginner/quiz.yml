@@ -46,7 +46,7 @@ questions:
         correct: false
         explain:
           de: "Dann wird `34 years` still zu `NA` (nur mit Warnung), obwohl die Zahl rettbar ist."
-          en: "Then `34 years` silently becomes `NA` (only with a warning), although the number could be saved."
+          en: "Then `34 years` becomes `NA` with nothing more than a warning, although the number could be rescued."
       - text:
           de: "Die Spalte löschen, weil sie fehlerhaft ist."
           en: "Delete the column because it is faulty."
