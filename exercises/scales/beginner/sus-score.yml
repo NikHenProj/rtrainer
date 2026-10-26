@@ -1,0 +1,86 @@
+id: sc-b-sus-score
+lesson: scales-beginner
+order: 2
+title:
+  de: Den SUS-Wert berechnen
+  en: Computing the SUS score
+kind: complete
+required: true
+packages: [dplyr]
+data: [survey]
+setup: |
+  library(dplyr)
+prompt:
+  de: |
+    Die System Usability Scale (SUS) hat zehn Items von 1 bis 5. Ungerade Items
+    sind positiv, gerade negativ formuliert. Jedes Item trägt 0 bis 4 Punkte bei:
+    ungerade Items `x - 1`, gerade Items `5 - x`. Der SUS-Wert (0–100) ist das
+    25-Fache des Mittelwerts dieser Beiträge; so zählen auch Personen mit einem
+    fehlenden Item.
+
+    Ersetze die Lücken `______`. Ergebnis: `respondent`, `interface` und `sus`.
+  en: |
+    The System Usability Scale (SUS) has ten items from 1 to 5. Odd items are
+    positively, even items negatively worded. Each item contributes 0 to 4
+    points: odd items `x - 1`, even items `5 - x`. The SUS score (0–100) is 25
+    times the mean of these contributions; that way respondents with a missing
+    item still count.
+
+    Replace the gaps `______`. Result: `respondent`, `interface` and `sus`.
+starter: |
+  survey |>
+    mutate(
+      across(c(sus_01, sus_03, sus_05, sus_07, sus_09), \(x) ______),
+      across(c(sus_02, sus_04, sus_06, sus_08, sus_10), \(x) ______),
+      sus = ______ * rowMeans(pick(sus_01:sus_10), na.rm = TRUE)
+    ) |>
+    select(respondent, interface, sus)
+solution: |
+  survey |>
+    mutate(
+      across(c(sus_01, sus_03, sus_05, sus_07, sus_09), \(x) x - 1),
+      across(c(sus_02, sus_04, sus_06, sus_08, sus_10), \(x) 5 - x),
+      sus = 25 * rowMeans(pick(sus_01:sus_10), na.rm = TRUE)
+    ) |>
+    select(respondent, interface, sus)
+hints:
+  - de: "Die ersten beiden Lücken sind die Beiträge aus dem Aufgabentext, je eine Rechnung mit `x`."
+    en: "The first two gaps are the contributions from the task text, one calculation with `x` each."
+  - de: "Zehn Beiträge von 0–4 ergeben als Summe 0–40, als Mittelwert 0–4. Womit kommt der Mittelwert auf 0–100?"
+    en: "Ten contributions of 0–4 add up to 0–40; their mean is 0–4. What brings the mean to 0–100?"
+  - de: "Ungerade: `x - 1`, gerade: `5 - x`, Faktor: 100 / 4."
+    en: "Odd: `x - 1`, even: `5 - x`, factor: 100 / 4."
+explanation:
+  de: |
+    Das Original rechnet `2.5 * Summe` der zehn Beiträge; bei vollständigen
+    Antworten ist das genau `25 * Mittelwert`. Der Mittelwert hat den Vorteil,
+    dass 40 Befragte mit einem oder zwei fehlenden Items nicht herausfallen
+    (`rowSums(na.rm = TRUE)` würde ihren Wert dagegen nach unten ziehen). Der
+    SUS-Wert ist kein Prozentwert: Der Durchschnitt vieler Studien liegt bei
+    etwa 68. Touch kommt hier auf M = 51,1, Voice auf M = 61,7, beide unter
+    diesem Richtwert. Fallstrick: Die geraden Items nicht umzupolen ergibt einen
+    Wert um 50, egal wie gut das System ist.
+  en: |
+    The original computes `2.5 * sum` of the ten contributions; with complete
+    answers that is exactly `25 * mean`. The mean has the advantage that 40
+    respondents with one or two missing items do not drop out
+    (`rowSums(na.rm = TRUE)` would instead pull their score down). The SUS score
+    is not a percentage: the average across many studies is about 68. Touch gets
+    M = 51.1 here, voice M = 61.7, both below this benchmark. Pitfall: not
+    reversing the even items gives a score around 50, however good the system is.
+check:
+  type: value
+  ignore_row_order: true
+common_mistakes:
+  - pattern: "sus\\s*=\\s*2\\.5\\s*\\*"
+    message:
+      de: "Der Faktor 2,5 gehört zur Summe der zehn Beiträge. Für den Mittelwert (0–4) brauchst du 25."
+      en: "The factor 2.5 belongs to the sum of the ten contributions. For the mean (0–4) you need 25."
+  - pattern: "sus_09\\),\\s*\\\\\\(x\\)\\s*5\\s*-\\s*x"
+    message:
+      de: "Vertauscht: Die ungeraden Items sind positiv formuliert und bekommen `x - 1`, die geraden `5 - x`."
+      en: "Swapped: the odd items are positively worded and get `x - 1`, the even ones `5 - x`."
+  - pattern: "\\b6\\s*-\\s*x"
+    message:
+      de: "`6 - x` polt zwar um, ergibt aber 1–5. Ein SUS-Beitrag geht von 0 bis 4, also `5 - x`."
+      en: "`6 - x` reverses, but gives 1–5. A SUS contribution runs from 0 to 4, so `5 - x`."

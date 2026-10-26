@@ -37,6 +37,26 @@ test_that("rt_compare compares htest results and explains wrong df", {
   expect_match(rt_compare(student, welch, lang = "en"), "degrees of freedom")
 })
 
+test_that("rt_compare compares gtsummary tables by content, not by call", {
+  skip_if_not_installed("gtsummary")
+  d <- data.frame(
+    g = rep(c("a", "b"), each = 12),
+    x = (1:24)^1.5,
+    s = rep(c("f", "m"), 12)
+  )
+  expected <- gtsummary::tbl_summary(d, by = g, include = c(x, s))
+  same <- gtsummary::tbl_summary(d[c("g", "x", "s")], by = g)
+  expect_null(rt_compare(same, expected))
+  expect_match(rt_compare(gtsummary::tbl_summary(d, by = g, include = x), expected), "andere Variablen")
+  expect_match(rt_compare(gtsummary::tbl_summary(d[-24, ], by = g, include = c(x, s)), expected), "Tabellenkopf")
+  mean_sd <- gtsummary::tbl_summary(
+    d, by = g, include = c(x, s), statistic = gtsummary::all_continuous() ~ "{mean} ({sd})"
+  )
+  expect_match(rt_compare(mean_sd, expected), "Kennwerte")
+  expect_match(rt_compare(d, expected), "gtsummary")
+  expect_match(rt_compare(mean_sd, expected, lang = "en"), "statistics")
+})
+
 test_that("rt_check reports success, mistakes and generic problems", {
   env <- new.env()
   env$.solution <- 5
@@ -83,6 +103,32 @@ test_that("rt_checker evaluates check code with quarto-live's arguments", {
   wrong <- rt_checker("ex", "1", code, new.env(), last_value = 1, solution = 2)
   expect_false(wrong$correct)
   expect_null(rt_checker("ex", "1", NULL, new.env(), last_value = 1))
+})
+
+test_that("rt_check re-evaluates the code when quarto-live passes the wrong last value", {
+  code <- 'rt_check(spec = list(type = "value"), mistakes = list(), lang = "de")'
+  env <- new.env()
+  env$d <- data.frame(a = 1:2)
+  asis <- structure("<table></table>", class = "knit_asis")
+  ok <- rt_checker("ex", "d[1, , drop = FALSE]", code, env, last_value = asis,
+                   solution = data.frame(a = 1L))
+  expect_true(ok$correct)
+  wrong <- rt_checker("ex", "d", code, env, last_value = asis, solution = data.frame(a = 1L))
+  expect_false(wrong$correct)
+  broken <- rt_checker("ex", "stop('x')", code, env, last_value = asis, solution = data.frame(a = 1L))
+  expect_match(broken$message, "Typ")
+  rt_checker("ex", "y <- 1\nd", code, env, last_value = asis, solution = data.frame(a = 1L))
+  expect_false(exists("y", envir = env, inherits = FALSE))
+  # print methods that return cat()'s NULL, e.g. report()
+  cat_print <- rt_checker("ex", "d$a", code, env, last_value = NULL, solution = 1:2)
+  expect_true(cat_print$correct)
+  # code ending in an assignment still has no result
+  assigned <- rt_checker("ex", "z <- d$a", code, env, last_value = NULL, solution = 1:2)
+  expect_false(assigned$correct)
+  expect_match(assigned$message, "kein Ergebnis")
+  # an unrelated last value (seen after loading psych in webR)
+  stray <- rt_checker("ex", "d$a", code, env, last_value = 1L, solution = 1:2)
+  expect_true(stray$correct)
 })
 
 test_that("rt_compare_plot accepts the same plot written differently", {

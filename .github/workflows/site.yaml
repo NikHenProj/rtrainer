@@ -39,6 +39,20 @@ jobs:
             any::tibble
             any::effectsize
             any::parameters
+            any::readr
+            any::readxl
+            any::janitor
+            any::forcats
+            any::lubridate
+            any::stringr
+            any::ggplot2
+            any::datawizard
+            any::psych
+            any::correlation
+            any::performance
+            any::report
+            any::gtsummary
+            any::broom.helpers
             any::chromote
             any::processx
 

@@ -1,0 +1,61 @@
+id: sc-b-straightline-predict
+lesson: scales-beginner
+order: 5
+title:
+  de: SUS bei Durchklicken
+  en: SUS for straightlining
+kind: predict
+required: false
+packages: []
+data: []
+setup: ""
+prompt:
+  de: |
+    Befragte `r133` hat alle zehn SUS-Items mit 3 beantwortet („teils, teils“),
+    ohne die Fragen zu lesen. Welchen SUS-Wert bekommt die Person nach der
+    Rechnung aus Übung 2? Gib die Zahl ein, ohne Code auszuführen.
+  en: |
+    Respondent `r133` answered all ten SUS items with 3 ("neutral") without
+    reading the questions. Which SUS score does this respondent get with the
+    calculation from exercise 2? Type the number without running code.
+starter: |
+  # Deine Vorhersage als Zahl / your prediction as a number
+solution: |
+  50
+hints:
+  - de: "Ein ungerades Item mit 3 trägt `3 - 1` Punkte bei, ein gerades `5 - 3`."
+    en: "An odd item with 3 contributes `3 - 1` points, an even one `5 - 3`."
+  - de: "Alle zehn Beiträge sind gleich. Ihr Mittelwert mal 25 ist der SUS-Wert."
+    en: "All ten contributions are equal. Their mean times 25 is the SUS score."
+explanation:
+  de: |
+    Jedes Item trägt 2 Punkte bei, der Mittelwert ist 2, also SUS = 25 × 2 = 50.
+    Durchklicken landet genau in der Mitte der Skala und sieht im Datensatz
+    unauffällig aus. Die gemischte Polung der SUS macht solche Muster nur
+    sichtbar, wenn man nach ihnen sucht: Bei ehrlichen Antworten widersprechen
+    sich positive und negative Items selten so gleichförmig. Deshalb gehören
+    Aufmerksamkeitsfragen in den Fragebogen und eine Prüfung auf gleiche
+    Antworten über alle Items (Streuung innerhalb der Person = 0) in die
+    Bereinigung.
+  en: |
+    Each item contributes 2 points, the mean is 2, so SUS = 25 × 2 = 50.
+    Straightlining lands exactly in the middle of the scale and looks
+    unremarkable in the data. The mixed keying of the SUS only reveals such
+    patterns if you look for them: honest answers rarely contradict themselves
+    so uniformly across positive and negative items. That is why questionnaires
+    include attention checks, and cleaning includes a check for identical
+    answers across all items (spread within the person = 0).
+misconception:
+  de: "Wer überall die Mitte ankreuzt, fällt im Skalenwert auf."
+  en: "Someone who ticks the middle everywhere stands out in the scale score."
+check:
+  type: value
+common_mistakes:
+  - pattern: "(?m)^\\s*75\\s*$"
+    message:
+      de: "75 wäre `2.5 * 30`, die Summe der Rohantworten. Erst werden die Antworten in Beiträge von 0–4 umgerechnet."
+      en: "75 would be `2.5 * 30`, the sum of the raw answers. The answers are first converted to contributions of 0–4."
+  - pattern: "(?m)^\\s*60\\s*$"
+    message:
+      de: "3 von 5 sind 60 %, aber der SUS ist kein Prozentwert der Rohantwort. Jedes Item trägt hier 2 von 4 Punkten bei."
+      en: "3 of 5 is 60%, but the SUS is not a percentage of the raw answer. Each item contributes 2 of 4 points here."

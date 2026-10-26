@@ -1,0 +1,81 @@
+id: rg-b-correlation
+lesson: regression-beginner
+order: 1
+title:
+  de: Korrelation auf Personenebene
+  en: Correlation at the participant level
+kind: debug
+required: true
+packages: [dplyr, correlation]
+data: [driving_sim]
+setup: |
+  library(dplyr)
+  library(correlation)
+prompt:
+  de: |
+    Hängt das Alter mit der Reaktionszeit zusammen? Der Starter berechnet die
+    Pearson-Korrelation über alle 480 Durchgänge und findet einen hochsignifikanten
+    Zusammenhang. Das Alter ist aber pro Person konstant. Ändere den Code so, dass
+    jede Person genau einmal eingeht: erst pro Person den Mittelwert von `rt_ms`
+    (fehlende Werte ignorieren), dann `correlation()` von `age` und `rt_ms`.
+  en: |
+    Is age related to reaction time? The starter computes the Pearson correlation
+    over all 480 trials and finds a highly significant relationship. But age is
+    constant within each participant. Change the code so that each participant
+    counts exactly once: first the mean of `rt_ms` per participant (ignore
+    missing values), then `correlation()` of `age` and `rt_ms`.
+starter: |
+  driving_sim |>
+    select(age, rt_ms) |>
+    correlation()
+solution: |
+  driving_sim |>
+    summarise(rt_ms = mean(rt_ms, na.rm = TRUE), .by = c(participant, age)) |>
+    select(age, rt_ms) |>
+    correlation()
+hints:
+  - de: "Schau auf `n_Obs` in der Ausgabe des Starters. Wie viele unabhängige Wertepaare gibt es wirklich?"
+    en: "Look at `n_Obs` in the starter's output. How many independent pairs of values are there really?"
+  - de: "Vor `select()` gehört ein `summarise()` mit einer Zeile pro Person; `age` muss dabei erhalten bleiben."
+    en: "Before `select()` you need a `summarise()` with one row per participant; `age` must be kept."
+  - de: "`summarise(rt_ms = mean(rt_ms, na.rm = TRUE), .by = c(participant, ______))`"
+    en: "`summarise(rt_ms = mean(rt_ms, na.rm = TRUE), .by = c(participant, ______))`"
+explanation:
+  de: |
+    Auf Personenebene ist r = .28, 95-%-KI [−.04, .54], p = .089, n = 39 (bei
+    einer Person fehlt das Alter). Die Daten passen also zu keinem bis zu einem
+    deutlichen positiven Zusammenhang; für eine präzise Schätzung sind 39
+    Personen zu wenig. Über alle Durchgänge ergibt sich r = .18 mit KI [.09, .27]
+    und p < .001: Das Intervall ist künstlich schmal, weil jedes Alter zwölfmal
+    vorkommt (Pseudoreplikation), und r sinkt, weil das Rauschen zwischen den
+    Durchgängen hinzukommt. `correlation()` liefert KI, t, df und p in einer
+    Tabelle und lässt fehlende Werte paarweise weg. Bericht: „Alter und mittlere
+    Reaktionszeit korrelierten r = .28, 95-%-KI [−.04, .54], p = .089.“
+  en: |
+    At the participant level, r = .28, 95% CI [−.04, .54], p = .089, n = 39 (age
+    is missing for one participant). The data are thus compatible with anything
+    from no to a clear positive relationship; 39 participants are too few for a
+    precise estimate. Over all trials, r = .18 with CI [.09, .27] and p < .001:
+    the interval is artificially narrow because each age occurs twelve times
+    (pseudoreplication), and r drops because the noise between trials is added.
+    `correlation()` returns CI, t, df and p in one table and drops missing values
+    pairwise. Report: "Age and mean reaction time correlated r = .28, 95% CI
+    [−.04, .54], p = .089."
+misconception:
+  de: "Eine Korrelation über alle Messzeilen beschreibt den Zusammenhang zwischen Personenmerkmalen."
+  en: "A correlation over all measurement rows describes the relationship between participant characteristics."
+check:
+  type: value
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*participant)[\\s\\S]*correlation\\("
+    message:
+      de: "Das Alter ändert sich nicht zwischen Durchgängen. Auf Durchgangsebene zählt jede Person zwölfmal und das KI wird zu schmal. Erst pro `participant` mitteln."
+      en: "Age does not change between trials. At the trial level each participant counts twelve times and the CI becomes too narrow. First average per `participant`."
+  - pattern: "spearman|kendall"
+    message:
+      de: "Verlangt ist die Pearson-Korrelation, die Voreinstellung von `correlation()`."
+      en: "The task asks for the Pearson correlation, the default of `correlation()`."
+  - pattern: "cor\\.test\\(|\\bcor\\("
+    message:
+      de: "`cor()` und `cor.test()` rechnen richtig, liefern aber keine Tabelle. Nimm `correlation()` für KI, df und p auf einen Blick."
+      en: "`cor()` and `cor.test()` compute correctly but do not return a table. Use `correlation()` for CI, df and p at a glance."

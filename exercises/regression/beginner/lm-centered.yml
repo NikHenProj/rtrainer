@@ -1,0 +1,89 @@
+id: rg-b-lm-centered
+lesson: regression-beginner
+order: 2
+title:
+  de: Regression mit zentriertem Prädiktor
+  en: Regression with a centred predictor
+kind: write
+required: true
+packages: [dplyr, parameters]
+data: [driving_sim]
+setup: |
+  library(dplyr)
+  library(parameters)
+  rt_by_person <- driving_sim |>
+    summarise(rt_ms = mean(rt_ms, na.rm = TRUE), .by = c(participant, age))
+prompt:
+  de: |
+    `rt_by_person` hat eine Zeile pro Person mit `age` und mittlerer `rt_ms`.
+    Schätze mit `lm()`, wie stark die Reaktionszeit mit dem Alter steigt. Der
+    Prädiktor `age10` soll **um 40 Jahre zentriert und in Jahrzehnten** gemessen
+    sein: Dann ist der Achsenabschnitt die erwartete Reaktionszeit einer
+    40-jährigen Person und die Steigung die Veränderung pro 10 Jahre.
+
+    Ergebnis: `model_parameters()` des Modells.
+  en: |
+    `rt_by_person` has one row per participant with `age` and mean `rt_ms`.
+    Use `lm()` to estimate how much reaction time increases with age. The
+    predictor `age10` should be **centred at 40 years and measured in decades**:
+    then the intercept is the expected reaction time of a 40-year-old and the
+    slope the change per 10 years.
+
+    Result: `model_parameters()` of the model.
+starter: |
+  fit <- lm(rt_ms ~ age, data = rt_by_person)
+  model_parameters(fit)
+solution: |
+  rt_age <- rt_by_person |>
+    mutate(age10 = (age - 40) / 10)
+  fit <- lm(rt_ms ~ age10, data = rt_age)
+  model_parameters(fit)
+hints:
+  - de: "Bilde den Prädiktor vorher als neue Spalte mit `mutate()`."
+    en: "Create the predictor beforehand as a new column with `mutate()`."
+  - de: "`age10 = (age - 40) / 10`. Direkt in der Formel haben `-` und `/` eine andere Bedeutung."
+    en: "`age10 = (age - 40) / 10`. Directly in the formula, `-` and `/` mean something else."
+  - de: "`fit <- lm(rt_ms ~ age10, data = ______)`, dann `model_parameters(fit)`."
+    en: "`fit <- lm(rt_ms ~ age10, data = ______)`, then `model_parameters(fit)`."
+explanation:
+  de: |
+    Eine 40-jährige Person reagiert im Mittel nach etwa 997 ms; pro Jahrzehnt
+    kommen etwa 27 ms hinzu, 95-%-KI [−4, 59] ms, t(37) = 1.74, p = .089. Das KI
+    reicht von keinem bis zu einem spürbaren Alterseffekt. t und p sind genau die
+    der Korrelation aus Übung 1: Eine einfache Regression und die
+    Pearson-Korrelation testen dieselbe Hypothese, die Regression liefert aber
+    die Steigung in ms. Ohne Zentrierung wäre der Achsenabschnitt die
+    Reaktionszeit einer 0-jährigen Person; ohne Skalierung stünde da ein kaum
+    lesbarer Wert pro Jahr. In einer Formel bedeutet `age - 40` „ohne Term 40“
+    und `/` Verschachtelung; Rechnungen gehören in `mutate()` oder `I()`.
+    `datawizard::center(age)` zentriert am Mittelwert, wenn kein runder Wert
+    naheliegt.
+  en: |
+    A 40-year-old reacts after about 997 ms on average; each decade adds about
+    27 ms, 95% CI [−4, 59] ms, t(37) = 1.74, p = .089. The CI ranges from no to a
+    noticeable age effect. t and p are exactly those of the correlation in
+    exercise 1: a simple regression and the Pearson correlation test the same
+    hypothesis, but the regression gives the slope in ms. Without centring, the
+    intercept would be the reaction time of a 0-year-old; without scaling, there
+    would be a barely readable value per year. In a formula, `age - 40` means
+    "without term 40" and `/` means nesting; calculations belong in `mutate()` or
+    `I()`. `datawizard::center(age)` centres at the mean when no round value
+    suggests itself.
+misconception:
+  de: "In einer Modellformel bedeuten `-` und `/` dasselbe wie in normalem R-Code."
+  en: "In a model formula, `-` and `/` mean the same as in normal R code."
+check:
+  type: value
+common_mistakes:
+  - pattern: "~\\s*\\(\\s*age\\s*-"
+    message:
+      de: "In einer Formel sind `-` und `/` Term-Operatoren, keine Rechenzeichen. Berechne den Prädiktor vorher mit `mutate()` oder schreibe `I((age - 40) / 10)`."
+      en: "In a formula, `-` and `/` are term operators, not arithmetic. Compute the predictor beforehand with `mutate()` or write `I((age - 40) / 10)`."
+  - pattern: "^(?![\\s\\S]*-\\s*40)[\\s\\S]*lm\\("
+    message:
+      de: "Der Prädiktor ist nicht um 40 zentriert; der Achsenabschnitt beschreibt dann eine Person mit Alter 0."
+      en: "The predictor is not centred at 40; the intercept then describes a person aged 0."
+  - pattern: "^(?![\\s\\S]*/\\s*10)[\\s\\S]*lm\\("
+    message:
+      de: "Die Steigung soll pro Jahrzehnt gelten: Teile das zentrierte Alter durch 10."
+      en: "The slope should be per decade: divide the centred age by 10."

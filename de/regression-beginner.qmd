@@ -1,0 +1,142 @@
+---
+title: "Korrelation und Regression"
+subtitle: "Beginner · Korrelation mit KI, einfache Regression, Zentrieren, Faktoren"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, correlation, parameters, performance, datawizard]
+resources:
+  - ../data/driving_sim.csv
+  - ../data/survey.csv
+---
+
+{{< include /_generated/de/regression-beginner/runtime.qmd >}}
+
+{{< include /_generated/de/regression-beginner/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R läuft hier direkt im Browser. Beim ersten Besuch lädt es 10–30 Sekunden (Anzeige unten rechts), danach geht es schneller.
+:::
+
+## Wozu? {#why}
+
+**Forschungsfrage:** Reagieren ältere Fahrerinnen und Fahrer langsamer auf eine Übernahmeaufforderung? Und hängt die Bewertung der Bedienung mit dem Vertrauen ins System zusammen?
+
+Eine Korrelation beschreibt, wie eng zwei Variablen zusammenhängen; eine Regression sagt, um wie viel sich das Kriterium pro Einheit des Prädiktors ändert, in der Einheit der Messung (ms, SUS-Punkte). Beide brauchen unabhängige Beobachtungen: Bei Messwiederholung zuerst pro Person zusammenfassen.
+
+## Konzept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 220" role="img" aria-labelledby="fig-rg-title fig-rg-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-rg-title">Achsenabschnitt und Steigung einer Regressionsgeraden</title>
+  <desc id="fig-rg-desc">Koordinatensystem mit Alter in Jahrzehnten ab 40 auf der x-Achse und Reaktionszeit auf der y-Achse. Eine steigende Gerade schneidet die senkrechte Linie bei age10 gleich 0 im Achsenabschnitt. Ein Stufendreieck zeigt die Steigung: eine Einheit nach rechts, b Millisekunden nach oben.</desc>
+  <line x1="60" y1="190" x2="540" y2="190" class="rt-fig-axis" />
+  <line x1="60" y1="190" x2="60" y2="20" class="rt-fig-axis" />
+  <line x1="220" y1="190" x2="220" y2="25" class="rt-fig-mean" />
+  <line x1="70" y1="150" x2="530" y2="60" class="rt-fig-a" />
+  <line x1="220" y1="120.7" x2="340" y2="120.7" class="rt-fig-arrow" />
+  <line x1="340" y1="120.7" x2="340" y2="97.2" class="rt-fig-arrow" />
+  <text x="220" y="208" text-anchor="middle" class="rt-fig-label">0 (= 40 Jahre)</text>
+  <text x="340" y="208" text-anchor="middle" class="rt-fig-label">1 (= 50 Jahre)</text>
+  <text x="530" y="208" text-anchor="end" class="rt-fig-label rt-fig-muted">age10</text>
+  <text x="70" y="30" class="rt-fig-label rt-fig-muted">rt_ms</text>
+  <text x="228" y="140" class="rt-fig-label">Achsenabschnitt</text>
+  <text x="348" y="114" class="rt-fig-label">Steigung b</text>
+  <text x="280" y="114" text-anchor="middle" class="rt-fig-label rt-fig-muted">+1</text>
+</svg>
+<figcaption>Der Achsenabschnitt ist der erwartete Wert bei Prädiktor = 0, die Steigung die Veränderung pro Einheit. Zentrieren verschiebt die 0 an eine sinnvolle Stelle.</figcaption>
+</figure>
+```
+
+- **Korrelation** `correlation::correlation()`: r von −1 bis 1 mit 95-%-KI, t, df und p in einer Tabelle. r² ist der Anteil gemeinsamer Varianz.
+- **Regression** `lm(kriterium ~ prädiktor, data = ...)`, gelesen mit `parameters::model_parameters()`: Koeffizient, KI, t, df, p.
+- **Zentrieren und skalieren:** Prädiktoren so umrechnen, dass 0 ein sinnvoller Wert ist und eine Einheit eine sinnvolle Größe hat (`age10 = (age - 40) / 10`). Rechnungen gehören in `mutate()`, nicht in die Formel.
+- **Faktoren als Prädiktoren:** Die erste Stufe ist die Referenz; jeder Koeffizient ist der Unterschied einer Stufe zu ihr.
+- **Modellgüte** `performance::r2()`: Anteil erklärter Varianz.
+- **Zusammenhang ist nicht Ursache:** Kausal deutbar sind nur zufällig zugeteilte Bedingungen.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## Mehr dazu: Korrelation und Regression hängen zusammen
+
+- Bei einem Prädiktor sind t und p der Steigung und der Korrelation identisch.
+- Die standardisierte Steigung (beide Variablen in SD-Einheiten) ist r.
+- Die Regression hat den Vorteil der Einheit: „27 ms pro Jahrzehnt“ ist anschaulicher als „r = .28“, und weitere Prädiktoren lassen sich ergänzen.
+- `correlation()` korrigiert p bei mehreren Korrelationen nach Holm (`p_adjust`); bei einer Korrelation ändert das nichts.
+:::
+
+## Beispiel {#example}
+
+Bereite den SUS-Wert und den Vertrauenswert vor (wie in der Lektion „Fragebögen und Skalen“):
+
+```{webr}
+scored <- survey |>
+  filter(attention_check == 4) |>
+  mutate(
+    across(c(sus_01, sus_03, sus_05, sus_07, sus_09), \(x) x - 1),
+    across(c(sus_02, sus_04, sus_06, sus_08, sus_10), \(x) 5 - x),
+    sus = 25 * rowMeans(pick(sus_01:sus_10), na.rm = TRUE),
+    across(c(trust_3, trust_5), \(x) 8 - x),
+    trust = row_means(pick(trust_1:trust_6), min_valid = 5)
+  )
+
+scored |>
+  select(sus, trust) |>
+  correlation()
+```
+
+Wie viele SUS-Punkte mehr pro Punkt Vertrauen? Und wie viel Varianz erklärt das?
+
+```{webr}
+fit <- lm(sus ~ trust, data = scored)
+model_parameters(fit)
+r2(fit)
+```
+
+**So berichtest du es:** SUS-Wert und Vertrauen hingen deutlich zusammen, r = .48, 95-%-KI [.35, .59], p < .001. Pro Punkt Vertrauen (Skala 1–7) lag der SUS-Wert um 9,1 Punkte höher, 95-%-KI [6,4; 11,8]; das Modell erklärt 23 % der Varianz. Ob Vertrauen die Bewertung beeinflusst oder umgekehrt, lässt die Umfrage offen.
+
+## Paketvergleich {#packages}
+
+| Aufgabe | Empfehlung | Alternative |
+|---|---|---|
+| Korrelation mit KI | **correlation** `correlation()` (Tabelle, mehrere Paare, Holm-Korrektur) | `cor.test()`: ein Paar, Liste statt Tabelle; `cor()`: nur r, ohne KI |
+| Regressionsergebnis | **parameters** `model_parameters()` | `summary(fit)` mit `confint(fit)`: Standard in fremdem Code; `broom::tidy(conf.int = TRUE)` |
+| Modellgüte | **performance** `r2()`, `model_performance()` | `summary(fit)$r.squared` |
+| Zentrieren | **dplyr** `mutate(age10 = (age - 40) / 10)` | `datawizard::center()`, `standardize()`: am Mittelwert bzw. in SD-Einheiten |
+
+## Übungen {#exercises}
+
+Drei Pflichtübungen und eine Zusatzübung. **Ausführen und prüfen** startet deinen Code und prüft ihn sofort. Hinweise deckst du einzeln auf (**Hinweis zeigen**), die Lösung erst danach.
+
+{{< include /_generated/de/regression-beginner/exercises.qmd >}}
+
+## Wissenscheck {#check}
+
+{{< include /_generated/de/regression-beginner/quiz.qmd >}}
+
+## Spickzettel {#cheatsheet}
+
+```r
+# erst eine Zeile pro Person
+rt_by_person <- driving_sim |>
+  summarise(rt_ms = mean(rt_ms, na.rm = TRUE), .by = c(participant, age))
+
+# Korrelation mit KI
+rt_by_person |> select(age, rt_ms) |> correlation()
+
+# Regression mit zentriertem, skaliertem Prädiktor
+rt_age <- rt_by_person |> mutate(age10 = (age - 40) / 10)
+fit <- lm(rt_ms ~ age10, data = rt_age)
+model_parameters(fit)
+r2(fit)
+
+# Faktor als Prädiktor: Referenz = erste Stufe
+lm(sus ~ interface + tech_affinity, data = scored)
+```
+
+- Erst die Einheit klären, dann korrelieren.
+- KI statt nur p: Welche Werte passen zu den Daten?
+- Prädiktoren mit `mutate()` vorbereiten, nicht in der Formel rechnen.
+- Achsenabschnitt = erwarteter Wert bei Prädiktor 0 bzw. in der Referenzstufe.
+
+{{< include /_generated/de/regression-beginner/footer.qmd >}}

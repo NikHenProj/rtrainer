@@ -1,0 +1,135 @@
+# Knowledge check: passed at >= `pass` share of correctly answered questions.
+lesson: reporting-beginner
+pass: 0.8
+questions:
+  - id: rp-b-q-apa
+    prompt:
+      de: "Welche Angabe ist im APA-Stil korrekt?"
+      en: "Which statement follows APA style?"
+    options:
+      - text:
+          de: "t(154.85) = 2.67, p = .008, d = 0.43, 95% CI [0.11, 0.75]"
+          en: "t(154.85) = 2.67, p = .008, d = 0.43, 95% CI [0.11, 0.75]"
+        correct: true
+        explain:
+          de: "Statistik mit df, p ohne führende Null (kann nicht größer als 1 sein), Effektgröße mit KI."
+          en: "Statistic with df, p without a leading zero (it cannot exceed 1), effect size with CI."
+      - text:
+          de: "t = 2.67, p = 0.008*"
+          en: "t = 2.67, p = 0.008*"
+        correct: false
+        explain:
+          de: "Es fehlen df und Effektgröße; p ohne führende Null und ohne Sternchen."
+          en: "df and effect size are missing; p without a leading zero and without asterisks."
+      - text:
+          de: "p < .05, der Effekt ist signifikant."
+          en: "p < .05, the effect is significant."
+        correct: false
+        explain:
+          de: "Exakte p-Werte berichten, dazu Größe und Richtung des Effekts."
+          en: "Report exact p-values, plus the size and direction of the effect."
+  - id: rp-b-q-report
+    prompt:
+      de: "Wie gehst du mit dem Text von `report()` um?"
+      en: "How do you handle the text from `report()`?"
+    options:
+      - text:
+          de: "Zahlen prüfen und übernehmen, Richtung und Bedeutung selbst formulieren."
+          en: "Check and take over the numbers, describe direction and meaning yourself."
+        correct: true
+        explain:
+          de: "`report()` spart Tipparbeit und Tippfehler; die inhaltliche Einordnung bleibt deine Aufgabe."
+          en: "`report()` saves typing and typos; the substantive interpretation remains your job."
+      - text:
+          de: "Wörtlich ins Manuskript kopieren, er ist ja automatisch richtig."
+          en: "Copy it verbatim into the manuscript; it is automatically correct."
+        correct: false
+        explain:
+          de: "Die Etiketten („small“, „moderate“) sind Faustregeln, und das Vorzeichen hängt an der Stufenreihenfolge."
+          en: "The labels (\"small\", \"moderate\") are rules of thumb, and the sign depends on the level order."
+      - text:
+          de: "Gar nicht verwenden, automatische Texte sind unwissenschaftlich."
+          en: "Do not use it at all; automatic texts are unscientific."
+        correct: false
+        explain:
+          de: "Die Zahlen sind dieselben wie in `parameters()` und `effectsize()`; wer sie prüft, kann sie nutzen."
+          en: "The numbers are the same as in `parameters()` and `effectsize()`; if you check them, you can use them."
+  - id: rp-b-q-table1
+    prompt:
+      de: "Was gehört in Tabelle 1 einer Studie mit zwei Gruppen? (Mehrere möglich)"
+      en: "What belongs in Table 1 of a study with two groups? (Several possible)"
+    multiple: true
+    options:
+      - text:
+          de: "Stichprobenmerkmale (Alter, Geschlecht, Vorerfahrung) je Gruppe mit n."
+          en: "Sample characteristics (age, gender, prior experience) per group with n."
+        correct: true
+        explain:
+          de: "Leser sehen so, wer teilgenommen hat und ob die Gruppen vergleichbar sind."
+          en: "Readers can see who took part and whether the groups are comparable."
+      - text:
+          de: "Fehlende Werte je Variable."
+          en: "Missing values per variable."
+        correct: true
+        explain:
+          de: "`tbl_summary()` zeigt sie als „Unknown“; das gehört dazu, statt sie still wegzulassen."
+          en: "`tbl_summary()` shows them as \"Unknown\"; that belongs in the table rather than being dropped silently."
+      - text:
+          de: "p-Werte für Gruppenunterschiede im Alter bei zufälliger Zuteilung."
+          en: "p-values for group differences in age under random assignment."
+        correct: false
+        explain:
+          de: "Bei Randomisierung sind Unterschiede per Definition Zufall; Tests darauf sagen nichts und werden von CONSORT abgeraten."
+          en: "Under randomisation, differences are by definition chance; tests on them say nothing and are discouraged by CONSORT."
+  - id: rp-b-q-sign
+    prompt:
+      de: "`t.test(sus ~ interface)` mit den Stufen touch, voice liefert eine negative Differenz. Was heißt das?"
+      en: "`t.test(sus ~ interface)` with the levels touch, voice returns a negative difference. What does that mean?"
+    options:
+      - text:
+          de: "touch liegt niedriger als voice."
+          en: "touch is lower than voice."
+        correct: true
+        explain:
+          de: "Die Differenz ist erste minus zweite Stufe. Mit `fct_relevel()` drehst du die Richtung um."
+          en: "The difference is first minus second level. `fct_relevel()` flips the direction."
+      - text:
+          de: "voice liegt niedriger als touch."
+          en: "voice is lower than touch."
+        correct: false
+        explain:
+          de: "Umgekehrt: touch − voice < 0 heißt, voice ist größer."
+          en: "The other way round: touch − voice < 0 means voice is larger."
+      - text:
+          de: "Der Effekt ist nicht signifikant."
+          en: "The effect is not significant."
+        correct: false
+        explain:
+          de: "Das Vorzeichen sagt nur die Richtung; über Signifikanz entscheiden KI und p."
+          en: "The sign only gives the direction; CI and p decide about significance."
+  - id: rp-b-q-word
+    prompt:
+      de: "Wie kommt eine gtsummary-Tabelle in ein Word-Manuskript?"
+      en: "How does a gtsummary table get into a Word manuscript?"
+    options:
+      - text:
+          de: "`as_flex_table()` und `flextable::save_as_docx()`, oder direkt in einem Quarto-Dokument mit `format: docx`."
+          en: "`as_flex_table()` and `flextable::save_as_docx()`, or directly in a Quarto document with `format: docx`."
+        correct: true
+        explain:
+          de: "Beides erhält die Formatierung; Quarto hält Text und Zahlen zusätzlich synchron. Beides läuft lokal, nicht im Browser."
+          en: "Both keep the formatting; Quarto additionally keeps text and numbers in sync. Both run locally, not in the browser."
+      - text:
+          de: "Bildschirmfoto der Tabelle einfügen."
+          en: "Paste a screenshot of the table."
+        correct: false
+        explain:
+          de: "Bilder lassen sich nicht bearbeiten, nicht durchsuchen und sind für Screenreader unlesbar."
+          en: "Images cannot be edited or searched and are unreadable for screen readers."
+      - text:
+          de: "Die Werte von Hand in eine Word-Tabelle abtippen."
+          en: "Type the values into a Word table by hand."
+        correct: false
+        explain:
+          de: "Fehleranfällig und bei jeder Datenänderung neu zu machen."
+          en: "Error-prone and has to be redone after every data change."

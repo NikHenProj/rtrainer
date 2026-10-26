@@ -1,0 +1,150 @@
+---
+title: "Fragebögen und Skalen"
+subtitle: "Beginner · Umpolen, SUS-Wert, Skalenmittelwerte, Cronbachs α"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, datawizard, psych]
+resources:
+  - ../data/survey.csv
+---
+
+{{< include /_generated/de/scales-beginner/runtime.qmd >}}
+
+{{< include /_generated/de/scales-beginner/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R läuft hier direkt im Browser. Beim ersten Besuch lädt es 10–30 Sekunden (Anzeige unten rechts), danach geht es schneller.
+:::
+
+## Wozu? {#why}
+
+**Forschungsfrage:** Bewerten die Befragten die Sprachbedienung (voice) als besser bedienbar als die Touch-Bedienung, und vertrauen sie ihr mehr?
+
+Usability und Vertrauen misst man nicht mit einer Frage, sondern mit einer Skala aus mehreren Items. Bevor du Gruppen vergleichst, machst du aus den Items einen Wert pro Person: negativ formulierte Items umpolen, zusammenfassen, Zuverlässigkeit prüfen. Fehler in diesem Schritt sieht man dem Ergebnis nicht an, sie verfälschen aber jeden späteren Test.
+
+## Konzept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 150" role="img" aria-labelledby="fig-sc-title fig-sc-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-sc-title">Umpolen einer Skala von 1 bis 7</title>
+  <desc id="fig-sc-desc">Oben die Rohwerte 1 bis 7, unten die umgepolten Werte. Linien verbinden 1 mit 7, 2 mit 6, 3 mit 5, die 4 bleibt 4, 7 mit 1. Formel 8 minus x.</desc>
+  <text x="10" y="42" class="rt-fig-label rt-fig-muted">roh</text>
+  <text x="10" y="128" class="rt-fig-label rt-fig-muted">8 − x</text>
+  <text x="170" y="42" text-anchor="middle" class="rt-fig-label">1</text>
+  <text x="170" y="128" text-anchor="middle" class="rt-fig-label">1</text>
+  <text x="220" y="42" text-anchor="middle" class="rt-fig-label">2</text>
+  <text x="220" y="128" text-anchor="middle" class="rt-fig-label">2</text>
+  <text x="270" y="42" text-anchor="middle" class="rt-fig-label">3</text>
+  <text x="270" y="128" text-anchor="middle" class="rt-fig-label">3</text>
+  <text x="320" y="42" text-anchor="middle" class="rt-fig-label">4</text>
+  <text x="320" y="128" text-anchor="middle" class="rt-fig-label">4</text>
+  <text x="370" y="42" text-anchor="middle" class="rt-fig-label">5</text>
+  <text x="370" y="128" text-anchor="middle" class="rt-fig-label">5</text>
+  <text x="420" y="42" text-anchor="middle" class="rt-fig-label">6</text>
+  <text x="420" y="128" text-anchor="middle" class="rt-fig-label">6</text>
+  <text x="470" y="42" text-anchor="middle" class="rt-fig-label">7</text>
+  <text x="470" y="128" text-anchor="middle" class="rt-fig-label">7</text>
+  <line x1="170" y1="52" x2="470" y2="108" class="rt-fig-a" />
+  <line x1="220" y1="52" x2="420" y2="108" class="rt-fig-arrow" />
+  <line x1="270" y1="52" x2="370" y2="108" class="rt-fig-arrow" />
+  <line x1="320" y1="52" x2="320" y2="108" class="rt-fig-arrow" />
+  <line x1="370" y1="52" x2="270" y2="108" class="rt-fig-arrow" />
+  <line x1="420" y1="52" x2="220" y2="108" class="rt-fig-arrow" />
+  <line x1="470" y1="52" x2="170" y2="108" class="rt-fig-a" />
+</svg>
+<figcaption>Umpolen spiegelt die Skala an ihrer Mitte: (Minimum + Maximum) − x. Für 1–7 also 8 − x, für 1–5 6 − x.</figcaption>
+</figure>
+```
+
+- **Polung:** Negativ formulierte Items („Ich bin dem System gegenüber misstrauisch“) werden umgepolt, damit hohe Werte überall dasselbe bedeuten. Welche Items das sind, steht im Fragebogen, nicht in den Daten.
+- **Skalenwert:** meist der Mittelwert der Items pro Person. Er bleibt auf der Antwortskala (1–7) und verträgt einzelne fehlende Items; `datawizard::row_means(min_valid = ...)` legt fest, wie viele gültig sein müssen.
+- **SUS:** zehn Items (1–5), Beiträge 0–4 (ungerade `x - 1`, gerade `5 - x`), Wert = 2,5 × Summe = 25 × Mittelwert, Bereich 0–100. Durchschnitt vieler Studien: etwa 68.
+- **Cronbachs α** (`psych::alpha()`): Wie einheitlich messen die Items? Ab etwa .70 üblich, ab .80 gut. α prüft nicht, ob die Skala nur ein Konstrukt misst. Mit `psych::` aufrufen: ggplot2 hat auch ein `alpha()` und überdeckt es.
+- **Datenqualität:** Aufmerksamkeitsfragen und Durchklicken (überall dieselbe Antwort) vor dem Skalenwert prüfen; Ausschlüsse berichten.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## Mehr dazu: Summe oder Mittelwert?
+
+- Bei vollständigen Daten sind Summe und Mittelwert gleichwertig (Mittelwert = Summe / Zahl der Items).
+- Fehlt ein Item, zählt `rowSums(na.rm = TRUE)` es wie eine 0; der Mittelwert der vorhandenen Items nicht.
+- Manche Instrumente schreiben die Summe vor (z. B. die SUS mit 2,5 × Summe). Dann den Mittelwert mit der Itemzahl multiplizieren, so bleibt der Wert vergleichbar.
+- NASA-TLX roh (RTLX): Mittelwert der sechs Subskalen (0–100), ohne Umpolen; auch `performance` nicht: Dort reicht die Skala von „perfekt“ (0) bis „Misserfolg“ (100), hohe Werte bedeuten also wie überall mehr Beanspruchung.
+:::
+
+## Beispiel {#example}
+
+`datawizard::reverse()` polt mit fester Spannweite um; ohne `range` nimmt es Minimum und Maximum der Daten:
+
+```{webr}
+x <- c(1, 2, 4, 6)
+reverse(x, range = c(1, 7))
+reverse(x)
+```
+
+Die NASA-TLX-Subskalen als Skalenwert `tlx` (mindestens 5 von 6 gültig), dann Zuverlässigkeit mit `psych::alpha()`:
+
+```{webr}
+tlx_items <- survey |>
+  select(starts_with("tlx_"))
+
+survey |>
+  mutate(tlx = row_means(pick(starts_with("tlx_")), min_valid = 5)) |>
+  summarise(tlx_m = mean(tlx, na.rm = TRUE), n = sum(!is.na(tlx)), .by = interface)
+
+psych::alpha(tlx_items)
+```
+
+In der Ausgabe von `alpha()` sind drei Stellen wichtig: `raw_alpha` oben (α der Skala), `r.drop` unter „Item statistics“ (Zusammenhang jedes Items mit den übrigen) und „Reliability if an item is dropped“ (α ohne das Item). Steigt α deutlich, wenn ein Item fehlt, passt es nicht zu den anderen.
+
+**So berichtest du es (Methodenteil):** Die Beanspruchung wurde mit dem NASA-TLX (ungewichtet, sechs Subskalen von 0–100) erfasst; der Skalenwert ist der Mittelwert der Subskalen, berechnet bei mindestens fünf gültigen Angaben. Die interne Konsistenz gibst du mit α an.
+
+## Paketvergleich {#packages}
+
+| Aufgabe | Empfehlung | Alternative |
+|---|---|---|
+| Items umpolen | **dplyr** `mutate(across(..., \(x) 8 - x))` | `datawizard::reverse(range = c(1, 7))`: lesbarer, mit fester Spannweite gleich sicher |
+| Skalenwert | **datawizard** `row_means(min_valid = ...)` | `rowMeans(na.rm = TRUE)`: ohne Mindestzahl gültiger Items; `psych::scoreItems()`: mit Schlüssel für viele Skalen auf einmal |
+| Zuverlässigkeit | **psych** `alpha()` (mit Trennschärfen und α ohne Item) | `performance::cronbachs_alpha()`: nur der Wert; `psych::omega()`: McDonalds ω (Intermediate) |
+
+## Übungen {#exercises}
+
+Vier Pflichtübungen und eine Zusatzübung. **Ausführen und prüfen** startet deinen Code und prüft ihn sofort. Hinweise deckst du einzeln auf (**Hinweis zeigen**), die Lösung erst danach.
+
+{{< include /_generated/de/scales-beginner/exercises.qmd >}}
+
+## Wissenscheck {#check}
+
+{{< include /_generated/de/scales-beginner/quiz.qmd >}}
+
+## Spickzettel {#cheatsheet}
+
+```r
+# umpolen: (Minimum + Maximum) - x
+survey_r <- survey |>
+  mutate(across(c(trust_3, trust_5), \(x) 8 - x))
+
+# Skalenwert mit Mindestzahl gültiger Items
+survey_r |>
+  filter(attention_check == 4) |>
+  mutate(trust = row_means(pick(trust_1:trust_6), min_valid = 5))
+
+# SUS: Beiträge 0-4, Wert 0-100
+survey |>
+  mutate(
+    across(c(sus_01, sus_03, sus_05, sus_07, sus_09), \(x) x - 1),
+    across(c(sus_02, sus_04, sus_06, sus_08, sus_10), \(x) 5 - x),
+    sus = 25 * rowMeans(pick(sus_01:sus_10), na.rm = TRUE)
+  )
+
+# Zuverlässigkeit
+psych::alpha(survey_r |> select(starts_with("trust_")))
+```
+
+- Polung aus dem Fragebogen nehmen, vor dem Skalenwert umpolen.
+- Mittelwert statt Summe, wenn Items fehlen können; Mindestzahl festlegen.
+- Negatives oder niedriges α: zuerst die Polung prüfen.
+- Ausschlüsse (Aufmerksamkeit, Durchklicken) mit Zahl und Grund berichten.
+
+{{< include /_generated/de/scales-beginner/footer.qmd >}}

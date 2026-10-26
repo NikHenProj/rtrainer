@@ -1,0 +1,17 @@
+# Lesson metadata; exercises are the other *.yml files in this folder
+# (sorted by `order`), the knowledge check is quiz.yml.
+lesson: scales-beginner
+minutes: 45
+prerequisites: [descriptives-beginner]
+langs: [de]
+packages: [dplyr, datawizard, psych]
+data: [survey]
+goals:
+  de:
+    - Negativ formulierte Items umpolen
+    - Den SUS-Wert und Skalenmittelwerte mit fehlenden Items berechnen
+    - Die interne Konsistenz mit `psych::alpha()` prüfen und deuten
+  en:
+    - Reverse negatively worded items
+    - Compute the SUS score and scale means with missing items
+    - Check and interpret internal consistency with `psych::alpha()`

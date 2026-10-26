@@ -1,0 +1,79 @@
+id: rp-b-report-lm
+lesson: reporting-beginner
+order: 3
+title:
+  de: Ergebnistext mit report()
+  en: Result text with report()
+kind: write
+required: true
+packages: [dplyr, report]
+data: [survey]
+setup: |
+  library(dplyr)
+  library(report)
+  scored <- survey |>
+    filter(attention_check == 4) |>
+    mutate(
+      across(c(sus_01, sus_03, sus_05, sus_07, sus_09), \(x) x - 1),
+      across(c(sus_02, sus_04, sus_06, sus_08, sus_10), \(x) 5 - x),
+      sus = 25 * rowMeans(pick(sus_01:sus_10), na.rm = TRUE)
+    ) |>
+    select(respondent, interface, age, gender, tech_affinity, sus)
+prompt:
+  de: |
+    Lass dir von `report()` einen Ergebnistext für das Modell schreiben, das den
+    SUS-Wert `sus` aus `interface` und `tech_affinity` vorhersagt (Daten:
+    `scored`). Ergebnis: das `report()`-Objekt. Lies den Text danach: Welche
+    Angaben übernimmst du ins Manuskript, welche nicht?
+  en: |
+    Let `report()` write a result text for the model that predicts the SUS score
+    `sus` from `interface` and `tech_affinity` (data: `scored`). Result: the
+    `report()` object. Then read the text: which details do you take into the
+    manuscript, and which not?
+starter: |
+  fit <- lm(sus ~ interface, data = scored)
+  report(fit)
+solution: |
+  fit <- lm(sus ~ interface + tech_affinity, data = scored)
+  report(fit)
+hints:
+  - de: "Der Starter hat nur einen Prädiktor. Ergänze den zweiten mit `+`."
+    en: "The starter has only one predictor. Add the second with `+`."
+  - de: "`fit <- lm(sus ~ interface + ______, data = scored)`"
+    en: "`fit <- lm(sus ~ interface + ______, data = scored)`"
+explanation:
+  de: |
+    `report()` liefert R², F-Test und für jeden Prädiktor beta, 95-%-KI, t, df
+    und p, dazu standardisierte Koeffizienten (Std. beta). Übernehmen kannst du
+    die Zahlen: „Voice wurde bei gleicher Technikaffinität um 10,7 SUS-Punkte
+    besser bewertet, b = 10,68, 95-%-KI [3,50; 17,85], t(154) = 2,94, p = .004.“
+    Nicht übernehmen solltest du die Etiketten: „moderate proportion of
+    variance“ und „statistically significant and positive“ folgen Faustregeln,
+    ersetzen aber keine inhaltliche Einordnung. APA schreibt p ohne führende
+    Null (.004). Der Text zum Achsenabschnitt (touch bei `tech_affinity = 0`)
+    beschreibt einen Wert außerhalb der Skala und gehört nicht in den Bericht.
+  en: |
+    `report()` returns R², the F-test and for each predictor beta, 95% CI, t, df
+    and p, plus standardised coefficients (Std. beta). You can take over the
+    numbers: "At equal tech affinity, voice was rated 10.7 SUS points higher,
+    b = 10.68, 95% CI [3.50, 17.85], t(154) = 2.94, p = .004." You should not
+    take over the labels: "moderate proportion of variance" and "statistically
+    significant and positive" follow rules of thumb but do not replace a
+    substantive interpretation. APA writes p without a leading zero (.004). The
+    text on the intercept (touch at `tech_affinity = 0`) describes a value
+    outside the scale and does not belong in the report.
+check:
+  type: value
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*tech_affinity)[\\s\\S]*report\\("
+    message:
+      de: "Im Modell fehlt `tech_affinity`. Der Text soll beide Prädiktoren berichten."
+      en: "`tech_affinity` is missing from the model. The text should report both predictors."
+  - pattern: "\\*\\s*tech_affinity|tech_affinity\\s*\\*"
+    message:
+      de: "`*` fügt eine Wechselwirkung hinzu. Gefragt sind zwei Haupteffekte: `+`."
+      en: "`*` adds an interaction. The task asks for two main effects: `+`."
+  - pattern: "t\\.test\\("
+    message:
+      de: "Gefragt ist der Text zum Regressionsmodell mit zwei Prädiktoren, nicht zu einem t-Test."
+      en: "The task asks for the text on the regression model with two predictors, not on a t-test."

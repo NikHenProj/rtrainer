@@ -1,0 +1,73 @@
+id: rg-b-two-predictors
+lesson: regression-beginner
+order: 4
+title:
+  de: Zwei Prädiktoren
+  en: Two predictors
+kind: write
+required: false
+packages: [dplyr, parameters]
+data: [survey]
+setup: |
+  library(dplyr)
+  library(parameters)
+  scored <- survey |>
+    filter(attention_check == 4) |>
+    mutate(
+      across(c(sus_01, sus_03, sus_05, sus_07, sus_09), \(x) x - 1),
+      across(c(sus_02, sus_04, sus_06, sus_08, sus_10), \(x) 5 - x),
+      sus = 25 * rowMeans(pick(sus_01:sus_10), na.rm = TRUE)
+    )
+prompt:
+  de: |
+    `scored` enthält den SUS-Wert `sus` pro Person. Technikaffine Personen
+    bewerten Systeme oft besser. Erweitere das Modell um `tech_affinity` (1–5)
+    als zweiten Prädiktor neben `interface`. Ergebnis: `model_parameters()` des
+    Modells.
+  en: |
+    `scored` contains the SUS score `sus` per respondent. Tech-savvy people
+    often rate systems better. Extend the model with `tech_affinity` (1–5) as a
+    second predictor next to `interface`. Result: `model_parameters()` of the
+    model.
+starter: |
+  fit <- lm(sus ~ interface, data = scored)
+  model_parameters(fit)
+solution: |
+  fit <- lm(sus ~ interface + tech_affinity, data = scored)
+  model_parameters(fit)
+hints:
+  - de: "Weitere Prädiktoren kommen mit `+` in die Formel."
+    en: "Further predictors are added to the formula with `+`."
+  - de: "`lm(sus ~ interface + ______, data = scored)`"
+    en: "`lm(sus ~ interface + ______, data = scored)`"
+explanation:
+  de: |
+    Bei gleicher Technikaffinität bewerten Voice-Nutzende die Bedienung um
+    10,7 SUS-Punkte besser, 95-%-KI [3,5; 17,9], p = .004; pro Punkt
+    Technikaffinität steigt der SUS um 8,5 Punkte [5,0; 12,0]. Der
+    Interface-Effekt ändert sich kaum gegenüber dem Modell ohne
+    `tech_affinity` (10,4), weil die Gruppen zufällig zugeteilt waren und sich
+    in der Technikaffinität nicht unterscheiden. Der Achsenabschnitt (24,2) gilt
+    für touch bei `tech_affinity = 0`, einem Wert außerhalb der Skala;
+    zentrieren würde ihn lesbar machen. `performance::r2(fit)` zeigt, dass das
+    Modell 17 % der SUS-Varianz erklärt.
+  en: |
+    At equal tech affinity, voice users rate usability 10.7 SUS points higher,
+    95% CI [3.5, 17.9], p = .004; each point of tech affinity raises the SUS by
+    8.5 points [5.0, 12.0]. The interface effect barely changes compared with the
+    model without `tech_affinity` (10.4), because the groups were randomly
+    assigned and do not differ in tech affinity. The intercept (24.2) applies to
+    touch at `tech_affinity = 0`, a value outside the scale; centring would make
+    it readable. `performance::r2(fit)` shows that the model explains 17% of the
+    SUS variance.
+check:
+  type: value
+common_mistakes:
+  - pattern: "\\*\\s*tech_affinity|tech_affinity\\s*\\*"
+    message:
+      de: "`*` fügt auch die Wechselwirkung hinzu. Gefragt sind zwei Haupteffekte: `+`."
+      en: "`*` also adds the interaction. The task asks for two main effects: `+`."
+  - pattern: "factor\\(\\s*tech_affinity"
+    message:
+      de: "Als Faktor bekäme jede Stufe einen eigenen Koeffizienten. Hier zählt `tech_affinity` als Zahl, die Steigung gilt pro Punkt."
+      en: "As a factor, every level would get its own coefficient. Here `tech_affinity` counts as a number; the slope is per point."

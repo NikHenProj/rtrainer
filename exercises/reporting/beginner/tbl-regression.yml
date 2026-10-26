@@ -1,0 +1,70 @@
+id: rp-b-tbl-regression
+lesson: reporting-beginner
+order: 5
+title:
+  de: Regressionstabelle
+  en: Regression table
+kind: write
+required: false
+packages: [dplyr, gtsummary, broom.helpers]
+data: [survey]
+setup: |
+  library(dplyr)
+  library(gtsummary)
+  scored <- survey |>
+    filter(attention_check == 4) |>
+    mutate(
+      across(c(sus_01, sus_03, sus_05, sus_07, sus_09), \(x) x - 1),
+      across(c(sus_02, sus_04, sus_06, sus_08, sus_10), \(x) 5 - x),
+      sus = 25 * rowMeans(pick(sus_01:sus_10), na.rm = TRUE)
+    ) |>
+    select(respondent, interface, age, gender, tech_affinity, sus)
+  fit <- lm(sus ~ interface + tech_affinity, data = scored)
+prompt:
+  de: |
+    `fit` ist das Modell `lm(sus ~ interface + tech_affinity, data = scored)`.
+    Erstelle daraus mit `tbl_regression()` eine Tabelle mit den Koeffizienten,
+    95-%-KI und p, und gib dem Prädiktor `tech_affinity` die Beschriftung
+    `"Technikaffinität (1–5)"`.
+  en: |
+    `fit` is the model `lm(sus ~ interface + tech_affinity, data = scored)`.
+    Use `tbl_regression()` to create a table with the coefficients, 95% CI and
+    p, and give the predictor `tech_affinity` the label
+    `"Technikaffinität (1–5)"`.
+starter: |
+  tbl_regression(fit)
+solution: |
+  tbl_regression(fit, label = list(tech_affinity ~ "Technikaffinität (1–5)"))
+hints:
+  - de: "Beschriftungen setzt `label =` wie bei `tbl_summary()`: eine Liste von Formeln."
+    en: "Labels are set with `label =` as in `tbl_summary()`: a list of formulas."
+  - de: "`tbl_regression(fit, label = list(______ ~ \"Technikaffinität (1–5)\"))`"
+    en: "`tbl_regression(fit, label = list(______ ~ \"Technikaffinität (1–5)\"))`"
+explanation:
+  de: |
+    `tbl_regression()` zeigt für jeden Prädiktor b, 95-%-KI und p; der Faktor
+    `interface` erscheint mit der Referenzstufe touch als eigener Zeile ohne
+    Wert. Die Tabelle hat dieselbe Grammatik wie `tbl_summary()` (`label`,
+    `include`, `estimate_fun`) und lässt sich mit `tbl_merge()` neben ein
+    zweites Modell stellen. Den Achsenabschnitt blendet sie standardmäßig aus;
+    mit `intercept = TRUE` erscheint er. Für Word: `as_flex_table(tbl)` und
+    `flextable::save_as_docx()` (lokal ausführen).
+  en: |
+    `tbl_regression()` shows b, 95% CI and p for each predictor; the factor
+    `interface` appears with the reference level touch as its own row without a
+    value. The table uses the same grammar as `tbl_summary()` (`label`,
+    `include`, `estimate_fun`) and can be placed next to a second model with
+    `tbl_merge()`. It hides the intercept by default; `intercept = TRUE` shows
+    it. For Word: `as_flex_table(tbl)` and `flextable::save_as_docx()` (run
+    locally).
+check:
+  type: value
+common_mistakes:
+  - pattern: "label\\s*=\\s*tech_affinity"
+    message:
+      de: "`label` erwartet eine Liste von Formeln: `label = list(tech_affinity ~ \"...\")`."
+      en: "`label` expects a list of formulas: `label = list(tech_affinity ~ \"...\")`."
+  - pattern: "Technikaffinit(?!ät \\(1–5\\))"
+    message:
+      de: "Die Beschriftung muss genau `\"Technikaffinität (1–5)\"` lauten (mit Halbgeviertstrich)."
+      en: "The label must be exactly `\"Technikaffinität (1–5)\"` (with an en dash)."

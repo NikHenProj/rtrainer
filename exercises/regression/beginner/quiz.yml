@@ -1,0 +1,135 @@
+# Knowledge check: passed at >= `pass` share of correctly answered questions.
+lesson: regression-beginner
+pass: 0.8
+questions:
+  - id: rg-b-q-ci
+    prompt:
+      de: "Alter und Reaktionszeit: r = .28, 95-%-KI [−.04, .54], p = .089, n = 39. Welche Aussage passt?"
+      en: "Age and reaction time: r = .28, 95% CI [−.04, .54], p = .089, n = 39. Which statement fits?"
+    options:
+      - text:
+          de: "Die Daten sind mit keinem bis zu einem deutlichen positiven Zusammenhang vereinbar."
+          en: "The data are compatible with anything from no to a clear positive relationship."
+        correct: true
+        explain:
+          de: "Das KI beschreibt die plausiblen Werte. Es ist breit, weil n klein ist."
+          en: "The CI describes the plausible values. It is wide because n is small."
+      - text:
+          de: "Es gibt keinen Zusammenhang zwischen Alter und Reaktionszeit."
+          en: "There is no relationship between age and reaction time."
+        correct: false
+        explain:
+          de: "Ein nicht signifikantes Ergebnis belegt keine Abwesenheit; das KI reicht bis .54."
+          en: "A non-significant result does not prove absence; the CI goes up to .54."
+      - text:
+          de: "Das Alter erklärt 28 % der Unterschiede in der Reaktionszeit."
+          en: "Age explains 28% of the differences in reaction time."
+        correct: false
+        explain:
+          de: "Der Anteil erklärter Varianz ist r² ≈ .08, also etwa 8 %."
+          en: "The share of explained variance is r² ≈ .08, so about 8%."
+  - id: rg-b-q-intercept
+    prompt:
+      de: "Modell `lm(rt_ms ~ age10)` mit `age10 = (age - 40) / 10`. Was ist der Achsenabschnitt?"
+      en: "Model `lm(rt_ms ~ age10)` with `age10 = (age - 40) / 10`. What is the intercept?"
+    options:
+      - text:
+          de: "Die erwartete Reaktionszeit einer 40-jährigen Person."
+          en: "The expected reaction time of a 40-year-old."
+        correct: true
+        explain:
+          de: "Bei `age10 = 0`, also `age = 40`. Deshalb zentriert man auf einen sinnvollen Wert."
+          en: "At `age10 = 0`, i.e. `age = 40`. That is why you centre at a meaningful value."
+      - text:
+          de: "Die mittlere Reaktionszeit der Stichprobe."
+          en: "The mean reaction time of the sample."
+        correct: false
+        explain:
+          de: "Das gilt nur, wenn am Stichprobenmittelwert des Alters zentriert wird (`datawizard::center()`)."
+          en: "That only holds when centring at the sample mean of age (`datawizard::center()`)."
+      - text:
+          de: "Die Veränderung der Reaktionszeit pro Jahrzehnt."
+          en: "The change in reaction time per decade."
+        correct: false
+        explain:
+          de: "Das ist die Steigung, der Koeffizient von `age10`."
+          en: "That is the slope, the coefficient of `age10`."
+  - id: rg-b-q-formula
+    prompt:
+      de: "Warum schreibt man in einer Formel `I(age / 10)` statt `age / 10`?"
+      en: "Why do you write `I(age / 10)` instead of `age / 10` in a formula?"
+    options:
+      - text:
+          de: "In Formeln haben `/`, `-`, `*` und `^` eine eigene Bedeutung; `I()` erzwingt normales Rechnen."
+          en: "In formulas, `/`, `-`, `*` and `^` have their own meaning; `I()` forces normal arithmetic."
+        correct: true
+        explain:
+          de: "`/` bedeutet Verschachtelung, `*` Wechselwirkung. Lesbarer ist meist, den Prädiktor vorher mit `mutate()` zu bilden."
+          en: "`/` means nesting, `*` interaction. It is usually more readable to create the predictor beforehand with `mutate()`."
+      - text:
+          de: "`I()` macht den Prädiktor zu einem Faktor."
+          en: "`I()` turns the predictor into a factor."
+        correct: false
+        explain:
+          de: "Das wäre `factor()`. `I()` heißt „as is“: Der Ausdruck wird wörtlich berechnet."
+          en: "That would be `factor()`. `I()` means \"as is\": the expression is computed literally."
+      - text:
+          de: "Ohne `I()` gibt es einen Fehler."
+          en: "Without `I()` you get an error."
+        correct: false
+        explain:
+          de: "Gerade nicht: R rechnet still ein anderes Modell. Deshalb ist der Fehler tückisch."
+          en: "Precisely not: R silently fits a different model. That is what makes the mistake treacherous."
+  - id: rg-b-q-causal
+    prompt:
+      de: "In einer Umfrage hängen Technikaffinität und SUS-Wert positiv zusammen. Welche Aussagen sind gedeckt? (Mehrere möglich)"
+      en: "In a survey, tech affinity and SUS score are positively related. Which statements are supported? (Several possible)"
+    multiple: true
+    options:
+      - text:
+          de: "Technikaffinere Befragte bewerten die Bedienung im Mittel besser."
+          en: "More tech-savvy respondents rate usability better on average."
+        correct: true
+        explain:
+          de: "Das beschreibt den Zusammenhang, ohne eine Ursache zu behaupten."
+          en: "That describes the relationship without claiming a cause."
+      - text:
+          de: "Wer technikaffiner wird, findet das System dadurch besser bedienbar."
+          en: "Becoming more tech-savvy makes people find the system easier to use."
+        correct: false
+        explain:
+          de: "Eine Querschnittskorrelation sagt nichts über Veränderung innerhalb von Personen und nichts über Ursachen."
+          en: "A cross-sectional correlation says nothing about change within people and nothing about causes."
+      - text:
+          de: "Der Interface-Effekt ist kausal deutbar, weil die Bedienung zufällig zugeteilt wurde."
+          en: "The interface effect can be interpreted causally because the interface was randomly assigned."
+        correct: true
+        explain:
+          de: "Randomisierung macht den Unterschied zwischen den Gruppen kausal deutbar, die Technikaffinität wurde dagegen nur gemessen."
+          en: "Randomisation makes the difference between the groups causally interpretable; tech affinity, by contrast, was only measured."
+  - id: rg-b-q-r2
+    prompt:
+      de: "Ein Modell hat R² = .17. Was heißt das?"
+      en: "A model has R² = .17. What does that mean?"
+    options:
+      - text:
+          de: "Es erklärt 17 % der Varianz des Kriteriums in dieser Stichprobe."
+          en: "It explains 17% of the variance of the outcome in this sample."
+        correct: true
+        explain:
+          de: "Das korrigierte R² schätzt den Wert für neue Daten etwas vorsichtiger."
+          en: "The adjusted R² estimates the value for new data somewhat more conservatively."
+      - text:
+          de: "Das Modell sagt 17 % der Fälle richtig vorher."
+          en: "The model predicts 17% of the cases correctly."
+        correct: false
+        explain:
+          de: "Das wäre eine Trefferquote bei Klassifikation. R² bezieht sich auf Varianz."
+          en: "That would be an accuracy for classification. R² refers to variance."
+      - text:
+          de: "Das Modell ist schlecht und nicht zu gebrauchen."
+          en: "The model is bad and useless."
+        correct: false
+        explain:
+          de: "Für Bewertungen von Menschen ist .17 nicht ungewöhnlich; entscheidend ist, ob die Koeffizienten die Frage beantworten."
+          en: "For human ratings, .17 is not unusual; what matters is whether the coefficients answer the question."

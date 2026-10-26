@@ -1,0 +1,135 @@
+# Knowledge check: passed at >= `pass` share of correctly answered questions.
+lesson: scales-beginner
+pass: 0.8
+questions:
+  - id: sc-b-q-reverse
+    prompt:
+      de: "Ein Item hat die Antwortstufen 1 bis 5. Wie polst du es um?"
+      en: "An item has the response options 1 to 5. How do you reverse it?"
+    options:
+      - text:
+          de: "`6 - x`"
+          en: "`6 - x`"
+        correct: true
+        explain:
+          de: "Minimum + Maximum minus x: 1 wird 5, 3 bleibt 3, 5 wird 1."
+          en: "Minimum + maximum minus x: 1 becomes 5, 3 stays 3, 5 becomes 1."
+      - text:
+          de: "`5 - x`"
+          en: "`5 - x`"
+        correct: false
+        explain:
+          de: "Das ergibt 0–4. Die Reihenfolge stimmt, aber die Werte sind nicht mehr mit den anderen Items vergleichbar."
+          en: "That gives 0–4. The order is right, but the values are no longer comparable with the other items."
+      - text:
+          de: "`-x`"
+          en: "`-x`"
+        correct: false
+        explain:
+          de: "Die Richtung stimmt, aber die Skala läuft dann von −5 bis −1; Mittelwerte mit anderen Items wären sinnlos."
+          en: "The direction is right, but the scale then runs from −5 to −1; means with other items would be meaningless."
+  - id: sc-b-q-sus
+    prompt:
+      de: "Ein Prototyp erreicht einen mittleren SUS-Wert von 72. Was heißt das?"
+      en: "A prototype reaches a mean SUS score of 72. What does that mean?"
+    options:
+      - text:
+          de: "Etwas über dem Durchschnitt vieler Studien (etwa 68); der Wert ist kein Prozentsatz."
+          en: "Slightly above the average of many studies (about 68); the score is not a percentage."
+        correct: true
+        explain:
+          de: "Die SUS reicht von 0 bis 100, ist aber nicht linear als Prozent zu lesen. Vergleiche mit Richtwerten oder mit einer Alternative."
+          en: "The SUS ranges from 0 to 100 but cannot be read linearly as a percentage. Compare with benchmarks or with an alternative."
+      - text:
+          de: "72 % der Befragten fanden das System gut bedienbar."
+          en: "72% of respondents found the system easy to use."
+        correct: false
+        explain:
+          de: "Der SUS-Wert ist ein Mittel über Personen und Items, kein Anteil zufriedener Personen."
+          en: "The SUS score is a mean across respondents and items, not a share of satisfied people."
+      - text:
+          de: "Das System ist besser als 72 % aller Produkte."
+          en: "The system is better than 72% of all products."
+        correct: false
+        explain:
+          de: "Das wäre ein Perzentil. Einem SUS von 72 entspricht in Vergleichsdaten etwa das 60. bis 65. Perzentil."
+          en: "That would be a percentile. A SUS of 72 corresponds to roughly the 60th to 65th percentile in reference data."
+  - id: sc-b-q-alpha
+    prompt:
+      de: "Eine Skala hat Cronbachs α = .93. Welche Aussagen stimmen? (Mehrere möglich)"
+      en: "A scale has Cronbach's α = .93. Which statements are true? (Several possible)"
+    multiple: true
+    options:
+      - text:
+          de: "Die Items hängen eng miteinander zusammen (hohe interne Konsistenz)."
+          en: "The items are closely related to each other (high internal consistency)."
+        correct: true
+        explain:
+          de: "Genau das beschreibt α."
+          en: "That is exactly what α describes."
+      - text:
+          de: "Sehr hohe Werte können auf fast gleich lautende, redundante Items hindeuten."
+          en: "Very high values can point to almost identical, redundant items."
+        correct: true
+        explain:
+          de: "Ab etwa .95 lohnt der Blick auf die Itemformulierungen; α steigt außerdem mit der Zahl der Items."
+          en: "From about .95 it is worth looking at the item wording; α also increases with the number of items."
+      - text:
+          de: "Damit ist belegt, dass die Skala genau ein Konstrukt misst."
+          en: "This proves that the scale measures exactly one construct."
+        correct: false
+        explain:
+          de: "Auch zwei korrelierte Faktoren können ein hohes α ergeben. Eindimensionalität prüft eine Faktorenanalyse (CFA)."
+          en: "Two correlated factors can also produce a high α. Unidimensionality is tested with a factor analysis (CFA)."
+  - id: sc-b-q-missing
+    prompt:
+      de: "Eine Person hat eines von sechs Items nicht beantwortet. Welcher Skalenwert ist mit den anderen vergleichbar?"
+      en: "A respondent skipped one of six items. Which scale score is comparable with the others?"
+    options:
+      - text:
+          de: "Der Mittelwert der fünf beantworteten Items."
+          en: "The mean of the five answered items."
+        correct: true
+        explain:
+          de: "Der Mittelwert bleibt auf der Antwortskala (1–7); mit einer Mindestzahl gültiger Items (`min_valid`) ist er gut vertretbar."
+          en: "The mean stays on the response scale (1–7); with a minimum number of valid items (`min_valid`) it is well defensible."
+      - text:
+          de: "Die Summe mit `rowSums(na.rm = TRUE)`."
+          en: "The sum with `rowSums(na.rm = TRUE)`."
+        correct: false
+        explain:
+          de: "Das fehlende Item zählt dann wie eine 0; die Person erscheint systematisch niedriger."
+          en: "The missing item then counts as 0; the respondent appears systematically lower."
+      - text:
+          de: "Gar keiner, die Person muss aus der ganzen Analyse."
+          en: "None at all; the respondent must be removed from the whole analysis."
+        correct: false
+        explain:
+          de: "Das verschenkt Daten. Üblich ist ein Skalenwert bei z. B. mindestens 80 % beantworteten Items."
+          en: "That wastes data. A common rule is a scale score with, e.g., at least 80% of items answered."
+  - id: sc-b-q-attention
+    prompt:
+      de: "Drei Befragte haben die Aufmerksamkeitsfrage falsch beantwortet. Wie gehst du vor?"
+      en: "Three respondents failed the attention check. How do you proceed?"
+    options:
+      - text:
+          de: "Nach der vorab festgelegten Regel ausschließen und Zahl und Grund im Methodenteil nennen."
+          en: "Exclude them according to the rule set in advance and state the number and reason in the methods section."
+        correct: true
+        explain:
+          de: "Transparent und nachvollziehbar; am besten schon in der Präregistrierung festgelegt."
+          en: "Transparent and reproducible; ideally already specified in the preregistration."
+      - text:
+          de: "Erst schauen, ob das Ergebnis mit oder ohne sie besser aussieht."
+          en: "First check whether the result looks better with or without them."
+        correct: false
+        explain:
+          de: "Das ist eine ergebnisabhängige Entscheidung und verzerrt die Inferenz."
+          en: "That is a result-dependent decision and biases the inference."
+      - text:
+          de: "Stillschweigend entfernen, das sind ja ungültige Daten."
+          en: "Remove them silently; they are invalid data after all."
+        correct: false
+        explain:
+          de: "Ausschlüsse gehören immer in den Bericht, sonst ist das n nicht nachvollziehbar."
+          en: "Exclusions always belong in the report; otherwise the n cannot be traced."

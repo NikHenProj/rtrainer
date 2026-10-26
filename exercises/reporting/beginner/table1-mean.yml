@@ -1,0 +1,87 @@
+id: rp-b-table1-mean
+lesson: reporting-beginner
+order: 2
+title:
+  de: Mittelwert und SD statt Median
+  en: Mean and SD instead of median
+kind: complete
+required: true
+packages: [dplyr, gtsummary]
+data: [survey]
+setup: |
+  library(dplyr)
+  library(gtsummary)
+  scored <- survey |>
+    filter(attention_check == 4) |>
+    mutate(
+      across(c(sus_01, sus_03, sus_05, sus_07, sus_09), \(x) x - 1),
+      across(c(sus_02, sus_04, sus_06, sus_08, sus_10), \(x) 5 - x),
+      sus = 25 * rowMeans(pick(sus_01:sus_10), na.rm = TRUE)
+    ) |>
+    select(respondent, interface, age, gender, tech_affinity, sus)
+prompt:
+  de: |
+    In psychologischen Zeitschriften stehen in Tabelle 1 meist M (SD). Ersetze
+    die Lücken `______`: `tech_affinity` soll wie eine kontinuierliche Variable
+    behandelt werden, und alle kontinuierlichen Variablen sollen als
+    `"{mean} ({sd})"` erscheinen.
+  en: |
+    In psychology journals, Table 1 usually shows M (SD). Replace the gaps
+    `______`: `tech_affinity` should be treated as a continuous variable, and
+    all continuous variables should appear as `"{mean} ({sd})"`.
+starter: |
+  tbl_summary(
+    scored,
+    by = interface,
+    include = c(age, tech_affinity, sus),
+    type = tech_affinity ~ ______,
+    statistic = ______ ~ "{mean} ({sd})"
+  )
+solution: |
+  tbl_summary(
+    scored,
+    by = interface,
+    include = c(age, tech_affinity, sus),
+    type = tech_affinity ~ "continuous",
+    statistic = all_continuous() ~ "{mean} ({sd})"
+  )
+hints:
+  - de: "Die Optionen erwarten Formeln: links die Variable(n), rechts der Wert."
+    en: "The options expect formulas: variable(s) on the left, the value on the right."
+  - de: "Der Typ ist ein Text wie `\"categorical\"` oder `\"continuous\"`."
+    en: "The type is a string such as `\"categorical\"` or `\"continuous\"`."
+  - de: "Alle kontinuierlichen Variablen wählt `all_continuous()` aus."
+    en: "`all_continuous()` selects all continuous variables."
+explanation:
+  de: |
+    `type` und `statistic` nehmen Formeln `variablen ~ wert`; Hilfsfunktionen
+    wie `all_continuous()` und `all_categorical()` wählen Variablen nach Typ.
+    Die Reihenfolge zählt: Erst macht `type` aus `tech_affinity` eine
+    kontinuierliche Variable, dann greift `all_continuous()` auch für sie. Ob
+    M (SD) oder Median (Q1, Q3) passt, hängt von der Verteilung ab: Für schiefe
+    Daten ist der Median ehrlicher. Mit `digits = all_continuous() ~ 1` legst
+    du die Nachkommastellen fest, mit `label = list(age ~ "Alter (Jahre)")` die
+    Beschriftung.
+  en: |
+    `type` and `statistic` take formulas `variables ~ value`; helpers such as
+    `all_continuous()` and `all_categorical()` select variables by type. The
+    order matters: first `type` makes `tech_affinity` continuous, then
+    `all_continuous()` covers it too. Whether M (SD) or median (Q1, Q3) fits
+    depends on the distribution: for skewed data the median is more honest. Use
+    `digits = all_continuous() ~ 1` for decimals and
+    `label = list(age ~ "Age (years)")` for labels.
+check:
+  type: value
+common_mistakes:
+  - pattern: "statistic\\s*=\\s*(age|sus)\\s*~"
+    message:
+      de: "So gilt das Format nur für eine Variable. `all_continuous()` erfasst alle kontinuierlichen auf einmal."
+      en: "That way the format applies to one variable only. `all_continuous()` covers all continuous ones at once."
+  - pattern: "\"continuous2\""
+    message:
+      de: "`continuous2` zeigt mehrere Kennwerte in eigenen Zeilen. Gefragt ist `\"continuous\"`."
+      en: "`continuous2` shows several statistics in separate rows. The task asks for `\"continuous\"`."
+  - pattern: "type\\s*=\\s*tech_affinity\\s*~\\s*continuous\\b"
+    message:
+      de: "Der Typ ist ein Text: `\"continuous\"` in Anführungszeichen."
+      en: "The type is a string: `\"continuous\"` in quotes."

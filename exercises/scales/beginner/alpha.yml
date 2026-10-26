@@ -1,0 +1,83 @@
+id: sc-b-alpha
+lesson: scales-beginner
+order: 3
+title:
+  de: Negatives Alpha
+  en: Negative alpha
+kind: debug
+required: true
+packages: [dplyr, psych]
+data: [survey]
+setup: |
+  library(dplyr)
+  library(psych)
+  trust_items <- survey |>
+    select(starts_with("trust_"))
+prompt:
+  de: |
+    `trust_items` enthält die sechs Vertrauensitems (1–7) im Rohzustand. Der
+    Starter berechnet Cronbachs α und liefert einen negativen Wert, dazu eine
+    Warnung von psych. Finde die Ursache und behebe sie im Code, sodass das
+    Ergebnis das richtige α (`raw_alpha`, ungerundet) ist.
+  en: |
+    `trust_items` contains the six trust items (1–7) as raw data. The starter
+    computes Cronbach's α and returns a negative value, plus a warning from
+    psych. Find the cause and fix it in the code so that the result is the
+    correct α (`raw_alpha`, unrounded).
+starter: |
+  psych::alpha(trust_items)$total$raw_alpha
+solution: |
+  trust_r <- trust_items |>
+    mutate(across(c(trust_3, trust_5), \(x) 8 - x))
+  psych::alpha(trust_r)$total$raw_alpha
+hints:
+  - de: "Lies die Warnung: Welche Items hängen negativ mit dem Rest zusammen?"
+    en: "Read the warning: which items are negatively related to the rest?"
+  - de: "`trust_3` und `trust_5` sind negativ formuliert. α setzt voraus, dass alle Items in dieselbe Richtung zeigen."
+    en: "`trust_3` and `trust_5` are negatively worded. α assumes that all items point in the same direction."
+  - de: "Erst umpolen (`8 - x`, wie in Übung 1), dann `psych::alpha()` auf die umgepolte Tabelle."
+    en: "Reverse first (`8 - x`, as in exercise 1), then `psych::alpha()` on the reversed table."
+explanation:
+  de: |
+    Nach dem Umpolen ist α = .91: Die sechs Items messen sehr einheitlich. In der
+    Ausgabe von `alpha(trust_r)` zeigt `r.drop` (.72–.76) die Trennschärfe jedes
+    Items, `raw_alpha` unter „Reliability if an item is dropped“ wäre ohne jedes
+    einzelne Item kleiner (.89); kein Item stört also. `check.keys = TRUE` polt
+    automatisch um und liefert hier dasselbe α, aber dann entscheidet die
+    Datenlage statt des Fragebogens, welches Item umgedreht wird; für den
+    Skalenwert musst du ohnehin selbst umpolen. α beschreibt die interne
+    Konsistenz, nicht, ob die Items genau ein Konstrukt messen (dafür: CFA).
+    `psych::` davor ist Absicht: ggplot2 hat ebenfalls eine Funktion `alpha()`
+    (Transparenz) und überdeckt psych, wenn es danach geladen wird. Bericht:
+    „Die Vertrauensskala war intern konsistent (Cronbachs α = .91).“
+  en: |
+    After reversing, α = .91: the six items measure very consistently. In the
+    output of `alpha(trust_r)`, `r.drop` (.72–.76) shows each item's
+    item-total correlation; `raw_alpha` under "Reliability if an item is
+    dropped" would be smaller without any single item (.89), so no item is a
+    problem. `check.keys = TRUE` reverses automatically and gives the same α
+    here, but then the data rather than the questionnaire decide which item is
+    flipped; you need to reverse yourself for the scale score anyway. α
+    describes internal consistency, not whether the items measure exactly one
+    construct (for that: CFA). Report: "The trust scale was internally
+    consistent (Cronbach's α = .91)." The `psych::` prefix is deliberate:
+    ggplot2 also has a function `alpha()` (transparency) and masks psych when
+    loaded afterwards.
+misconception:
+  de: "Ein niedriges oder negatives α zeigt, dass die Skala nichts taugt. Meist sind schlicht negativ formulierte Items nicht umgepolt."
+  en: "A low or negative α shows that the scale is useless. Usually, negatively worded items simply have not been reversed."
+check:
+  type: value
+common_mistakes:
+  - pattern: "\\b7\\s*-\\s*x"
+    message:
+      de: "`7 - x` verschiebt die Items auf 0–6. Für α wäre das egal, für den Skalenwert nicht: nimm `8 - x`."
+      en: "`7 - x` shifts the items to 0–6. That would not matter for α, but it does for the scale score: use `8 - x`."
+  - pattern: "c\\([^)]*trust_[1246]\\b"
+    message:
+      de: "Nur `trust_3` und `trust_5` sind negativ formuliert; polst du weitere Items um, sinkt α wieder."
+      en: "Only `trust_3` and `trust_5` are negatively worded; reversing further items lowers α again."
+  - pattern: "std\\.alpha"
+    message:
+      de: "Gefragt ist `raw_alpha`, das α der Rohwerte; `std.alpha` beruht auf standardisierten Items."
+      en: "The task asks for `raw_alpha`, the α of the raw scores; `std.alpha` is based on standardised items."

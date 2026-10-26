@@ -46,9 +46,9 @@ Stand 2026-10-26. Quelle: `legacy/exercises/` (Tag `v0-shiny`). Migriert: 16 von
 | 29 | 05-programming/trycatch-slope | write | programming-intermediate | Unverändert; Bezug zu `possibly()` (Nr. 23). |
 | 30 | 06-stats/anova-eta | write | group-comparisons-intermediate | `afex::aov_ez()` + `effectsize::eta_squared()` statt `aov()` und Handrechnung. |
 | 31 | 06-stats/assumptions | write | group-comparisons-intermediate | `performance::check_normality()`/`check_homogeneity()` auf Residuen. |
-| 32 | 06-stats/correlation | write | regression-beginner **B** | `correlation::correlation()` statt `cor.test()`; Interpretation mit KI. |
+| 32 | 06-stats/correlation | write | regression-beginner **B** | `correlation::correlation()` statt `cor.test()`; Interpretation mit KI. | **Migriert (M8.2c).**
 | 33 | 06-stats/describe-person | write | descriptives-beginner **B** | Zwei Stufen mitteln (Person, dann Bedingung); Abgrenzung zu `gc-b-describe` (dort schon aggregiert). | **Migriert (M8.2b).**
-| 34 | 06-stats/lm-centered | write | regression-beginner **B** | `parameters::model_parameters()`; zentrieren mit `datawizard::center()` als Variante. |
+| 34 | 06-stats/lm-centered | write | regression-beginner **B** | `parameters::model_parameters()`; zentrieren mit `datawizard::center()` als Variante. | **Migriert (M8.2c).**
 | 35 | 06-stats/mannwhitney | write | robust-intermediate | `rstatix::wilcox_test()` + `wilcox_effsize()`; englische Stufen. |
 | 36 | 06-stats/padjust-predict | predict | group-comparisons-intermediate | Unverändert (Holm). |
 | 37 | 06-stats/paired-debug | debug | group-comparisons-intermediate | Gepaarter Vergleich; ergänzt `gc-b-pseudoreplication` (dort: Durchgänge als unabhängig gezählt). |

@@ -1,0 +1,69 @@
+id: rp-b-table1
+lesson: reporting-beginner
+order: 1
+title:
+  de: Tabelle 1 mit gtsummary
+  en: Table 1 with gtsummary
+kind: write
+required: true
+packages: [dplyr, gtsummary]
+data: [survey]
+setup: |
+  library(dplyr)
+  library(gtsummary)
+  scored <- survey |>
+    filter(attention_check == 4) |>
+    mutate(
+      across(c(sus_01, sus_03, sus_05, sus_07, sus_09), \(x) x - 1),
+      across(c(sus_02, sus_04, sus_06, sus_08, sus_10), \(x) 5 - x),
+      sus = 25 * rowMeans(pick(sus_01:sus_10), na.rm = TRUE)
+    ) |>
+    select(respondent, interface, age, gender, tech_affinity, sus)
+prompt:
+  de: |
+    `scored` enthält eine Zeile pro Befragter mit `interface`, `age`, `gender`,
+    `tech_affinity` und dem SUS-Wert `sus`. Erstelle mit `tbl_summary()` eine
+    Tabelle 1, die Alter, Geschlecht und Technikaffinität getrennt nach
+    `interface` beschreibt (in dieser Reihenfolge, sonst Voreinstellungen).
+  en: |
+    `scored` contains one row per respondent with `interface`, `age`, `gender`,
+    `tech_affinity` and the SUS score `sus`. Use `tbl_summary()` to create a
+    Table 1 that describes age, gender and tech affinity separately by
+    `interface` (in this order, otherwise defaults).
+starter: |
+  tbl_summary(scored, include = c(age, gender))
+solution: |
+  tbl_summary(scored, by = interface, include = c(age, gender, tech_affinity))
+hints:
+  - de: "`by =` legt die Spalten fest, `include =` die Zeilen."
+    en: "`by =` sets the columns, `include =` the rows."
+  - de: "`tbl_summary(scored, by = ______, include = c(age, gender, ______))`"
+    en: "`tbl_summary(scored, by = ______, include = c(age, gender, ______))`"
+explanation:
+  de: |
+    `tbl_summary()` erkennt den Variablentyp selbst: Alter erscheint als Median
+    (Q1, Q3), Geschlecht mit Anzahl und Prozent, und die fehlende Altersangabe
+    als Zeile „Unknown“. Auch `tech_affinity` wird mit Anzahl und Prozent je
+    Stufe gezeigt, weil es nur fünf Werte hat; in der nächsten Übung stellst du
+    das um. Die Kopfzeile nennt das n je Gruppe (79 und 78). Ohne `include`
+    landen alle Spalten in der Tabelle, auch `respondent`. Fürs Manuskript:
+    `as_flex_table()` und `flextable::save_as_docx()` (lokal, siehe Kasten).
+  en: |
+    `tbl_summary()` detects the variable type itself: age appears as median
+    (Q1, Q3), gender with count and percent, and the missing age as an
+    "Unknown" row. `tech_affinity` is also shown with count and percent per
+    level because it has only five values; you will change that in the next
+    exercise. The header gives the n per group (79 and 78). Without `include`,
+    all columns end up in the table, including `respondent`. For the manuscript:
+    `as_flex_table()` and `flextable::save_as_docx()` (locally, see box).
+check:
+  type: value
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*\\bby\\s*=)[\\s\\S]*tbl_summary"
+    message:
+      de: "Ohne `by = interface` beschreibt die Tabelle alle Befragten zusammen statt getrennt nach Bedienung."
+      en: "Without `by = interface` the table describes all respondents together instead of separately by interface."
+  - pattern: "include\\s*=\\s*c\\([^)]*interface"
+    message:
+      de: "`interface` gehört in `by =`, nicht in `include =`: Es bildet die Spalten."
+      en: "`interface` belongs in `by =`, not in `include =`: it forms the columns."

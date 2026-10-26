@@ -1,0 +1,163 @@
+---
+title: "Ergebnisse berichten"
+subtitle: "Beginner · Tabelle 1, Ergebnistexte mit report(), Regressionstabellen"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, report, gtsummary, broom.helpers]
+resources:
+  - ../data/survey.csv
+---
+
+{{< include /_generated/de/reporting-beginner/runtime.qmd >}}
+
+{{< include /_generated/de/reporting-beginner/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R läuft hier direkt im Browser. Diese Lektion lädt mehr Pakete als die anderen; beim ersten Besuch dauert es bis zu einer Minute (Anzeige unten rechts), danach geht es schneller.
+:::
+
+## Wozu? {#why}
+
+**Forschungsfrage:** Wie berichtest du die Umfrage zur Sprach- und Touch-Bedienung so, dass Gutachterinnen und Leser Stichprobe, Effekt und Unsicherheit auf einen Blick sehen?
+
+Zahlen von Hand aus der Konsole in Word abzutippen ist die häufigste Fehlerquelle im Ergebnisteil. Die Berichtskette des Kurses lautet: Modell → `parameters`/`effectsize` → `report()` (Text) → `gtsummary` (Tabelle) → Word oder Quarto. Jede Zahl kommt dabei direkt aus R.
+
+## Konzept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 150" role="img" aria-labelledby="fig-rp-title fig-rp-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-rp-title">Berichtskette</title>
+  <desc id="fig-rp-desc">Vier Kästen nacheinander: Daten und Modell, dann report für den Text und gtsummary für die Tabelle, beide führen zu Word oder Quarto.</desc>
+  <rect x="10" y="45" width="120" height="50" rx="6" class="rt-fig-box" />
+  <rect x="180" y="10" width="160" height="50" rx="6" class="rt-fig-box-accent" />
+  <rect x="180" y="80" width="160" height="50" rx="6" class="rt-fig-box-accent" />
+  <rect x="400" y="45" width="150" height="50" rx="6" class="rt-fig-box" />
+  <text x="70" y="75" text-anchor="middle" class="rt-fig-label">Daten, Modell</text>
+  <text x="260" y="32" text-anchor="middle" class="rt-fig-code">report()</text>
+  <text x="260" y="50" text-anchor="middle" class="rt-fig-label rt-fig-muted">Text</text>
+  <text x="260" y="102" text-anchor="middle" class="rt-fig-code">tbl_summary()</text>
+  <text x="260" y="120" text-anchor="middle" class="rt-fig-label rt-fig-muted">Tabelle</text>
+  <text x="475" y="75" text-anchor="middle" class="rt-fig-label">Word, Quarto</text>
+  <line x1="130" y1="62" x2="178" y2="38" class="rt-fig-arrow" />
+  <line x1="130" y1="78" x2="178" y2="102" class="rt-fig-arrow" />
+  <line x1="340" y1="38" x2="398" y2="62" class="rt-fig-arrow" />
+  <line x1="340" y1="102" x2="398" y2="78" class="rt-fig-arrow" />
+</svg>
+<figcaption>Text und Tabelle kommen direkt aus dem Modell; ändern sich die Daten, ändert sich der Bericht mit.</figcaption>
+</figure>
+```
+
+- **Tabelle 1** `gtsummary::tbl_summary(data, by = gruppe, include = c(...))`: erkennt Variablentypen, zeigt n je Gruppe und fehlende Werte. Anpassen mit `statistic`, `type`, `label`, `digits`.
+- **Ergebnistext** `report::report(modell)`: APA-naher Text mit Kennwerten, KI und Effektgröße. Zahlen prüfen, Etiketten („small“, „significant“) und Richtung selbst formulieren.
+- **Stichprobe in einem Satz** `report_participants()`: Alter, Geschlecht, n.
+- **Regressionstabelle** `tbl_regression(modell)`: b, KI und p je Prädiktor.
+- **APA-Regeln:** exakte p-Werte ohne führende Null (`p = .008`, `p < .001`), Statistik mit df, Effektgröße mit KI, Richtung in Worten.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## Mehr dazu: was `report()` nicht weiß
+
+- Bei Tests aus `t.test()` oder `cor.test()` kennt `report()` die Daten nicht und schätzt die Effektgröße aus t (Hinweis „providing the data argument“). Mit `report(test, data = scored)` rechnet es genau.
+- Das Vorzeichen folgt der Reihenfolge der Faktorstufen (erste minus zweite).
+- Etiketten für Effektgrößen folgen festen Faustregeln (Cohen, Funder) und passen nicht für jedes Feld.
+- `tbl_summary() |> add_p()` ergänzt Tests; bei randomisierten Gruppen in Tabelle 1 nicht sinnvoll.
+:::
+
+## Beispiel {#example}
+
+Zuerst die Daten wie in den Lektionen zuvor: SUS-Wert, ohne Aufmerksamkeitsfehler.
+
+```{webr}
+scored <- survey |>
+  filter(attention_check == 4) |>
+  mutate(
+    across(c(sus_01, sus_03, sus_05, sus_07, sus_09), \(x) x - 1),
+    across(c(sus_02, sus_04, sus_06, sus_08, sus_10), \(x) 5 - x),
+    sus = 25 * rowMeans(pick(sus_01:sus_10), na.rm = TRUE)
+  )
+
+report_participants(scored, age = "age", gender = "gender", participants = "respondent")
+```
+
+Lies den Satz genau: `report_participants()` zählt „prefer not to say“ als „non-binary“. Automatische Texte also immer gegen die Daten prüfen (`count(scored, gender)`).
+
+Eine beschriftete Tabelle mit Gesamtspalte:
+
+```{webr}
+scored |>
+  tbl_summary(
+    by = interface,
+    include = c(sus, tlx_mental),
+    label = list(sus ~ "SUS (0–100)", tlx_mental ~ "Geistige Anforderung (0–100)")
+  ) |>
+  add_overall()
+```
+
+**So berichtest du es (Methodenteil):** 157 Personen gingen in die Auswertung ein (79 touch, 78 voice; Alter M = 37,1, SD = 11,1); drei wurden wegen einer falsch beantworteten Aufmerksamkeitsfrage ausgeschlossen. Tabelle 1 beschreibt die Stichprobe je Gruppe.
+
+## Paketvergleich {#packages}
+
+| Aufgabe | Empfehlung | Alternative |
+|---|---|---|
+| Tabelle 1 | **gtsummary** `tbl_summary()` | `modelsummary::datasummary_balance()`; `tableone` (älter, Medizin) |
+| Modelltabelle | **gtsummary** `tbl_regression()` (ein Modell, gleiche Grammatik wie Tabelle 1) | `modelsummary::modelsummary()`: mehrere Modelle nebeneinander (Intermediate) |
+| Ergebnistext | **report** `report()` | von Hand aus `parameters()`/`effectsize()`; `papaja::apa_print()` (lokal) |
+| Word-Ausgabe | **flextable** über `as_flex_table()` | `rempsyc::nice_table()` für APA-Tabellen aus Data Frames; Quarto mit `format: docx` |
+
+::: {.callout-note appearance="simple"}
+## Lokal ausführen
+
+Word-Dateien schreibt R im Browser nicht auf deine Festplatte. Lokal geht es so:
+
+```r
+library(gtsummary)
+library(flextable)
+
+tbl <- tbl_summary(scored, by = interface, include = c(age, gender, tech_affinity))
+tbl |>
+  as_flex_table() |>
+  save_as_docx(path = "table1.docx")
+```
+
+Ergebnis: `table1.docx` im Projektordner mit formatierter Tabelle, die du in Word weiterbearbeiten kannst. Noch besser ist ein Quarto-Dokument mit `format: docx`: Text, Zahlen und Tabellen bleiben dann synchron.
+:::
+
+## Übungen {#exercises}
+
+Vier Pflichtübungen und eine Zusatzübung. **Ausführen und prüfen** startet deinen Code und prüft ihn sofort. Hinweise deckst du einzeln auf (**Hinweis zeigen**), die Lösung erst danach.
+
+{{< include /_generated/de/reporting-beginner/exercises.qmd >}}
+
+## Wissenscheck {#check}
+
+{{< include /_generated/de/reporting-beginner/quiz.qmd >}}
+
+## Spickzettel {#cheatsheet}
+
+```r
+# Tabelle 1
+tbl_summary(
+  scored,
+  by = interface,
+  include = c(age, gender, tech_affinity),
+  type = tech_affinity ~ "continuous",
+  statistic = all_continuous() ~ "{mean} ({sd})",
+  label = list(age ~ "Alter (Jahre)")
+)
+
+# Ergebnistext und Stichprobe
+fit <- lm(sus ~ interface + tech_affinity, data = scored)
+report(fit)
+report_participants(scored, age = "age", gender = "gender")
+
+# Regressionstabelle, dann Word (lokal)
+tbl_regression(fit) |> as_flex_table()
+```
+
+- Jede Zahl aus R, keine abgetippten Werte.
+- `report()`-Texte prüfen: Vorzeichen, Etiketten, Kategorien.
+- APA: exakte p ohne führende Null, df, Effektgröße mit KI.
+- Ausschlüsse und fehlende Werte in Text und Tabelle nennen.
+
+{{< include /_generated/de/reporting-beginner/footer.qmd >}}

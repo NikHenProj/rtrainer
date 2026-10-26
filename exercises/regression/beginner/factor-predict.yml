@@ -1,0 +1,90 @@
+id: rg-b-factor-predict
+lesson: regression-beginner
+order: 3
+title:
+  de: Ein Faktor als Prädiktor
+  en: A factor as predictor
+kind: predict
+required: true
+packages: []
+data: []
+setup: ""
+prompt:
+  de: |
+    Die SUS-Mittelwerte der Befragten (nach Ausschluss der Aufmerksamkeitsfehler)
+    sind:
+
+    | interface | sus_m |
+    |---|---|
+    | touch | 51.10 |
+    | voice | 61.46 |
+
+    `interface` ist ein Faktor mit den Stufen `touch`, `voice` (in dieser
+    Reihenfolge). Welche Koeffizienten liefert `lm(sus ~ interface, data = scored)`?
+    Gib `c(Achsenabschnitt, Koeffizient von interfacevoice)` auf 2
+    Nachkommastellen ein, ohne Code auszuführen.
+  en: |
+    The SUS means of the respondents (after excluding attention-check failures)
+    are:
+
+    | interface | sus_m |
+    |---|---|
+    | touch | 51.10 |
+    | voice | 61.46 |
+
+    `interface` is a factor with the levels `touch`, `voice` (in this order).
+    Which coefficients does `lm(sus ~ interface, data = scored)` return? Type
+    `c(intercept, coefficient of interfacevoice)` to 2 decimals, without running
+    code.
+starter: |
+  # Deine Vorhersage als Wert / your prediction as a value, e.g. c(1, 2)
+solution: |
+  c(51.10, 10.36)
+hints:
+  - de: "R kodiert einen Faktor mit k Stufen als k − 1 Dummy-Variablen. Die erste Stufe ist die Referenz."
+    en: "R codes a factor with k levels as k − 1 dummy variables. The first level is the reference."
+  - de: "Der Achsenabschnitt ist der erwartete Wert, wenn alle Dummys 0 sind, also für `touch`."
+    en: "The intercept is the expected value when all dummies are 0, i.e. for `touch`."
+  - de: "`interfacevoice` ist der Unterschied voice − touch."
+    en: "`interfacevoice` is the difference voice − touch."
+explanation:
+  de: |
+    Mit einem Faktor ist der Achsenabschnitt der Mittelwert der Referenzstufe
+    (touch, 51,10) und der Koeffizient `interfacevoice` der Unterschied zu ihr
+    (61,46 − 51,10 = 10,36; ungerundet 10,37). Das Modell ist damit ein
+    t-Test in anderer Form: t und p des Koeffizienten entsprechen dem
+    Student-t-Test mit gleichen Varianzen. Die Referenzstufe bestimmst du mit der
+    Reihenfolge der Faktorstufen (`forcats::fct_relevel()`); das Vorzeichen
+    folgt daraus. Der Vorteil der Regression: Weitere Prädiktoren lassen sich
+    einfach ergänzen (Zusatzübung).
+  en: |
+    With a factor, the intercept is the mean of the reference level (touch,
+    51.10) and the coefficient `interfacevoice` is the difference from it
+    (61.46 − 51.10 = 10.36; unrounded 10.37). The model is thus a t-test in
+    another form: t and p of the coefficient match Student's t-test with equal
+    variances. You set the reference level via the order of the factor levels
+    (`forcats::fct_relevel()`); the sign follows from it. The advantage of
+    regression: further predictors are easy to add (extra exercise).
+misconception:
+  de: "Der Koeffizient eines Faktors ist der Mittelwert dieser Gruppe."
+  en: "The coefficient of a factor is the mean of that group."
+check:
+  type: value
+  tolerance: 0.001
+common_mistakes:
+  - pattern: "61[.,]46\\s*\\)"
+    message:
+      de: "Der Koeffizient von `interfacevoice` ist nicht der Mittelwert von voice, sondern der Unterschied zur Referenzstufe touch."
+      en: "The coefficient of `interfacevoice` is not the mean of voice but the difference from the reference level touch."
+  - pattern: "c\\(\\s*61"
+    message:
+      de: "Die Referenzstufe ist die erste Faktorstufe, hier `touch`. Der Achsenabschnitt ist deren Mittelwert."
+      en: "The reference level is the first factor level, here `touch`. The intercept is its mean."
+  - pattern: "-\\s*10"
+    message:
+      de: "Das Vorzeichen: `interfacevoice` ist voice − touch, und voice liegt höher."
+      en: "The sign: `interfacevoice` is voice − touch, and voice is higher."
+  - pattern: "c\\(\\s*56"
+    message:
+      de: "Der Achsenabschnitt ist nicht der Gesamtmittelwert, sondern der Mittelwert der Referenzstufe touch."
+      en: "The intercept is not the grand mean but the mean of the reference level touch."

@@ -165,6 +165,25 @@ step("visualisation: plot solution graded correct", !is.na(checked), sprintf("%s
 drawn <- js("!!document.querySelector('#ex-vi-b-aes-inherit canvas, #ex-vi-b-aes-inherit img')")
 step("visualisation: plot drawn", drawn)
 
+# 6. Reporting: gtsummary, report and broom.helpers load; a table solution passes.
+goto("/de/reporting-beginner.html")
+loaded <- wait_for(
+  "document.querySelectorAll('#ex-rp-b-table1 .exercise-editor-btn-run-code').length > 0 &&
+   document.querySelectorAll('.exercise-editor-btn-run-code.disabled').length === 0",
+  timeout = 300
+)
+step("reporting: webR, gtsummary and report ready", !is.na(loaded), sprintf("%s s", loaded))
+invisible(js("(() => {
+  const ex = document.querySelector('#ex-rp-b-table1');
+  const v = ex.querySelector('.cm-content').cmView.view;
+  v.dispatch({changes: {from: 0, to: v.state.doc.length, insert:
+    'tbl_summary(scored, by = interface, include = c(age, gender, tech_affinity))'}});
+  ex.querySelector('.exercise-editor-btn-run-code').click();
+  return true;
+})()"))
+checked <- wait_for("!!document.querySelector('#ex-rp-b-table1 .exercise-grade.alert-success')", timeout = 120)
+step("reporting: gtsummary table graded correct", !is.na(checked), sprintf("%s s", checked))
+
 goto("/en/index.html")
 Sys.sleep(1)
 step("en: German-only lesson not linked in course plan", js("!document.querySelector('a[href*=\"cleaning-beginner\"]')"))

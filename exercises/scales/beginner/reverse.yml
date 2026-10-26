@@ -1,0 +1,73 @@
+id: sc-b-reverse
+lesson: scales-beginner
+order: 1
+title:
+  de: Items umpolen
+  en: Reversing items
+kind: write
+required: true
+packages: [dplyr]
+data: [survey]
+setup: |
+  library(dplyr)
+prompt:
+  de: |
+    Die Vertrauensskala in `survey` hat sechs Items von 1 (stimme gar nicht zu)
+    bis 7 (stimme völlig zu). `trust_3` und `trust_5` sind negativ formuliert
+    („Ich bin dem System gegenüber misstrauisch“). Pole beide Items um, sodass
+    hohe Werte überall mehr Vertrauen bedeuten. Die Spaltennamen bleiben gleich,
+    das Ergebnis ist der ganze Datensatz.
+  en: |
+    The trust scale in `survey` has six items from 1 (strongly disagree) to 7
+    (strongly agree). `trust_3` and `trust_5` are negatively worded ("I am
+    suspicious of the system"). Reverse both items so that high values mean
+    more trust everywhere. The column names stay the same; the result is the
+    whole dataset.
+starter: |
+  survey |>
+    mutate()
+solution: |
+  survey |>
+    mutate(across(c(trust_3, trust_5), \(x) 8 - x))
+hints:
+  - de: "Umpolen heißt: 1 wird 7, 2 wird 6, …, 7 wird 1. Welche Rechnung macht das?"
+    en: "Reversing means: 1 becomes 7, 2 becomes 6, …, 7 becomes 1. Which calculation does that?"
+  - de: "Die Formel lautet `(Minimum + Maximum) - x`, hier also `8 - x`."
+    en: "The formula is `(minimum + maximum) - x`, so here `8 - x`."
+  - de: "`mutate(across(c(trust_3, trust_5), \\(x) ______))`"
+    en: "`mutate(across(c(trust_3, trust_5), \\(x) ______))`"
+explanation:
+  de: |
+    `(Minimum + Maximum) - x` spiegelt die Skala an ihrer Mitte: Aus 1 wird 7,
+    die 4 bleibt 4. `across()` wendet dieselbe Rechnung auf mehrere Spalten an,
+    fehlende Werte bleiben `NA`. Fallstrick: `7 - x` verschiebt die Skala auf 0–6;
+    die Korrelationen stimmen dann, aber Mittelwerte sind nicht mehr mit den
+    anderen Items vergleichbar. `datawizard::reverse(x, range = c(1, 7))` macht
+    dasselbe; ohne `range` nimmt es das beobachtete Minimum und Maximum, und das
+    ist bei kleinen Stichproben nicht immer 1 und 7. Gleiche Spaltennamen sind
+    bequem, aber riskant: Wer das Skript zweimal ausführt, polt doppelt. Sicherer
+    sind neue Namen wie `trust_3_r`.
+  en: |
+    `(minimum + maximum) - x` mirrors the scale at its centre: 1 becomes 7, 4
+    stays 4. `across()` applies the same calculation to several columns; missing
+    values stay `NA`. Pitfall: `7 - x` shifts the scale to 0–6; the correlations
+    are still right, but means are no longer comparable with the other items.
+    `datawizard::reverse(x, range = c(1, 7))` does the same; without `range` it
+    uses the observed minimum and maximum, which in small samples are not always
+    1 and 7. Keeping the column names is convenient but risky: running the script
+    twice reverses twice. New names such as `trust_3_r` are safer.
+check:
+  type: value
+common_mistakes:
+  - pattern: "\\b7\\s*-\\s*(x|trust_)"
+    message:
+      de: "`7 - x` macht aus 1–7 eine Skala von 0–6. Für 1–7 brauchst du `8 - x` (Minimum + Maximum)."
+      en: "`7 - x` turns 1–7 into a scale from 0–6. For 1–7 you need `8 - x` (minimum + maximum)."
+  - pattern: "\\b6\\s*-\\s*(x|trust_)"
+    message:
+      de: "`6 - x` passt zu einer Skala von 1–5. Die Vertrauensitems gehen von 1 bis 7."
+      en: "`6 - x` fits a scale from 1–5. The trust items run from 1 to 7."
+  - pattern: "trust_[1246]\\b"
+    message:
+      de: "Nur `trust_3` und `trust_5` sind negativ formuliert; die anderen Items bleiben unverändert."
+      en: "Only `trust_3` and `trust_5` are negatively worded; the other items stay unchanged."

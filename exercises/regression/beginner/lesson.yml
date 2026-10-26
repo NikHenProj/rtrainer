@@ -1,0 +1,17 @@
+# Lesson metadata; exercises are the other *.yml files in this folder
+# (sorted by `order`), the knowledge check is quiz.yml.
+lesson: regression-beginner
+minutes: 45
+prerequisites: [group-comparisons-beginner, scales-beginner]
+langs: [de]
+packages: [dplyr, correlation, parameters, performance]
+data: [driving_sim, survey]
+goals:
+  de:
+    - Eine Korrelation mit Konfidenzintervall auf der richtigen Ebene berechnen
+    - Eine einfache Regression mit `lm()` rechnen und mit `parameters` deuten
+    - Prädiktoren zentrieren und Faktoren als Prädiktoren lesen
+  en:
+    - Compute a correlation with a confidence interval at the right level
+    - Fit a simple regression with `lm()` and interpret it with `parameters`
+    - Centre predictors and read factors as predictors

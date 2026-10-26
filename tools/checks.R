@@ -36,6 +36,9 @@ rt_messages <- list(
     plot_scale = "Die Skalen stimmen nicht: erwartet %s, erhalten %s.",
     plot_data = "Die Daten des Plots stimmen nicht: %s",
     none = "keine",
+    table_variables = "Die Tabelle enthält andere Variablen: erwartet %s, erhalten %s.",
+    table_header = "Der Tabellenkopf stimmt nicht (Gruppenspalten oder N je Gruppe). Prüfe `by` und die Daten.",
+    table_values = "Die Kennwerte in der Tabelle stimmen noch nicht. Prüfe `statistic`, `type` und die Daten.",
     check_error = "Beim Prüfen ist ein Fehler aufgetreten: %s"
   ),
   en = list(
@@ -64,6 +67,9 @@ rt_messages <- list(
     plot_scale = "The scales do not match: expected %s, got %s.",
     plot_data = "The plot data do not match: %s",
     none = "none",
+    table_variables = "The table contains other variables: expected %s, got %s.",
+    table_header = "The table header does not match (group columns or N per group). Check `by` and the data.",
+    table_values = "The statistics in the table are not right yet. Check `statistic`, `type` and the data.",
     check_error = "An error occurred while checking: %s"
   )
 )
@@ -131,6 +137,10 @@ rt_compare <- function(result, expected, tolerance = 1e-6,
       return(rt_msg("htest", lang, paste(fields[differs], collapse = ", ")))
     }
     return(NULL)
+  }
+
+  if (inherits(expected, "gtsummary")) {
+    return(rt_compare_gtsummary(result, expected, lang))
   }
 
   if (is.data.frame(expected)) {
@@ -334,13 +344,40 @@ rt_match_mistake <- function(user_code, mistakes, lang = "de") {
 }
 
 # Check the current attempt. `spec` is the exercise's `check` field:
+# gtsummary tables: same variables, same visible header, same formatted cells.
+# The objects themselves differ in calls and environments, so they are not compared.
+rt_compare_gtsummary <- function(result, expected, lang = "de") {
+  if (!inherits(result, "gtsummary")) {
+    return(rt_msg("class", lang, "gtsummary", class(result)[1]))
+  }
+  variables <- function(x) unique(x$table_body$variable)
+  if (!identical(variables(result), variables(expected))) {
+    return(rt_msg(
+      "table_variables", lang,
+      rt_collapse(variables(expected)), rt_collapse(variables(result))
+    ))
+  }
+  header <- function(x) {
+    h <- x$table_styling$header
+    h$label[!h$hide]
+  }
+  if (!identical(header(result), header(expected))) {
+    return(rt_msg("table_header", lang))
+  }
+  body <- function(x) rt_plain_df(gtsummary::as_tibble(x, col_labels = FALSE))
+  if (!identical(body(result), body(expected))) {
+    return(rt_msg("table_values", lang))
+  }
+  NULL
+}
+
 # type = "value" (last value vs. solution), "object" (object `name` in the
 # user's environment vs. the solution's) or "output" (printed output matches
 # regex `pattern`) or "plot" (ggplot vs. the solution's: layers, aes(),
 # settings, facets, scales; optional `params`, `check_data`, and `name` for
 # a plot stored in an object instead of the last value).
-rt_check <- function(spec, mistakes = list(), lang = "de", env = parent.frame()) {
-  problem <- tryCatch(
+rt_problem <- function(spec, lang, env) {
+  tryCatch(
     switch(spec$type,
       value = rt_compare(
         get0(".result", env),
@@ -389,6 +426,39 @@ rt_check <- function(spec, mistakes = list(), lang = "de", env = parent.frame())
     ),
     error = function(e) rt_msg("check_error", lang, conditionMessage(e))
   )
+}
+
+# Evaluate the user's code again in a child of their environment. quarto-live
+# hands over what printing returned, which is not always the value: rendered
+# HTML for objects with a knit_print() method (gtsummary), NULL for print
+# methods that return cat() (report), and on the first run after loading
+# psych an unrelated value. Only a visible value counts, so code ending in an
+# assignment still has no result. Returns NULL when there is nothing to use.
+rt_reevaluate <- function(env) {
+  user_env <- get0(".envir_result", env)
+  user_code <- get0(".user_code", env)
+  if (!is.environment(user_env) || !is.character(user_code)) {
+    return(NULL)
+  }
+  tryCatch(
+    {
+      res <- withVisible(eval(parse(text = user_code), envir = new.env(parent = user_env)))
+      if (res$visible) list(value = res$value) else NULL
+    },
+    error = function(e) NULL
+  )
+}
+
+rt_check <- function(spec, mistakes = list(), lang = "de", env = parent.frame()) {
+  problem <- rt_problem(spec, lang, env)
+  if (!is.null(problem) && identical(spec$type, "value")) {
+    again <- rt_reevaluate(env)
+    if (!is.null(again)) {
+      retry_env <- new.env(parent = env)
+      retry_env$.result <- again$value
+      problem <- rt_problem(spec, lang, retry_env)
+    }
+  }
 
   if (is.null(problem)) {
     return(rt_feedback(TRUE, rt_msg("correct", lang)))

@@ -1,0 +1,89 @@
+id: sc-b-scale-score
+lesson: scales-beginner
+order: 4
+title:
+  de: Skalenwert und Gruppenvergleich
+  en: Scale score and group comparison
+kind: write
+required: true
+packages: [dplyr, datawizard]
+data: [survey]
+setup: |
+  library(dplyr)
+  library(datawizard)
+  survey_r <- survey |>
+    mutate(across(c(trust_3, trust_5), \(x) 8 - x))
+prompt:
+  de: |
+    In `survey_r` sind `trust_3` und `trust_5` schon umgepolt. Bilde den
+    Skalenwert `trust` als Mittelwert von `trust_1` bis `trust_6`, aber nur für
+    Personen mit mindestens 5 beantworteten Items (sonst `NA`). Nimm nur
+    Befragte auf, die die Aufmerksamkeitsfrage richtig beantwortet haben
+    (`attention_check == 4`).
+
+    Ergebnis pro `interface`: `trust_m` und `trust_sd` (2 Nachkommastellen)
+    und `n`, die Zahl der Personen mit gültigem Skalenwert.
+  en: |
+    In `survey_r`, `trust_3` and `trust_5` are already reversed. Compute the
+    scale score `trust` as the mean of `trust_1` to `trust_6`, but only for
+    respondents with at least 5 answered items (otherwise `NA`). Include only
+    respondents who answered the attention check correctly
+    (`attention_check == 4`).
+
+    Result per `interface`: `trust_m` and `trust_sd` (2 decimals) and `n`, the
+    number of respondents with a valid scale score.
+starter: |
+  survey_r |>
+    mutate(trust = rowMeans(pick(trust_1:trust_6))) |>
+    summarise(trust_m = mean(trust), .by = interface)
+solution: |
+  survey_r |>
+    filter(attention_check == 4) |>
+    mutate(trust = row_means(pick(trust_1:trust_6), min_valid = 5)) |>
+    summarise(
+      trust_m = round(mean(trust, na.rm = TRUE), 2),
+      trust_sd = round(sd(trust, na.rm = TRUE), 2),
+      n = sum(!is.na(trust)),
+      .by = interface
+    )
+hints:
+  - de: "Drei Schritte: filtern, Skalenwert bilden, zusammenfassen. `rowMeans()` kennt keine Mindestzahl gültiger Items."
+    en: "Three steps: filter, compute the scale score, summarise. `rowMeans()` has no minimum number of valid items."
+  - de: "`datawizard::row_means(pick(trust_1:trust_6), min_valid = 5)` liefert `NA` für Personen mit weniger als 5 Antworten."
+    en: "`datawizard::row_means(pick(trust_1:trust_6), min_valid = 5)` returns `NA` for respondents with fewer than 5 answers."
+  - de: "`n()` zählt Zeilen, auch die mit `NA`. Gültige Werte zählt `sum(!is.na(trust))`."
+    en: "`n()` counts rows, including those with `NA`. `sum(!is.na(trust))` counts valid values."
+explanation:
+  de: |
+    Drei Befragte fallen wegen der Aufmerksamkeitsfrage heraus, vier weitere
+    haben zu wenige Vertrauensitems (zwei übersprangen den ganzen Block). Es
+    bleiben 78 (touch) und 75 (voice) Personen; Vertrauen ist mit M = 3,86 und
+    4,04 (SD ≈ 1,3) fast gleich. Eine Mindestzahl gültiger Items ist ein
+    Kompromiss: Wer nur ein Item beantwortet, hätte mit `rowMeans(na.rm = TRUE)`
+    einen sehr unsicheren Skalenwert. Die Regel (hier 5 von 6) und die Zahl der
+    Ausschlüsse gehören in den Methodenteil, idealerweise vorab festgelegt.
+  en: |
+    Three respondents drop out because of the attention check, four more have
+    too few trust items (two skipped the whole block). That leaves 78 (touch) and
+    75 (voice) respondents; trust is almost equal at M = 3.86 and 4.04
+    (SD ≈ 1.3). A minimum number of valid items is a compromise: someone who
+    answered only one item would get a very uncertain score with
+    `rowMeans(na.rm = TRUE)`. The rule (here 5 of 6) and the number of
+    exclusions belong in the methods section, ideally decided in advance.
+check:
+  type: value
+  ignore_row_order: true
+  ignore_col_order: false
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*attention_check)[\\s\\S]*summarise"
+    message:
+      de: "Drei Befragte haben die Aufmerksamkeitsfrage falsch beantwortet; filtere zuerst auf `attention_check == 4`."
+      en: "Three respondents failed the attention check; first filter to `attention_check == 4`."
+  - pattern: "rowMeans\\([^)]*\\)?[^)]*na\\.rm"
+    message:
+      de: "Mit `rowMeans(na.rm = TRUE)` bekommt auch einen Wert, wer nur ein Item beantwortet hat. Nimm `row_means(..., min_valid = 5)`."
+      en: "With `rowMeans(na.rm = TRUE)`, even someone who answered a single item gets a score. Use `row_means(..., min_valid = 5)`."
+  - pattern: "\\bn\\s*=\\s*n\\(\\)"
+    message:
+      de: "`n()` zählt auch Personen ohne gültigen Skalenwert. Gezählt werden sollen nur gültige: `sum(!is.na(trust))`."
+      en: "`n()` also counts respondents without a valid score. Only valid ones should be counted: `sum(!is.na(trust))`."

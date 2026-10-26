@@ -1,0 +1,17 @@
+# Lesson metadata; exercises are the other *.yml files in this folder
+# (sorted by `order`), the knowledge check is quiz.yml.
+lesson: reporting-beginner
+minutes: 40
+prerequisites: [regression-beginner]
+langs: [de]
+packages: [dplyr, report, gtsummary, broom.helpers]
+data: [survey]
+goals:
+  de:
+    - Eine Tabelle 1 mit `gtsummary::tbl_summary()` erstellen und anpassen
+    - Ergebnistexte mit `report()` erzeugen und kritisch lesen
+    - Ein Regressionsmodell als Tabelle berichten
+  en:
+    - Create and adjust a Table 1 with `gtsummary::tbl_summary()`
+    - Generate result texts with `report()` and read them critically
+    - Report a regression model as a table

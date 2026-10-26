@@ -1,0 +1,97 @@
+id: rp-b-report-read
+lesson: reporting-beginner
+order: 4
+title:
+  de: Einen report()-Text lesen
+  en: Reading a report() text
+kind: interpret
+required: true
+packages: []
+data: []
+setup: ""
+prompt:
+  de: |
+    `report(t.test(sus ~ interface, data = scored))` liefert:
+
+    > The Welch Two Sample t-test testing the difference of sus by interface
+    > (mean in group touch = 51.10, mean in group voice = 61.46) suggests that
+    > the effect is negative, statistically significant, and small
+    > (difference = -10.37, 95% CI [-18.03, -2.70], t(154.85) = -2.67,
+    > p = 0.008; Cohen's d = -0.43, 95% CI [-0.75, -0.11])
+
+    Welche Aussagen stimmen?
+
+    1. Voice wird im Mittel um etwa 10 SUS-Punkte besser bewertet als touch.
+    2. „negative“ bedeutet, dass voice schlechter abschneidet.
+    3. Die Daten sind mit Unterschieden von etwa 3 bis 18 SUS-Punkten vereinbar.
+    4. Mit p = 0.008 ist der Unterschied mit 99,2 % Wahrscheinlichkeit echt.
+
+    Gib die Nummern der richtigen Aussagen aufsteigend als Vektor ein, z. B. `c(1, 2)`.
+  en: |
+    `report(t.test(sus ~ interface, data = scored))` returns:
+
+    > The Welch Two Sample t-test testing the difference of sus by interface
+    > (mean in group touch = 51.10, mean in group voice = 61.46) suggests that
+    > the effect is negative, statistically significant, and small
+    > (difference = -10.37, 95% CI [-18.03, -2.70], t(154.85) = -2.67,
+    > p = 0.008; Cohen's d = -0.43, 95% CI [-0.75, -0.11])
+
+    Which statements are true?
+
+    1. Voice is rated about 10 SUS points better than touch on average.
+    2. "negative" means that voice performs worse.
+    3. The data are compatible with differences of about 3 to 18 SUS points.
+    4. With p = 0.008, the difference is real with 99.2% probability.
+
+    Type the numbers of the true statements in ascending order as a vector,
+    e.g. `c(1, 2)`.
+starter: |
+  # Nummern der richtigen Aussagen als Vektor / numbers of the true statements as a vector
+solution: |
+  c(1, 3)
+hints:
+  - de: "Vergleiche die beiden Gruppenmittelwerte im Text. Wer liegt höher?"
+    en: "Compare the two group means in the text. Which is higher?"
+  - de: "`t.test()` rechnet erste Gruppe minus zweite, hier touch − voice."
+    en: "`t.test()` computes first group minus second, here touch − voice."
+  - de: "Der p-Wert ist die Wahrscheinlichkeit solcher Daten, wenn es keinen Unterschied gäbe, nicht die Wahrscheinlichkeit einer Hypothese."
+    en: "The p-value is the probability of such data if there were no difference, not the probability of a hypothesis."
+explanation:
+  de: |
+    Richtig sind 1 und 3. Das Vorzeichen folgt der Reihenfolge der Faktorstufen:
+    `t.test()` rechnet touch − voice, deshalb ist die Differenz negativ, obwohl
+    voice besser abschneidet. Für den Bericht drehst du es um oder benennst die
+    Richtung ausdrücklich: „Voice wurde um 10,4 SUS-Punkte besser bewertet,
+    95-%-KI [2,7; 18,0], t(154,85) = 2,67, p = .008, d = 0,43 [0,11; 0,75].“
+    Der p-Wert sagt, wie überraschend die Daten wären, wenn es keinen
+    Unterschied gäbe; eine Wahrscheinlichkeit für die Hypothese ist er nicht.
+    „small“ ist Cohens Faustregel für d; ob 10 SUS-Punkte praktisch bedeutsam
+    sind, entscheidest du inhaltlich, etwa im Vergleich mit dem SUS-Richtwert 68.
+  en: |
+    Statements 1 and 3 are true. The sign follows the order of the factor
+    levels: `t.test()` computes touch − voice, so the difference is negative
+    even though voice performs better. For the report, flip it or name the
+    direction explicitly: "Voice was rated 10.4 SUS points higher, 95% CI
+    [2.7, 18.0], t(154.85) = 2.67, p = .008, d = 0.43 [0.11, 0.75]." The p-value
+    says how surprising the data would be if there were no difference; it is
+    not a probability for the hypothesis. "small" is Cohen's rule of thumb for
+    d; whether 10 SUS points matter in practice is a substantive judgement, for
+    example compared with the SUS benchmark of 68.
+misconception:
+  de: "Das Vorzeichen in `report()` und `t.test()` zeigt, welche Gruppe besser ist, und p ist die Wahrscheinlichkeit, dass der Effekt echt ist."
+  en: "The sign in `report()` and `t.test()` shows which group is better, and p is the probability that the effect is real."
+check:
+  type: value
+common_mistakes:
+  - pattern: "\\b2\\b"
+    message:
+      de: "Aussage 2 stimmt nicht: `t.test()` rechnet touch − voice. Die Mittelwerte im Text zeigen, dass voice höher liegt."
+      en: "Statement 2 is false: `t.test()` computes touch − voice. The means in the text show that voice is higher."
+  - pattern: "\\b4\\b"
+    message:
+      de: "Aussage 4 stimmt nicht: p ist die Wahrscheinlichkeit solcher Daten unter der Nullhypothese, keine Wahrscheinlichkeit für den Effekt."
+      en: "Statement 4 is false: p is the probability of such data under the null hypothesis, not a probability for the effect."
+  - pattern: "c\\(\\s*3\\s*,\\s*1\\s*\\)"
+    message:
+      de: "Die Auswahl stimmt, aber bitte aufsteigend: `c(1, 3)`."
+      en: "The selection is right, but please in ascending order: `c(1, 3)`."
