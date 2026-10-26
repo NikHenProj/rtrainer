@@ -1,0 +1,142 @@
+---
+title: "Correlation and regression"
+subtitle: "Beginner · Correlation with CI, simple regression, centring, factors"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, correlation, parameters, performance, datawizard]
+resources:
+  - ../data/driving_sim.csv
+  - ../data/survey.csv
+---
+
+{{< include /_generated/en/regression-beginner/runtime.qmd >}}
+
+{{< include /_generated/en/regression-beginner/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R runs directly in your browser. On the first visit it takes 10–30 seconds to load (status at the bottom right); after that it is faster.
+:::
+
+## Why? {#why}
+
+**Research question:** Do older drivers react more slowly to a takeover request? And is the usability rating related to trust in the system?
+
+A correlation describes how closely two variables are related; a regression says how much the outcome changes per unit of the predictor, in the unit of measurement (ms, SUS points). Both need independent observations: with repeated measures, summarise per person first.
+
+## Concept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 220" role="img" aria-labelledby="fig-rg-title fig-rg-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-rg-title">Intercept and slope of a regression line</title>
+  <desc id="fig-rg-desc">Coordinate system with age in decades from 40 on the x axis and reaction time on the y axis. A rising line crosses the vertical line at age10 equal to 0 at the intercept. A step triangle shows the slope: one unit to the right, b milliseconds up.</desc>
+  <line x1="60" y1="190" x2="540" y2="190" class="rt-fig-axis" />
+  <line x1="60" y1="190" x2="60" y2="20" class="rt-fig-axis" />
+  <line x1="220" y1="190" x2="220" y2="25" class="rt-fig-mean" />
+  <line x1="70" y1="150" x2="530" y2="60" class="rt-fig-a" />
+  <line x1="220" y1="120.7" x2="340" y2="120.7" class="rt-fig-arrow" />
+  <line x1="340" y1="120.7" x2="340" y2="97.2" class="rt-fig-arrow" />
+  <text x="220" y="208" text-anchor="middle" class="rt-fig-label">0 (= 40 years)</text>
+  <text x="340" y="208" text-anchor="middle" class="rt-fig-label">1 (= 50 years)</text>
+  <text x="530" y="208" text-anchor="end" class="rt-fig-label rt-fig-muted">age10</text>
+  <text x="70" y="30" class="rt-fig-label rt-fig-muted">rt_ms</text>
+  <text x="228" y="140" class="rt-fig-label">intercept</text>
+  <text x="348" y="114" class="rt-fig-label">slope b</text>
+  <text x="280" y="114" text-anchor="middle" class="rt-fig-label rt-fig-muted">+1</text>
+</svg>
+<figcaption>The intercept is the expected value at predictor = 0, the slope the change per unit. Centring moves 0 to a meaningful place.</figcaption>
+</figure>
+```
+
+- **Correlation** `correlation::correlation()`: r from −1 to 1 with 95% CI, t, df and p in one table. r² is the share of common variance.
+- **Regression** `lm(outcome ~ predictor, data = ...)`, read with `parameters::model_parameters()`: coefficient, CI, t, df, p.
+- **Centring and scaling:** transform predictors so that 0 is a meaningful value and one unit is a meaningful size (`age10 = (age - 40) / 10`). Calculations belong in `mutate()`, not in the formula.
+- **Factors as predictors:** the first level is the reference; each coefficient is the difference of one level from it.
+- **Model fit** `performance::r2()`: share of explained variance.
+- **Association is not causation:** only randomly assigned conditions can be interpreted causally.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## More: correlation and regression are related
+
+- With one predictor, t and p of the slope and of the correlation are identical.
+- The standardised slope (both variables in SD units) is r.
+- Regression has the advantage of units: "27 ms per decade" is more tangible than "r = .28", and further predictors can be added.
+- `correlation()` adjusts p for several correlations with Holm (`p_adjust`); for a single correlation this changes nothing.
+:::
+
+## Example {#example}
+
+Prepare the SUS score and the trust score (as in the lesson "Questionnaires and scales"):
+
+```{webr}
+scored <- survey |>
+  filter(attention_check == 4) |>
+  mutate(
+    across(c(sus_01, sus_03, sus_05, sus_07, sus_09), \(x) x - 1),
+    across(c(sus_02, sus_04, sus_06, sus_08, sus_10), \(x) 5 - x),
+    sus = 25 * rowMeans(pick(sus_01:sus_10), na.rm = TRUE),
+    across(c(trust_3, trust_5), \(x) 8 - x),
+    trust = row_means(pick(trust_1:trust_6), min_valid = 5)
+  )
+
+scored |>
+  select(sus, trust) |>
+  correlation()
+```
+
+How many more SUS points per point of trust? And how much variance does that explain?
+
+```{webr}
+fit <- lm(sus ~ trust, data = scored)
+model_parameters(fit)
+r2(fit)
+```
+
+**How to report it:** SUS score and trust were clearly related, r = .48, 95% CI [.35, .59], p < .001. Per point of trust (scale 1–7), the SUS score was 9.1 points higher, 95% CI [6.4, 11.8]; the model explains 23% of the variance. Whether trust influences the rating or the other way round, the survey leaves open.
+
+## Package comparison {#packages}
+
+| Task | Recommended | Alternative |
+|---|---|---|
+| Correlation with CI | **correlation** `correlation()` (table, several pairs, Holm correction) | `cor.test()`: one pair, list instead of table; `cor()`: only r, no CI |
+| Regression results | **parameters** `model_parameters()` | `summary(fit)` with `confint(fit)`: standard in other people's code; `broom::tidy(conf.int = TRUE)` |
+| Model fit | **performance** `r2()`, `model_performance()` | `summary(fit)$r.squared` |
+| Centring | **dplyr** `mutate(age10 = (age - 40) / 10)` | `datawizard::center()`, `standardize()`: at the mean or in SD units |
+
+## Exercises {#exercises}
+
+Three required exercises and one optional exercise. **Run and check** runs your code and checks it right away. Reveal hints one at a time (**Show Hint**), the solution only after that.
+
+{{< include /_generated/en/regression-beginner/exercises.qmd >}}
+
+## Knowledge check {#check}
+
+{{< include /_generated/en/regression-beginner/quiz.qmd >}}
+
+## Cheat sheet {#cheatsheet}
+
+```r
+# one row per person first
+rt_by_person <- driving_sim |>
+  summarise(rt_ms = mean(rt_ms, na.rm = TRUE), .by = c(participant, age))
+
+# correlation with CI
+rt_by_person |> select(age, rt_ms) |> correlation()
+
+# regression with a centred, scaled predictor
+rt_age <- rt_by_person |> mutate(age10 = (age - 40) / 10)
+fit <- lm(rt_ms ~ age10, data = rt_age)
+model_parameters(fit)
+r2(fit)
+
+# factor as predictor: reference = first level
+lm(sus ~ interface + tech_affinity, data = scored)
+```
+
+- Clarify the unit first, then correlate.
+- CI instead of only p: which values are compatible with the data?
+- Prepare predictors with `mutate()`, do not calculate in the formula.
+- Intercept = expected value at predictor 0 or in the reference level.
+
+{{< include /_generated/en/regression-beginner/footer.qmd >}}

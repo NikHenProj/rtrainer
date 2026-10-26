@@ -1,0 +1,150 @@
+---
+title: "Questionnaires and scales"
+subtitle: "Beginner · Reverse keying, SUS score, scale means, Cronbach's α"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, datawizard, psych]
+resources:
+  - ../data/survey.csv
+---
+
+{{< include /_generated/en/scales-beginner/runtime.qmd >}}
+
+{{< include /_generated/en/scales-beginner/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R runs directly in your browser. On the first visit it takes 10–30 seconds to load (status at the bottom right); after that it is faster.
+:::
+
+## Why? {#why}
+
+**Research question:** Do respondents rate voice control as more usable than touch control, and do they trust it more?
+
+Usability and trust are not measured with one question but with a scale of several items. Before you compare groups, you turn the items into one score per person: reverse the negatively worded items, combine them, check reliability. Mistakes in this step do not show in the result, but they distort every later test.
+
+## Concept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 150" role="img" aria-labelledby="fig-sc-title fig-sc-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-sc-title">Reversing a 1 to 7 scale</title>
+  <desc id="fig-sc-desc">At the top the raw values 1 to 7, at the bottom the reversed values. Lines connect 1 with 7, 2 with 6, 3 with 5, 4 stays 4, 7 with 1. Formula 8 minus x.</desc>
+  <text x="10" y="42" class="rt-fig-label rt-fig-muted">raw</text>
+  <text x="10" y="128" class="rt-fig-label rt-fig-muted">8 − x</text>
+  <text x="170" y="42" text-anchor="middle" class="rt-fig-label">1</text>
+  <text x="170" y="128" text-anchor="middle" class="rt-fig-label">1</text>
+  <text x="220" y="42" text-anchor="middle" class="rt-fig-label">2</text>
+  <text x="220" y="128" text-anchor="middle" class="rt-fig-label">2</text>
+  <text x="270" y="42" text-anchor="middle" class="rt-fig-label">3</text>
+  <text x="270" y="128" text-anchor="middle" class="rt-fig-label">3</text>
+  <text x="320" y="42" text-anchor="middle" class="rt-fig-label">4</text>
+  <text x="320" y="128" text-anchor="middle" class="rt-fig-label">4</text>
+  <text x="370" y="42" text-anchor="middle" class="rt-fig-label">5</text>
+  <text x="370" y="128" text-anchor="middle" class="rt-fig-label">5</text>
+  <text x="420" y="42" text-anchor="middle" class="rt-fig-label">6</text>
+  <text x="420" y="128" text-anchor="middle" class="rt-fig-label">6</text>
+  <text x="470" y="42" text-anchor="middle" class="rt-fig-label">7</text>
+  <text x="470" y="128" text-anchor="middle" class="rt-fig-label">7</text>
+  <line x1="170" y1="52" x2="470" y2="108" class="rt-fig-a" />
+  <line x1="220" y1="52" x2="420" y2="108" class="rt-fig-arrow" />
+  <line x1="270" y1="52" x2="370" y2="108" class="rt-fig-arrow" />
+  <line x1="320" y1="52" x2="320" y2="108" class="rt-fig-arrow" />
+  <line x1="370" y1="52" x2="270" y2="108" class="rt-fig-arrow" />
+  <line x1="420" y1="52" x2="220" y2="108" class="rt-fig-arrow" />
+  <line x1="470" y1="52" x2="170" y2="108" class="rt-fig-a" />
+</svg>
+<figcaption>Reversing mirrors the scale at its midpoint: (minimum + maximum) − x. For 1–7 that is 8 − x, for 1–5 6 − x.</figcaption>
+</figure>
+```
+
+- **Keying:** negatively worded items ("I am suspicious of the system") are reversed so that high values mean the same everywhere. Which items these are is stated in the questionnaire, not in the data.
+- **Scale score:** usually the mean of the items per person. It stays on the response scale (1–7) and tolerates single missing items; `datawizard::row_means(min_valid = ...)` sets how many have to be valid.
+- **SUS:** ten items (1–5), contributions 0–4 (odd `x - 1`, even `5 - x`), score = 2.5 × sum = 25 × mean, range 0–100. Average across many studies: about 68.
+- **Cronbach's α** (`psych::alpha()`): how consistently do the items measure? From about .70 common, from .80 good. α does not test whether the scale measures only one construct. Call it with `psych::`: ggplot2 also has an `alpha()` that masks it.
+- **Data quality:** check attention checks and straightlining (the same answer everywhere) before computing the scale score; report exclusions.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## More: sum or mean?
+
+- With complete data, sum and mean are equivalent (mean = sum / number of items).
+- If an item is missing, `rowSums(na.rm = TRUE)` counts it as 0; the mean of the available items does not.
+- Some instruments prescribe the sum (e.g. the SUS with 2.5 × sum). Then multiply the mean by the number of items; that keeps the score comparable.
+- Raw NASA-TLX (RTLX): mean of the six subscales (0–100), without reversing; not even `performance`: there the scale runs from "perfect" (0) to "failure" (100), so high values mean more workload, as everywhere else.
+:::
+
+## Example {#example}
+
+`datawizard::reverse()` reverses with a fixed range; without `range` it uses the minimum and maximum of the data:
+
+```{webr}
+x <- c(1, 2, 4, 6)
+reverse(x, range = c(1, 7))
+reverse(x)
+```
+
+The NASA-TLX subscales as the scale score `tlx` (at least 5 of 6 valid), then reliability with `psych::alpha()`:
+
+```{webr}
+tlx_items <- survey |>
+  select(starts_with("tlx_"))
+
+survey |>
+  mutate(tlx = row_means(pick(starts_with("tlx_")), min_valid = 5)) |>
+  summarise(tlx_m = mean(tlx, na.rm = TRUE), n = sum(!is.na(tlx)), .by = interface)
+
+psych::alpha(tlx_items)
+```
+
+Three places in the output of `alpha()` matter: `raw_alpha` at the top (α of the scale), `r.drop` under "Item statistics" (how each item relates to the others) and "Reliability if an item is dropped" (α without the item). If α rises clearly when an item is dropped, it does not fit with the others.
+
+**How to report it (methods section):** Workload was measured with the NASA-TLX (unweighted, six subscales from 0–100); the scale score is the mean of the subscales, computed when at least five were valid. Report internal consistency as α.
+
+## Package comparison {#packages}
+
+| Task | Recommended | Alternative |
+|---|---|---|
+| Reversing items | **dplyr** `mutate(across(..., \(x) 8 - x))` | `datawizard::reverse(range = c(1, 7))`: more readable, equally safe with a fixed range |
+| Scale score | **datawizard** `row_means(min_valid = ...)` | `rowMeans(na.rm = TRUE)`: no minimum number of valid items; `psych::scoreItems()`: with a key for many scales at once |
+| Reliability | **psych** `alpha()` (with item-total correlations and α without each item) | `performance::cronbachs_alpha()`: only the value; `psych::omega()`: McDonald's ω (intermediate) |
+
+## Exercises {#exercises}
+
+Four required exercises and one optional exercise. **Run and check** runs your code and checks it right away. Reveal hints one at a time (**Show Hint**), the solution only after that.
+
+{{< include /_generated/en/scales-beginner/exercises.qmd >}}
+
+## Knowledge check {#check}
+
+{{< include /_generated/en/scales-beginner/quiz.qmd >}}
+
+## Cheat sheet {#cheatsheet}
+
+```r
+# reverse: (minimum + maximum) - x
+survey_r <- survey |>
+  mutate(across(c(trust_3, trust_5), \(x) 8 - x))
+
+# scale score with a minimum number of valid items
+survey_r |>
+  filter(attention_check == 4) |>
+  mutate(trust = row_means(pick(trust_1:trust_6), min_valid = 5))
+
+# SUS: contributions 0-4, score 0-100
+survey |>
+  mutate(
+    across(c(sus_01, sus_03, sus_05, sus_07, sus_09), \(x) x - 1),
+    across(c(sus_02, sus_04, sus_06, sus_08, sus_10), \(x) 5 - x),
+    sus = 25 * rowMeans(pick(sus_01:sus_10), na.rm = TRUE)
+  )
+
+# reliability
+psych::alpha(survey_r |> select(starts_with("trust_")))
+```
+
+- Take the keying from the questionnaire; reverse before computing the scale score.
+- Mean instead of sum when items can be missing; set a minimum number.
+- Negative or low α: check the keying first.
+- Report exclusions (attention, straightlining) with number and reason.
+
+{{< include /_generated/en/scales-beginner/footer.qmd >}}

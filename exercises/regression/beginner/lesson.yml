@@ -3,7 +3,6 @@
 lesson: regression-beginner
 minutes: 45
 prerequisites: [group-comparisons-beginner, scales-beginner]
-langs: [de]
 packages: [dplyr, correlation, parameters, performance]
 data: [driving_sim, survey]
 goals:

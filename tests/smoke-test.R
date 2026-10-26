@@ -186,7 +186,15 @@ step("reporting: gtsummary table graded correct", !is.na(checked), sprintf("%s s
 
 goto("/en/index.html")
 Sys.sleep(1)
-step("en: translated lesson linked, German-only lesson not", js("!!document.querySelector('a[href*=\"descriptives-beginner\"]') && !document.querySelector('a[href*=\"scales-beginner\"]')"))
+beginner <- c(
+  "working-with-r", "import", "cleaning", "reshaping", "visualisation",
+  "descriptives", "group-comparisons", "scales", "regression", "reporting"
+)
+unlinked <- js(sprintf(
+  "[%s].filter(slug => !document.querySelector(`a[href*=\"${slug}-beginner\"]`)).join(', ')",
+  paste0("'", beginner, "'", collapse = ", ")
+))
+step("en: all beginner lessons linked in course plan", identical(unlinked, ""), unlinked)
 
 cat(sprintf("\n%d failure(s)\n", length(failures)))
 if (length(failures) > 0) quit(status = 1)

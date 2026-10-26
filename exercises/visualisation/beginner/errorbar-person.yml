@@ -67,7 +67,7 @@ explanation:
   en: |
     Computed over all trials, `n` is 160 instead of 40, and the SD contains the
     noise within participants instead of the differences between them. The
-    standard error is thus about 40 % too small (visual 14 instead of 23 ms);
+    standard error is thus about 40% too small (visual 14 instead of 23 ms);
     the bars promise a precision the sample does not have. The mean also changes
     slightly, because participants with missing trials otherwise get less weight.
     With repeated measures, such bars are conservative for comparisons between

@@ -1,9 +1,16 @@
 # rtrainer (Quarto course)
 
-## Milestone 8, part 3b: English beginner lessons reshaping, visualisation, descriptives (awaiting acceptance)
+## Milestone 8, part 3c: English beginner lessons scales, regression, reporting (awaiting acceptance)
+
+- English pages `en/scales-beginner.qmd`, `en/regression-beginner.qmd`, `en/reporting-beginner.qmd` (incl. the "Run locally" box for Word export), translated from the German lessons with identical code, data and exercise IDs; `langs: [de]` removed from their `lesson.yml`. All ten beginner lessons are now available in German and English.
+- Proofread the English texts of the 14 exercises and 3 quizzes. Fix: `rp-b-tbl-regression` expected the German label `"Technikaffinität (1–5)"` in both languages (one shared solution); now `"Tech affinity (1–5)"` (code stays English), and the near-miss regex flags any other label for `tech_affinity`.
+- English percentages written without a space ("95% CI"), as in the earlier English pages and the exercise texts; applied to the 3b pages too.
+- Smoke test: the English course-plan step now checks that all ten beginner lessons are linked.
+
+## Milestone 8, part 3b: English beginner lessons reshaping, visualisation, descriptives (accepted, merged into main)
 
 - English pages `en/reshaping-beginner.qmd`, `en/visualisation-beginner.qmd`, `en/descriptives-beginner.qmd`, translated from the German lessons with identical code, data and exercise IDs (SVG labels/descriptions, cheat-sheet comments and `labs()` axis titles in the examples translated); `langs: [de]` removed from their `lesson.yml`.
-- Proofread the English texts of the 17 exercises and 3 quizzes; two fixes: the trial-level SE is about 40 % too small (14 vs 23 ms), not "a third" (DE and EN); "Simpson's paradox" instead of "Simpson pattern" (EN).
+- Proofread the English texts of the 17 exercises and 3 quizzes; two fixes: the trial-level SE is about 40% too small (14 vs 23 ms), not "a third" (DE and EN); "Simpson's paradox" instead of "Simpson pattern" (EN).
 - Smoke test: the English course-plan step now expects `descriptives-beginner` linked and the still German-only `scales-beginner` not linked.
 - CI: explicit `Rscript tools/generate.R` step before `quarto render`, because Quarto resolves `{{< include >}}` before the pre-render hook; a render on a fresh checkout (no `_generated/`) failed.
 

@@ -1,0 +1,163 @@
+---
+title: "Reporting results"
+subtitle: "Beginner · Table 1, result texts with report(), regression tables"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, report, gtsummary, broom.helpers]
+resources:
+  - ../data/survey.csv
+---
+
+{{< include /_generated/en/reporting-beginner/runtime.qmd >}}
+
+{{< include /_generated/en/reporting-beginner/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R runs directly in your browser. This lesson loads more packages than the others; on the first visit it takes up to a minute (status at the bottom right); after that it is faster.
+:::
+
+## Why? {#why}
+
+**Research question:** How do you report the survey on voice and touch control so that reviewers and readers see sample, effect and uncertainty at a glance?
+
+Copying numbers by hand from the console into Word is the most common source of errors in a results section. The course's reporting chain is: model → `parameters`/`effectsize` → `report()` (text) → `gtsummary` (table) → Word or Quarto. Every number comes straight from R.
+
+## Concept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 150" role="img" aria-labelledby="fig-rp-title fig-rp-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-rp-title">Reporting chain</title>
+  <desc id="fig-rp-desc">Four boxes in sequence: data and model, then report for the text and gtsummary for the table, both leading to Word or Quarto.</desc>
+  <rect x="10" y="45" width="120" height="50" rx="6" class="rt-fig-box" />
+  <rect x="180" y="10" width="160" height="50" rx="6" class="rt-fig-box-accent" />
+  <rect x="180" y="80" width="160" height="50" rx="6" class="rt-fig-box-accent" />
+  <rect x="400" y="45" width="150" height="50" rx="6" class="rt-fig-box" />
+  <text x="70" y="75" text-anchor="middle" class="rt-fig-label">data, model</text>
+  <text x="260" y="32" text-anchor="middle" class="rt-fig-code">report()</text>
+  <text x="260" y="50" text-anchor="middle" class="rt-fig-label rt-fig-muted">text</text>
+  <text x="260" y="102" text-anchor="middle" class="rt-fig-code">tbl_summary()</text>
+  <text x="260" y="120" text-anchor="middle" class="rt-fig-label rt-fig-muted">table</text>
+  <text x="475" y="75" text-anchor="middle" class="rt-fig-label">Word, Quarto</text>
+  <line x1="130" y1="62" x2="178" y2="38" class="rt-fig-arrow" />
+  <line x1="130" y1="78" x2="178" y2="102" class="rt-fig-arrow" />
+  <line x1="340" y1="38" x2="398" y2="62" class="rt-fig-arrow" />
+  <line x1="340" y1="102" x2="398" y2="78" class="rt-fig-arrow" />
+</svg>
+<figcaption>Text and table come straight from the model; if the data change, the report changes with them.</figcaption>
+</figure>
+```
+
+- **Table 1** `gtsummary::tbl_summary(data, by = group, include = c(...))`: detects variable types, shows n per group and missing values. Adjust with `statistic`, `type`, `label`, `digits`.
+- **Result text** `report::report(model)`: APA-style text with statistics, CI and effect size. Check the numbers; phrase labels ("small", "significant") and direction yourself.
+- **Sample in one sentence** `report_participants()`: age, gender, n.
+- **Regression table** `tbl_regression(model)`: b, CI and p per predictor.
+- **APA rules:** exact p-values without a leading zero (`p = .008`, `p < .001`), statistic with df, effect size with CI, direction in words.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## More: what `report()` does not know
+
+- For tests from `t.test()` or `cor.test()`, `report()` does not know the data and estimates the effect size from t (note "providing the data argument"). With `report(test, data = scored)` it computes it exactly.
+- The sign follows the order of the factor levels (first minus second).
+- Effect size labels follow fixed rules of thumb (Cohen, Funder) and do not fit every field.
+- `tbl_summary() |> add_p()` adds tests; not meaningful for randomised groups in Table 1.
+:::
+
+## Example {#example}
+
+First the data as in the previous lessons: SUS score, without attention-check failures.
+
+```{webr}
+scored <- survey |>
+  filter(attention_check == 4) |>
+  mutate(
+    across(c(sus_01, sus_03, sus_05, sus_07, sus_09), \(x) x - 1),
+    across(c(sus_02, sus_04, sus_06, sus_08, sus_10), \(x) 5 - x),
+    sus = 25 * rowMeans(pick(sus_01:sus_10), na.rm = TRUE)
+  )
+
+report_participants(scored, age = "age", gender = "gender", participants = "respondent")
+```
+
+Read the sentence carefully: `report_participants()` counts "prefer not to say" as "non-binary". So always check automatic texts against the data (`count(scored, gender)`).
+
+A labelled table with an overall column:
+
+```{webr}
+scored |>
+  tbl_summary(
+    by = interface,
+    include = c(sus, tlx_mental),
+    label = list(sus ~ "SUS (0–100)", tlx_mental ~ "Mental demand (0–100)")
+  ) |>
+  add_overall()
+```
+
+**How to report it (methods section):** 157 people were included in the analysis (79 touch, 78 voice; age M = 37.1, SD = 11.1); three were excluded for failing the attention check. Table 1 describes the sample per group.
+
+## Package comparison {#packages}
+
+| Task | Recommended | Alternative |
+|---|---|---|
+| Table 1 | **gtsummary** `tbl_summary()` | `modelsummary::datasummary_balance()`; `tableone` (older, medicine) |
+| Model table | **gtsummary** `tbl_regression()` (one model, same grammar as Table 1) | `modelsummary::modelsummary()`: several models side by side (intermediate) |
+| Result text | **report** `report()` | by hand from `parameters()`/`effectsize()`; `papaja::apa_print()` (local) |
+| Word output | **flextable** via `as_flex_table()` | `rempsyc::nice_table()` for APA tables from data frames; Quarto with `format: docx` |
+
+::: {.callout-note appearance="simple"}
+## Run locally
+
+R in the browser does not write Word files to your disk. Locally it works like this:
+
+```r
+library(gtsummary)
+library(flextable)
+
+tbl <- tbl_summary(scored, by = interface, include = c(age, gender, tech_affinity))
+tbl |>
+  as_flex_table() |>
+  save_as_docx(path = "table1.docx")
+```
+
+Result: `table1.docx` in the project folder with a formatted table that you can keep editing in Word. Even better is a Quarto document with `format: docx`: text, numbers and tables then stay in sync.
+:::
+
+## Exercises {#exercises}
+
+Four required exercises and one optional exercise. **Run and check** runs your code and checks it right away. Reveal hints one at a time (**Show Hint**), the solution only after that.
+
+{{< include /_generated/en/reporting-beginner/exercises.qmd >}}
+
+## Knowledge check {#check}
+
+{{< include /_generated/en/reporting-beginner/quiz.qmd >}}
+
+## Cheat sheet {#cheatsheet}
+
+```r
+# Table 1
+tbl_summary(
+  scored,
+  by = interface,
+  include = c(age, gender, tech_affinity),
+  type = tech_affinity ~ "continuous",
+  statistic = all_continuous() ~ "{mean} ({sd})",
+  label = list(age ~ "Age (years)")
+)
+
+# result text and sample
+fit <- lm(sus ~ interface + tech_affinity, data = scored)
+report(fit)
+report_participants(scored, age = "age", gender = "gender")
+
+# regression table, then Word (locally)
+tbl_regression(fit) |> as_flex_table()
+```
+
+- Every number from R, no retyped values.
+- Check `report()` texts: sign, labels, categories.
+- APA: exact p without a leading zero, df, effect size with CI.
+- Report exclusions and missing values in text and table.
+
+{{< include /_generated/en/reporting-beginner/footer.qmd >}}

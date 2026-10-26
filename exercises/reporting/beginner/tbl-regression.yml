@@ -25,21 +25,21 @@ prompt:
     `fit` ist das Modell `lm(sus ~ interface + tech_affinity, data = scored)`.
     Erstelle daraus mit `tbl_regression()` eine Tabelle mit den Koeffizienten,
     95-%-KI und p, und gib dem Prädiktor `tech_affinity` die Beschriftung
-    `"Technikaffinität (1–5)"`.
+    `"Tech affinity (1–5)"`.
   en: |
     `fit` is the model `lm(sus ~ interface + tech_affinity, data = scored)`.
     Use `tbl_regression()` to create a table with the coefficients, 95% CI and
     p, and give the predictor `tech_affinity` the label
-    `"Technikaffinität (1–5)"`.
+    `"Tech affinity (1–5)"`.
 starter: |
   tbl_regression(fit)
 solution: |
-  tbl_regression(fit, label = list(tech_affinity ~ "Technikaffinität (1–5)"))
+  tbl_regression(fit, label = list(tech_affinity ~ "Tech affinity (1–5)"))
 hints:
   - de: "Beschriftungen setzt `label =` wie bei `tbl_summary()`: eine Liste von Formeln."
     en: "Labels are set with `label =` as in `tbl_summary()`: a list of formulas."
-  - de: "`tbl_regression(fit, label = list(______ ~ \"Technikaffinität (1–5)\"))`"
-    en: "`tbl_regression(fit, label = list(______ ~ \"Technikaffinität (1–5)\"))`"
+  - de: "`tbl_regression(fit, label = list(______ ~ \"Tech affinity (1–5)\"))`"
+    en: "`tbl_regression(fit, label = list(______ ~ \"Tech affinity (1–5)\"))`"
 explanation:
   de: |
     `tbl_regression()` zeigt für jeden Prädiktor b, 95-%-KI und p; der Faktor
@@ -64,7 +64,7 @@ common_mistakes:
     message:
       de: "`label` erwartet eine Liste von Formeln: `label = list(tech_affinity ~ \"...\")`."
       en: "`label` expects a list of formulas: `label = list(tech_affinity ~ \"...\")`."
-  - pattern: "Technikaffinit(?!ät \\(1–5\\))"
+  - pattern: "tech_affinity\\s*~\\s*\"(?!Tech affinity \\(1–5\\)\")"
     message:
-      de: "Die Beschriftung muss genau `\"Technikaffinität (1–5)\"` lauten (mit Halbgeviertstrich)."
-      en: "The label must be exactly `\"Technikaffinität (1–5)\"` (with an en dash)."
+      de: "Die Beschriftung muss genau `\"Tech affinity (1–5)\"` lauten (mit Halbgeviertstrich)."
+      en: "The label must be exactly `\"Tech affinity (1–5)\"` (with an en dash)."

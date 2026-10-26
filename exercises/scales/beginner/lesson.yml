@@ -3,7 +3,6 @@
 lesson: scales-beginner
 minutes: 45
 prerequisites: [descriptives-beginner]
-langs: [de]
 packages: [dplyr, datawizard, psych]
 data: [survey]
 goals:

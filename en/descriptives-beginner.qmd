@@ -61,7 +61,7 @@ Every results section starts with a description: the sample (Table 1), then mean
 ## More: SD or SE?
 
 - **SD** describes how different the people are; it belongs in Table 1 and in text such as "M = 37.2, SD = 11.0".
-- **SE** = SD / √n describes how precisely the mean is estimated; it belongs with error bars. Better still: a 95 % confidence interval (lesson "Group comparisons").
+- **SE** = SD / √n describes how precisely the mean is estimated; it belongs with error bars. Better still: a 95% confidence interval (lesson "Group comparisons").
 - Always state in the caption what the bars show.
 :::
 

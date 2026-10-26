@@ -3,7 +3,6 @@
 lesson: reporting-beginner
 minutes: 40
 prerequisites: [regression-beginner]
-langs: [de]
 packages: [dplyr, report, gtsummary, broom.helpers]
 data: [survey]
 goals:
