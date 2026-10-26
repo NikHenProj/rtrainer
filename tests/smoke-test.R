@@ -228,6 +228,15 @@ unlinked <- js(sprintf(
   paste0("'", beginner, "'", collapse = ", ")
 ))
 step("en: all beginner lessons linked in course plan", identical(unlinked, ""), unlinked)
+project_row <- js("document.querySelector('tr.rt-plan-project a[href*=\"project-beginner\"]')?.getAttribute('href') || ''")
+step("en: project row links the English page", grepl("project-beginner", project_row) && !grepl("/de/", project_row), project_row)
+goto("/en/project-beginner.html")
+en_project <- wait_for(
+  "document.documentElement.lang.startsWith('en') && document.querySelector('h1').textContent.includes('Mini project') &&
+   !!document.querySelector('#ex-pj-b-import') && !!document.querySelector('#script')",
+  timeout = 15
+)
+step("en: project page in English with exercises", !is.na(en_project))
 
 cat(sprintf("\n%d failure(s)\n", length(failures)))
 if (length(failures) > 0) quit(status = 1)

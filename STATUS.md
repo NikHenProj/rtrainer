@@ -1,12 +1,12 @@
 # STATUS
 
-Stand (2026-10-26): **M6 bis M8 Teil 4 abgenommen und in `main`** (alle 10 Beginner-Lektionen DE + EN, Mini-Projekt Beginner DE `de/project-beginner.qmd`). Nichts gepusht (`main` ist `origin/main` voraus). Entscheidungen: NEWS.md.
+Stand (2026-10-26): **M6 bis M8 Teil 4 abgenommen und in `main`** (alle 10 Beginner-Lektionen DE + EN, Mini-Projekt Beginner DE). **M8 Teil 5 (Mini-Projekt EN, `en/project-beginner.qmd`) in `main`, zur Abnahme.** Nichts gepusht (`main` ist `origin/main` voraus). Entscheidungen: NEWS.md.
 
 ## Was steht
 - **Gerüst (M6):** Quarto-Website mit quarto-live/webR, Theme hell/dunkel (IBM Plex Sans, JetBrains Mono, Indigo), Kopfzeile Kursplan · Wiederholen (n fällig) · Pakete · Glossar · DE/EN · Hell/Dunkel · Suche.
 - **Kursplan** (`de/index.qmd`, `en/index.qmd`): Matrix 23 Themen × 3 Stufen, Status je Zelle, „Weitermachen mit / Als Nächstes“, „Heute wiederholen (n)“.
 - **Lektionen:** `working-with-r-beginner`, `import-beginner`, `cleaning-beginner`, `reshaping-beginner`, `visualisation-beginner`, `descriptives-beginner`, `scales-beginner`, `regression-beginner`, `reporting-beginner` (33 Pflicht- + 13 Zusatzübungen, je 5 Fragen Wissenscheck). Alle in DE und EN (keine `langs`-Einschränkung mehr). Aufbau: Breadcrumb, Lektionskasten mit Fortschritt, links „Abschnitt x von 7“ (ab 1200 px), rechts Inhaltsverzeichnis, 3 Pflichtübungen (YAML), Wissenscheck (5 Fragen, ≥ 80 %), Spickzettel, Zurück/Weiter.
-- **Mini-Projekt Beginner (DE, `langs: [de]`):** `project-beginner`, eigene Zeile „Mini-Projekt“ unter den 23 Themen (`kind: project` in curriculum.yml), Pfad nach reporting-beginner. Auftrag mit Analyseplan → 5 Schritte mit je einer Pflichtübung (Import, Ausschluss, Skalen, Welch-t-Test, Tabelle 1, Ergebnisse deuten; 6 Pflicht + 1 Zusatz `pj-b-tlx-subscales`) → Gesamtskript (live) + „Lokal ausführen“ (Quarto → docx) → Wissenscheck (5) → Checkliste. Generator schreibt zusätzlich `exercise-<id>.qmd` je Übung; Check-Option `check_types`; Wiederholungskarten rendern Tabellen/Listen/Zitate.
+- **Mini-Projekt Beginner (DE + EN):** `project-beginner`, eigene Zeile „Mini-Projekt“ unter den 23 Themen (`kind: project` in curriculum.yml), Pfad nach reporting-beginner. Auftrag mit Analyseplan → 5 Schritte mit je einer Pflichtübung (Import, Ausschluss, Skalen, Welch-t-Test, Tabelle 1, Ergebnisse deuten; 6 Pflicht + 1 Zusatz `pj-b-tlx-subscales`) → Gesamtskript (live) + „Lokal ausführen“ (Quarto → docx) → Wissenscheck (5) → Checkliste. Generator schreibt zusätzlich `exercise-<id>.qmd` je Übung; Check-Option `check_types`; Wiederholungskarten rendern Tabellen/Listen/Zitate.
 - **Wiederholung** (`review.qmd`): Leitner Boxen 1–5 (0/1/3/7/21 Tage), Sicherheits-Rating vor dem Prüfen, Leicht/Okay/Schwer, Serie, Mischen nach Lektionen; R lädt erst beim Start. Export/Import des Fortschritts (`#backup`).
 - **Pakete und Glossar** aus YAML (`content/packages/*.yml`, `content/glossary.yml`), Vorlagen für weitere Einträge.
 - **Sprachen:** `/de/` und `/en/`; Umschalter führt zur gleichen Seite und zum gleichen Abschnitt; Fortschritt sprachübergreifend.
@@ -16,13 +16,13 @@ Stand (2026-10-26): **M6 bis M8 Teil 4 abgenommen und in `main`** (alle 10 Begin
 - **Triage** `docs/legacy-triage.md`: 54 behalten (18 im Beginner-Pfad), 11 streichen, freigegeben. Migriert: 18 (markiert), damit alle Beginner-Aufgaben der Triage.
 - Alt: `legacy/exercises/` (65 Aufgaben), `legacy/driving_sim_v0.*`.
 
-## Geprüft (2026-10-26, M8 Teil 4)
+## Geprüft (2026-10-26, M8 Teil 5)
 Über Verifier-Subagent (echte Ausgabe, gekürzt):
 - `Rscript tools/selftest.R`: 56/56 exercises ok (Warnungen erwartet: `ymd_hms` in cl-b-dates, psych in sc-b-alpha)
 - `testthat::test_dir("tools/tests")`: FAIL 0 | WARN 4 | SKIP 0 | PASS 210; `node --test tests/js`: 12 pass, 0 fail
-- `Rscript tools/generate.R`: Generated 217 files, 56 exercises. `quarto render`: Exit 0, 0 Warnungen
-- `Rscript tests/smoke-test.R`: 0 failure(s); neu „project: own row in the German course plan“, „character interface gets the type hint“, „import from the CSV graded correct“ ok (Projektseite bereit nach 16,7 s)
-- Browser (Vorschau): Kursplan-Zeile „Mini-Projekt“ abgesetzt, ohne Nummer. Projektseite selbst nicht manuell durchgeklickt (nur Rauchtest: Import-Übung falsch/richtig); Gesamtskript lokal in R ausgeführt (160 → 157, report-Text wie erwartet), im Browser nicht.
+- `Rscript tools/generate.R`: Generated 229 files, 56 exercises. `quarto render`: Exit 0, 0 Warnungen; `_site/en/project-beginner.html` vorhanden
+- `Rscript tests/smoke-test.R`: 0 failure(s); neu „en: project row links the English page“, „en: project page in English with exercises“ ok
+- EN-Projektseite nicht manuell im Browser durchgeklickt (nur Rauchtest: Titel, Übung, Gesamtskript vorhanden); EN-Übungen nicht im Browser bewertet (selbe IDs/Checks wie DE).
 
 ## Offen / bekannte Lücken
 - Beginner-Lektionen 1–6 nicht manuell im Browser durchgeklickt (7–9 nur die Übungen, nicht Wissenscheck/Optik), nur Rauchtest (je eine Übung in cleaning und visualisation); Beispiel-Plots und SVG-Abbildungen von reshaping/visualisation/descriptives optisch nicht geprüft.
@@ -35,7 +35,7 @@ Stand (2026-10-26): **M6 bis M8 Teil 4 abgenommen und in `main`** (alle 10 Begin
 - Kursplan: „nicht vorgesehen“-Zellen werden vom Screenreader einzeln vorgelesen (19×); ggf. kürzen.
 
 ## Als Nächstes
-1. EN-Fassung des Mini-Projekts (`en/project-beginner.qmd`, `langs` entfernen, Rauchtest EN-Kursplan um `project` erweitern).
+1. Abnahme EN-Mini-Projekt durch Nick.
 2. Pages einrichten, pushen (nur nach Rückfrage); danach CI-Lauf prüfen. Dann M9 (Intermediate).
 
 ## Umgebung

@@ -1,11 +1,10 @@
 # Lesson metadata; exercises are the other *.yml files in this folder
 # (sorted by `order`), the knowledge check is quiz.yml.
 # Mini project: one analysis of `survey` from the file to the report; the
-# page (de/project-beginner.qmd) places each exercise in its step.
+# pages (de/ and en/project-beginner.qmd) place each exercise in its step.
 lesson: project-beginner
 minutes: 60
 prerequisites: [reporting-beginner]
-langs: [de]
 packages: [dplyr, readr, datawizard, effectsize, report, gtsummary]
 data: [survey]
 goals:

@@ -43,7 +43,7 @@ explanation:
     erste Werte auf einen Blick; das lohnt sich nach jedem Einlesen.
   en: |
     `read_csv()` reports the detected column types: `respondent`, `interface`
-    and `gender` as text, everything else as numbers. 160 rows, 28 columns. The
+    and `gender` as text, everything else as numeric. 160 rows, 28 columns. The
     group is made a factor explicitly because the order of its levels later
     sets the sign in the t-test and the column order in Table 1 (first level =
     reference). `glimpse(survey_raw)` shows types and first values at a glance;

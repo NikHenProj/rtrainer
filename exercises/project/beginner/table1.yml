@@ -53,16 +53,16 @@ explanation:
     Die Kopfzeile nennt n je Gruppe (79 und 78). Fehlende Werte erscheinen
     als Zeile „Unknown“: eine Altersangabe und vier Vertrauenswerte.
     `all_continuous()` erfasst `tech_affinity` nur, weil `type` es zur
-    stetigen Variable macht. Für das Manuskript ergänzt du `label = list(...)` mit Einheiten
-    (z. B. „SUS (0–100)“) und exportierst lokal mit `as_flex_table()`.
+    stetigen Variable macht. Für das Manuskript ergänzt du `label = list(...)`
+    mit Einheiten (z. B. „SUS (0–100)“) und exportierst lokal mit `as_flex_table()`.
     Tests zwischen randomisierten Gruppen (`add_p()`) gehören nicht in die
     Tabelle 1.
   en: |
     The header gives n per group (79 and 78). Missing values appear as an
     "Unknown" row: one age and four trust scores. `all_continuous()` catches
-    `tech_affinity` only because `type` makes it continuous. For the manuscript, add
-    `label = list(...)` with units (e.g. "SUS (0–100)") and export locally
-    with `as_flex_table()`. Tests between randomised groups (`add_p()`) do
+    `tech_affinity` only because `type` makes it continuous. For the
+    manuscript, add `label = list(...)` with units (e.g. "SUS (0–100)") and
+    export locally with `as_flex_table()`. Tests between randomised groups (`add_p()`) do
     not belong in Table 1.
 check:
   type: value

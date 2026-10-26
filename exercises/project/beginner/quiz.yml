@@ -20,7 +20,7 @@ questions:
         correct: false
         explain:
           de: "Das ist ein Freiheitsgrad des Forschenden (p-Hacking): Die Fehlerrate stimmt dann nicht mehr."
-          en: "That is a researcher degree of freedom (p-hacking): the error rate is no longer valid."
+          en: "That exploits a researcher degree of freedom (p-hacking): the error rate no longer holds."
       - text:
           de: "Gar nicht; man nimmt immer alle Daten."
           en: "Never; you always use all data."
@@ -91,7 +91,7 @@ questions:
         correct: true
         explain:
           de: "Mit jedem weiteren Test steigt die Chance auf ein Zufallsergebnis; die Kennzeichnung macht das sichtbar."
-          en: "Each further test raises the chance of a chance finding; labelling makes this visible."
+          en: "Each further test raises the risk of a false positive; labelling makes this visible."
       - text:
           de: "Nur signifikante Nebenmaße werden berichtet."
           en: "Only significant secondary outcomes are reported."

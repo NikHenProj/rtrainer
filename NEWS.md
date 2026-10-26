@@ -1,5 +1,11 @@
 # rtrainer (Quarto course)
 
+## Milestone 8, part 5: mini project beginner (EN) (for review)
+
+- Page `en/project-beginner.qmd`, translated from the German page: same sections, anchors, code, data and exercise ids; numbers in English notation (`95% CI [2.7, 18.0]`), `tbl_summary()` labels in English in the full script. `langs: [de]` removed from `exercises/project/beginner/lesson.yml`, so the generator builds both languages.
+- English exercise and quiz texts proof-read: reflowed long lines (`pj-b-exclude`, `pj-b-table1`), wording in `pj-b-import`, `pj-b-tlx-subscales` ("speech recognition errors") and two quiz explanations (p-hacking, false positive).
+- Smoke test: English course plan links the project row to the English page; the English project page loads with title, exercises and full script.
+
 ## Milestone 8, part 4: mini project beginner (DE) (accepted, merged into main)
 
 - Page `de/project-beginner.qmd` (`langs: [de]`): one analysis of `survey` from `data/survey.csv` to the report. Sections: brief with analysis plan (table of decisions) → 1 import → 2 exclusions → 3 scale scores → 4 group comparison → 5 report → full script (one live block, all steps; "Run locally" box with a Quarto document `format: docx` and inline R) → knowledge check (5 questions on analysis decisions) → checklist. Each exercise sits in its step and starts from the correct result of the previous step, so an error does not carry over.

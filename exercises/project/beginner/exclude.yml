@@ -47,12 +47,13 @@ explanation:
     nennst du Regel und Zahl: „Drei Personen wurden wegen einer falsch
     beantworteten Aufmerksamkeitsfrage ausgeschlossen (N = 157).“
   en: |
-    Three respondents drop out (r027 with 2, r088 with 6, r133 with 3; r133
-    also gave the same answer to every item). 157 remain: 79 touch, 78 voice.
-    `attention_check > 3` would have kept r088 (answer 6). `drop_na()` at
-    this point would remove everyone with a single missing item, 85 of 157
-    respondents, and bias the results if the missingness is not random. In the methods section, state the rule and the number: "Three
-    respondents were excluded for failing the attention check (N = 157)."
+    Three respondents are excluded (r027 with 2, r088 with 6, r133 with 3;
+    r133 also gave the same answer to every item). 157 remain: 79 touch, 78
+    voice. `attention_check > 3` would have kept r088 (answer 6). `drop_na()`
+    at this point would remove everyone with a single missing item, 85 of 157
+    respondents, and bias the results if the missingness is not random. In
+    the methods section, state the rule and the number: "Three respondents
+    were excluded for failing the attention check (N = 157)."
 check:
   type: object
   name: cleaned

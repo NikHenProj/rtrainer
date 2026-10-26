@@ -1,0 +1,209 @@
+---
+title: "Mini project: voice or touch control?"
+subtitle: "Beginner · analysing a questionnaire study completely, from the file to the report"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, readr, datawizard, effectsize, report, gtsummary]
+resources:
+  - ../data/survey.csv
+---
+
+{{< include /_generated/en/project-beginner/runtime.qmd >}}
+
+{{< include /_generated/en/project-beginner/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R runs directly in your browser. The project loads all packages of the beginner level; on the first visit it takes up to a minute (status at the bottom right); after that it is faster.
+:::
+
+## Brief {#brief}
+
+**Research question:** Do drivers rate an infotainment system with voice control as more usable than with touch control?
+
+After a test drive, 160 people filled in an online questionnaire, randomly assigned to one of the two interfaces. You analyse the study once from start to finish, with the tools of the beginner lessons. The only new part is that everything is connected: every number in the report comes from one continuous chain starting at the raw file.
+
+**Analysis plan** (set before the analysis):
+
+| Step | Decision |
+|---|---|
+| 1 Import | `data/survey.csv`, `interface` as a factor (touch = reference) |
+| 2 Exclusion | only respondents who did not answer the attention check with 4; missing single items are no reason |
+| 3 Scales | SUS (0–100); trust (1–7, `trust_3`/`trust_5` reversed, ≥ 5 of 6 items); raw TLX (0–100) |
+| 4 Main question | SUS between the groups, Welch's t-test, Cohen's d with 95% CI |
+| 5 Secondary outcomes | trust and TLX, analysed the same way, reported as secondary outcomes |
+| 6 Report | Table 1 by group, results paragraph in APA style |
+
+**How you work:** Each step has one required exercise. It always starts with the correct result of the previous step, so a mistake in step 2 does not carry over. At the end, the [full script](#script) runs all steps in one piece.
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 600 90" role="img" aria-labelledby="fig-pj-title fig-pj-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-pj-title">Analysis chain</title>
+  <desc id="fig-pj-desc">Five boxes in sequence with arrows: survey.csv, survey_raw, cleaned, scored, then test and report.</desc>
+  <rect x="5" y="20" width="100" height="50" rx="6" class="rt-fig-box" />
+  <rect x="130" y="20" width="100" height="50" rx="6" class="rt-fig-box" />
+  <rect x="255" y="20" width="100" height="50" rx="6" class="rt-fig-box" />
+  <rect x="380" y="20" width="100" height="50" rx="6" class="rt-fig-box" />
+  <rect x="505" y="20" width="90" height="50" rx="6" class="rt-fig-box-accent" />
+  <text x="55" y="50" text-anchor="middle" class="rt-fig-code">.csv</text>
+  <text x="180" y="50" text-anchor="middle" class="rt-fig-code">survey_raw</text>
+  <text x="305" y="50" text-anchor="middle" class="rt-fig-code">cleaned</text>
+  <text x="430" y="50" text-anchor="middle" class="rt-fig-code">scored</text>
+  <text x="550" y="50" text-anchor="middle" class="rt-fig-label">report</text>
+  <line x1="105" y1="45" x2="128" y2="45" class="rt-fig-arrow" />
+  <line x1="230" y1="45" x2="253" y2="45" class="rt-fig-arrow" />
+  <line x1="355" y1="45" x2="378" y2="45" class="rt-fig-arrow" />
+  <line x1="480" y1="45" x2="503" y2="45" class="rt-fig-arrow" />
+</svg>
+<figcaption>One object per step: raw data, cleaned, with scale scores; from that, test, table and text.</figcaption>
+</figure>
+```
+
+## 1 Import {#import}
+
+Recap from [Importing data](import-beginner.qmd): `read_csv()` detects the column types and reports them. Then check with `glimpse()` that numbers are numbers and the group has the right levels.
+
+{{< include /_generated/en/project-beginner/exercise-pj-b-import.qmd >}}
+
+## 2 Clean {#cleaning}
+
+Recap from [Cleaning data](cleaning-beginner.qmd) and [Scales](scales-beginner.qmd): exclusions follow a rule set in advance, not the result. Note the number of excluded respondents per reason; it belongs in the methods section.
+
+{{< include /_generated/en/project-beginner/exercise-pj-b-exclude.qmd >}}
+
+## 3 Compute scales {#scales}
+
+Recap from [Questionnaires and scales](scales-beginner.qmd): reverse first, then average; for each scale, a rule for missing items. The SUS part is already in the starter.
+
+{{< include /_generated/en/project-beginner/exercise-pj-b-scales.qmd >}}
+
+## 4 Compare groups {#compare}
+
+Recap from [Group comparisons](group-comparisons-beginner.qmd): Welch's t-test for the main question, plus the effect size with CI. You analyse the secondary outcomes the same way but report them as secondary outcomes.
+
+{{< include /_generated/en/project-beginner/exercise-pj-b-ttest.qmd >}}
+
+{{< include /_generated/en/project-beginner/exercise-pj-b-tlx-subscales.qmd >}}
+
+## 5 Report {#report}
+
+Recap from [Reporting results](reporting-beginner.qmd): Table 1 describes the analysed sample; the results text gives direction, size and uncertainty.
+
+{{< include /_generated/en/project-beginner/exercise-pj-b-table1.qmd >}}
+
+{{< include /_generated/en/project-beginner/exercise-pj-b-results.qmd >}}
+
+## Full script {#script}
+
+The whole analysis in one block, from the file to the text. Change a rule (e.g. `min_valid = 6` or no exclusion) and run the block again: all numbers change with it.
+
+```{webr}
+# 1 Import
+survey_raw <- read_csv("data/survey.csv", show_col_types = FALSE) |>
+  mutate(interface = factor(interface, levels = c("touch", "voice")))
+
+# 2 Exclusions (attention check)
+cleaned <- survey_raw |>
+  filter(attention_check == 4)
+
+# 3 Scale scores
+scored <- cleaned |>
+  mutate(
+    across(c(sus_01, sus_03, sus_05, sus_07, sus_09), \(x) x - 1),
+    across(c(sus_02, sus_04, sus_06, sus_08, sus_10), \(x) 5 - x),
+    across(c(trust_3, trust_5), \(x) 8 - x),
+    sus = 25 * rowMeans(pick(sus_01:sus_10), na.rm = TRUE),
+    trust = row_means(pick(trust_1:trust_6), min_valid = 5),
+    tlx = rowMeans(pick(starts_with("tlx_")), na.rm = TRUE)
+  ) |>
+  select(respondent, interface, age, gender, tech_affinity, sus, trust, tlx)
+
+# 4 Main question and effect sizes
+sus_test <- t.test(sus ~ interface, data = scored)
+cohens_d(sus ~ interface, data = scored)
+cohens_d(trust ~ interface, data = scored)
+cohens_d(tlx ~ interface, data = scored)
+
+# 5 Report: sample, result text, Table 1
+c(raw = nrow(survey_raw), excluded = nrow(survey_raw) - nrow(cleaned), analysed = nrow(scored))
+report(sus_test, data = scored)
+tbl_summary(
+  scored,
+  by = interface,
+  include = c(age, gender, tech_affinity, sus, trust, tlx),
+  type = tech_affinity ~ "continuous",
+  statistic = all_continuous() ~ "{mean} ({sd})",
+  label = list(
+    age ~ "Age (years)", gender ~ "Gender", tech_affinity ~ "Affinity for technology (1–5)",
+    sus ~ "SUS (0–100)", trust ~ "Trust (1–7)", tlx ~ "NASA-TLX raw (0–100)"
+  )
+)
+```
+
+**How to report it:**
+
+> *Method.* Of 160 respondents, three were excluded for failing the attention check; 157 were analysed (79 touch, 78 voice). Trust was computed when at least five of six items were answered (four respondents without a score). Table 1 describes the sample by group.
+>
+> *Results.* Voice control was rated as more usable than touch control (SUS *M* = 61.5 vs. 51.1; difference 10.4 points, 95% CI [2.7, 18.0], *t*(154.85) = 2.67, *p* = .008, *d* = 0.43, 95% CI [0.11, 0.74]). Both means are below the benchmark of 68. For the secondary outcomes, the differences were small and uncertain (trust: *d* = 0.14 [−0.18, 0.45]; workload: *d* = −0.21 [−0.53, 0.10], each voice − touch).
+
+::: {.callout-note appearance="simple"}
+## Run locally
+
+In the browser, the report stays on the page. Locally, you write it as a Quarto document; text, numbers and table then come straight from R and change with the data:
+
+````markdown
+---
+title: "Voice vs. touch control"
+format: docx
+---
+
+```{r}
+#| include: false
+library(tidyverse)
+library(datawizard)
+library(effectsize)
+library(gtsummary)
+# ... steps 1–3 from the full script ...
+sus_test <- t.test(sus ~ interface, data = scored)
+sus_d <- cohens_d(sus ~ voice_first, data = mutate(scored, voice_first = fct_rev(interface)))
+```
+
+Voice was rated `r round(diff(sus_test$estimate), 1)` SUS points higher,
+d = `r round(sus_d$Cohens_d, 2)`.
+
+```{r}
+#| label: tbl-sample
+tbl_summary(scored, by = interface, include = c(age, gender, tech_affinity))
+```
+````
+
+Result: a Word file that is automatically correct the next time you render it with new data or changed rules. `fct_rev()` reverses the levels so that d is positive for an advantage of voice.
+:::
+
+## Knowledge check {#check}
+
+{{< include /_generated/en/project-beginner/quiz.qmd >}}
+
+## Checklist {#cheatsheet}
+
+```r
+# One object per step, each from the previous one
+survey_raw <- read_csv("data/survey.csv") |> mutate(interface = factor(...))
+cleaned    <- survey_raw |> filter(attention_check == 4)
+scored     <- cleaned |> mutate(<reverse>, <scale scores>) |> select(...)
+
+t.test(sus ~ interface, data = scored)        # main question
+cohens_d(sus ~ interface, data = scored)      # effect size + CI
+tbl_summary(scored, by = interface, ...)      # Table 1
+report(t.test(...), data = scored)            # draft text, then check it
+```
+
+- Analysis plan before the analysis: exclusions, scoring rules, main and secondary outcomes.
+- After importing, `glimpse()`: types, factor levels, number of rows.
+- Report exclusions with number and reason; Table 1 and test on the same sample.
+- Check the sign (first factor level minus second), state the direction in words.
+- Non-significant does not mean "no difference": look at the CI.
+- Everything in one script or Quarto document, no retyped numbers.
+
+{{< include /_generated/en/project-beginner/footer.qmd >}}
