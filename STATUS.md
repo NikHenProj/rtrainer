@@ -1,6 +1,13 @@
 # STATUS
 
-Stand (2026-10-26): Meilenstein 1-4 lauffähig und verifiziert. Meilenstein 4 (Inhalte) abgeschlossen: Durchgänge 1-9, 65 Paket-Aufgaben (Soll 65 erreicht).
+Stand (2026-10-26): Meilenstein 1-4 lauffähig und verifiziert, 65 Paket-Aufgaben. Meilenstein 5, Teil 1 (git, `export_learnr()`, README) erledigt.
+
+## Meilenstein 5, Teil 1 (erledigt, Details: NEWS.md)
+- git-Repo angelegt (Branch `main`, `.gitignore` für R-Pakete; `.claude/launch.json` und `settings.local.json` nicht versioniert). Noch kein GitHub-Remote.
+- `export_learnr(topics, path, exercises, overwrite)` in `R/export_learnr.R`: eine learnr-`.Rmd` pro Thema mit globalem Setup (gradethis, `rtrainer_data()`, `rt_equal()`/`rt_output()`), pro Aufgabe `<id>-setup`, `<id>` (Starter, `exercise.timelimit`), `<id>-hint-N`, `<id>-solution`, `<id>-check` (gradethis `grade_this()`, nur bei value/object/output) und Erklärung in `<details>`. Andere Check-Typen sowie `forbid`/`require`/`post` bekommen eine sichtbare Notiz. Rmd-Quelltext in Prompts wird für knitr maskiert.
+- gradethis 0.2.14 aus r-universe installiert (nicht auf CRAN; `Additional_repositories` in DESCRIPTION). Mit `gradethis::mock_this_exercise()` geprüft: 51/54 übersetzte Checks lassen die Lösung bestehen, alle Starter fallen durch. Ausnahmen (bekannt, in NEWS.md): mixed-allfit-singular, repro-rmarkdown-params-debug, repro-targets-pipeline.
+- Tests `tests/testthat/test-export-learnr.R`: Themenauswahl im `withr::local_tempdir()`, Chunk-Labels/exercise-Optionen/Anzahl Aufgaben, Notiz statt Check, object-Check, unbekanntes Thema, Überschreibschutz, Chunk-Grenze im Code, knitr-Roundtrip der Maskierung, alle 65 Aufgaben exportierbar und parsebar, gradethis-Mock (richtig/falsch); Rendern nur mit Pandoc (lokal übersprungen).
+- README.md: Zweck, Installation, `start()`-Modi, eigene Aufgaben, Check-Typen, Lernförderung, Shiny statt learnr (+ Export), Abschnitt „keine Sandbox“.
 
 ## Meilenstein 4, Durchgang 9 (erledigt, Details: NEWS.md)
 - 4 Reproduzierbarkeits-Aufgaben in `inst/exercises/09-reproducibility/` (topic `reproduzierbarkeit`, Projekte/Dateien nur im `tempdir()` des Workers): here-project (L1, Arbeitsverzeichnis `analysis/`, Wurzel über `.Rproj`/`here::i_am()`, `dir.create()` vor `write.csv()`, `require: [here]`), renv-dependencies-predict (L2, predict: statische Analyse von `renv::dependencies()`: `if (FALSE)` zählt, `character.only`/Kommentar/String nicht, `.Rmd` -> rmarkdown), rmarkdown-params-debug (L2, debug: globales `params` blockiert `render(params =)`; Fix `params = list(...)` + `envir = new.env()`), targets-pipeline (L3, complete: `format = "file"`, Abhängigkeiten über Symbole, Personenmittel; `check$post` ändert die CSV und erwartet alle 4 Ziele in `tar_outdated()`).
@@ -84,9 +91,10 @@ Arten: write 35 (54 %), predict 9 (14 %), debug 11 (17 %), complete 10 (15 %) �
 - Start für manuelle Tests: `.claude/launch.json` (Konfigurationen `rtrainer-daily`, `rtrainer-exam`; Skript und Datenverzeichnis liegen im Scratchpad dieser Sitzung, für neue Sitzungen ggf. neu anlegen).
 
 ## Als Nächstes
-Meilenstein 5 (Abschnitt in docs/SPEC.md per grep suchen): `export_learnr()`, Vignetten, README (inkl. ehrlichem Hinweis: keine Sicherheits-Sandbox), GitHub Actions (R CMD check), shinytest2-Smoke-Test lauffähig machen (Chromium/`CHROMOTE_CHROME`). Vorher klären: git-Repo anlegen (nötig für Actions und create-release-checklist).
+Meilenstein 5, Teil 2: Vignetten (Pandoc fehlt lokal: installieren oder Vignetten so bauen, dass `R CMD check` ohne Pandoc durchläuft), GitHub Actions (`R CMD check`, braucht GitHub-Remote; gradethis über `Additional_repositories`), shinytest2-Smoke-Test lauffähig machen (Chromium/`CHROMOTE_CHROME`). Danach Abnahmekriterien aus SPEC.md durchgehen.
 
 ## Bekannte Lücken
+- learnr-Export: 3 Checks scheitern in gradethis trotz richtiger Lösung (`allFit()` braucht das globale Environment; Datei-Seiteneffekte im Setup werden für die Lösung nicht wiederholt). Gerendert und im Browser angesehen wurde noch kein exportiertes Tutorial (kein Pandoc).
 - shinytest2-Smoke-Test wird übersprungen: kein Chrome/Chromium installiert (`CHROMOTE_CHROME` setzen oder Chromium installieren, dann läuft er mit).
 - "Loading required package: shiny" erscheint in den Tests (harmlos, kommt aus einer Abhängigkeit beim `testServer`).
 - predict-Prompts zeigen Code als Markdown-Block; in der App noch nicht gegengeprüft, wie das aussieht und dass der Starter-Kommentar nicht verwirrt.
@@ -99,12 +107,12 @@ Meilenstein 5 (Abschnitt in docs/SPEC.md per grep suchen): `export_learnr()`, Vi
 - posit-dev/skills@4400f97: r-package-development, r-testthat, r-tidyverse-style, shiny-bslib, create-release-checklist; anthropics/skills@dbd4588: webapp-testing. skill-creator kommt als Plugin-Skill.
 - Konflikte, bei denen die Projektregeln gelten: kein `air format` (styler/lintr); `expect_error()` bleibt, Snapshots nur für neue, längere Meldungen.
 - webapp-testing braucht Python Playwright (nicht installiert); stattdessen eingebauter Browser + shinytest2.
-- create-release-checklist braucht `gh` plus GitHub-Remote (noch kein git-Repo).
+- create-release-checklist braucht `gh` plus GitHub-Remote (git-Repo seit 2026-10-26, Remote fehlt noch).
 
 ## Offene Entscheidungen
 (keine)
 
 ## Letzte Testausgabe (gekürzt, 2026-10-26, via rtrainer-verifier)
-- `devtools::test()`: `[ FAIL 0 | WARN 0 | SKIP 1 | PASS 277 ]` (Skip: shinytest2, kein Chrome)
-- `check_all_solutions()`: 65/65 ok, alle Starter schlagen fehl, max. 8,1 s (mixed-allfit-singular; gesamt 167 s); repro-*: 1,4 / 1,4 / 1,7 / 3,0 s
+- `devtools::test()`: `[ FAIL 0 | WARN 0 | SKIP 2 | PASS 701 ]` (Skips: shinytest2 – kein Chrome; Tutorial-Rendern – kein Pandoc). PASS-Anstieg von 277 auf 701 durch die Parse-Tests aller exportierten Chunks.
+- `check_all_solutions()`: 65/65 ok, alle Starter schlagen fehl, max. 8,1 s (mixed-allfit-singular)
 - `devtools::check(--no-manual)`: `Status: OK` (0 errors | 0 warnings | 0 notes)
