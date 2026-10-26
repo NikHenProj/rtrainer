@@ -1,6 +1,21 @@
 # STATUS
 
-Stand (2026-10-26): Meilenstein 1-4 lauffähig und verifiziert, 65 Paket-Aufgaben. Meilenstein 5, Teil 1 (git, `export_learnr()`, README) erledigt.
+Stand (2026-10-26): Meilensteine 1-5 erledigt, 65 Paket-Aufgaben. Meilenstein 5, Teil 2 (Vignetten, GitHub Actions, shinytest2) erledigt; Abnahmekriterien siehe unten. Noch kein GitHub-Remote.
+
+## Abnahmekriterien (SPEC.md, geprüft 2026-10-26)
+| Kriterium | Ergebnis | Beleg |
+|---|---|---|
+| `rtrainer::start()` öffnet die App, Aufgabe lösbar, Feedback < 2 s | erfüllt mit Einschränkung | shinytest2-Smoke-Test läuft (App startet in Chromium, Code setzen, Prüfen, Rückmeldung erscheint); manuelle Browser-Tests in M3/M4. Feedback < 2 s für Basis-/Tidyverse-Aufgaben (dplyr 1,6 s erste Prüfung, 0,9 s danach). Aufgaben mit lme4/ggplot2/targets brauchen bei der ersten Prüfung 2-6,7 s (Paketladen im Subprozess). |
+| Fortschritt bleibt nach Neustart erhalten | erfüllt | JSON atomar in `R_user_dir()`; Tests „progress survives save/load“, „corrupt file falls back…“, Settings-Test in `test-app-server.R` |
+| >= 60 Aufgaben, alle Selbsttests grün | erfüllt | 65 Aufgaben, `check_all_solutions()` 65/65, alle Starter scheitern |
+| `R CMD check` ohne Errors und Warnings | erfüllt | `Status: OK` (0/0/0), lokal mit Vignetten, ohne Pandoc; CI-Workflow angelegt, aber noch nie gelaufen (kein Remote) |
+| Neue Aufgabe in < 5 Minuten als YAML | erfüllt (nicht von Hand gestoppt) | Vignette „Eigene Aufgaben“ führt `new_exercise()` -> `load_exercises()` -> `check_all_solutions()` beim Bauen real aus; nur eine Datei, keine Code-Änderung nötig |
+
+## Meilenstein 5, Teil 2 (erledigt, Details: NEWS.md)
+- Vignetten `vignettes/erste-schritte.Rmd` (Modi, Ablauf, Fortschritt/Leitner, Dashboard) und `vignettes/eigene-aufgaben.Rmd` (Felder, Arten, Check-Typen, `forbid`/`require`/`post`, Selbsttest, Registrieren, learnr-Export). Entscheidung: litedown-Engine statt `rmarkdown::html_vignette`, damit `R CMD check` ohne Pandoc läuft; litedown in Suggests.
+- `.github/workflows/R-CMD-check.yaml`: r-lib/actions v2, ubuntu/macOS/Windows, R release; gradethis über `extra-repositories` (r-universe); Pandoc (`setup-pandoc`) und Chrome (`browser-actions/setup-chrome` -> `CHROMOTE_CHROME`), `NOT_CRAN: true`. Badge im README mit Platzhalter `OWNER`.
+- shinytest2-Smoke-Test läuft jetzt: Er startet die App aus einem temporären `app.R` (vorher scheiterte er mit „no package called rtrainer“, und die Fortschritts-Option erreichte den App-Prozess nicht). Chrome bekommt ein eigenes TMPDIR und wird danach geschlossen (sonst NOTE „detritus in the temp directory“).
+- Lokaler Browser ohne Systeminstallation: Playwright-Chromium unter `~/.cache/ms-playwright/chromium-1243/chrome-linux64/chrome`. Für die Tests `CHROMOTE_CHROME` auf diesen Pfad setzen (noch nicht in `~/.Renviron`, sonst wird der Test lokal übersprungen) und `NOT_CRAN=true` (macht `devtools::test()` selbst).
 
 ## Meilenstein 5, Teil 1 (erledigt, Details: NEWS.md)
 - git-Repo angelegt (Branch `main`, `.gitignore` für R-Pakete; `.claude/launch.json` und `settings.local.json` nicht versioniert). Noch kein GitHub-Remote.
@@ -91,17 +106,19 @@ Arten: write 35 (54 %), predict 9 (14 %), debug 11 (17 %), complete 10 (15 %) �
 - Start für manuelle Tests: `.claude/launch.json` (Konfigurationen `rtrainer-daily`, `rtrainer-exam`; Skript und Datenverzeichnis liegen im Scratchpad dieser Sitzung, für neue Sitzungen ggf. neu anlegen).
 
 ## Als Nächstes
-Meilenstein 5, Teil 2: Vignetten (Pandoc fehlt lokal: installieren oder Vignetten so bauen, dass `R CMD check` ohne Pandoc durchläuft), GitHub Actions (`R CMD check`, braucht GitHub-Remote; gradethis über `Additional_repositories`), shinytest2-Smoke-Test lauffähig machen (Chromium/`CHROMOTE_CHROME`). Danach Abnahmekriterien aus SPEC.md durchgehen.
+GitHub-Remote anlegen, `OWNER` im README-Badge ersetzen, pushen und den ersten CI-Lauf prüfen (macOS/Windows, shinytest2 mit Chrome, learnr-Rendern mit Pandoc). Danach offene Lücken unten (z. B. `start(topics=)` im freien Modus, Exam-Timer).
 
 ## Bekannte Lücken
 - learnr-Export: 3 Checks scheitern in gradethis trotz richtiger Lösung (`allFit()` braucht das globale Environment; Datei-Seiteneffekte im Setup werden für die Lösung nicht wiederholt). Gerendert und im Browser angesehen wurde noch kein exportiertes Tutorial (kein Pandoc).
-- shinytest2-Smoke-Test wird übersprungen: kein Chrome/Chromium installiert (`CHROMOTE_CHROME` setzen oder Chromium installieren, dann läuft er mit).
+- shinytest2-Smoke-Test läuft lokal nur mit gesetztem `CHROMOTE_CHROME` (Playwright-Chromium, siehe oben).
 - "Loading required package: shiny" erscheint in den Tests (harmlos, kommt aus einer Abhängigkeit beim `testServer`).
 - predict-Prompts zeigen Code als Markdown-Block; in der App noch nicht gegengeprüft, wie das aussieht und dass der Starter-Kommentar nicht verwirrt.
 - Timer im Prüfungsmodus zeigt nach dem Beenden 00:00 statt der Restzeit.
 - Debug-Aufgaben zeigen immer „Der Code enthält einen Fehler.“, auch wenn der Prompt zwei Fehler nennt (mapping-setting-debug).
 - `start(topics = )` filtert im freien Modus die Aufgabenliste nicht vor (es erscheinen alle 65).
-- Pandoc fehlt lokal: Vignetten mit HTML-Ausgabe brauchen Pandoc (für Meilenstein 5 installieren oder `R CMD check` mit `--no-build-vignettes` prüfen).
+- Pandoc fehlt lokal: Nur das Rendern exportierter learnr-Tutorials ist betroffen (Test übersprungen, läuft in CI). Vignetten brauchen kein Pandoc mehr.
+- CI-Workflow ist ungetestet, bis ein Remote existiert.
+- Feedback < 2 s gilt nicht für Aufgaben mit lme4/ggplot2/targets bei der ersten Prüfung (bis 6,7 s).
 
 ## Externe Skills (installiert 2026-10-25 nach .claude/skills/)
 - posit-dev/skills@4400f97: r-package-development, r-testthat, r-tidyverse-style, shiny-bslib, create-release-checklist; anthropics/skills@dbd4588: webapp-testing. skill-creator kommt als Plugin-Skill.
@@ -112,7 +129,7 @@ Meilenstein 5, Teil 2: Vignetten (Pandoc fehlt lokal: installieren oder Vignette
 ## Offene Entscheidungen
 (keine)
 
-## Letzte Testausgabe (gekürzt, 2026-10-26, via rtrainer-verifier)
-- `devtools::test()`: `[ FAIL 0 | WARN 0 | SKIP 2 | PASS 701 ]` (Skips: shinytest2 – kein Chrome; Tutorial-Rendern – kein Pandoc). PASS-Anstieg von 277 auf 701 durch die Parse-Tests aller exportierten Chunks.
-- `check_all_solutions()`: 65/65 ok, alle Starter schlagen fehl, max. 8,1 s (mixed-allfit-singular)
-- `devtools::check(--no-manual)`: `Status: OK` (0 errors | 0 warnings | 0 notes)
+## Letzte Testausgabe (gekürzt, 2026-10-26, via rtrainer-verifier, mit `CHROMOTE_CHROME`)
+- `devtools::test()`: `[ FAIL 0 | WARN 0 | SKIP 1 | PASS 702 ]` (Skip: Tutorial-Rendern – Pandoc fehlt). Browser-Smoke-Test lief und bestand.
+- `check_all_solutions()`: 65/65 ok, alle Starter schlagen fehl, max. 8,15 s (mixed-allfit-singular)
+- `devtools::check(--no-manual)`: `Status: OK` (0 errors | 0 warnings | 0 notes), Vignetten gebaut und geprüft

@@ -1,5 +1,9 @@
 # rtrainer
 
+<!-- badges: start -->
+[![R-CMD-check](https://github.com/OWNER/rtrainer/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/OWNER/rtrainer/actions/workflows/R-CMD-check.yaml)
+<!-- badges: end -->
+
 Lokaler, offline nutzbarer Trainer für fortgeschrittenes R: eine Shiny-App mit
 65 Aufgaben (Basics, dplyr, tidyr, purrr, Programmierung, Statistik, Mixed
 Models, ggplot2, Reproduzierbarkeit), automatischer Prüfung, gestuften
@@ -28,6 +32,9 @@ deren Pakete fehlen, schlagen beim Prüfen mit einer Meldung fehl, die
 übrigen funktionieren trotzdem.
 
 ## Start
+
+Ausführlicher: `vignette("erste-schritte", "rtrainer")` und
+`vignette("eigene-aufgaben", "rtrainer")`.
 
 ```r
 rtrainer::start()                                  # Daily: fällige Wiederholungen + neue Aufgaben, Themen gemischt

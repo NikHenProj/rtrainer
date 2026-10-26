@@ -191,9 +191,20 @@ test_that("app smoke test in a browser", {
   skip_if_not_installed("shinytest2")
   skip_if(is.null(tryCatch(chromote::find_chrome(), error = function(e) NULL)),
           "Kein Chrome/Chromium gefunden")
-  local_progress_dir()
-  app <- shinytest2::AppDriver$new(rtrainer_app("free", exercises = fx()), name = "smoke",
-                                   load_timeout = 30000)
+  # The app runs in a separate R process: pass data dir and exercises via app.R
+  # (shinytest2 turns library(rtrainer) into load_all() during devtools::test()).
+  app_dir <- withr::local_tempdir()
+  # Chrome puts org.chromium.* into TMPDIR (R CMD check "detritus" note): give
+  # it a throwaway TMPDIR and close the browser before that dir is removed.
+  withr::local_envvar(TMPDIR = withr::local_tempdir())
+  withr::defer(try(chromote::default_chromote_object()$close(), silent = TRUE))
+  writeLines(c(
+    "library(rtrainer)",
+    sprintf("options(rtrainer.data_dir = %s)", deparse(withr::local_tempdir())),
+    sprintf("ex <- load_exercises(%s)", deparse(normalizePath(test_path("fixtures", "exercises")))),
+    'rtrainer_app("free", exercises = ex[c("fx-sum", "fx-print", "fx-plot")])'
+  ), file.path(app_dir, "app.R"))
+  app <- shinytest2::AppDriver$new(app_dir, name = "smoke", load_timeout = 30000)
   withr::defer(app$stop())
   app$set_inputs(editor = "x <- 1:10\nsum(x[x %% 2 == 0])", allow_no_input_binding_ = TRUE)
   app$click("check")
