@@ -1,0 +1,53 @@
+id: tidyr-pivot-wider
+topic: tidyr
+title: Bedingungen ins Breitformat
+level: 1
+kind: write
+tags: [tidyr, pivot_wider, summarise]
+packages: [dplyr, tidyr]
+seed: 1
+prompt: |
+  Erzeuge aus `driving_sim` eine Tabelle mit einer Zeile pro Person:
+  Spalte `vp_id` und je eine Spalte `visuell`, `auditiv`, `haptisch`
+  mit der mittleren Reaktionszeit `rt_ms` dieser Person in der
+  Bedingung (fehlende Werte ignorieren, auf 1 Stelle gerundet).
+  Ergebnis: 40 Zeilen, 4 Spalten.
+setup: |
+  library(dplyr)
+  library(tidyr)
+  driving_sim <- read.csv(rtrainer_data("driving_sim.csv"))
+starter: |
+  driving_sim |>
+    # dein Code
+solution: |
+  driving_sim |>
+    summarise(rt = round(mean(rt_ms, na.rm = TRUE), 1), .by = c(vp_id, condition)) |>
+    pivot_wider(names_from = condition, values_from = rt)
+hints:
+  - "Erst auf eine Zeile pro Person und Bedingung verdichten, dann umformen."
+  - "`pivot_wider()` braucht `names_from` (neue Spaltennamen) und `values_from` (Werte)."
+  - "Alle Spalten außer `names_from`/`values_from` bilden die Zeilen-ID; nach dem Zusammenfassen bleibt nur `vp_id` übrig."
+explanation: |
+  `pivot_wider()` identifiziert Zeilen über alle Spalten, die nicht in
+  `names_from` oder `values_from` stehen (`id_cols`). Auf den Rohdaten
+  wären das auch `trial`, `age` und `lane_dev`, also fast jede Zeile
+  einzeln mit vielen `NA`. Darum zuerst mit `summarise()` auf eine
+  Zeile pro Person × Bedingung reduzieren. Alternativ geht es in einem
+  Schritt mit `id_cols = vp_id` und `values_fn = \(x) round(mean(x, na.rm = TRUE), 1)`.
+  Das Breitformat ist praktisch für Tabellen oder gepaarte Tests, für
+  Modelle und ggplot2 bleibt das Langformat die Regel.
+misconception: "pivot_wider() fasst mehrere Werte pro Zelle automatisch zusammen."
+check:
+  type: value
+  compare: data_frame
+  ignore_row_order: true
+  ignore_col_order: true
+  ignore_attributes: true
+  tolerance: 1.0e-8
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*(summarise|values_fn))[\\s\\S]*pivot_wider"
+    message: "Ohne Zusammenfassen bilden `trial`, `age`, `lane_dev` usw. die Zeilen-ID. Verdichte erst auf eine Zeile pro Person und Bedingung (oder nutze `id_cols` und `values_fn`)."
+  - pattern: "pivot_longer"
+    message: "`driving_sim` ist schon lang (eine Zeile pro Trial). Für Bedingungen als Spalten brauchst du `pivot_wider()`."
+  - pattern: "^(?![\\s\\S]*na\\.rm)[\\s\\S]*mean\\("
+    message: "Ohne `na.rm = TRUE` wird der Mittelwert bei einem fehlenden Trial `NA`."

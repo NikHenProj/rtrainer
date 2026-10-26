@@ -1,0 +1,66 @@
+id: mixed-condition-trial
+topic: mixed-models
+title: Bedingung × Trial mit Satterthwaite-Tests
+level: 3
+kind: complete
+tags: [lmertest, messwiederholung, interaktion, zentrieren, satterthwaite, interpretation]
+packages: [lme4, lmerTest]
+seed: 1
+prompt: |
+  Messwiederholung über Bedingung und Trial: Ändert sich der
+  Übungseffekt je nach Warnmodalität? Nach der `allFit`-Aufgabe genügt
+  ein Zufallsintercept pro `vp_id`.
+
+  Zentriere `trial` auf die Mitte der vier Trials (`trial_c`), schätze
+  mit `lmerTest` ein Modell mit `condition`, `trial_c` und ihrer
+  Interaktion und liefere die Typ-III-Tabelle mit Satterthwaite-
+  Freiheitsgraden (`anova()`), als Data Frame wie sie ist. Ergänze die
+  Lücken `___`.
+setup: |
+  driving_sim <- read.csv(rtrainer_data("driving_sim.csv"))
+starter: |
+  # trial auf die Mitte der Trials zentrieren
+  driving_sim$trial_c <- ___
+  # Bedingung, Trial und Interaktion; Zufallsintercept pro Person
+  fit <- ___
+  # Typ-III-Tabelle (Satterthwaite)
+  ___
+solution: |
+  driving_sim$trial_c <- driving_sim$trial - 2.5
+  fit <- lmer(rt_ms ~ condition * trial_c + (1 | vp_id), data = driving_sim)
+  anova(fit)
+hints:
+  - "Die Mitte von 1 bis 4 ist 2.5; `*` in der Formel erzeugt Haupteffekte und Interaktion."
+  - "Mit geladenem `lmerTest` liefert `lmer()` ein Objekt, dessen `anova()` Typ III mit Satterthwaite rechnet (`DenDF`, `Pr(>F)`)."
+  - "`lmer(rt_ms ~ condition * trial_c + (1 | vp_id), data = driving_sim)`, dann `anova(fit)`."
+explanation: |
+  Mit Interaktion testet der Bedingungseffekt die Unterschiede dort,
+  wo `trial_c = 0` ist; zentriert also in der Mitte der Trials:
+  F(2, 423) = 196 (visuell +184 ms, 95-%-KI [159, 209], gegenüber
+  auditiv). Unzentriert würde er bei einem nicht existierenden Trial 0
+  geprüft (F = 48). Der Übungseffekt beträgt -25 ms pro Trial (KI
+  [-41, -10]). Die Interaktion ist nicht signifikant, F(2, 423) = 2.0,
+  p = .14, aber die KIs der Steigungsdifferenzen ([-11, 34] und
+  [-33, 11] ms pro Trial) lassen relevante Unterschiede offen: kein
+  Beleg für Gleichheit. Die großen Nenner-df entstehen, weil Bedingung
+  und Trial innerhalb der Personen variieren und nur der Intercept
+  zufällig ist; bei echter Slope-Varianz wären die Tests zu liberal.
+misconception: "Haupteffekte in einem Modell mit Interaktion sind Durchschnittseffekte, egal wo die kontinuierliche Variable ihre Null hat."
+check:
+  type: value
+  compare: data_frame
+  ignore_row_order: false
+  ignore_col_order: false
+  ignore_attributes: true
+  tolerance: 1.0e-4
+common_mistakes:
+  - pattern: "___"
+    message: "Es sind noch Lücken `___` offen."
+  - pattern: "lme4::lmer"
+    message: "`lme4::lmer()` umgeht `lmerTest`; dessen `anova()` liefert keine Nenner-df und p-Werte. Nutze `lmer()` aus `lmerTest`."
+  - pattern: "trial_c\\s*<-\\s*[^\\n]*trial\\s*-\\s*(1|2)\\b(?!\\.)|trial_c\\s*<-\\s*(driving_sim\\$)?trial\\s*(\\n|$)|~[^\\n]*\\*\\s*trial\\b(?!_)"
+    message: "Mit Interaktion wird der Bedingungseffekt bei `trial_c = 0` getestet. Zentriere auf die Mitte der Trials (2.5), sonst prüft der Haupteffekt einen anderen Zeitpunkt."
+  - pattern: "factor\\s*\\(\\s*(driving_sim\\$)?trial"
+    message: "Als Faktor schätzt `trial` drei Kontraste statt eines linearen Übungseffekts; gefragt ist `trial_c` als zentrierte Zahl."
+  - pattern: "\\(\\s*1\\s*\\|\\s*(condition|trial|trial_c)\\s*\\)|condition\\s*\\+\\s*trial_c\\s*\\+\\s*\\("
+    message: "Prüfe die Formel: `condition * trial_c` (Haupteffekte und Interaktion) und Zufallsintercept `(1 | vp_id)`."

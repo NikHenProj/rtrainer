@@ -1,0 +1,65 @@
+id: basics-first-slow
+topic: basics
+title: Schleife mit vorzeitigem Abbruch
+level: 3
+kind: complete
+tags: [kontrollstrukturen, schleifen, funktionen, randfaelle]
+seed: 1
+prompt: |
+  `first_slow(rt, limit)` soll den Index des **ersten** Durchgangs
+  liefern, dessen Reaktionszeit über `limit` liegt. `NA`-Werte werden
+  übersprungen. Gibt es keinen solchen Durchgang (auch bei leerem
+  Vektor), ist das Ergebnis `NA_integer_`.
+
+  Ergänze die Lücken `___` im Editor.
+starter: |
+  first_slow <- function(rt, limit = 1500) {
+    for (i in ___(rt)) {
+      if (!is.na(rt[i]) && rt[i] > ___) {
+        ___(i)
+      }
+    }
+    NA_integer_
+  }
+solution: |
+  first_slow <- function(rt, limit = 1500) {
+    for (i in seq_along(rt)) {
+      if (!is.na(rt[i]) && rt[i] > limit) {
+        return(i)
+      }
+    }
+    NA_integer_
+  }
+hints:
+  - "Die erste Lücke erzeugt die Indizes 1, 2, ..., n, und zwar auch dann korrekt, wenn `rt` leer ist."
+  - "`1:length(rt)` ergibt bei leerem `rt` den Vektor `c(1, 0)`. `seq_along(rt)` ergibt `integer(0)`."
+  - "Die letzte Lücke beendet die Funktion sofort mit dem aktuellen Index."
+explanation: |
+  `seq_along(rt)` ist bei leerem Vektor `integer(0)`, die Schleife läuft
+  also nicht; `1:length(rt)` würde `c(1, 0)` durchlaufen und `rt[1]`
+  wäre `NA`. `return(i)` verlässt die Funktion sofort, nicht nur die
+  Schleife (dafür wäre `break` da). `&&` wertet kurzgeschlossen aus,
+  daher wird `rt[i] > limit` bei `NA` gar nicht erst gebildet und `if()`
+  bekommt nie ein `NA`. Vektorisiert ginge es mit
+  `which(rt > limit)[1]`; das liefert ebenfalls `NA_integer_`, wenn
+  nichts passt.
+misconception: "`1:length(x)` ist eine sichere Indexfolge, auch für leere Vektoren."
+check:
+  type: function
+  name: first_slow
+  tests:
+    - args: "list(c(900, 1600, 2100))"
+      expect: "2L"
+    - args: "list(c(NA, 1200, 1800), limit = 1000)"
+      expect: "2L"
+    - args: "list(c(800, NA, 950))"
+      expect: "NA_integer_"
+    - args: "list(numeric())"
+      expect: "NA_integer_"
+common_mistakes:
+  - pattern: "1\\s*:\\s*length\\("
+    message: "`1:length(rt)` ergibt bei leerem `rt` die Folge `c(1, 0)`. `seq_along(rt)` ist sicher."
+  - pattern: "break\\s*(\\(\\s*i\\s*\\))?"
+    message: "`break` verlässt nur die Schleife; danach liefert die Funktion `NA_integer_`. Nutze `return(i)`."
+  - pattern: "rt\\[i\\]\\s*>\\s*1500"
+    message: "Verwende das Argument `limit` statt der festen Zahl; sonst ignoriert die Funktion den Aufrufer."

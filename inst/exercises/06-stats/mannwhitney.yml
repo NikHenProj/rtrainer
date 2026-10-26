@@ -1,0 +1,58 @@
+id: stats-mannwhitney
+topic: statistik
+title: Mann-Whitney-U mit Effektstärke
+level: 2
+kind: write
+tags: [mann-whitney, wilcox, effektstaerke, messwiederholung, konfidenzintervall]
+packages: [dplyr]
+seed: 1
+prompt: |
+  Unterscheiden sich Männer (`"m"`) und Frauen (`"w"`) in der mittleren
+  Spurabweichung `lane_dev`? Verwende den Mann-Whitney-U-Test
+  (`wilcox.test()`), jede Person geht mit ihrem Mittelwert über alle
+  Trials ein; die eine diverse Person (`"d"`) bleibt außen vor.
+
+  Gib einen Vektor zurück: `W`, die Rang-biseriale Korrelation
+  `r = 2 * W / (n_m * n_w) - 1` sowie untere und obere Grenze des KI für
+  die Lageverschiebung (`conf.int = TRUE`). Reihenfolge: `m` vor `w`.
+setup: |
+  library(dplyr)
+  driving_sim <- read.csv(rtrainer_data("driving_sim.csv"))
+starter: |
+  # dein Code
+solution: |
+  per_person <- driving_sim |>
+    filter(gender %in% c("m", "w")) |>
+    summarise(lane = mean(lane_dev, na.rm = TRUE), .by = c(vp_id, gender))
+  res <- wilcox.test(lane ~ gender, data = per_person, conf.int = TRUE)
+  n <- table(per_person$gender)
+  w <- unname(res$statistic)
+  c(w, 2 * w / (n[["m"]] * n[["w"]]) - 1, res$conf.int)
+hints:
+  - "Erst filtern und pro Person mitteln; der Test braucht genau zwei Gruppen."
+  - "`wilcox.test(lane ~ gender, data = ..., conf.int = TRUE)` liefert `statistic` (W) und `conf.int`."
+  - "Die Gruppengrößen bekommst du mit `table(per_person$gender)`; `W` ist `res$statistic`."
+explanation: |
+  W = 169 bei 19 Männern und 20 Frauen ergibt r = -0.11: Nur leicht
+  mehr als die Hälfte aller Paare (Mann, Frau) zeigen bei der Frau die
+  größere Abweichung. Das KI für die Lageverschiebung (Hodges-Lehmann)
+  reicht von etwa -0.05 bis 0.03 m und enthält 0; ein Unterschied
+  größer als einige Zentimeter ist damit unwahrscheinlich, Gleichheit
+  ist aber nicht bewiesen. Der U-Test vergleicht Verteilungen bzw.
+  Ränge, nicht Mediane; die Rang-biseriale Korrelation ist seine
+  natürliche Effektstärke. Auf Trial-Ebene zählte jede Person zwölfmal.
+misconception: "Der Mann-Whitney-Test vergleicht Mediane, und ein p > .05 belegt, dass kein Unterschied besteht."
+check:
+  type: value
+  tolerance: 1.0e-6
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*vp_id)[\\s\\S]*wilcox\\.test"
+    message: "Der Test läuft auf Trial-Ebene: Jede Person zählt rund zwölfmal (Pseudoreplikation). Erst pro `vp_id` mitteln."
+  - pattern: "^(?![\\s\\S]*[\"'][dmw][\"'])[\\s\\S]*wilcox\\.test"
+    message: "`gender` hat drei Ausprägungen; der Test braucht genau zwei. Filtere auf `\"m\"` und `\"w\"`."
+  - pattern: "t\\.test\\("
+    message: "Gefragt ist der Rangtest `wilcox.test()`, nicht der t-Test."
+  - pattern: "paired\\s*=\\s*(TRUE|T)\\b"
+    message: "Männer und Frauen sind verschiedene Personen; gepaart wäre der Vorzeichen-Rang-Test."
+  - pattern: "^(?![\\s\\S]*conf\\.int\\s*=)[\\s\\S]*wilcox\\.test"
+    message: "Für das Intervall der Lageverschiebung braucht `wilcox.test()` das Argument `conf.int = TRUE`."

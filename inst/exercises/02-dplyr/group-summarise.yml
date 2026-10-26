@@ -1,0 +1,40 @@
+id: dplyr-group-summarise
+topic: dplyr
+title: Gruppieren und zusammenfassen
+level: 2
+kind: write
+tags: [dplyr, summarise, group_by]
+packages: [dplyr]
+seed: 1
+prompt: |
+  Berechne in `mtcars` pro Zylinderzahl (`cyl`) den mittleren
+  Verbrauch `mpg` (gerundet auf 1 Stelle) und die Anzahl der Autos.
+  Die Spalten sollen `cyl`, `m` und `n` heißen.
+setup: |
+  library(dplyr)
+starter: |
+  mtcars |>
+    # dein Code
+solution: |
+  mtcars |>
+    group_by(cyl) |>
+    summarise(m = round(mean(mpg), 1), n = n())
+hints:
+  - "Mit `group_by()` legst du die Gruppen fest."
+  - "`summarise()` erlaubt mehrere Kennwerte, `n()` zählt Zeilen."
+  - "Runde mit `round(mean(mpg), 1)`."
+explanation: |
+  `group_by()` markiert die Gruppen, `summarise()` reduziert jede Gruppe
+  auf eine Zeile. Das Ergebnis bleibt ein tibble; die Gruppierung wird
+  nach `summarise()` um eine Ebene aufgelöst.
+misconception: "summarise() ohne group_by() fasst den gesamten Datensatz zu einer Zeile zusammen."
+check:
+  type: value
+  compare: data_frame
+  ignore_row_order: true
+  ignore_col_order: false
+  ignore_attributes: true
+  tolerance: 1.0e-8
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*round\\()[\\s\\S]*mean\\(mpg\\)"
+    message: "Du hast nicht gerundet. Das Ergebnis soll auf 1 Nachkommastelle gerundet sein."

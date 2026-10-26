@@ -1,0 +1,54 @@
+id: stats-anova-eta
+topic: statistik
+title: Einfaktorielle ANOVA mit Eta-Quadrat
+level: 2
+kind: write
+tags: [anova, aov, effektstaerke, eta-quadrat, messwiederholung, aggregation]
+packages: [dplyr]
+seed: 1
+prompt: |
+  `age_group` teilt die Personen in drei Altersgruppen. Prüfe mit einer
+  einfaktoriellen ANOVA (`aov()`), ob sich die mittlere Reaktionszeit
+  zwischen den Gruppen unterscheidet; jede Person geht mit ihrem
+  Mittelwert über alle Trials ein.
+
+  Gib `c(F, eta2)` zurück, mit `eta2 = SS_Effekt / SS_gesamt`.
+setup: |
+  library(dplyr)
+  driving_sim <- read.csv(rtrainer_data("driving_sim.csv"))
+  driving_sim$age_group <- cut(driving_sim$age, c(-Inf, 34, 49, Inf),
+                               labels = c("bis34", "35bis49", "ab50"))
+starter: |
+  # dein Code
+solution: |
+  per_person <- driving_sim |>
+    summarise(rt = mean(rt_ms, na.rm = TRUE), .by = c(vp_id, age_group))
+  fit <- aov(rt ~ age_group, data = per_person)
+  tab <- summary(fit)[[1]]
+  ss <- tab[["Sum Sq"]]
+  c(tab[["F value"]][1], ss[1] / sum(ss))
+hints:
+  - "Erst eine Zeile pro Person, dann `aov(rt ~ age_group, data = ...)`."
+  - "`summary(fit)[[1]]` ist ein Data Frame mit den Spalten `Sum Sq` und `F value`; die erste Zeile ist der Effekt, die zweite die Residuen."
+  - "`ss <- tab[[\"Sum Sq\"]]`; Eta-Quadrat ist `ss[1] / sum(ss)`."
+explanation: |
+  F(2, 36) = 8.77; die Altersgruppe erklärt eta² = .33 der Varianz der
+  Personenmittelwerte, ein großer Effekt. Der F-Test sagt nur, dass
+  nicht alle Gruppenmittel gleich sind; welche Gruppen sich wie stark
+  unterscheiden, zeigen erst Paarvergleiche mit KI (Tukey). eta² ist in
+  kleinen Stichproben nach oben verzerrt; omega² korrigiert das. Ohne
+  Aggregation hätte die ANOVA etwa 450 Fehler-Freiheitsgrade, obwohl
+  nur 39 Personen das Alter liefern. Für die Bedingung (innerhalb der
+  Person) wäre `aov()` ohne `Error()`-Term falsch; das leistet später
+  ein Mixed Model.
+misconception: "Eta-Quadrat setzt die Effekt-Quadratsumme ins Verhältnis zur Residual-Quadratsumme."
+check:
+  type: value
+  tolerance: 1.0e-6
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*vp_id)[\\s\\S]*aov"
+    message: "Die ANOVA läuft auf Trial-Ebene: Jede Person zählt rund zwölfmal, die Fehler-Freiheitsgrade sind zu hoch. Erst pro `vp_id` mitteln."
+  - pattern: "ss\\[\\s*1\\s*\\]\\s*/\\s*ss\\[\\s*2\\s*\\]"
+    message: "Das ist SS_Effekt / SS_Residual (entspricht f²). Eta-Quadrat teilt durch die Gesamt-Quadratsumme."
+  - pattern: "oneway\\.test"
+    message: "`oneway.test()` ist die Welch-ANOVA mit eigenem F und ohne Quadratsummen; hier ist die klassische ANOVA mit `aov()` verlangt."

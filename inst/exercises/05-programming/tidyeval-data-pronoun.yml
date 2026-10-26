@@ -1,0 +1,77 @@
+id: programming-tidyeval-data-pronoun
+topic: programmierung
+title: Spalten als Strings mit .data und dynamischen Namen
+level: 3
+kind: complete
+tags: [tidyeval, data-pronoun, embracing, dplyr, funktionen]
+packages: [dplyr]
+seed: 1
+prompt: |
+  Die Messvariablen kommen diesmal als **Strings** aus einem Vektor
+  (z. B. aus einer Konfigurationsdatei), die Gruppierung weiterhin ohne
+  Anführungszeichen. `summarise_var(data, group, var)` soll pro Gruppe
+  den Mittelwert in eine Spalte namens `mean_<var>` schreiben, also
+  `mean_rt_ms` bzw. `mean_lane_dev`.
+
+  Ergänze die Lücken `___`; der letzte Ausdruck verbindet beide
+  Ergebnisse zu einer Tabelle mit den Spalten `condition`, `mean_rt_ms`,
+  `mean_lane_dev`.
+setup: |
+  library(dplyr)
+  driving_sim <- read.csv(rtrainer_data("driving_sim.csv"))
+  vars <- c("rt_ms", "lane_dev")
+starter: |
+  summarise_var <- function(data, group, var) {
+    data |>
+      ___ |>
+      summarise(___ := mean(___, na.rm = TRUE), .groups = "drop")
+  }
+  left_join(
+    summarise_var(driving_sim, condition, vars[1]),
+    summarise_var(driving_sim, condition, vars[2]),
+    by = "condition"
+  )
+solution: |
+  summarise_var <- function(data, group, var) {
+    data |>
+      group_by({{ group }}) |>
+      summarise("mean_{var}" := mean(.data[[var]], na.rm = TRUE), .groups = "drop")
+  }
+  left_join(
+    summarise_var(driving_sim, condition, vars[1]),
+    summarise_var(driving_sim, condition, vars[2]),
+    by = "condition"
+  )
+hints:
+  - "Zwei Arten von Argumenten: `group` ist ein Ausdruck wie in der Aufgabe zuvor, `var` ein String, also ein Wert und kein Spaltenname."
+  - "Für einen String gibt es das Pronomen `.data`, das wie eine Liste der Spalten indiziert wird. Ein Spaltenname links von `:=` darf eine glue-Zeichenkette sein."
+  - "`group_by({{ group }})`, links `\"mean_{var}\" :=`, rechts `mean(.data[[var]], na.rm = TRUE)`."
+explanation: |
+  `{{ }}` passt für Argumente, die der Aufrufer als Ausdruck schreibt;
+  bei einem String würde `{{ var }}` nur die Konstante `"rt_ms"` an
+  `mean()` geben (mit Warnung und `NA`). `.data[[var]]` schlägt den
+  String dagegen ausdrücklich als Spalte im Data Frame nach und ist
+  zugleich robust gegen gleichnamige Variablen in der Umgebung. Links
+  von `:=` interpoliert dplyr glue-Syntax: `"mean_{var}"` setzt den
+  Wert von `var` ein, `"mean_{{ group }}"` würde den Spaltennamen
+  eines umarmten Arguments einsetzen. `=` erlaubt keinen berechneten
+  Namen, daher `:=` (Walrus-Operator).
+misconception: "{{ }} funktioniert auch für Spaltennamen, die als String übergeben werden."
+check:
+  type: value
+  compare: data_frame
+  ignore_row_order: true
+  ignore_col_order: false
+  ignore_attributes: true
+  tolerance: 1.0e-8
+common_mistakes:
+  - pattern: "___"
+    message: "Es sind noch Lücken `___` offen."
+  - pattern: "\\{\\{\\s*var\\s*\\}\\}\\s*,\\s*na\\.rm|mean\\(\\s*var\\b"
+    message: "`var` enthält einen String; `{{ var }}` oder `var` übergeben nur die Konstante `\"rt_ms\"`. Nachschlagen im Data Frame: `.data[[var]]`."
+  - pattern: "mean_var|[\"']mean_\\{\\{\\s*var"
+    message: "Der Name soll den Wert von `var` enthalten: `\"mean_{var}\"`; `{{ var }}` im Namen ist für umarmte Argumente gedacht."
+  - pattern: "group_by\\(\\s*\\.data\\[\\[\\s*group|group_by\\(\\s*group\\s*\\)"
+    message: "`group` wird ohne Anführungszeichen übergeben, also umarmen: `group_by({{ group }})`."
+  - pattern: "summarise\\(\\s*[\"']?mean_\\{var\\}[\"']?\\s*=[^=]"
+    message: "Ein berechneter Spaltenname braucht `:=` statt `=`."

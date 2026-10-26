@@ -1,0 +1,77 @@
+id: stats-tukey
+topic: statistik
+title: Tukey-Paarvergleiche nach der ANOVA
+level: 2
+kind: complete
+tags: [tukey, posthoc, multiples-testen, konfidenzintervall, anova]
+packages: [dplyr]
+seed: 1
+prompt: |
+  Nach der ANOVA über drei Altersgruppen sollen alle Paarvergleiche mit
+  simultanen 95-%-KI berichtet werden. Ergänze die Lücken `___`, sodass
+  ein Data Frame mit `contrast`, `diff`, `lwr`, `upr` und `p_adj`
+  entsteht (eine Zeile pro Vergleich, Reihenfolge wie in
+  `TukeyHSD()`).
+setup: |
+  library(dplyr)
+  driving_sim <- read.csv(rtrainer_data("driving_sim.csv"))
+  driving_sim$age_group <- cut(driving_sim$age, c(-Inf, 34, 49, Inf),
+                               labels = c("bis34", "35bis49", "ab50"))
+starter: |
+  per_person <- driving_sim |>
+    summarise(rt = mean(rt_ms, na.rm = TRUE), .by = c(___, age_group))
+  fit <- aov(rt ~ age_group, data = per_person)
+  tk <- ___(fit)$___
+  data.frame(
+    contrast = rownames(tk),
+    diff = tk[, "diff"],
+    lwr = tk[, "lwr"],
+    upr = tk[, "upr"],
+    p_adj = tk[, ___],
+    row.names = NULL
+  )
+solution: |
+  per_person <- driving_sim |>
+    summarise(rt = mean(rt_ms, na.rm = TRUE), .by = c(vp_id, age_group))
+  fit <- aov(rt ~ age_group, data = per_person)
+  tk <- TukeyHSD(fit)$age_group
+  data.frame(
+    contrast = rownames(tk),
+    diff = tk[, "diff"],
+    lwr = tk[, "lwr"],
+    upr = tk[, "upr"],
+    p_adj = tk[, "p adj"],
+    row.names = NULL
+  )
+hints:
+  - "Die Altersgruppe ist ein Personenmerkmal; gemittelt wird pro Person."
+  - "Die Funktion für Tukeys Honest Significant Differences nimmt das `aov`-Objekt und liefert eine Liste mit einer Matrix pro Faktor."
+  - "`TukeyHSD(fit)$age_group`; die p-Spalte heißt `\"p adj\"` (mit Leerzeichen)."
+explanation: |
+  `TukeyHSD()` liefert für jeden Paarvergleich die Mittelwertdifferenz
+  mit einem KI, das gemeinsam für alle drei Vergleiche 95 % abdeckt.
+  35-49 sind etwa 175 ms langsamer als bis 34 (KI [72, 277]), ab 50 etwa
+  114 ms (KI [9, 220]); zwischen 35-49 und ab 50 ist das KI
+  [-158, 37] breit und schließt sowohl 0 als auch deutliche
+  Unterschiede ein. Die Intervalle sind informativer als die
+  Signifikanzsterne: Der Vergleich ab 50 vs. bis 34 ist knapp
+  signifikant, aber sehr unpräzise. Tukey setzt gleiche Varianzen
+  voraus; bei Zweifel Games-Howell oder `pairwise.t.test(pool.sd =
+  FALSE)` mit Holm.
+misconception: "Mehrere ungeschützte t-Tests nach einer ANOVA halten die Fehlerrate von 5 % ein."
+check:
+  type: value
+  compare: data_frame
+  ignore_row_order: false
+  ignore_col_order: false
+  ignore_attributes: true
+  tolerance: 1.0e-6
+common_mistakes:
+  - pattern: "___"
+    message: "Es sind noch Lücken `___` offen."
+  - pattern: "\\.by\\s*=\\s*c\\(\\s*[\"']?condition"
+    message: "Die Altersgruppe variiert zwischen Personen, nicht zwischen Bedingungen. Gemittelt wird pro `vp_id`."
+  - pattern: "\\[\\s*,\\s*[\"']p[._]?adj[\"']\\s*\\]"
+    message: "Die Spalte heißt `\"p adj\"`, mit Leerzeichen; schau mit `colnames(tk)` nach."
+  - pattern: "pairwise\\.t\\.test"
+    message: "`pairwise.t.test()` liefert nur p-Werte, keine Intervalle; hier ist `TukeyHSD()` gefragt."

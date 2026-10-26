@@ -1,0 +1,62 @@
+id: stats-describe-person
+topic: statistik
+title: Deskriptiv mit der Person als Einheit
+level: 1
+kind: write
+tags: [deskriptiv, messwiederholung, aggregation, standardfehler]
+packages: [dplyr]
+seed: 1
+prompt: |
+  Beschreibe die Reaktionszeit pro Bedingung so, dass jede
+  Versuchsperson einmal zählt: Bilde zuerst pro Person und Bedingung den
+  Mittelwert von `rt_ms` und fasse diese Personenmittelwerte dann pro
+  `condition` zusammen.
+
+  Ergebnis: eine Zeile pro Bedingung mit den Spalten `condition`, `m`
+  (Mittelwert), `sd` (Standardabweichung), `n` (Anzahl Personen) und
+  `se` (Standardfehler `sd / sqrt(n)`), ungerundet.
+setup: |
+  library(dplyr)
+  driving_sim <- read.csv(rtrainer_data("driving_sim.csv"))
+starter: |
+  driving_sim |>
+    # dein Code
+solution: |
+  driving_sim |>
+    summarise(rt = mean(rt_ms, na.rm = TRUE), .by = c(vp_id, condition)) |>
+    summarise(
+      m = mean(rt),
+      sd = sd(rt),
+      n = n(),
+      se = sd / sqrt(n),
+      .by = condition
+    )
+hints:
+  - "Zwei Schritte: erst auf eine Zeile pro Person und Bedingung verdichten, dann auf eine Zeile pro Bedingung."
+  - "Im ersten `summarise()` gruppierst du nach Person und Bedingung; einzelne `rt_ms` fehlen."
+  - "`summarise(rt = mean(rt_ms, na.rm = TRUE), .by = c(vp_id, condition))`, danach `m`, `sd`, `n = n()` und `se` pro `condition`."
+explanation: |
+  Jede Person liefert 4 Trials pro Bedingung. Über alle Trials gerechnet
+  wäre `n` = 160 statt 40, und `sd` enthielte das Rauschen innerhalb der
+  Person; der Standardfehler würde dadurch um gut ein Drittel
+  unterschätzt und jedes daraus gebaute Konfidenzintervall (`m ± 2 se`)
+  wäre zu schmal. Die Personenmittelwerte sind die unabhängigen
+  Einheiten. Visuell liegt mit etwa 1180 ms rund 240 ms über haptisch;
+  ob dieser Unterschied über Personen hinweg stabil ist, klärt erst ein
+  gepaarter Vergleich, weil dieselben Personen in allen Bedingungen
+  stecken.
+misconception: "Jede Zeile ist eine unabhängige Beobachtung, auch wenn dieselbe Person mehrfach gemessen wurde."
+check:
+  type: value
+  compare: data_frame
+  ignore_row_order: true
+  ignore_col_order: false
+  ignore_attributes: true
+  tolerance: 1.0e-6
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*vp_id)[\\s\\S]*condition"
+    message: "Du fasst direkt über alle Trials zusammen. Dann zählt jede Messung als eigene Person: `n` wird 160 statt 40 und `se` zu klein. Erst pro `vp_id` und Bedingung mitteln."
+  - pattern: "^(?![\\s\\S]*na\\.rm)[\\s\\S]*mean\\("
+    message: "Einige `rt_ms` fehlen; ohne `na.rm = TRUE` wird der Personenmittelwert `NA`."
+  - pattern: "\\bn\\s*=\\s*(160|40)\\b"
+    message: "`n` nicht fest eintragen, sondern mit `n()` zählen; so bleibt der Code richtig, wenn Personen fehlen."

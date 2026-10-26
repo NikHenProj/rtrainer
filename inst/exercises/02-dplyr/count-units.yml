@@ -1,0 +1,43 @@
+id: dplyr-count-units
+topic: dplyr
+title: Personen statt Zeilen zählen
+level: 1
+kind: write
+tags: [dplyr, count, distinct]
+packages: [dplyr]
+seed: 1
+prompt: |
+  Wie viele **Versuchspersonen** gibt es in `driving_sim` pro Geschlecht
+  (`gender`)? Das Ergebnis hat die Spalten `gender` und `n`.
+setup: |
+  library(dplyr)
+  driving_sim <- read.csv(rtrainer_data("driving_sim.csv"))
+starter: |
+  driving_sim |>
+    # dein Code
+solution: |
+  driving_sim |>
+    distinct(vp_id, gender) |>
+    count(gender)
+hints:
+  - "Jede Person hat 12 Zeilen (3 Bedingungen x 4 Trials). Was zählt `count()`?"
+  - "Reduziere die Daten zuerst auf eine Zeile pro Person."
+  - "`distinct(vp_id, gender)` und danach `count(gender)`."
+explanation: |
+  `count()` zählt Zeilen, nicht Einheiten. Im Langformat mit
+  Messwiederholung gehört jede Person zu 12 Zeilen, daher wäre jede
+  Zahl 12-mal zu groß. `distinct(vp_id, gender)` reduziert auf die
+  Analyseeinheit; alternativ `summarise(n = n_distinct(vp_id), .by = gender)`.
+  Vor jeder Zählung lohnt die Frage: Was ist hier eine Beobachtung?
+misconception: "count() zählt Personen, auch wenn jede Person mehrere Zeilen hat."
+check:
+  type: value
+  compare: data_frame
+  ignore_row_order: true
+  ignore_col_order: false
+  ignore_attributes: true
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*distinct)[\\s\\S]*count\\(\\s*gender"
+    message: "Das zählt Zeilen: Jede Person steckt in 12 Zeilen. Reduziere vorher auf eine Zeile pro Person."
+  - pattern: "^(?![\\s\\S]*distinct)[\\s\\S]*n\\(\\)"
+    message: "`n()` zählt Zeilen der Gruppe, nicht Personen. Nutze `n_distinct(vp_id)` oder `distinct()`."

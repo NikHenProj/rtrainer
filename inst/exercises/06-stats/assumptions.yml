@@ -1,0 +1,64 @@
+id: stats-assumptions
+topic: statistik
+title: Voraussetzungen der ANOVA prüfen
+level: 3
+kind: write
+tags: [voraussetzungen, shapiro, levene, residuen, anova]
+packages: [dplyr]
+seed: 1
+prompt: |
+  Prüfe für die ANOVA `rt ~ age_group` (eine Zeile pro Person,
+  Mittelwert über alle Trials) die beiden klassischen Voraussetzungen:
+
+  1. Normalverteilung mit `shapiro.test()` – auf das, was das Modell
+     tatsächlich annimmt.
+  2. Varianzhomogenität mit dem Levene-Test in der robusten
+     Median-Variante (Brown-Forsythe), **ohne** Zusatzpaket: eine ANOVA
+     auf die absoluten Abweichungen vom jeweiligen Gruppenmedian.
+
+  Gib `c(p_shapiro, p_levene)` zurück.
+setup: |
+  library(dplyr)
+  driving_sim <- read.csv(rtrainer_data("driving_sim.csv"))
+  driving_sim$age_group <- cut(driving_sim$age, c(-Inf, 34, 49, Inf),
+                               labels = c("bis34", "35bis49", "ab50"))
+starter: |
+  # dein Code
+solution: |
+  per_person <- driving_sim |>
+    summarise(rt = mean(rt_ms, na.rm = TRUE), .by = c(vp_id, age_group))
+  fit <- aov(rt ~ age_group, data = per_person)
+  p_shapiro <- shapiro.test(residuals(fit))$p.value
+  bf <- per_person |>
+    mutate(abw = abs(rt - median(rt)), .by = age_group)
+  p_levene <- summary(aov(abw ~ age_group, data = bf))[[1]][["Pr(>F)"]][1]
+  c(p_shapiro, p_levene)
+hints:
+  - "Die ANOVA nimmt normalverteilte Fehler an, nicht normalverteilte Rohwerte über alle Gruppen."
+  - "`shapiro.test(residuals(fit))`. Für Levene: pro `age_group` `abs(rt - median(rt))` bilden und darauf wieder `aov()` rechnen."
+  - "Den p-Wert holst du mit `summary(fit2)[[1]][[\"Pr(>F)\"]][1]`."
+explanation: |
+  Shapiro auf den Residuen ergibt p = .24, der Brown-Forsythe-Test
+  p = .050 (identisch mit `car::leveneTest()`, das dieselbe Rechnung
+  macht). Solche Tests sind kein Freigabe-Schalter: Bei 39 Personen
+  haben sie wenig Power, bei großen Stichproben schlagen sie bei
+  belanglosen Abweichungen an. Besser: Residuen-Plots ansehen und
+  robust rechnen, z. B. Welch-ANOVA (`oneway.test()`) als Standard.
+  Shapiro auf die Rohwerte aller Gruppen zusammen prüft eine Mischung
+  aus Gruppenunterschieden und Fehlern, also die falsche Größe. Die
+  Median-Variante ist robuster gegen Schiefe als Levenes Original mit
+  dem Mittelwert.
+misconception: "Für eine ANOVA müssen die Rohdaten normalverteilt sein, und ein nicht signifikanter Test belegt die Voraussetzung."
+check:
+  type: value
+  tolerance: 1.0e-6
+  forbid: [leveneTest]
+common_mistakes:
+  - pattern: "shapiro\\.test\\([^)]*\\$\\s*rt\\b"
+    message: "Das prüft die Rohwerte. Die ANOVA nimmt normalverteilte Residuen an: `shapiro.test(residuals(fit))`."
+  - pattern: "abs\\([^)]*mean\\("
+    message: "Das ist Levenes Original mit dem Mittelwert. Verlangt ist die robuste Median-Variante (Brown-Forsythe)."
+  - pattern: "bartlett\\.test|fligner\\.test"
+    message: "Das ist ein anderer Varianztest. Gefragt ist Levene mit Median, gerechnet als ANOVA auf `abs(rt - median(rt))` pro Gruppe."
+  - pattern: "^(?![\\s\\S]*vp_id)[\\s\\S]*aov"
+    message: "Die ANOVA läuft auf Trial-Ebene. Die Voraussetzungen gelten für das Modell mit einer Zeile pro Person: erst pro `vp_id` mitteln."

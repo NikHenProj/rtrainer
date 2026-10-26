@@ -1,0 +1,50 @@
+id: purrr-map-extract-predict
+topic: purrr
+title: Extrahieren mit map() und leere Elemente
+level: 1
+kind: predict
+tags: [purrr, map, map_dbl, typstabil, listen]
+packages: [purrr]
+seed: 1
+prompt: |
+  Was liefert der folgende Code? Führe ihn nicht aus, sondern gib das
+  Ergebnis als R-Wert ein (z. B. `c(1, 2)`).
+
+  ```r
+  vps <- list(
+    list(id = "vp01", rt = c(800, 640)),
+    list(id = "vp02", rt = c(900, 780, 660)),
+    list(id = "vp03", rt = numeric(0))
+  )
+  vps |>
+    map("rt") |>
+    map_dbl(mean)
+  ```
+setup: |
+  library(purrr)
+starter: |
+  # Deine Vorhersage als Wert, z. B. c(1, 2)
+solution: |
+  c(720, 780, NaN)
+hints:
+  - "Ein String statt einer Funktion in `map()` holt das gleichnamige Element aus jedem Listeneintrag."
+  - "`map_dbl()` liefert genau einen Wert pro Eingabe, also drei Werte."
+  - "Was ist `mean(numeric(0))`?"
+explanation: |
+  `map("rt")` ist die Kurzform für `map(\(p) p[["rt"]])` und liefert
+  eine Liste mit drei numerischen Vektoren, einer davon leer.
+  `map_dbl(mean)` wendet `mean()` auf jeden an; der Mittelwert eines
+  leeren Vektors ist `NaN` (0/0), kein Fehler und kein Weglassen. So
+  bleibt die Länge immer gleich der Eingabe, und das Ergebnis passt
+  zeilenweise zu `vps`. In echten Daten lohnt danach ein Blick auf
+  `is.nan()`, weil leere Gruppen sonst still als fehlend durchgehen.
+misconception: "map_dbl() lässt Elemente ohne Daten weg oder setzt sie auf 0."
+check:
+  type: value
+common_mistakes:
+  - pattern: "^[\\s\\S]*?c\\(\\s*720\\s*,\\s*780\\s*\\)\\s*$"
+    message: "`map_dbl()` liefert immer ein Ergebnis pro Element; auch `vp03` bekommt einen Wert."
+  - pattern: "\\b0\\s*\\)\\s*$"
+    message: "Der Mittelwert eines leeren Vektors ist nicht 0: Summe 0 geteilt durch Länge 0."
+  - pattern: "list\\("
+    message: "`map_dbl()` gibt einen Double-Vektor zurück, keine Liste."

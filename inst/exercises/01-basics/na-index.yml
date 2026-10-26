@@ -1,0 +1,37 @@
+id: basics-na-index
+topic: basics
+title: NA im logischen Index
+level: 1
+kind: predict
+tags: [vektoren, indizierung, NA]
+seed: 1
+prompt: |
+  Was liefert der folgende Code? Führe ihn nicht aus, sondern gib das
+  Ergebnis als R-Wert ein (z. B. `c(1, 2)`).
+
+  ```r
+  x <- c(4, NA, 7, 1)
+  x[x > 3]
+  ```
+starter: |
+  # Deine Vorhersage als Wert, z. B. c(1, 2)
+solution: |
+  c(4, NA, 7)
+hints:
+  - "Werte zuerst `x > 3` elementweise aus. Was ergibt `NA > 3`?"
+  - "`x > 3` ist `c(TRUE, NA, TRUE, FALSE)`."
+  - "Ein `NA` im logischen Index wählt kein Element ab, sondern erzeugt ein `NA` im Ergebnis."
+explanation: |
+  `NA > 3` ist `NA`, also lautet der Index `c(TRUE, NA, TRUE, FALSE)`.
+  Bei logischer Indizierung erzeugt jedes `NA` im Index ein `NA` im
+  Ergebnis, statt die Stelle zu überspringen. Darum liefert
+  `mean(x[x > 3])` hier `NA`. `x[which(x > 3)]` oder
+  `x[!is.na(x) & x > 3]` lassen die fehlenden Werte weg.
+misconception: "Ein NA im logischen Index wird wie FALSE behandelt und fällt weg."
+check:
+  type: value
+common_mistakes:
+  - pattern: "^[\\s\\S]*?c\\(\\s*4\\s*,\\s*7\\s*\\)\\s*$"
+    message: "Das `NA` fällt nicht weg: `NA > 3` ist `NA`, und ein `NA` im Index liefert ein `NA` im Ergebnis."
+  - pattern: "^[\\s\\S]*?c\\(\\s*4\\s*,\\s*7\\s*,\\s*NA\\s*\\)\\s*$"
+    message: "Die Reihenfolge bleibt erhalten: Das Ergebnis folgt den Positionen in `x`."

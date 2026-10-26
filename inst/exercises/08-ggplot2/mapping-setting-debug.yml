@@ -1,0 +1,54 @@
+id: ggplot2-mapping-setting-debug
+topic: ggplot2
+title: Mapping oder Setting?
+level: 1
+kind: debug
+tags: [ggplot2, aes, mapping, setting]
+packages: [ggplot2]
+seed: 1
+prompt: |
+  Der Plot soll die Reaktionszeit pro Bedingung als Boxplot zeigen. Alle
+  Boxen sollen einheitlich `"steelblue"` gefüllt sein (ohne
+  Füll-Legende), darüber liegen die einzelnen Trials als gejitterte
+  Punkte, **nach Bedingung eingefärbt**.
+
+  Der Code bricht ab, und auch die Boxen sehen nicht wie gewünscht aus.
+  Repariere ihn.
+setup: |
+  library(ggplot2)
+  driving_sim <- read.csv(rtrainer_data("driving_sim.csv"))
+starter: |
+  ggplot(driving_sim, aes(condition, rt_ms)) +
+    geom_boxplot(aes(fill = "steelblue"), outlier.shape = NA) +
+    geom_jitter(colour = condition, width = 0.15, alpha = 0.4)
+solution: |
+  ggplot(driving_sim, aes(condition, rt_ms)) +
+    geom_boxplot(fill = "steelblue", outlier.shape = NA) +
+    geom_jitter(aes(colour = condition), width = 0.15, alpha = 0.4)
+hints:
+  - "Es gibt zwei Fehler, beide mit derselben Ursache: Was gehört in `aes()`, was nicht?"
+  - "`aes()` verbindet Spalten mit Ästhetiken (Mapping); feste Werte setzt man außerhalb von `aes()` (Setting)."
+  - "Die Füllfarbe ist fest, also außerhalb von `aes()`; die Punktfarbe kommt aus einer Spalte, also `aes(colour = condition)`."
+explanation: |
+  In `aes()` wird jeder Wert als Datenvariable behandelt: `"steelblue"`
+  ist dort eine Konstante mit einer einzigen Kategorie, die die Füllskala
+  in die erste Standardfarbe (Lachsrot) übersetzt und in einer Legende
+  „steelblue“ beschriftet. Ein fester Wert gehört deshalb außerhalb von
+  `aes()`. Umgekehrt sucht `colour = condition` außerhalb von `aes()`
+  nach einem R-Objekt `condition` und bricht ab, weil die Spalte nur im
+  Data Frame existiert. Faustregel: kommt der Wert aus einer Spalte, steht
+  er in `aes()`; ist er für alle Zeilen gleich, steht er außerhalb.
+misconception: "Alles, was das Aussehen bestimmt, gehört in aes(), und Spalten kann man überall direkt verwenden."
+check:
+  type: plot
+  geoms: [boxplot, point]
+  mapping: {x: condition, y: rt_ms, colour: condition}
+  layers:
+    boxplot: [x, fill]
+common_mistakes:
+  - pattern: "geom_jitter\\((?![^)]*aes\\()[^)]*colou?r\\s*=\\s*condition"
+    message: "Außerhalb von `aes()` wird ein fester Wert gesetzt; `condition` wird dann als R-Objekt gesucht und nicht gefunden. Spalten werden in `aes(colour = condition)` gemappt."
+  - pattern: "aes\\([^)]*fill\\s*=\\s*[\"']"
+    message: "In `aes()` ist `\"steelblue\"` eine Datenkonstante: die Füllskala übersetzt sie in die Standardfarbe und zeigt eine Legende. Feste Farben außerhalb von `aes()` setzen: `geom_boxplot(fill = \"steelblue\")`."
+  - pattern: "colou?r\\s*=\\s*[\"']condition[\"']"
+    message: "`\"condition\"` in Anführungszeichen ist eine Konstante, keine Spalte; alle Punkte bekommen dieselbe Farbe."

@@ -1,0 +1,48 @@
+id: tidyr-pivot-longer-predict
+topic: tidyr
+title: Zeilenfolge nach pivot_longer()
+level: 1
+kind: predict
+tags: [tidyr, pivot_longer, na]
+packages: [tidyr]
+seed: 1
+prompt: |
+  Was liefert der folgende Code? Führe ihn nicht aus, sondern gib das
+  Ergebnis als R-Wert ein (z. B. `c(1, 2)`).
+
+  ```r
+  d <- tibble(
+    vp      = c("a", "b"),
+    visuell = c(900, NA),
+    auditiv = c(1100, 1050)
+  )
+  d |>
+    pivot_longer(-vp, names_to = "condition", values_to = "rt") |>
+    pull(rt)
+  ```
+starter: |
+  # Deine Vorhersage als Wert, z. B. c(1, 2)
+solution: |
+  c(900, 1100, NA, 1050)
+hints:
+  - "Jede Zeile von `d` wird zu so vielen Zeilen, wie Spalten gestapelt werden."
+  - "`pivot_longer()` arbeitet zeilenweise: erst alle Werte von `a`, dann alle von `b`."
+  - "`NA` bleibt erhalten, solange `values_drop_na = FALSE` (Standard) gilt."
+explanation: |
+  `pivot_longer()` macht aus jeder Zeile einen Block mit einer Zeile pro
+  gestapelter Spalte; die Reihenfolge ist daher Person für Person
+  (`a`-visuell, `a`-auditiv, `b`-visuell, `b`-auditiv), nicht Spalte für
+  Spalte wie bei `stack()` oder `unlist(d[-1])`. Fehlende Werte bleiben
+  als eigene Zeile stehen; mit `values_drop_na = TRUE` würden sie
+  entfernt. Wer sich auf die Reihenfolge verlässt (z. B. beim Anhängen
+  von Vektoren), sollte nach dem Umformen explizit `arrange()` nutzen.
+misconception: "pivot_longer() stapelt die Spalten untereinander (erst alle visuell-Werte, dann alle auditiv-Werte)."
+check:
+  type: value
+common_mistakes:
+  - pattern: "900\\s*,\\s*NA\\s*,\\s*1100"
+    message: "Das ist die Reihenfolge Spalte für Spalte. `pivot_longer()` geht zeilenweise vor: erst beide Werte von `a`, dann die von `b`."
+  - pattern: "^(?![\\s\\S]*NA)[\\s\\S]*1050"
+    message: "Der fehlende Wert bleibt als Zeile erhalten; `NA` wird nur mit `values_drop_na = TRUE` entfernt."
+  - pattern: "\""
+    message: "`pull(rt)` liefert die Werte-Spalte, also Zahlen, nicht die Bedingungsnamen."

@@ -1,0 +1,86 @@
+id: repro-here-project
+topic: reproduzierbarkeit
+title: Pfade im Projekt mit here
+level: 1
+kind: write
+tags: [reproduzierbarkeit, r-projekte, here, pfade]
+seed: 1
+prompt: |
+  Ein R-Projekt in `tempdir()` hat diese Struktur:
+
+  ```
+  fahrstudie/
+  ├── fahrstudie.Rproj
+  ├── analysis/
+  │   └── auswertung.R      <- dein Skript, aktuelles Arbeitsverzeichnis
+  └── data/raw/driving_sim.csv
+  ```
+
+  Das Arbeitsverzeichnis ist `analysis/`. Schreibe den Code so, dass er
+  unabhängig vom Arbeitsverzeichnis läuft, solange er im Projekt
+  ausgeführt wird; baue alle Pfade mit dem Paket **here**.
+
+  - Lies `data/raw/driving_sim.csv` mit `read.csv()` als `daten` ein.
+  - Schreibe die Zeilen der Bedingung `"haptisch"` mit `write.csv()`
+    nach `output/haptisch.csv` im Projekt, ohne Zeilennamen. Den Ordner
+    `output/` gibt es noch nicht.
+setup: |
+  .proj <- file.path(tempdir(), "fahrstudie")
+  dir.create(file.path(.proj, "data", "raw"), recursive = TRUE)
+  dir.create(file.path(.proj, "analysis"))
+  writeLines("Version: 1.0", file.path(.proj, "fahrstudie.Rproj"))
+  file.create(file.path(.proj, "analysis", "auswertung.R"))
+  invisible(file.copy(rtrainer_data("driving_sim.csv"), file.path(.proj, "data", "raw")))
+  setwd(file.path(.proj, "analysis"))
+starter: |
+  # 1. Daten aus dem Projektordner einlesen
+  # 2. Bedingung haptisch nach output/ im Projekt schreiben
+solution: |
+  here::i_am("analysis/auswertung.R")
+  daten <- read.csv(here::here("data", "raw", "driving_sim.csv"))
+  dir.create(here::here("output"), showWarnings = FALSE)
+  write.csv(
+    daten[daten$condition == "haptisch", ],
+    here::here("output", "haptisch.csv"),
+    row.names = FALSE
+  )
+hints:
+  - "`here::here()` setzt Pfade vom Projekt-Wurzelverzeichnis aus zusammen, egal in welchem Unterordner das Skript läuft."
+  - "Die Wurzel erkennt here an der `.Rproj`-Datei; `here::i_am(\"analysis/auswertung.R\")` macht sie explizit. `write.csv()` legt keine Ordner an: erst `dir.create()`."
+  - "`read.csv(here::here(\"data\", \"raw\", \"driving_sim.csv\"))` und `write.csv(..., here::here(\"output\", \"haptisch.csv\"), row.names = FALSE)`."
+explanation: |
+  `here()` sucht beim Laden vom Arbeitsverzeichnis aufwärts nach einer
+  Projektmarkierung (`.Rproj`, `.here`, `DESCRIPTION`, `.git`) und baut
+  alle Pfade von dort; das Skript läuft so aus `analysis/`, aus der
+  Projektwurzel und mit `Rscript` gleich. `here::i_am()` prüft zusätzlich,
+  dass das Skript wirklich in diesem Projekt liegt, und setzt die Wurzel
+  neu, falls here schon in einem anderen Ordner geladen wurde. Relative
+  Pfade wie `"data/raw/..."` oder `"../data"` hängen vom Arbeitsverzeichnis
+  ab, `setwd()` mit absolutem Pfad vom eigenen Rechner. `write.csv()`
+  schreibt ohne `row.names = FALSE` eine zusätzliche Spalte `X`.
+misconception: "Pfade relativ zum Skript funktionieren immer, weil R im Ordner des Skripts startet."
+check:
+  type: object
+  name: daten
+  class: data.frame
+  compare_value: true
+  require: [here]
+  post: |
+    local({
+      f <- file.path(.proj, "output", "haptisch.csv")
+      stopifnot("`output/haptisch.csv` fehlt im Projektordner." = file.exists(f))
+      d <- read.csv(f)
+      c(zeilen = nrow(d), spalten = ncol(d))
+    })
+  post_message: "`output/haptisch.csv` hat nicht die erwartete Form (160 Zeilen, 7 Spalten)."
+common_mistakes:
+  - pattern: "setwd\\("
+    message: "`setwd()` bindet das Skript an einen Ordner auf deinem Rechner; auf einem anderen Rechner oder nach dem Verschieben bricht es ab. `here()` findet die Projektwurzel selbst."
+  - pattern: "read[._]csv\\(\\s*[\"'](\\./)?data/"
+    message: "Relative Pfade beginnen im Arbeitsverzeichnis, und das ist hier `analysis/`, nicht die Projektwurzel. `here::here(\"data\", \"raw\", ...)` baut den Pfad von der Wurzel aus."
+  - pattern: "\\.\\./"
+    message: "`../` funktioniert nur, solange das Skript aus `analysis/` läuft; aus der Projektwurzel oder per `Rscript` zeigt es woandershin. Nutze `here::here()`."
+  - pattern: "^(?![\\s\\S]*dir\\.create)[\\s\\S]*write[._]csv\\("
+    message: "Der Ordner `output/` existiert noch nicht, und `write.csv()` legt keine Ordner an: erst `dir.create(here::here(\"output\"))`."
+  - pattern: "^(?![\\s\\S]*row\\.names\\s*=\\s*(FALSE|F)\\b)[\\s\\S]*write\\.csv\\("
+    message: "Ohne `row.names = FALSE` schreibt `write.csv()` die Zeilennamen als zusätzliche Spalte `X`."

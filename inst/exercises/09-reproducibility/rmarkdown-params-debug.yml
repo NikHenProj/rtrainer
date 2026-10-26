@@ -1,0 +1,114 @@
+id: repro-rmarkdown-params-debug
+topic: reproduzierbarkeit
+title: Parametrisierte Berichte in einer Schleife
+level: 2
+kind: debug
+tags: [reproduzierbarkeit, rmarkdown, params, render]
+seed: 1
+prompt: |
+  `rmd` (in `proj`, `tempdir()`) ist ein parametrisierter Bericht:
+
+  ````
+  ---
+  title: "Bedingungsbericht"
+  params:
+    bedingung: visuell
+    min_trial: 1
+  ---
+
+  ```{r, include = FALSE}
+  d <- read.csv("driving_sim.csv")
+  d <- d[d$condition == params$bedingung & d$trial >= params$min_trial, ]
+  m <- round(mean(d$rt_ms, na.rm = TRUE))
+  ```
+
+  Bedingung `r params$bedingung`, ab Trial `r params$min_trial`: M = `r m` ms (n = `r nrow(d)`)
+  ````
+
+  Der Code soll für jede Bedingung einen Bericht ab Trial 2 als
+  `bericht_<bedingung>.md` in `proj` erzeugen und die Pfade in `berichte`
+  sammeln. Er bricht ab mit: *params object already exists in knit
+  environment so can't be overwritten by render params*. Repariere ihn.
+
+  (`render_md()` ist `rmarkdown::render()` mit Markdown-Ausgabe, damit
+  kein Pandoc nötig ist; alle übrigen Argumente wie bei `render()`.)
+setup: |
+  proj <- file.path(tempdir(), "berichte")
+  dir.create(proj)
+  invisible(file.copy(rtrainer_data("driving_sim.csv"), proj))
+  rmd <- file.path(proj, "bericht.Rmd")
+  writeLines(c(
+    "---", "title: \"Bedingungsbericht\"", "params:", "  bedingung: visuell",
+    "  min_trial: 1", "---", "",
+    "```{r, include = FALSE}",
+    "d <- read.csv(\"driving_sim.csv\")",
+    "d <- d[d$condition == params$bedingung & d$trial >= params$min_trial, ]",
+    "m <- round(mean(d$rt_ms, na.rm = TRUE))",
+    "```", "",
+    "Bedingung `r params$bedingung`, ab Trial `r params$min_trial`: M = `r m` ms (n = `r nrow(d)`)"
+  ), rmd)
+  render_md <- local({
+    fmt <- rmarkdown::output_format(
+      knitr = rmarkdown::knitr_options(),
+      pandoc = rmarkdown::pandoc_options(to = "markdown"),
+      keep_md = TRUE
+    )
+    function(input, output_file = NULL, ..., envir = parent.frame()) {
+      rmarkdown::render(input, output_format = fmt, output_file = output_file,
+                        run_pandoc = FALSE, quiet = TRUE, envir = envir, ...)
+      out <- if (is.null(output_file)) sub("\\.Rmd$", ".md", input) else file.path(dirname(input), output_file)
+      invisible(normalizePath(out))
+    }
+  })
+starter: |
+  berichte <- character()
+  for (b in c("visuell", "auditiv", "haptisch")) {
+    params <- list(bedingung = b, min_trial = 2)
+    berichte[b] <- render_md(rmd, output_file = paste0("bericht_", b, ".md"))
+  }
+solution: |
+  berichte <- character()
+  for (b in c("visuell", "auditiv", "haptisch")) {
+    berichte[b] <- render_md(
+      rmd,
+      params = list(bedingung = b, min_trial = 2),
+      output_file = paste0("bericht_", b, ".md"),
+      envir = new.env()
+    )
+  }
+hints:
+  - "Wie kommen Parameter in einen Bericht: über ein Objekt in der Sitzung oder über ein Argument von `render()`?"
+  - "`render()` legt `params` selbst in der Render-Umgebung an (Standard: die aufrufende, hier die globale) und weigert sich, ein vorhandenes Objekt zu überschreiben."
+  - "`render_md(rmd, params = list(bedingung = b, min_trial = 2), output_file = ..., envir = new.env())`."
+explanation: |
+  Parameter gehören in das Argument `params = list(...)`; `render()`
+  ergänzt fehlende Einträge aus dem YAML-Kopf und legt das Ergebnis als
+  gesperrtes `params` in der Render-Umgebung an. Ein selbst angelegtes
+  `params` (praktisch zum interaktiven Testen der Chunks) blockiert das.
+  Mit `envir = new.env()` läuft jeder Bericht in einer frischen Umgebung:
+  Objekte wie `d` und `m` landen nicht in der Sitzung und können den
+  nächsten Bericht nicht unbemerkt beeinflussen. Ergebnis: visuell 1161,
+  auditiv 974, haptisch 922 ms (je n = 120 Trials ab Trial 2). Ganz
+  ohne Rückstände aus der Sitzung rendert `callr::r()` oder
+  `xfun::Rscript_call()` in einem eigenen Prozess.
+misconception: "Ein Objekt `params` in der Sitzung wird an den Bericht weitergereicht wie eine globale Variable."
+check:
+  type: object
+  name: berichte
+  class: character
+  post: |
+    local({
+      f <- file.path(proj, paste0("bericht_", c("visuell", "auditiv", "haptisch"), ".md"))
+      stopifnot("Es fehlen Berichte `bericht_<bedingung>.md` in `proj`." = all(file.exists(f)))
+      vapply(f, function(x) tail(readLines(x), 1), "", USE.NAMES = FALSE)
+    })
+  post_message: "Die Berichte haben nicht den erwarteten Inhalt."
+common_mistakes:
+  - pattern: "\\bparams\\s*<-"
+    message: "Solange ein Objekt `params` in der Render-Umgebung liegt, bricht `render()` ab, auch wenn du es mit `params = params` übergibst. Übergib die Liste direkt und rendere in `envir = new.env()`."
+  - pattern: "^(?![\\s\\S]*\\bparams\\s*=)[\\s\\S]*"
+    message: "Ohne Argument `params =` nimmt `render()` die Standardwerte aus dem YAML-Kopf (visuell, ab Trial 1): Alle Berichte wären gleich."
+  - pattern: "^(?![\\s\\S]*min_trial\\s*=)[\\s\\S]*"
+    message: "Fehlt `min_trial`, ergänzt `render()` den YAML-Standard 1: Die Berichte zählen dann 160 statt 120 Trials."
+  - pattern: "output_file\\s*=\\s*[\"'][^\"']*[\"']\\s*[,)]"
+    message: "Mit einem festen `output_file` überschreibt jeder Durchlauf den Bericht davor; der Name muss die Bedingung enthalten."

@@ -1,0 +1,76 @@
+id: mixed-random-slope
+topic: mixed-models
+title: Random Slope statt einem lm() pro Person
+level: 2
+kind: complete
+tags: [lme4, random-slope, shrinkage, lm, coef, ranef]
+packages: [lme4]
+seed: 1
+prompt: |
+  In der purrr-Aufgabe `nest-map-models` wurde der Übungseffekt mit
+  einem `lm()` pro Person geschätzt. Hier steht dem ein Random-Slope-
+  Modell gegenüber, für die Spurabweichung `lane_dev`: fest
+  `condition + trial`, zufällig Intercept und `trial`-Steigung pro
+  `vp_id` (korreliert).
+
+  Ergänze die Lücken `___`. Ergebnis: ein Data Frame mit einer Zeile
+  pro Person und den Spalten `vp_id`, `slope_lm` (Steigung aus dem
+  `lm()` pro Person) und `slope_mixed` (personenspezifische Steigung aus
+  dem Mixed Model, also fester Effekt plus Abweichung).
+setup: |
+  driving_sim <- read.csv(rtrainer_data("driving_sim.csv"))
+starter: |
+  slope_lm <- sapply(
+    split(driving_sim, driving_sim$vp_id),
+    function(d) coef(lm(lane_dev ~ condition + trial, data = d))[["trial"]]
+  )
+  fit <- lmer(lane_dev ~ condition + trial + (1 + ___ | ___), data = driving_sim)
+  person <- ___(fit)$vp_id
+  data.frame(
+    vp_id = rownames(person),
+    slope_lm = unname(slope_lm[rownames(person)]),
+    slope_mixed = person[, ___]
+  )
+solution: |
+  slope_lm <- sapply(
+    split(driving_sim, driving_sim$vp_id),
+    function(d) coef(lm(lane_dev ~ condition + trial, data = d))[["trial"]]
+  )
+  fit <- lmer(lane_dev ~ condition + trial + (1 + trial | vp_id), data = driving_sim)
+  person <- coef(fit)$vp_id
+  data.frame(
+    vp_id = rownames(person),
+    slope_lm = unname(slope_lm[rownames(person)]),
+    slope_mixed = person[, "trial"]
+  )
+hints:
+  - "Links vom `|` steht, was pro Person variieren darf, rechts die Gruppierung."
+  - "`ranef()` liefert nur die Abweichungen vom festen Effekt, `coef()` die Summe aus festem Effekt und Abweichung."
+  - "`(1 + trial | vp_id)`, `coef(fit)$vp_id`, Spalte `\"trial\"`."
+explanation: |
+  `coef()` addiert zur festen Steigung (-0.0031 m pro Trial, 95-%-KI
+  [-0.0077, 0.0014]) die vorhergesagte Abweichung jeder Person. Die
+  `lm()`-Steigungen streuen mit SD 0.015, die Mixed-Model-Steigungen
+  nur mit SD 0.003: Der größte Teil der Streuung der Einzelfits ist
+  Schätzfehler aus 12 Trials, und das Modell zieht unsichere
+  Personen zur gemeinsamen Steigung (Shrinkage, partial pooling).
+  Die geschätzte Slope-SD (0.007) beschreibt die Population; die
+  einzelnen Vorhersagen (BLUPs) sind bewusst konservativer.
+  Fallstrick: `ranef()` allein liefert nur die Abweichungen um 0.
+misconception: "Ein `lm()` pro Person misst die echten Unterschiede zwischen Personen; die Streuung der Einzelsteigungen ist die Slope-Varianz."
+check:
+  type: value
+  compare: data_frame
+  ignore_row_order: true
+  ignore_col_order: false
+  ignore_attributes: true
+  tolerance: 1.0e-6
+common_mistakes:
+  - pattern: "___"
+    message: "Es sind noch Lücken `___` offen."
+  - pattern: "\\branef\\s*\\(\\s*fit"
+    message: "`ranef()` liefert nur die Abweichung jeder Person vom festen Effekt. Die personenspezifische Steigung ist fest + zufällig: `coef()`."
+  - pattern: "\\|\\s*(condition|trial)\\s*\\)"
+    message: "Rechts vom `|` steht die Gruppe, über die die Effekte variieren: `vp_id`."
+  - pattern: "\\(\\s*1\\s*\\+\\s*condition\\s*\\|"
+    message: "Gefragt ist eine zufällige Steigung für `trial` (Übungseffekt pro Person), nicht für die Bedingung."

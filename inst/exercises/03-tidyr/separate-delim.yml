@@ -1,0 +1,63 @@
+id: tidyr-separate-delim
+topic: tidyr
+title: Zusammengesetzten Schlüssel zerlegen
+level: 2
+kind: write
+tags: [tidyr, separate_wider_delim, typen, randfaelle]
+packages: [dplyr, tidyr]
+seed: 1
+prompt: |
+  Aus dem Logging-System kommt `log` mit einem zusammengesetzten
+  Schlüssel `key` wie `"vp01_visuell_3"` und der Spalte `rt_ms`. Bei
+  einigen Einträgen fehlt die Trial-Nummer (z. B. `"vp41_auditiv"`).
+
+  Zerlege `key` in die Spalten `vp_id`, `condition` und `trial`. Fehlt
+  die Trial-Nummer, soll `trial` `NA` sein (kein Fehler). `trial` soll
+  ganzzahlig (`integer`) sein. Ergebnis: Spalten `vp_id`, `condition`,
+  `trial`, `rt_ms`. Verwende `separate_wider_delim()`.
+setup: |
+  library(dplyr)
+  library(tidyr)
+  driving_sim <- read.csv(rtrainer_data("driving_sim.csv"))
+  log <- driving_sim |>
+    filter(vp_id %in% c("vp01", "vp02")) |>
+    transmute(key = paste(vp_id, condition, trial, sep = "_"), rt_ms) |>
+    bind_rows(tibble(key = c("vp41_auditiv", "vp42_haptisch"), rt_ms = c(1310L, 980L)))
+starter: |
+  log |>
+    # dein Code
+solution: |
+  log |>
+    separate_wider_delim(key, delim = "_", names = c("vp_id", "condition", "trial"),
+                         too_few = "align_start") |>
+    mutate(trial = as.integer(trial))
+hints:
+  - "`separate_wider_delim()` braucht `delim` und die neuen Spaltennamen in `names`."
+  - "Für Schlüssel mit zu wenigen Teilen gibt es das Argument `too_few`."
+  - "Die Teile sind immer Text; `trial` musst du danach umwandeln."
+explanation: |
+  `separate_wider_delim()` zerlegt an einem festen Trennzeichen und ist
+  strikt: Hat ein Wert zu wenige oder zu viele Teile, bricht es mit
+  einer Meldung ab, die die betroffenen Zeilen nennt (`too_few =
+  "debug"` zeigt sie als Spalten). `too_few = "align_start"` füllt
+  fehlende Teile rechts mit `NA` auf. Das Ergebnis sind immer
+  Zeichenketten; anders als das alte `separate(convert = TRUE)` musst
+  du den Typ selbst setzen. Für Muster ohne festes Trennzeichen
+  (z. B. `"vp01visuell3"`) gibt es `separate_wider_regex()`.
+misconception: "separate_wider_delim() erkennt Zahlen und liefert sie als numerische Spalte."
+check:
+  type: value
+  compare: data_frame
+  ignore_row_order: true
+  ignore_col_order: false
+  ignore_attributes: true
+  tolerance: 1.0e-8
+  forbid: [separate, extract]
+  require: [separate_wider_delim]
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*(as\\.integer|as\\.numeric|parse_number|as\\.double|readr::|type\\.convert))[\\s\\S]*separate"
+    message: "Die Teile sind Zeichenketten. Wandle `trial` mit `as.integer()` um."
+  - pattern: "too_few\\s*=\\s*[\"']align_end"
+    message: "`align_end` füllt links auf: Dann landet die Person in `NA` und die Bedingung in `vp_id`. Fehlt der letzte Teil, brauchst du `align_start`."
+  - pattern: "^(?![\\s\\S]*too_few)[\\s\\S]*separate_wider_delim"
+    message: "Zwei Schlüssel haben nur zwei Teile. Ohne `too_few` bricht `separate_wider_delim()` ab; mit `too_few = \"align_start\"` wird `trial` dort `NA`."

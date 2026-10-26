@@ -1,0 +1,50 @@
+id: dplyr-case-when
+topic: dplyr
+title: Reaktionszeiten kategorisieren
+level: 2
+kind: write
+tags: [dplyr, mutate, case_when, NA]
+packages: [dplyr]
+seed: 1
+prompt: |
+  Ergänze `driving_sim` um die Spalte `rt_kat`:
+  `"schnell"` bei `rt_ms` unter 900, `"mittel"` von 900 bis unter 1200,
+  `"langsam"` ab 1200. Fehlende Reaktionszeiten bleiben `NA`.
+  Alle übrigen Spalten bleiben erhalten.
+setup: |
+  library(dplyr)
+  driving_sim <- read.csv(rtrainer_data("driving_sim.csv"))
+starter: |
+  driving_sim |>
+    # dein Code
+solution: |
+  driving_sim |>
+    mutate(rt_kat = case_when(
+      rt_ms < 900 ~ "schnell",
+      rt_ms < 1200 ~ "mittel",
+      rt_ms >= 1200 ~ "langsam"
+    ))
+hints:
+  - "`case_when()` prüft die Bedingungen von oben nach unten; die erste zutreffende gewinnt."
+  - "Wegen der Reihenfolge reicht für `mittel` die Bedingung `rt_ms < 1200`."
+  - "Vorsicht mit `.default` oder `TRUE ~ ...`: Das fängt auch `NA` ein."
+explanation: |
+  `case_when()` wertet die Fälle der Reihe nach aus, deshalb muss die
+  mittlere Kategorie die untere Grenze nicht wiederholen. Zeilen, auf
+  die kein Fall zutrifft, werden `NA`. Ein Auffangfall
+  (`.default = "langsam"` oder `TRUE ~ "langsam"`) würde fehlende
+  Reaktionszeiten als langsam einstufen, weil `NA < 900` nicht `TRUE`
+  ist und sie durchrutschen. Für geordnete Kategorien ist danach
+  `factor(rt_kat, levels = c("schnell", "mittel", "langsam"))` sinnvoll.
+misconception: "Ein Auffangfall in case_when() lässt NA-Werte unberührt."
+check:
+  type: value
+  compare: data_frame
+  ignore_row_order: true
+  ignore_col_order: false
+  ignore_attributes: true
+common_mistakes:
+  - pattern: "(\\.default\\s*=|TRUE\\s*~)"
+    message: "Der Auffangfall erfasst auch fehlende `rt_ms`. Formuliere die letzte Kategorie explizit (`rt_ms >= 1200`)."
+  - pattern: "rt_ms\\s*<=\\s*900|rt_ms\\s*>\\s*1200"
+    message: "Prüfe die Grenzen: 900 gehört zu `mittel`, 1200 zu `langsam`."

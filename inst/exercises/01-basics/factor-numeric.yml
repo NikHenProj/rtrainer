@@ -1,0 +1,37 @@
+id: basics-factor-numeric
+topic: basics
+title: Faktor in Zahlen umwandeln
+level: 2
+kind: debug
+tags: [faktoren, typumwandlung]
+seed: 1
+prompt: |
+  `tempo` enthält die Geschwindigkeit (km/h), mit der die Übernahme
+  ausgelöst wurde. Sie wurde beim Einlesen zu einem Faktor. Der Code im
+  Editor soll die mittlere Geschwindigkeit berechnen, liefert aber einen
+  falschen Wert. Repariere ihn; das Ergebnis ist eine einzelne Zahl.
+setup: |
+  tempo <- factor(c("80", "130", "100", "130", "80", "100", "130"))
+starter: |
+  mean(as.numeric(tempo))
+solution: |
+  mean(as.numeric(as.character(tempo)))
+hints:
+  - "Schau dir `as.numeric(tempo)` und `levels(tempo)` an."
+  - "Ein Faktor speichert ganzzahlige Codes und eine Tabelle von Beschriftungen (`levels`)."
+  - "Wandle erst in die Beschriftungen um und dann in Zahlen, z. B. über `as.character()` oder `levels(tempo)[tempo]`."
+explanation: |
+  Ein Faktor ist intern ein Integer-Vektor mit Codes 1, 2, 3, ... und
+  einem `levels`-Attribut. `as.numeric()` liefert die Codes; die Levels
+  sind hier alphabetisch sortiert (`"100" "130" "80"`), daher steht 3
+  für 80 km/h. Richtig ist `as.numeric(as.character(tempo))` oder die
+  schnellere Variante `as.numeric(levels(tempo))[tempo]`. Beim Einlesen
+  hilft `read.csv(..., stringsAsFactors = FALSE)` bzw. `readr`.
+misconception: "as.numeric() auf einem Faktor liefert die angezeigten Werte statt der internen Level-Codes."
+check:
+  type: value
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*(as\\.character|levels))[\\s\\S]*as\\.(numeric|integer)\\(\\s*tempo\\s*\\)"
+    message: "`as.numeric(tempo)` liefert die Level-Codes (1, 2, 3), nicht die km/h-Werte."
+  - pattern: "as\\.numeric\\(\\s*levels\\(\\s*tempo\\s*\\)\\s*\\)\\s*\\)\\s*$"
+    message: "`levels(tempo)` enthält jeden Wert nur einmal. Indiziere mit dem Faktor: `as.numeric(levels(tempo))[tempo]`."

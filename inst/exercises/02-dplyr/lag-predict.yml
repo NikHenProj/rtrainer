@@ -1,0 +1,48 @@
+id: dplyr-lag-predict
+topic: dplyr
+title: lag() in gruppierten Daten
+level: 2
+kind: predict
+tags: [dplyr, window, lag, group_by]
+packages: [dplyr]
+seed: 1
+prompt: |
+  Was liefert der folgende Code? Führe ihn nicht aus, sondern gib das
+  Ergebnis als R-Wert ein (z. B. `c(1, 2)`).
+
+  ```r
+  d <- tibble(
+    vp = c("a", "a", "a", "b", "b"),
+    rt = c(500, 650, 600, 700, 720)
+  )
+  d |>
+    group_by(vp) |>
+    mutate(diff = rt - lag(rt)) |>
+    pull(diff)
+  ```
+starter: |
+  # Deine Vorhersage als Wert, z. B. c(1, 2)
+solution: |
+  c(NA, 150, -50, NA, 20)
+hints:
+  - "`lag(rt)` verschiebt den Vektor um eine Position nach hinten. Was steht an erster Stelle?"
+  - "In gruppierten Daten wird `lag()` pro Gruppe berechnet."
+  - "Der erste Wert jeder Gruppe hat keinen Vorgänger, die Differenz ist dort `NA`."
+explanation: |
+  Window-Funktionen wie `lag()`, `lead()` und `cumsum()` arbeiten in
+  `mutate()` innerhalb jeder Gruppe. Für Person `b` ist der Vorgänger
+  von 700 also nicht 600 aus Person `a`, sondern fehlt: `NA`. Ohne
+  `group_by()` erhielte man `c(NA, 150, -50, 100, 20)` und würde Werte
+  verschiedener Personen voneinander abziehen. Die Reihenfolge der
+  Zeilen bestimmt den Vorgänger; bei ungeordneten Daten vorher
+  `arrange()` oder `lag(rt, order_by = trial)` nutzen.
+misconception: "lag() ignoriert die Gruppierung und schaut immer auf die vorherige Zeile der Tabelle."
+check:
+  type: value
+common_mistakes:
+  - pattern: "100"
+    message: "Die Gruppen werden getrennt: Der erste Wert von `b` hat keinen Vorgänger, also `NA`."
+  - pattern: "^[\\s\\S]*?c\\(\\s*150\\s*,\\s*-50\\s*,\\s*20\\s*\\)\\s*$"
+    message: "`mutate()` behält alle Zeilen; die fehlenden Vorgänger stehen als `NA` im Ergebnis."
+  - pattern: "-150"
+    message: "Prüfe das Vorzeichen: `rt - lag(rt)` ist aktueller minus vorheriger Wert."

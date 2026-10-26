@@ -1,0 +1,90 @@
+id: programming-bench-debug
+topic: programmierung
+title: bench::mark() bricht ab
+level: 3
+kind: debug
+tags: [bench, vektorisierung, schleifen, NA]
+packages: [bench]
+seed: 1
+timeout: 20
+prompt: |
+  Du willst messen, ob sich die Vektorisierung lohnt: Welche Trials sind
+  langsamer als ein Cutoff? Der Benchmark im Editor bricht aber ab:
+  `Each result must equal the first result`.
+
+  Repariere den Code so, dass der Benchmark läuft. Fachlich gilt: Eine
+  fehlende Reaktionszeit ist **unbekannt**, nicht "nicht langsam"; das
+  Ergebnis behält also `NA`. Beide Funktionen sollen für jeden Vektor,
+  auch einen leeren, dasselbe liefern.
+setup: |
+  driving_sim <- read.csv(rtrainer_data("driving_sim.csv"))
+starter: |
+  slow_loop <- function(x, cutoff = 1000) {
+    out <- logical(length(x))
+    for (i in seq_along(x)) {
+      out[i] <- !is.na(x[i]) && x[i] > cutoff
+    }
+    out
+  }
+  slow_vec <- function(x, cutoff = 1000) x > cutoff
+
+  res <- bench::mark(
+    loop = slow_loop(driving_sim$rt_ms),
+    vec = slow_vec(driving_sim$rt_ms),
+    iterations = 50
+  )
+  res[c("expression", "median", "mem_alloc")]
+solution: |
+  slow_loop <- function(x, cutoff = 1000) {
+    out <- logical(length(x))
+    for (i in seq_along(x)) {
+      out[i] <- x[i] > cutoff
+    }
+    out
+  }
+  slow_vec <- function(x, cutoff = 1000) x > cutoff
+
+  res <- bench::mark(
+    loop = slow_loop(driving_sim$rt_ms),
+    vec = slow_vec(driving_sim$rt_ms),
+    iterations = 50
+  )
+  res[c("expression", "median", "mem_alloc")]
+hints:
+  - "Die Fehlermeldung ist kein Problem von bench: `mark()` vergleicht standardmäßig die Ergebnisse aller Ausdrücke. Welche Elemente unterscheiden sich?"
+  - "Vergleiche `slow_loop(c(900, NA))` und `slow_vec(c(900, NA))`. Was macht `!is.na(x[i]) && ...` aus einem fehlenden Wert?"
+  - "In der Schleife reicht `out[i] <- x[i] > cutoff`; ein `NA` lässt sich in einen logischen Vektor schreiben."
+explanation: |
+  `bench::mark()` prüft mit `check = TRUE` (Standard), dass alle
+  Ausdrücke dasselbe Ergebnis liefern, und deckt so hier einen echten
+  Unterschied auf: `!is.na(x[i]) && ...` macht aus jedem fehlenden Wert
+  `FALSE`, die vektorisierte Version behält `NA`. Laut Vorgabe ist `NA`
+  richtig, also wird die Schleife repariert. `check = FALSE` würde nur
+  den Fehler verstecken und zwei Funktionen vergleichen, die nicht
+  dasselbe tun. Im Ergebnis zeigt `median` die typische Laufzeit und
+  `mem_alloc` den Speicher; `x > cutoff` ist hier deutlich schneller,
+  der Unterschied ist bei 480 Werten aber praktisch egal. Benchmarks
+  lohnen erst bei großen Daten oder vielen Wiederholungen.
+misconception: "bench::mark() misst nur die Zeit; ob die Ausdrücke dasselbe liefern, spielt keine Rolle."
+check:
+  type: function
+  name: slow_loop
+  require: [mark]
+  tests:
+    - args: "list(c(900, NA, 1200))"
+      expect: "c(FALSE, NA, TRUE)"
+    - args: "list(c(900, 1200), cutoff = 1000)"
+      expect: "c(FALSE, TRUE)"
+    - args: "list(c(900, 1200), cutoff = 800)"
+      expect: "c(TRUE, TRUE)"
+    - args: "list(numeric())"
+      expect: "logical(0)"
+common_mistakes:
+  - pattern: "check\\s*=\\s*FALSE"
+    message: "`check = FALSE` versteckt nur, dass die Funktionen Verschiedenes liefern; repariere die Schleife."
+  - pattern: "!\\s*is\\.na\\(\\s*x\\s*\\)\\s*&"
+    message: "Jetzt verwirft auch die vektorisierte Version die `NA`; laut Vorgabe bleibt eine fehlende Reaktionszeit `NA`."
+  - pattern: "!\\s*is\\.na\\(\\s*x\\[i\\]\\s*\\)\\s*&&"
+    message: "`!is.na(x[i]) && ...` macht aus jedem fehlenden Wert `FALSE`; dadurch unterscheiden sich die Ergebnisse."
+  - pattern: "na\\.omit|x\\[\\s*!\\s*is\\.na\\(\\s*x\\s*\\)\\s*\\]"
+    message: "Werte zu entfernen ändert die Länge; das Ergebnis soll zu jedem Trial einen Eintrag haben."

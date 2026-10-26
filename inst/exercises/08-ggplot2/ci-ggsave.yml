@@ -1,0 +1,86 @@
+id: ggplot2-ci-ggsave
+topic: ggplot2
+title: 95-%-KI plotten und exportieren
+level: 3
+kind: write
+tags: [ggplot2, fehlerbalken, konfidenzintervall, ggsave, faktoren]
+packages: [dplyr, ggplot2]
+seed: 1
+prompt: |
+  Erstelle die Abbildung `fig` für ein Manuskript:
+
+  - pro Bedingung Mittelwert und 95-%-Konfidenzintervall der
+    Reaktionszeit aus den **Personenmitteln** (t-basiert:
+    `m ± qt(0.975, n - 1) * se`, `n` = Anzahl Personen),
+    dargestellt mit `geom_pointrange()`;
+  - Bedingungen auf der x-Achse in der Reihenfolge visuell, auditiv,
+    haptisch.
+
+  Speichere `fig` anschließend mit `ggsave()` als PNG unter dem Pfad in
+  `out_file` (liegt in `tempdir()`), 16 × 10 cm, 300 dpi.
+setup: |
+  library(dplyr)
+  library(ggplot2)
+  driving_sim <- read.csv(rtrainer_data("driving_sim.csv"))
+  out_file <- file.path(tempdir(), "rt_bedingung.png")
+starter: |
+  # 1. Personenmittel, dann m, se, n und KI pro Bedingung
+  # 2. fig <- ggplot(...) + geom_pointrange()
+  # 3. ggsave(...)
+solution: |
+  ci <- driving_sim |>
+    summarise(rt = mean(rt_ms, na.rm = TRUE), .by = c(vp_id, condition)) |>
+    summarise(m = mean(rt), se = sd(rt) / sqrt(n()), n = n(), .by = condition) |>
+    mutate(
+      lo = m - qt(0.975, n - 1) * se,
+      hi = m + qt(0.975, n - 1) * se,
+      condition = factor(condition, levels = c("visuell", "auditiv", "haptisch"))
+    )
+
+  fig <- ggplot(ci, aes(condition, m, ymin = lo, ymax = hi)) +
+    geom_pointrange()
+
+  ggsave(out_file, fig, width = 16, height = 10, units = "cm", dpi = 300)
+hints:
+  - "Drei Schritte: Kennwerte aus Personenmitteln, Plot mit `ymin`/`ymax`, Export."
+  - "Die Reihenfolge einer Zeichenkette ist alphabetisch; ein Faktor mit `levels` (oder `scale_x_discrete(limits = )`) legt sie fest. `ggsave()` rechnet ohne `units` in Zoll."
+  - "`lo = m - qt(0.975, n - 1) * se`, `aes(condition, m, ymin = lo, ymax = hi)` und `ggsave(out_file, fig, width = 16, height = 10, units = \"cm\", dpi = 300)`."
+explanation: |
+  Das KI kommt aus den 40 Personenmitteln; mit `qt(0.975, 39)` = 2,02
+  statt 1,96 ist es bei kleinem `n` etwas breiter. Visuell liegt bei
+  etwa 1176 ms [1130; 1222], haptisch bei 935 ms [897; 974]; die
+  Intervalle überlappen nicht, der Abstand von rund 240 ms ist aber erst
+  mit einem gepaarten Test bzw. Mixed Model sauber abgesichert, weil
+  dieselben Personen in allen Bedingungen stecken. `ggsave()` nimmt ohne
+  `units` Zoll an: 16 × 10 wären dann 41 × 25 cm, und die Schrift wirkt
+  im Manuskript winzig. Die Reihenfolge der Bedingungen steuert der
+  Faktor, nicht die Zeilenreihenfolge der Tabelle.
+misconception: "Die Abbildungsgröße beim Export ist egal, weil man sie im Manuskript skaliert."
+check:
+  type: plot
+  name: fig
+  geoms: [pointrange]
+  scales: [x]
+  layers:
+    pointrange: [x, y, ymin, ymax]
+  tolerance: 1.0e-6
+  post: |
+    local({
+      stopifnot("Die Datei `out_file` wurde nicht geschrieben." = file.exists(out_file))
+      h <- readBin(out_file, "raw", 24)
+      stopifnot("`out_file` ist keine PNG-Datei." = identical(h[2:4], charToRaw("PNG")))
+      px <- function(b) sum(as.integer(b) * 256^(3:0))
+      c(breite_px = px(h[17:20]), hoehe_px = px(h[21:24]))
+    })
+  post_message: "Die PNG-Datei hat nicht die Größe 16 × 10 cm bei 300 dpi."
+common_mistakes:
+  - pattern: "ggsave\\(\\s*(plot\\s*=\\s*)?fig\\s*,(?![^)]*filename\\s*=)"
+    message: "Das erste Argument von `ggsave()` ist `filename`, erst danach kommt `plot`: `ggsave(out_file, fig, ...)`."
+  - pattern: "^(?![\\s\\S]*vp_id)[\\s\\S]*"
+    message: "Die Kennwerte laufen direkt über alle Trials: `n` ist dann 160 statt 40 und das KI zu schmal. Erst pro `vp_id` und Bedingung mitteln."
+  - pattern: "1\\.96"
+    message: "1,96 gilt für große Stichproben; bei 40 Personen ist `qt(0.975, 39)` = 2,02."
+  - pattern: "^(?![\\s\\S]*units\\s*=\\s*[\"']cm)[\\s\\S]*ggsave\\("
+    message: "Ohne `units = \"cm\"` rechnet `ggsave()` in Zoll: 16 × 10 Zoll sind 4800 × 3000 px bei 300 dpi."
+  - pattern: "^(?![\\s\\S]*(levels|limits)\\s*=)[\\s\\S]*"
+    message: "Zeichenketten werden alphabetisch sortiert (auditiv, haptisch, visuell). Die Reihenfolge legst du mit `factor(levels = )` oder `scale_x_discrete(limits = )` fest."

@@ -1,0 +1,70 @@
+id: ggplot2-errorbar-person-debug
+topic: ggplot2
+title: Fehlerbalken aus Personenmitteln
+level: 2
+kind: debug
+tags: [ggplot2, fehlerbalken, messwiederholung, aggregation, standardfehler]
+packages: [dplyr, ggplot2]
+seed: 1
+prompt: |
+  Der Plot soll pro Bedingung den Mittelwert der Reaktionszeit mit
+  Fehlerbalken ± 1 Standardfehler zeigen. Einheit ist die Person: erst
+  pro Person und Bedingung mitteln, dann über die 40 Personen
+  (wie in „Deskriptiv mit der Person als Einheit“).
+
+  Der Code läuft, aber die Fehlerbalken sind zu schmal. Repariere die
+  Zusammenfassung; behalte `geom_point()` + `geom_errorbar()` sowie die
+  Spaltennamen `m` und `se`.
+setup: |
+  library(dplyr)
+  library(ggplot2)
+  driving_sim <- read.csv(rtrainer_data("driving_sim.csv"))
+starter: |
+  sumstat <- driving_sim |>
+    group_by(condition) |>
+    summarise(
+      m = mean(rt_ms, na.rm = TRUE),
+      se = sd(rt_ms, na.rm = TRUE) / sqrt(sum(!is.na(rt_ms)))
+    )
+
+  ggplot(sumstat, aes(condition, m)) +
+    geom_point() +
+    geom_errorbar(aes(ymin = m - se, ymax = m + se), width = 0.2)
+solution: |
+  sumstat <- driving_sim |>
+    summarise(rt = mean(rt_ms, na.rm = TRUE), .by = c(vp_id, condition)) |>
+    summarise(m = mean(rt), se = sd(rt) / sqrt(n()), .by = condition)
+
+  ggplot(sumstat, aes(condition, m)) +
+    geom_point() +
+    geom_errorbar(aes(ymin = m - se, ymax = m + se), width = 0.2)
+hints:
+  - "Wie viele unabhängige Einheiten stecken im `se` des Starters pro Bedingung?"
+  - "Der Starter rechnet über 160 Trials je Bedingung; es sind aber nur 40 Personen."
+  - "Zuerst `summarise(rt = mean(rt_ms, na.rm = TRUE), .by = c(vp_id, condition))`, dann `m` und `se = sd(rt) / sqrt(n())` pro `condition`."
+explanation: |
+  Über alle Trials gerechnet ist `n` = 160 statt 40, und die SD enthält
+  das Rauschen innerhalb der Personen statt der Unterschiede zwischen
+  ihnen. Der Standardfehler fällt dadurch um rund ein Drittel zu klein
+  aus (visuell 14 statt 23 ms), die Balken suggerieren eine Präzision,
+  die die Stichprobe nicht hat. Auch der Mittelwert ändert sich leicht,
+  weil Personen mit fehlenden Trials sonst weniger Gewicht bekommen.
+  Bei Messwiederholung sind solche Between-Balken übrigens konservativ
+  für Vergleiche zwischen Bedingungen; für Within-Vergleiche gibt es
+  korrigierte Intervalle (Cousineau-Morey).
+misconception: "Jeder Trial ist eine unabhängige Beobachtung, also gehören alle Trials in den Standardfehler."
+check:
+  type: plot
+  geoms: [point, errorbar]
+  mapping: {x: condition, y: m}
+  layers:
+    point: [x, y]
+    errorbar: [x, ymin, ymax]
+  tolerance: 1.0e-6
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*vp_id)[\\s\\S]*"
+    message: "Die Zusammenfassung läuft direkt über alle Trials: `n` ist dann 160 statt 40 und `se` zu klein. Erst pro `vp_id` und Bedingung mitteln."
+  - pattern: "sqrt\\(\\s*(40|160)\\s*\\)"
+    message: "`n` nicht fest eintragen, sondern mit `n()` zählen; so bleibt der Code richtig, wenn Personen fehlen."
+  - pattern: "^(?![\\s\\S]*na\\.rm)[\\s\\S]*mean\\(\\s*rt_ms"
+    message: "Einige `rt_ms` fehlen; ohne `na.rm = TRUE` wird der Personenmittelwert `NA`."

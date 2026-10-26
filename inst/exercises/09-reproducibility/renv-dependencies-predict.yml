@@ -1,0 +1,100 @@
+id: repro-renv-dependencies-predict
+topic: reproduzierbarkeit
+title: Was renv im Projekt findet
+level: 2
+kind: predict
+tags: [reproduzierbarkeit, renv, lockfile, abhaengigkeiten]
+seed: 1
+prompt: |
+  Ein implizites `renv::snapshot()` nimmt die Pakete ins Lockfile auf,
+  die `renv::dependencies()` im Projekt findet (plus deren Abhängigkeiten).
+  Das Projekt `proj` enthält genau diese drei Dateien:
+
+  `R/helpers.R`
+  ```r
+  # Später: library(lme4) für die Mixed Models
+  se <- function(x) sd(x) / sqrt(length(x))
+  ```
+
+  `analysis/01-clean.R`
+  ```r
+  library(dplyr)
+  d <- readr::read_csv(here::here("data", "driving_sim.csv"))
+  if (FALSE) library(targets)
+  pkg <- "ggplot2"
+  library(pkg, character.only = TRUE)
+  requireNamespace("lmerTest", quietly = TRUE)
+  msg <- "library(purrr) fehlt noch"
+  ```
+
+  `bericht.Rmd`
+  ````
+  ---
+  title: "Bericht"
+  output: html_document
+  ---
+
+  ```{r}
+  tidyr::pivot_longer
+  ```
+  ````
+
+  Was liefert `sort(unique(renv::dependencies(proj)$Package))`? Gib die
+  Paketnamen als alphabetisch sortierten Zeichenvektor ein.
+setup: |
+  proj <- file.path(tempdir(), "renv-projekt")
+  dir.create(file.path(proj, "R"), recursive = TRUE)
+  dir.create(file.path(proj, "analysis"))
+  writeLines(c(
+    "# Später: library(lme4) für die Mixed Models",
+    "se <- function(x) sd(x) / sqrt(length(x))"
+  ), file.path(proj, "R", "helpers.R"))
+  writeLines(c(
+    "library(dplyr)",
+    "d <- readr::read_csv(here::here(\"data\", \"driving_sim.csv\"))",
+    "if (FALSE) library(targets)",
+    "pkg <- \"ggplot2\"",
+    "library(pkg, character.only = TRUE)",
+    "requireNamespace(\"lmerTest\", quietly = TRUE)",
+    "msg <- \"library(purrr) fehlt noch\""
+  ), file.path(proj, "analysis", "01-clean.R"))
+  writeLines(c(
+    "---", "title: \"Bericht\"", "output: html_document", "---", "",
+    "```{r}", "tidyr::pivot_longer", "```"
+  ), file.path(proj, "bericht.Rmd"))
+starter: |
+  # Deine Vorhersage als alphabetisch sortierter Zeichenvektor, z. B. c("a", "b")
+solution: |
+  c("dplyr", "here", "lmerTest", "readr", "rmarkdown", "targets", "tidyr")
+hints:
+  - "renv führt den Code nicht aus, sondern liest ihn: Es sucht Aufrufe wie `library()`, `require()`, `requireNamespace()` und `paket::funktion`."
+  - "Was nur zur Laufzeit feststeht (ein Paketname in einer Variablen), sieht eine statische Analyse nicht; Kommentare und Zeichenketten sind kein Code. Für `.Rmd`-Dateien braucht das Projekt außerdem das Paket, das sie rendert."
+  - "Gefunden werden `dplyr`, `readr`, `here`, `targets` (auch in `if (FALSE)`), `lmerTest` und `tidyr`, dazu eines für die Rmd-Datei."
+explanation: |
+  `renv::dependencies()` parst die Dateien statisch: `library(dplyr)`,
+  `readr::`, `here::`, `requireNamespace("lmerTest")` und `tidyr::` im
+  Chunk zählen, ebenso `library(targets)` in totem Code, weil nichts
+  ausgeführt wird. `library(pkg, character.only = TRUE)` bleibt
+  unsichtbar: ggplot2 fehlt im Lockfile, und `renv::restore()` auf einem
+  anderen Rechner installiert es nicht. Abhilfe ist ein expliziter
+  `library(ggplot2)`-Aufruf (etwa in einer Datei `_dependencies.R`) oder
+  ein expliziter Snapshot über `DESCRIPTION`. Kommentare und Zeichenketten
+  sind kein Code (kein lme4, kein purrr); für die `.Rmd`-Datei ergänzt
+  renv `rmarkdown`. Das Lockfile selbst ist länger, weil `snapshot()` die
+  rekursiven Abhängigkeiten (z. B. rlang, vctrs) mit aufnimmt.
+misconception: "renv::snapshot() hält alle Pakete fest, die im Code vorkommen oder in der Bibliothek installiert sind."
+check:
+  type: value
+common_mistakes:
+  - pattern: "ggplot2"
+    message: "`library(pkg, character.only = TRUE)` sieht renv nicht: Der Paketname steht erst zur Laufzeit fest, renv liest den Code aber nur. ggplot2 fehlt deshalb im Lockfile."
+  - pattern: "purrr"
+    message: "`\"library(purrr) fehlt noch\"` ist eine Zeichenkette, kein Aufruf; renv wertet nur Code aus, keine Texte."
+  - pattern: "lme4"
+    message: "Kommentare sind kein Code: `# library(lme4)` zählt nicht als Abhängigkeit."
+  - pattern: "(?m)\\A(?=[\\s\\S]*^\\s*c\\s*\\()(?![\\s\\S]*targets)"
+    message: "renv führt den Code nicht aus, also auch nicht die Bedingung `if (FALSE)`: `library(targets)` darin wird trotzdem gefunden."
+  - pattern: "(?m)\\A(?=[\\s\\S]*^\\s*c\\s*\\()(?![\\s\\S]*rmarkdown)"
+    message: "Für `.Rmd`-Dateien ergänzt renv das Paket `rmarkdown`, das sie rendert, auch ohne `library()`-Aufruf."
+  - pattern: "(?m)\\A(?=[\\s\\S]*^\\s*c\\s*\\()(?![\\s\\S]*lmerTest)"
+    message: "`requireNamespace(\"lmerTest\")` zählt wie `library()` als Abhängigkeit."

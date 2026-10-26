@@ -1,0 +1,52 @@
+id: dplyr-summarise-regroup
+topic: dplyr
+title: Mittelwert der Personenmittel
+level: 3
+kind: debug
+tags: [dplyr, summarise, group_by]
+packages: [dplyr]
+seed: 1
+prompt: |
+  Gesucht ist pro Bedingung der Mittelwert der Personen-Mittelwerte
+  von `rt_ms` (erst pro Person und Bedingung mitteln, dann über die
+  Personen). Das Ergebnis soll 3 Zeilen mit den Spalten `condition`
+  und `rt_mean` haben, liefert aber 40 Zeilen. Repariere den Code.
+setup: |
+  library(dplyr)
+  driving_sim <- read.csv(rtrainer_data("driving_sim.csv"))
+starter: |
+  driving_sim |>
+    group_by(vp_id, condition) |>
+    summarise(rt_vp = mean(rt_ms, na.rm = TRUE)) |>
+    summarise(rt_mean = mean(rt_vp))
+solution: |
+  driving_sim |>
+    group_by(condition, vp_id) |>
+    summarise(rt_vp = mean(rt_ms, na.rm = TRUE)) |>
+    summarise(rt_mean = mean(rt_vp))
+hints:
+  - "Schau dir die Gruppierung nach dem ersten `summarise()` an (`group_vars()`)."
+  - "`summarise()` entfernt nur die letzte Gruppierungsebene."
+  - "Ändere die Reihenfolge in `group_by()` oder gruppiere vor dem zweiten `summarise()` neu nach `condition`."
+explanation: |
+  Nach `summarise()` bleibt die Gruppierung ohne die letzte Variable
+  erhalten: Aus `group_by(vp_id, condition)` wird `vp_id`, das zweite
+  `summarise()` mittelt also pro Person über die Bedingungen. Mit
+  `group_by(condition, vp_id)` bleibt `condition` übrig. Robuster ist,
+  die Gruppierung explizit zu machen: `.groups = "drop"` und danach
+  `summarise(..., .by = condition)`. Inhaltlich gewichtet das
+  Zwei-Stufen-Mittel jede Person gleich, auch wenn ihr einzelne
+  Trials fehlen.
+misconception: "Nach summarise() ist die Gruppierung aufgehoben oder bleibt vollständig bestehen."
+check:
+  type: value
+  compare: data_frame
+  ignore_row_order: true
+  ignore_col_order: false
+  ignore_attributes: true
+  tolerance: 1.0e-8
+common_mistakes:
+  - pattern: "ungroup\\(\\)\\s*\\|>\\s*summarise\\(\\s*rt_mean"
+    message: "Nach `ungroup()` mittelt `summarise()` über alles und liefert eine Zeile. Du brauchst eine Gruppierung nach `condition`."
+  - pattern: "^(?![\\s\\S]*rt_vp)[\\s\\S]*summarise\\(\\s*rt_mean\\s*=\\s*mean\\(\\s*rt_ms"
+    message: "Das mittelt direkt über alle Trials. Gesucht ist das Mittel der Personen-Mittelwerte (zwei Stufen)."

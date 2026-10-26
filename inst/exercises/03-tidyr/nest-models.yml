@@ -1,0 +1,70 @@
+id: tidyr-nest-models
+topic: tidyr
+title: Ein Modell pro Bedingung mit nest()
+level: 3
+kind: write
+tags: [tidyr, nest, unnest, listenspalten, lm]
+packages: [dplyr, tidyr]
+seed: 1
+prompt: |
+  Passe pro Bedingung ein lineares Modell `lm(rt_ms ~ trial)` an
+  (Übungseffekt über die Trials). Ergebnis: eine Zeile pro Bedingung
+  mit den Spalten `condition`, `slope` (Steigung von `trial`) und `r2`
+  (R²), ungerundet.
+
+  Arbeite mit Listenspalten: `nest()`, eine Funktion pro Datensatz, die
+  einen einzeiligen Data Frame mit `slope` und `r2` liefert, und
+  `unnest()` (oder `unnest_wider()`). `group_by()`, `summarise()` und
+  `reframe()` sind hier nicht erlaubt; `purrr` ist noch nicht dran
+  (`lapply()` geht).
+setup: |
+  library(dplyr)
+  library(tidyr)
+  driving_sim <- read.csv(rtrainer_data("driving_sim.csv"))
+starter: |
+  driving_sim |>
+    # dein Code
+solution: |
+  fit_one <- function(d) {
+    m <- lm(rt_ms ~ trial, data = d)
+    data.frame(slope = coef(m)[["trial"]], r2 = summary(m)$r.squared)
+  }
+  driving_sim |>
+    nest(.by = condition) |>
+    mutate(fit = lapply(data, fit_one)) |>
+    select(condition, fit) |>
+    unnest(fit)
+hints:
+  - "`nest(.by = condition)` liefert drei Zeilen mit einer Listenspalte `data`."
+  - "In `mutate()` erzeugt `lapply(data, ...)` eine neue Listenspalte mit je einem Data Frame."
+  - "Wirf `data` weg (`select()`) und mache die Data Frames mit `unnest()` zu Spalten."
+explanation: |
+  Eine Listenspalte hält pro Zeile ein beliebiges Objekt, hier einen
+  Data Frame mit allen Trials einer Bedingung. Weil `fit_one()` einen
+  Data Frame zurückgibt, kann `unnest()` dessen Spalten direkt an die
+  Bedingung anhängen; liefe die Funktion auf einen Vektor `c(slope, r2)`
+  hinaus, bekäme man mit `unnest()` zwei Zeilen statt zwei Spalten.
+  `unnest_wider()` wäre das Werkzeug für benannte Listen/Vektoren.
+  Vorteil des Musters: Daten, Modell und Kennwerte bleiben in einer
+  Tabelle, und man kann weitere Kennwerte ergänzen. `lm()` ignoriert
+  die Messwiederholung (Personen); für die Inferenz wäre ein Mixed
+  Model nötig.
+misconception: "unnest() verteilt den Inhalt einer Listenspalte immer auf neue Spalten."
+check:
+  type: value
+  compare: data_frame
+  ignore_row_order: true
+  ignore_col_order: false
+  ignore_attributes: true
+  tolerance: 1.0e-8
+  forbid: [group_by, summarise, summarize, reframe, do]
+  require: [nest]
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*unnest)[\\s\\S]*nest\\("
+    message: "Ohne `unnest()` bleiben die Ergebnisse in einer Listenspalte; `slope` und `r2` gibt es dann nicht als Spalten."
+  - pattern: "c\\(\\s*slope\\s*=|c\\(\\s*coef\\("
+    message: "Ein Vektor wird von `unnest()` in Zeilen aufgeteilt. Gib einen einzeiligen Data Frame zurück (oder nutze `unnest_wider()`)."
+  - pattern: "coef\\([^)]*\\)\\[\\[?1\\]?\\]"
+    message: "Das erste Element von `coef()` ist der Achsenabschnitt. Die Steigung ist `coef(m)[[\"trial\"]]`."
+  - pattern: "unnest\\(\\s*data"
+    message: "`data` enthält die Rohdaten; damit holst du alle 480 Trials zurück. Entnestet werden soll die Spalte mit den Kennwerten."

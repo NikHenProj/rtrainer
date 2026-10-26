@@ -1,0 +1,55 @@
+id: stats-welch-age
+topic: statistik
+title: Welch-t-Test zwischen Altersgruppen
+level: 1
+kind: write
+tags: [welch, t-test, messwiederholung, aggregation, konfidenzintervall]
+packages: [dplyr]
+seed: 1
+prompt: |
+  Reagieren ältere Fahrende langsamer? `age_group` teilt die Personen in
+  `"ab40"` und `"unter40"`. Vergleiche die mittlere Reaktionszeit der
+  beiden Gruppen mit einem Welch-t-Test, wobei jede Person **einmal**
+  eingeht (Mittelwert über alle ihre Trials).
+
+  Gib einen numerischen Vektor zurück: t-Wert, Freiheitsgrade, untere
+  und obere Grenze des 95-%-KI für die Differenz `ab40 - unter40`
+  (Reihenfolge der Formel-Schnittstelle `rt ~ age_group`).
+setup: |
+  library(dplyr)
+  driving_sim <- read.csv(rtrainer_data("driving_sim.csv"))
+  driving_sim$age_group <- ifelse(driving_sim$age >= 40, "ab40", "unter40")
+starter: |
+  # dein Code
+solution: |
+  per_person <- driving_sim |>
+    summarise(rt = mean(rt_ms, na.rm = TRUE), .by = c(vp_id, age_group))
+  res <- t.test(rt ~ age_group, data = per_person)
+  c(res$statistic, res$parameter, res$conf.int)
+hints:
+  - "Die Altersgruppe ist ein Merkmal der Person, die Trials sind Wiederholungen. Welche Einheit ist unabhängig?"
+  - "Erst eine Zeile pro Person (`vp_id`, `age_group`) mit dem Mittelwert von `rt_ms`, dann `t.test(rt ~ age_group, data = ...)`. Welch ist in R der Standard."
+  - "Aus dem Ergebnis `res` brauchst du `res$statistic`, `res$parameter` und `res$conf.int`."
+explanation: |
+  Mit einer Zeile pro Person ergibt sich t = 2.07 bei df = 24.6; ab 40
+  ist man im Mittel etwa 85 ms langsamer, 95-%-KI [0.3, 170] ms. Das
+  Intervall schließt 0 knapp aus, ist aber breit: Der Effekt kann
+  vernachlässigbar oder deutlich sein. Mit allen 457 Trials als
+  Einzelwerten erhielte man t = 4.4 bei df = 309 und ein viel schmaleres
+  KI; das ist Pseudoreplikation, denn das Alter variiert nur zwischen
+  den 39 Personen. Welch (`var.equal = FALSE`, die Voreinstellung)
+  verzichtet auf gleiche Varianzen, was bei 25 vs. 14 Personen
+  vernünftig ist; vp17 ohne Altersangabe fällt automatisch weg.
+misconception: "Mehr Zeilen bedeuten mehr unabhängige Information, auch wenn sie von denselben Personen stammen."
+check:
+  type: value
+  tolerance: 1.0e-6
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*vp_id)[\\s\\S]*t\\.test"
+    message: "Der Test läuft auf Trial-Ebene: Jede Person zählt rund zwölfmal, df und KI werden zu optimistisch (Pseudoreplikation). Erst pro `vp_id` mitteln."
+  - pattern: "var\\.equal\\s*=\\s*(TRUE|T)\\b"
+    message: "`var.equal = TRUE` ist der Student-t-Test. Verlangt ist Welch, die Voreinstellung von `t.test()`."
+  - pattern: "paired\\s*=\\s*(TRUE|T)\\b"
+    message: "Die Gruppen bestehen aus verschiedenen Personen; ein gepaarter Test passt nur, wenn dieselben Personen zweimal gemessen wurden."
+  - pattern: "wilcox\\.test"
+    message: "Gefragt ist der Welch-t-Test, nicht der Rangtest."

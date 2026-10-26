@@ -1,0 +1,49 @@
+id: stats-correlation
+topic: statistik
+title: Korrelation auf Personenebene mit KI
+level: 2
+kind: write
+tags: [korrelation, pearson, konfidenzintervall, messwiederholung, aggregation]
+packages: [dplyr]
+seed: 1
+prompt: |
+  Hängt das Alter mit der Reaktionszeit zusammen? Berechne die
+  Pearson-Korrelation zwischen `age` und der mittleren `rt_ms` einer
+  Person (über alle Bedingungen und Trials) mit 95-%-KI.
+
+  Gib einen Vektor `c(r, untere Grenze, obere Grenze)` zurück.
+setup: |
+  library(dplyr)
+  driving_sim <- read.csv(rtrainer_data("driving_sim.csv"))
+starter: |
+  # dein Code
+solution: |
+  per_person <- driving_sim |>
+    summarise(rt = mean(rt_ms, na.rm = TRUE), .by = c(vp_id, age))
+  res <- cor.test(per_person$age, per_person$rt)
+  c(res$estimate, res$conf.int)
+hints:
+  - "Das Alter ist pro Person konstant. Wie viele unabhängige Wertepaare gibt es also?"
+  - "Eine Zeile pro Person (`vp_id`, `age`) mit dem Mittelwert von `rt_ms`; `cor()` liefert kein Intervall."
+  - "`res <- cor.test(per_person$age, per_person$rt)`, dann `res$estimate` und `res$conf.int`."
+explanation: |
+  Auf Personenebene ist r = .27, 95-%-KI [-.05, .54]: Die Daten passen
+  zu keinem bis zu einem deutlichen positiven Zusammenhang, n = 39 ist
+  für eine präzise Schätzung zu klein. Mit allen Trials als Paaren
+  erhielte man r = .17 mit KI [.07, .25] und einen kleinen p-Wert; das
+  Intervall ist künstlich schmal, weil jedes Alter zwölfmal vorkommt
+  (Pseudoreplikation), und `r` sinkt, weil das Rauschen zwischen Trials
+  die Varianz aufbläht. Die Person ohne Altersangabe fällt in
+  `cor.test()` automatisch weg; bei `cor()` bräuchte es
+  `use = "complete.obs"`.
+misconception: "Eine Korrelation über alle Messzeilen beschreibt den Zusammenhang zwischen Personenmerkmalen."
+check:
+  type: value
+  tolerance: 1.0e-6
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*vp_id)[\\s\\S]*cor"
+    message: "Das Alter ändert sich nicht zwischen Trials. Auf Trial-Ebene zählt jede Person zwölfmal und das KI wird zu schmal. Erst pro `vp_id` mitteln."
+  - pattern: "spearman|kendall"
+    message: "Verlangt ist die Pearson-Korrelation (Voreinstellung); für Spearman liefert `cor.test()` kein KI."
+  - pattern: "^(?![\\s\\S]*cor\\.test)[\\s\\S]*\\bcor\\("
+    message: "`cor()` liefert nur den Koeffizienten; das Intervall kommt aus `cor.test()`."

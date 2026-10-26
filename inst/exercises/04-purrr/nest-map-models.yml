@@ -1,0 +1,67 @@
+id: purrr-nest-map-models
+topic: purrr
+title: Ein Modell pro Person mit nest() und map()
+level: 3
+kind: write
+tags: [tidyr, nest, unnest, listenspalten, lm, purrr, map]
+packages: [dplyr, tidyr, purrr]
+seed: 1
+prompt: |
+  Schätze den Übungseffekt pro Person: Passe für jede Versuchsperson
+  `lm(rt_ms ~ trial)` über alle ihre Trials an. Ergebnis: eine Zeile
+  pro Person mit den Spalten `vp_id`, `slope` (Steigung von `trial`,
+  ungerundet, Double) und `n` (Anzahl der im Modell verwendeten Trials,
+  Integer).
+
+  Arbeite mit `nest()` und speichere die Modelle in einer Listenspalte;
+  die Kennwerte holst du mit typstabilen `map`-Varianten heraus.
+  `group_by()`, `summarise()`, `reframe()`, `lapply()` und `sapply()`
+  sind nicht erlaubt.
+setup: |
+  library(dplyr)
+  library(tidyr)
+  library(purrr)
+  driving_sim <- read.csv(rtrainer_data("driving_sim.csv"))
+starter: |
+  driving_sim |>
+    # dein Code
+solution: |
+  driving_sim |>
+    nest(.by = vp_id) |>
+    mutate(
+      model = map(data, \(d) lm(rt_ms ~ trial, data = d)),
+      slope = map_dbl(model, \(m) coef(m)[["trial"]]),
+      n = map_int(model, nobs)
+    ) |>
+    select(vp_id, slope, n)
+hints:
+  - "`nest(.by = vp_id)` liefert 40 Zeilen mit einer Listenspalte `data`; `map(data, ...)` macht daraus eine Listenspalte mit Modellen."
+  - "Aus jedem Modell soll genau eine Zahl kommen: dafür `map_dbl()` bzw. `map_int()` statt `map()`, dann braucht es kein `unnest()`."
+  - "`coef(m)[[\"trial\"]]` ist die Steigung, `nobs(m)` zählt die Trials ohne fehlende Werte."
+explanation: |
+  Die Modelle bleiben als Objekte in der Listenspalte `model`, sodass man
+  später weitere Kennwerte (Residuen, `confint()`) daraus ziehen kann,
+  ohne neu zu schätzen. `map_dbl()` und `map_int()` liefern atomare
+  Spalten direkt, `unnest()` ist dann unnötig; mit `map()` entstünden
+  Listenspalten aus Einzelwerten. `nobs()` zählt nur Trials, die `lm()`
+  tatsächlich verwendet hat (fehlende `rt_ms` fallen weg), `nrow(d)`
+  wäre immer 12. Die Steigungen pro Person sind verrauscht (12 Trials,
+  Bedingung nicht im Modell); ein Random-Slope-Modell schätzt das
+  gemeinsam und mit Shrinkage.
+misconception: "Die Anzahl der Zeilen pro Gruppe entspricht der Anzahl der Beobachtungen im Modell."
+check:
+  type: value
+  compare: data_frame
+  ignore_row_order: true
+  ignore_col_order: false
+  ignore_attributes: true
+  tolerance: 1.0e-8
+  forbid: [group_by, summarise, summarize, reframe, do, lapply, sapply, vapply]
+  require: [nest, map]
+common_mistakes:
+  - pattern: "slope\\s*=\\s*map\\("
+    message: "`map()` erzeugt eine Listenspalte; `slope` soll eine Double-Spalte sein (`map_dbl()`)."
+  - pattern: "\\bnrow\\b"
+    message: "`nrow(d)` zählt alle Trials einschließlich fehlender `rt_ms`; `lm()` verwendet sie nicht. Nimm `nobs()` des Modells."
+  - pattern: "coef\\([^)]*\\)\\[\\[?1\\]?\\]"
+    message: "Das erste Element von `coef()` ist der Achsenabschnitt. Die Steigung ist `coef(m)[[\"trial\"]]`."

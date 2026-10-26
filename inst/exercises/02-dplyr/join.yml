@@ -1,0 +1,59 @@
+id: dplyr-join
+topic: dplyr
+title: Fragebogen anfügen
+level: 3
+kind: write
+tags: [dplyr, joins, summarise]
+packages: [dplyr]
+seed: 1
+prompt: |
+  `fragebogen` enthält die Fahrerfahrung in Jahren, die Personen-ID
+  heißt dort aber `vp`. Für einige Personen fehlt der Fragebogen,
+  dafür gibt es eine Person, die nicht im Fahrsimulator war.
+
+  Berechne pro Person die mittlere `rt_ms` (fehlende Werte ignorieren)
+  und füge `erfahrung_jahre` an. Alle 40 Personen aus `driving_sim`
+  sollen erhalten bleiben, keine weiteren. Spalten: `vp_id`, `rt_mean`,
+  `erfahrung_jahre`.
+setup: |
+  library(dplyr)
+  driving_sim <- read.csv(rtrainer_data("driving_sim.csv"))
+  ids <- c(1:36, 38, 41)
+  fragebogen <- data.frame(
+    vp = sprintf("vp%02d", ids),
+    erfahrung_jahre = (ids * 7) %% 25 + 1
+  )
+starter: |
+  driving_sim |>
+    # dein Code
+solution: |
+  driving_sim |>
+    summarise(rt_mean = mean(rt_ms, na.rm = TRUE), .by = vp_id) |>
+    left_join(fragebogen, by = join_by(vp_id == vp))
+hints:
+  - "Erst pro Person zusammenfassen, dann verbinden: so vervielfachst du keine Zeilen."
+  - "Welcher Join behält alle Zeilen der linken Tabelle, auch ohne Partner?"
+  - "`left_join(fragebogen, by = join_by(vp_id == vp))`."
+explanation: |
+  `left_join()` behält alle Zeilen links und setzt `NA`, wo rechts
+  kein Partner existiert (hier vp37, vp39, vp40); vp41 fällt weg.
+  `inner_join()` würde Personen ohne Fragebogen stillschweigend
+  entfernen, `full_join()` vp41 mit `NA`-Reaktionszeit hinzufügen.
+  `join_by(vp_id == vp)` verbindet unterschiedlich benannte Schlüssel.
+  Nach einem Join lohnt ein Blick auf `nrow()` oder das Argument
+  `relationship = "one-to-one"`, um unerwartete Vervielfachung zu erkennen.
+misconception: "Ein Join behält automatisch alle Einheiten beider Tabellen bzw. nur die vollständigen."
+check:
+  type: value
+  compare: data_frame
+  ignore_row_order: true
+  ignore_col_order: false
+  ignore_attributes: true
+  tolerance: 1.0e-8
+common_mistakes:
+  - pattern: "inner_join"
+    message: "`inner_join()` entfernt Personen ohne Fragebogen. Gefordert sind alle 40 Personen."
+  - pattern: "full_join"
+    message: "`full_join()` fügt auch vp41 hinzu, die nicht im Fahrsimulator war."
+  - pattern: "right_join"
+    message: "`right_join()` behält die Personen aus `fragebogen`, nicht die aus `driving_sim`."

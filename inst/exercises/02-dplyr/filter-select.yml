@@ -1,0 +1,46 @@
+id: dplyr-filter-select
+topic: dplyr
+title: Zeilen filtern, Spalten wählen
+level: 1
+kind: write
+tags: [dplyr, filter, select]
+packages: [dplyr]
+seed: 1
+prompt: |
+  Wähle aus `driving_sim` alle Trials der Bedingungen `visuell` und
+  `auditiv` mit einer Reaktionszeit über 1300 ms. Behalte nur die
+  Spalten `vp_id`, `condition`, `trial` und `rt_ms` (in dieser
+  Reihenfolge).
+setup: |
+  library(dplyr)
+  driving_sim <- read.csv(rtrainer_data("driving_sim.csv"))
+starter: |
+  driving_sim |>
+    # dein Code
+solution: |
+  driving_sim |>
+    filter(condition %in% c("visuell", "auditiv"), rt_ms > 1300) |>
+    select(vp_id, condition, trial, rt_ms)
+hints:
+  - "`filter()` für Zeilen, `select()` für Spalten."
+  - "Mehrere Bedingungen in `filter()` werden mit Komma (= UND) verknüpft. Für mehrere erlaubte Werte gibt es `%in%`."
+  - "`filter(condition %in% c(\"visuell\", \"auditiv\"), rt_ms > 1300)`."
+explanation: |
+  `%in%` prüft für jede Zeile, ob der Wert in der Menge liegt.
+  `condition == c("visuell", "auditiv")` vergleicht dagegen elementweise
+  mit einem recycelten Vektor (Zeile 1 mit "visuell", Zeile 2 mit
+  "auditiv", ...) und verliert so stillschweigend etwa die Hälfte der
+  Treffer. Zeilen mit `NA` in `rt_ms` entfernt `filter()` automatisch,
+  weil `NA > 1300` nicht `TRUE` ist.
+misconception: "`x == c(a, b)` prüft, ob x gleich a oder b ist."
+check:
+  type: value
+  compare: data_frame
+  ignore_row_order: true
+  ignore_col_order: false
+  ignore_attributes: true
+common_mistakes:
+  - pattern: "condition\\s*==\\s*c\\("
+    message: "`==` mit einem Vektor recycelt ihn zeilenweise, statt beide Werte zu erlauben. Nutze `%in%`."
+  - pattern: "condition\\s*==\\s*\"visuell\"\\s*&\\s*condition\\s*==\\s*\"auditiv\""
+    message: "Eine Zeile kann nicht gleichzeitig beide Bedingungen haben. Du brauchst ODER (`|`) bzw. `%in%`."

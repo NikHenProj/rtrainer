@@ -1,0 +1,95 @@
+id: repro-targets-pipeline
+topic: reproduzierbarkeit
+title: Eine targets-Pipeline mit Datei-Abhängigkeit
+level: 3
+kind: complete
+tags: [reproduzierbarkeit, targets, pipeline, abhaengigkeiten, messwiederholung]
+packages: [targets]
+seed: 1
+prompt: |
+  Das Arbeitsverzeichnis ist ein Projekt in `tempdir()` mit
+  `data/driving_sim.csv`. Baue mit `tar_script()` eine Pipeline
+  (`_targets.R`) aus vier Zielen:
+
+  - `raw_file`: die CSV-Datei, so dass targets ihren **Inhalt** verfolgt;
+  - `daten`: die eingelesene Datei;
+  - `person`: mittlere `rt_ms` pro `vp_id` und `condition`;
+  - `kennwerte`: Mittel der Personenmittel pro `condition` (Spalten
+    `condition`, `rt_ms`).
+
+  Führe die Pipeline aus und lies `kennwerte` aus dem Speicher. Ergänze
+  die Lücken `___`. Geprüft wird auch, ob nach einer Änderung der CSV
+  alle Ziele als veraltet gelten.
+setup: |
+  .proj <- file.path(tempdir(), "pipeline")
+  dir.create(file.path(.proj, "data"), recursive = TRUE)
+  invisible(file.copy(rtrainer_data("driving_sim.csv"), file.path(.proj, "data")))
+  setwd(.proj)
+starter: |
+  tar_script({
+    library(targets)
+    list(
+      tar_target(raw_file, "data/driving_sim.csv", format = ___),
+      tar_target(daten, read.csv(___)),
+      tar_target(person, aggregate(rt_ms ~ vp_id + condition, data = ___, FUN = mean)),
+      tar_target(kennwerte, ___)
+    )
+  }, ask = FALSE)
+  # nur in dieser Übung im laufenden Prozess (sonst einfach tar_make())
+  tar_make(callr_function = NULL, reporter = "silent")
+  kennwerte <- ___
+solution: |
+  tar_script({
+    library(targets)
+    list(
+      tar_target(raw_file, "data/driving_sim.csv", format = "file"),
+      tar_target(daten, read.csv(raw_file)),
+      tar_target(person, aggregate(rt_ms ~ vp_id + condition, data = daten, FUN = mean)),
+      tar_target(kennwerte, aggregate(rt_ms ~ condition, data = person, FUN = mean))
+    )
+  }, ask = FALSE)
+  # nur in dieser Übung im laufenden Prozess (sonst einfach tar_make())
+  tar_make(callr_function = NULL, reporter = "silent")
+  kennwerte <- tar_read(kennwerte)
+hints:
+  - "Abhängigkeiten entstehen dadurch, dass ein Ziel im Befehl eines anderen als Symbol vorkommt."
+  - "Ein Ziel mit `format = \"file\"` gibt einen Pfad zurück, targets speichert aber einen Hash des Dateiinhalts. Die nachfolgenden Ziele müssen `raw_file` bzw. `person` verwenden, nicht den Pfad oder `daten`."
+  - "`read.csv(raw_file)`, `aggregate(rt_ms ~ condition, data = person, FUN = mean)` und `tar_read(kennwerte)`."
+explanation: |
+  targets baut aus den Symbolen in den Befehlen einen Abhängigkeitsgraphen
+  (`raw_file` -> `daten` -> `person` -> `kennwerte`) und führt bei
+  `tar_make()` nur veraltete Ziele aus. Mit `format = "file"` hasht es den
+  Dateiinhalt: Ändert sich die CSV, sind alle vier Ziele veraltet. Ohne
+  `format = "file"` ist `raw_file` nur eine Zeichenkette, die sich nie
+  ändert; ein `read.csv("data/...")` direkt in `daten` umgeht die
+  Datei-Abhängigkeit genauso, und die Pipeline meldet trotz neuer Daten
+  „aktuell“. Die Kennwerte kommen aus den Personenmitteln (visuell
+  1176, auditiv 992, haptisch 935 ms), damit Personen mit fehlenden Trials
+  nicht anders gewichtet werden. `tar_make()` startet normalerweise einen
+  frischen R-Prozess, damit nichts aus der Sitzung in die Pipeline
+  rutscht; `callr_function = NULL` dient hier nur der Laufzeit.
+misconception: "targets erkennt geänderte Eingabedaten automatisch, sobald ihr Pfad in der Pipeline steht."
+check:
+  type: object
+  name: kennwerte
+  class: data.frame
+  compare_value: true
+  ignore_row_order: true
+  tolerance: 1.0e-6
+  post: |
+    local({
+      d <- read.csv("data/driving_sim.csv")
+      d$rt_ms[1] <- d$rt_ms[1] + 1000
+      write.csv(d, "data/driving_sim.csv", row.names = FALSE)
+      sort(tar_outdated(callr_function = NULL, reporter = "silent"))
+    })
+  post_message: "Nach einer Änderung der CSV müssten alle Ziele veraltet sein."
+common_mistakes:
+  - pattern: "___"
+    message: "Es sind noch Lücken `___` offen."
+  - pattern: "read\\.csv\\(\\s*[\"']"
+    message: "`read.csv(\"data/...\")` im Ziel `daten` umgeht `raw_file`: targets sieht keine Verbindung zur Datei und hält `daten` nach Änderungen für aktuell. Lies `raw_file` ein."
+  - pattern: "^(?![\\s\\S]*format\\s*=\\s*[\"']file[\"'])[\\s\\S]*"
+    message: "Ohne `format = \"file\"` speichert targets nur den Pfad als Zeichenkette; die ändert sich nie, also gilt die Pipeline trotz neuer Daten als aktuell."
+  - pattern: "kennwerte\\s*,\\s*aggregate\\([^\\n]*data\\s*=\\s*daten"
+    message: "`kennwerte` direkt aus `daten` mittelt über Trials, nicht über Personen; Personen mit fehlenden Trials zählen dann weniger. Nimm `person`."

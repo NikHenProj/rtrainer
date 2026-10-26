@@ -1,0 +1,45 @@
+id: purrr-map-na-count
+topic: purrr
+title: Fehlende Werte pro Spalte mit map_int()
+level: 1
+kind: write
+tags: [purrr, map, map_int, typstabil, na]
+packages: [purrr]
+seed: 1
+prompt: |
+  Zähle für jede Spalte von `driving_sim`, wie viele Werte fehlen.
+  Ergebnis: ein benannter **Integer-Vektor** (Namen = Spaltennamen),
+  keine Liste. Verwende die typstabile `map`-Variante, die garantiert
+  Integer liefert; `sapply()`, `vapply()`, `colSums()` und Schleifen
+  sind hier nicht erlaubt.
+setup: |
+  library(purrr)
+  driving_sim <- read.csv(rtrainer_data("driving_sim.csv"))
+starter: |
+  # Ein Integer pro Spalte
+solution: |
+  map_int(driving_sim, \(x) sum(is.na(x)))
+hints:
+  - "Ein Data Frame ist eine Liste von Spalten; `map_*()` läuft also über die Spalten."
+  - "Die Variante mit Suffix `_int` liefert einen Integer-Vektor und bricht ab, wenn ein Ergebnis kein einzelner Integer ist."
+  - "Pro Spalte: `sum(is.na(x))` in einer anonymen Funktion `\\(x) ...`."
+explanation: |
+  `map_int()` ruft die Funktion für jedes Listenelement (hier: jede
+  Spalte) auf und garantiert einen Integer-Vektor gleicher Länge mit den
+  Spaltennamen. Anders als `sapply()` kann der Ergebnistyp nicht je nach
+  Daten zwischen Vektor, Matrix und Liste wechseln: Liefert ein Aufruf
+  etwas anderes als einen einzelnen Integer, gibt es sofort einen Fehler.
+  `sum()` auf logischen Werten ist bereits Integer; `mean(is.na(x))`
+  (Anteil) wäre ein Double und bräuchte `map_dbl()`.
+misconception: "map() liefert automatisch einen Vektor, wenn jedes Ergebnis ein einzelner Wert ist."
+check:
+  type: value
+  forbid: [sapply, vapply, lapply, colSums, apply, for, while]
+  require: [map_int]
+common_mistakes:
+  - pattern: "map\\(\\s*driving_sim"
+    message: "`map()` gibt immer eine Liste zurück. Für einen Integer-Vektor brauchst du `map_int()`."
+  - pattern: "map_int\\(\\s*driving_sim\\s*,\\s*is\\.na\\s*\\)"
+    message: "`is.na(x)` liefert pro Spalte 480 Werte, `map_int()` erwartet aber genau einen. Fasse sie mit `sum()` zusammen."
+  - pattern: "mean\\(\\s*is\\.na"
+    message: "`mean()` liefert einen Anteil (Double), keinen Integer; gesucht ist die Anzahl, also `sum()`."

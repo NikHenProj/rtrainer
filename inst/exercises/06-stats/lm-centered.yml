@@ -1,0 +1,56 @@
+id: stats-lm-centered
+topic: statistik
+title: Regression mit zentriertem, skaliertem Prädiktor
+level: 3
+kind: write
+tags: [lm, regression, zentrieren, konfidenzintervall, formel, messwiederholung]
+packages: [dplyr]
+seed: 1
+prompt: |
+  Schätze mit `lm()`, wie stark die mittlere Reaktionszeit einer Person
+  mit dem Alter steigt. Der Prädiktor soll **um 40 Jahre zentriert und
+  in Jahrzehnten** gemessen sein, damit der Achsenabschnitt die
+  erwartete RT einer 40-jährigen Person ist und die Steigung die
+  Veränderung pro 10 Jahre. Eine Zeile pro Person.
+
+  Gib `c(Achsenabschnitt, Steigung, untere KI-Grenze der Steigung,
+  obere KI-Grenze der Steigung)` zurück (95 %).
+setup: |
+  library(dplyr)
+  driving_sim <- read.csv(rtrainer_data("driving_sim.csv"))
+starter: |
+  # dein Code
+solution: |
+  per_person <- driving_sim |>
+    summarise(rt = mean(rt_ms, na.rm = TRUE), .by = c(vp_id, age)) |>
+    mutate(age10 = (age - 40) / 10)
+  fit <- lm(rt ~ age10, data = per_person)
+  c(coef(fit), confint(fit)["age10", ])
+hints:
+  - "Erst eine Zeile pro Person, dann den Prädiktor als neue Spalte bilden."
+  - "`age10 = (age - 40) / 10`. Direkt in der Formel haben `-` und `/` eine andere Bedeutung, dort bräuchte es `I()`."
+  - "`fit <- lm(rt ~ age10, ...)`, dann `coef(fit)` und `confint(fit)[\"age10\", ]`."
+explanation: |
+  Eine 40-jährige Person reagiert im Mittel nach etwa 1029 ms; pro
+  Jahrzehnt kommen etwa 24 ms hinzu, 95-%-KI [-5, 54] ms. Das KI zeigt,
+  dass die Daten mit keinem bis zu einem spürbaren Alterseffekt
+  vereinbar sind. Ohne Zentrierung wäre der Achsenabschnitt die RT
+  einer 0-jährigen Person, ohne Skalierung stünde da ein kaum lesbarer
+  Wert pro Jahr. In einer Formel bedeutet `age - 40` "ohne Term 40" und
+  `/` Verschachtelung; Arithmetik gehört in `mutate()` oder `I()`. Auf
+  Trial-Ebene wäre das KI zu schmal, weil das Alter nur zwischen
+  Personen variiert; mit Bedingungen und Trials im selben Modell
+  braucht es ein Mixed Model.
+misconception: "In einer Modellformel bedeuten - und / dasselbe wie in normalem R-Code."
+check:
+  type: value
+  tolerance: 1.0e-6
+common_mistakes:
+  - pattern: "~\\s*\\(\\s*age\\s*-"
+    message: "In einer Formel bedeuten `-` und `/` Term-Operatoren, keine Arithmetik. Berechne den Prädiktor vorher mit `mutate()` oder schreibe `I((age - 40) / 10)`."
+  - pattern: "^(?![\\s\\S]*-\\s*40)[\\s\\S]*lm\\("
+    message: "Der Prädiktor ist nicht um 40 zentriert; der Achsenabschnitt beschreibt dann eine Person mit Alter 0."
+  - pattern: "^(?![\\s\\S]*/\\s*10)[\\s\\S]*lm\\("
+    message: "Die Steigung soll pro Jahrzehnt gelten: Teile das zentrierte Alter durch 10."
+  - pattern: "^(?![\\s\\S]*vp_id)[\\s\\S]*lm\\("
+    message: "Das Modell läuft auf Trial-Ebene: Jede Person zählt rund zwölfmal, das KI wird zu schmal. Erst pro `vp_id` mitteln."

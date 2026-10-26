@@ -1,0 +1,53 @@
+id: mixed-structure-predict
+topic: mixed-models
+title: Aufbau eines Random-Slope-Modells vorhersagen
+level: 1
+kind: predict
+tags: [lme4, random-slope, fixef, ranef, varcorr, modellstruktur]
+seed: 1
+prompt: |
+  `driving_sim` hat 40 Personen mit je 3 Bedingungen × 4 Trials
+  (480 Zeilen, 9 fehlende `lane_dev`). Was liefert der folgende Code?
+  Führe ihn nicht aus, sondern gib das Ergebnis als R-Wert ein
+  (z. B. `c(10, 20, 30, 40)`).
+
+  ```r
+  fit <- lmer(lane_dev ~ condition + trial + (1 + trial | vp_id),
+              data = driving_sim)
+  c(
+    length(fixef(fit)),
+    ncol(ranef(fit)$vp_id),
+    nrow(ranef(fit)$vp_id),
+    nrow(as.data.frame(VarCorr(fit)))
+  )
+  ```
+starter: |
+  # Deine Vorhersage als Wert, z. B. c(10, 20, 30, 40)
+solution: |
+  c(4, 2, 40, 4)
+hints:
+  - "Zähle getrennt: Was wird für alle gemeinsam geschätzt, was pro Person, und welche Varianzparameter hat das Modell?"
+  - "`condition` hat 3 Stufen, also 2 Dummy-Koeffizienten neben dem Achsenabschnitt. `ranef()` hat eine Zeile pro Gruppe, eine Spalte pro Zufallseffekt."
+  - "`VarCorr()` enthält zwei Varianzen, eine Kovarianz (Korrelation) zwischen Intercept und Slope und die Residualvarianz."
+explanation: |
+  Fix sind Achsenabschnitt, zwei Bedingungskontraste (Referenz
+  `auditiv`) und `trial`: 4 Koeffizienten. Pro Person gibt es zwei
+  Abweichungen (Intercept, Slope), also 2 Spalten und 40 Zeilen; die
+  Anzahl der Gruppen hängt nicht an fehlenden Trials. Geschätzt werden
+  aber nicht 80 Personenparameter, sondern nur deren Verteilung:
+  zwei Standardabweichungen, eine Korrelation und die Residual-SD
+  (4 Zeilen in `VarCorr()`). Das unterscheidet das Mixed Model von 40
+  separaten `lm()`-Fits.
+misconception: "Ein Mixed Model schätzt für jede Person eigene Parameter wie getrennte Regressionen, und `(1 + trial | vp_id)` hat nur zwei Varianzparameter."
+check:
+  type: value
+  tolerance: 1.0e-8
+common_mistakes:
+  - pattern: "^[\\s\\S]*?c\\(\\s*[35]\\s*,"
+    message: "Zähle die fixen Koeffizienten: Achsenabschnitt, 2 Kontraste für 3 Bedingungen (die Referenz `auditiv` hat keinen eigenen) und `trial`."
+  - pattern: "^[\\s\\S]*?c\\([^)]*\\b4[0-9]{2}\\b"
+    message: "`ranef()` hat eine Zeile pro Gruppe (`vp_id`), nicht pro Beobachtung: 40 Personen."
+  - pattern: "^[\\s\\S]*?c\\([^)]*,\\s*[23]\\s*\\)\\s*$"
+    message: "`VarCorr()` enthält neben den zwei Varianzen auch die Korrelation zwischen Intercept und Slope sowie die Residualvarianz."
+  - pattern: "^[\\s\\S]*?c\\(\\s*4\\s*,\\s*[13]\\s*,"
+    message: "Pro Person gibt es genau die Zufallseffekte aus `(1 + trial | vp_id)`: eine Intercept- und eine Slope-Abweichung."

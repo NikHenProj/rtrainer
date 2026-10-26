@@ -1,0 +1,55 @@
+id: ggplot2-aes-inherit
+topic: ggplot2
+title: Gemeinsame Mappings vererben
+level: 1
+kind: write
+tags: [ggplot2, aes, geoms, vererbung]
+packages: [ggplot2]
+seed: 1
+prompt: |
+  Zeichne ein Streudiagramm mit `rt_ms` auf der x- und `lane_dev` auf der
+  y-Achse, die Punkte nach `condition` eingefärbt. Ergänze für **jede
+  Bedingung** eine eigene lineare Regressionsgerade ohne
+  Konfidenzband (`geom_smooth()`).
+
+  Der Plot ist der letzte Ausdruck deines Codes.
+setup: |
+  library(ggplot2)
+  driving_sim <- read.csv(rtrainer_data("driving_sim.csv"))
+starter: |
+  ggplot(driving_sim, aes(x = rt_ms, y = lane_dev))
+  # + Punkte und Regressionsgeraden je Bedingung
+solution: |
+  ggplot(driving_sim, aes(rt_ms, lane_dev, colour = condition)) +
+    geom_point(alpha = 0.4) +
+    geom_smooth(method = "lm", se = FALSE)
+hints:
+  - "Welche Layer sollen die Farbe kennen: nur die Punkte oder auch die Geraden?"
+  - "Mappings in `ggplot(aes())` erben alle Layer; Mappings in `geom_point(aes())` gelten nur dort."
+  - "`colour = condition` gehört in das `aes()` von `ggplot()`; bei `geom_smooth()` fehlen noch `method` und `se`."
+explanation: |
+  Ein Mapping in `ggplot(aes())` erben alle Layer. Weil `colour` dort
+  steht, gruppiert auch `geom_smooth()` nach Bedingung und schätzt drei
+  getrennte Geraden. Steht `colour` nur in `geom_point(aes())`, kennt
+  `geom_smooth()` die Bedingung nicht und legt eine einzige Gerade durch
+  alle 480 Punkte. Das kann einen Zusammenhang vortäuschen, der allein
+  aus Unterschieden zwischen den Bedingungen kommt (Simpson-Muster).
+  Ohne `method = "lm"` nimmt `geom_smooth()` bei weniger als 1000
+  Punkten LOESS, also eine Kurve statt einer Geraden.
+misconception: "Ein Mapping in einem Layer gilt automatisch für den ganzen Plot."
+check:
+  type: plot
+  geoms: [point, smooth]
+  mapping: {x: rt_ms, y: lane_dev, colour: condition}
+  layers:
+    smooth: [x, y, ymin, ymax, group, colour]
+  tolerance: 1.0e-6
+common_mistakes:
+  - pattern: "colou?r\\s*=\\s*[\"']condition[\"']"
+    message: "In Anführungszeichen ist `\"condition\"` eine Konstante, keine Spalte: alle Punkte bekommen dieselbe Farbe. Den Spaltennamen ohne Anführungszeichen schreiben."
+  - pattern: "geom_point\\(\\s*aes\\([^)]*colou?r\\s*="
+    message: "Ein Mapping in `geom_point(aes())` gilt nur für die Punkte; `geom_smooth()` rechnet dann eine Gerade über alle Bedingungen. Gemeinsame Mappings gehören in `ggplot(aes())`."
+  - pattern: "^(?![\\s\\S]*method\\s*=\\s*[\"']lm[\"'])[\\s\\S]*geom_smooth"
+    message: "Ohne `method = \"lm\"` nimmt `geom_smooth()` bei weniger als 1000 Punkten LOESS, also eine Kurve statt einer Geraden."
+  - pattern: "^(?![\\s\\S]*se\\s*=\\s*(FALSE|F)\\b)[\\s\\S]*geom_smooth"
+    message: "Das Konfidenzband schaltest du mit `se = FALSE` ab."

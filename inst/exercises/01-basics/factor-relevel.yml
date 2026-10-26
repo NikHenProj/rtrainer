@@ -1,0 +1,42 @@
+id: basics-factor-relevel
+topic: basics
+title: Faktorstufen umsortieren
+level: 2
+kind: write
+tags: [faktoren, driving_sim]
+seed: 1
+prompt: |
+  In `driving_sim` (Fahrsimulator-Studie, schon geladen) ist `condition`
+  ein Text mit den Werten `visuell`, `auditiv` und `haptisch`.
+  Lege ein Objekt `cond` an: `condition` als Faktor mit der
+  Stufenreihenfolge `auditiv`, `visuell`, `haptisch` (auditiv wird so
+  später zur Referenzkategorie in Modellen). Die Zuordnung der Werte
+  darf sich dabei nicht ändern.
+setup: |
+  driving_sim <- read.csv(rtrainer_data("driving_sim.csv"))
+starter: |
+  # cond <- ...
+solution: |
+  cond <- factor(driving_sim$condition, levels = c("auditiv", "visuell", "haptisch"))
+hints:
+  - "`factor()` sortiert die Stufen standardmäßig alphabetisch."
+  - "Die Reihenfolge legst du beim Erzeugen über das Argument `levels` fest."
+  - "Achte auf exakte Schreibweise: Werte, die in `levels` fehlen, werden still zu `NA`."
+explanation: |
+  `factor(x, levels = ...)` ordnet die vorhandenen Werte den Stufen in der
+  angegebenen Reihenfolge zu. Die Zuweisung `levels(cond) <- c(...)`
+  sortiert dagegen nicht um, sondern **benennt** die bestehenden Stufen
+  um: Aus `auditiv, haptisch, visuell` würde dann `haptisch` zu
+  `visuell` umetikettiert, ohne Fehlermeldung. Für nur eine neue
+  Referenzstufe genügt `relevel(factor(x), ref = "auditiv")`.
+misconception: "`levels(f) <- neue_reihenfolge` sortiert die Stufen um; tatsächlich werden sie umbenannt."
+check:
+  type: object
+  name: cond
+  class: factor
+  compare_value: true
+common_mistakes:
+  - pattern: "levels\\(\\s*cond\\s*\\)\\s*<-"
+    message: "`levels(cond) <-` benennt die Stufen um, statt sie umzusortieren. Dadurch tragen Messungen falsche Bedingungen."
+  - pattern: "^(?![\\s\\S]*levels\\s*=)[\\s\\S]*factor\\("
+    message: "Ohne `levels =` sortiert `factor()` alphabetisch (auditiv, haptisch, visuell)."

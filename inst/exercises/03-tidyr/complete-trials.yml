@@ -1,0 +1,64 @@
+id: tidyr-complete-trials
+topic: tidyr
+title: Fehlende Trials sichtbar machen
+level: 2
+kind: complete
+tags: [tidyr, complete, nesting, na]
+packages: [tidyr]
+seed: 1
+prompt: |
+  In `obs` fehlen die Trials, in denen keine Reaktionszeit
+  aufgezeichnet wurde (die Zeilen gibt es gar nicht). Stelle das
+  vollständige Design wieder her: jede Person in jeder Bedingung mit
+  den Trials 1 bis 4. In ergänzten Zeilen sollen `age` und `gender` der
+  Person stehen, `rt_ms` und `lane_dev` sind `NA`. Ergebnis: 480 Zeilen,
+  Spalten wie in `obs`.
+
+  Ergänze die Lücken `___` im Editor.
+setup: |
+  library(tidyr)
+  driving_sim <- read.csv(rtrainer_data("driving_sim.csv"))
+  obs <- driving_sim[!is.na(driving_sim$rt_ms), ]
+starter: |
+  obs |>
+    ___(
+      ___(vp_id, age, gender),
+      condition,
+      trial = ___
+    )
+solution: |
+  obs |>
+    complete(
+      nesting(vp_id, age, gender),
+      condition,
+      trial = 1:4
+    )
+hints:
+  - "Die äußere Funktion ergänzt alle fehlenden Kombinationen der genannten Spalten."
+  - "Die innere Funktion sorgt dafür, dass nur vorkommende Kombinationen von `vp_id`, `age` und `gender` verwendet werden, nicht jedes Alter mit jeder Person."
+  - "Für `trial` kannst du die gewünschten Werte direkt angeben, statt nur die beobachteten zu nehmen."
+explanation: |
+  `complete()` bildet alle Kombinationen der genannten Variablen
+  (wie `expand_grid()`) und fügt fehlende als Zeilen mit `NA` ein.
+  `nesting()` beschränkt sich auf die beobachteten Kombinationen, damit
+  Personenmerkmale wie `age` und `gender` an der Person hängen, statt
+  gekreuzt zu werden. `trial = 1:4` legt die Werte fest; so werden auch
+  Trials ergänzt, die in keiner Person beobachtet wurden. Danach zeigt
+  `is.na(rt_ms)` die Ausfälle explizit, z. B. für einen Ausfallplot oder
+  für Modelle, die vollständige Zellen erwarten. Mit dem Argument
+  `fill = list(...)` lassen sich ergänzte Werte statt mit `NA` füllen.
+misconception: "complete() kennt die zusammengehörigen Personenmerkmale und kreuzt nur die Design-Faktoren."
+check:
+  type: value
+  compare: data_frame
+  ignore_row_order: true
+  ignore_col_order: false
+  ignore_attributes: true
+  tolerance: 1.0e-8
+common_mistakes:
+  - pattern: "complete\\(\\s*vp_id\\s*,\\s*age\\s*,\\s*gender"
+    message: "So wird jede Person mit jedem Alter und Geschlecht gekreuzt. `nesting(vp_id, age, gender)` nimmt nur die beobachteten Kombinationen."
+  - pattern: "complete\\(\\s*vp_id\\s*,\\s*condition"
+    message: "Ohne `age` und `gender` in `nesting()` bleiben diese Spalten in den ergänzten Zeilen `NA`."
+  - pattern: "expand_grid|crossing\\("
+    message: "`crossing()`/`expand_grid()` erzeugt nur das Gitter; `complete()` verbindet es gleich mit den Daten."

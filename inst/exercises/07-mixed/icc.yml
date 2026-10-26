@@ -1,0 +1,52 @@
+id: mixed-icc
+topic: mixed-models
+title: Intraklassenkorrelation aus dem Nullmodell
+level: 2
+kind: write
+tags: [lme4, icc, varcorr, varianzkomponenten, random-intercept]
+packages: [lme4]
+seed: 1
+prompt: |
+  Wie viel der Variation in `rt_ms` liegt zwischen Personen? Passe ein
+  Nullmodell (nur Achsenabschnitt fix, Zufallsintercept pro `vp_id`)
+  an und berechne daraus die Intraklassenkorrelation (ICC) als eine
+  Zahl, ungerundet. Ziehe die Varianzen aus `VarCorr()`;
+  `performance::icc()` ist nicht erlaubt.
+setup: |
+  driving_sim <- read.csv(rtrainer_data("driving_sim.csv"))
+starter: |
+  # fit0 <- lmer(...)
+  # vc <- as.data.frame(VarCorr(fit0))
+solution: |
+  fit0 <- lmer(rt_ms ~ 1 + (1 | vp_id), data = driving_sim)
+  vc <- as.data.frame(VarCorr(fit0))
+  vc$vcov[vc$grp == "vp_id"] / sum(vc$vcov)
+hints:
+  - "Die ICC ist ein Varianzanteil: Varianz zwischen Personen geteilt durch die Gesamtvarianz."
+  - "`as.data.frame(VarCorr(fit0))` hat die Spalten `vcov` (Varianzen) und `sdcor` (Standardabweichungen); Zeilen `vp_id` und `Residual`."
+  - "`vc$vcov[1] / (vc$vcov[1] + vc$vcov[2])` mit dem Modell `rt_ms ~ 1 + (1 | vp_id)`."
+explanation: |
+  Die ICC beträgt etwa 0.35 (SD zwischen Personen 117 ms, residual
+  158 ms): 35 % der Varianz liegt zwischen Personen, und zwei Trials
+  derselben Person korrelieren im Mittel zu 0.35. Bei 12 Trials pro
+  Person ist der Design-Effekt 1 + 11 × 0.35 ≈ 4.9: Die 468 Trials
+  tragen so viel Information wie knapp 100 unabhängige Messungen,
+  nicht 468. Mit `condition` im Modell steigt die (bedingte) ICC auf
+  etwa 0.52, weil die Bedingungsunterschiede aus der Residualvarianz
+  verschwinden; deshalb immer angeben, aus welchem Modell die ICC
+  stammt. Fallstrick: Mit `sdcor` statt `vcov` rechnet man einen
+  Anteil an Standardabweichungen, der kein Varianzanteil ist.
+misconception: "Die ICC ist das Verhältnis der Standardabweichungen, oder Personen- zu Residualvarianz."
+check:
+  type: value
+  tolerance: 1.0e-4
+  forbid: [icc]
+common_mistakes:
+  - pattern: "\\bsdcor\\b"
+    message: "`sdcor` sind Standardabweichungen. Die ICC ist ein Anteil an der Varianz: nimm `vcov`."
+  - pattern: "lmer\\s*\\(\\s*rt_ms\\s*~\\s*(?!1\\s*\\+\\s*\\()[^(|]*condition"
+    message: "Das ist eine bedingte ICC: Mit `condition` als festem Effekt fehlt die Bedingungsvarianz im Nenner. Gefragt ist das Nullmodell `rt_ms ~ 1 + (1 | vp_id)`."
+  - pattern: "vcov\\s*\\[\\s*1\\s*\\]\\s*/\\s*vc\\$vcov\\s*\\[\\s*2\\s*\\]"
+    message: "Personenvarianz geteilt durch Residualvarianz ist kein Anteil. Teile durch die Summe beider Varianzen."
+  - pattern: "\\blm\\s*\\("
+    message: "`lm()` kennt keine Varianzkomponenten; die ICC kommt aus einem Modell mit Zufallsintercept, `lmer(rt_ms ~ 1 + (1 | vp_id))`."

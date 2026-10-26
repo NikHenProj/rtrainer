@@ -1,0 +1,63 @@
+id: programming-dots-center
+topic: programmierung
+title: Kennwert-Funktion mit Default und ...
+level: 1
+kind: write
+tags: [funktionen, defaults, dots]
+seed: 1
+prompt: |
+  Schreibe eine Funktion `center(x, fun = median, digits = 1, ...)`, die
+  einen Lagewert von `x` berechnet und auf `digits` Stellen rundet.
+
+  - `fun` ist die Kennwert-Funktion (Standard: `median`).
+  - Alle weiteren Argumente werden unverändert an `fun` weitergereicht,
+    z. B. `center(driving_sim$rt_ms, na.rm = TRUE)` oder
+    `center(driving_sim$rt_ms, mean, trim = 0.1, na.rm = TRUE)`.
+  - Ohne `na.rm` bleibt ein `NA` in `x` wie bei `median()` erhalten.
+starter: |
+  center <- function(x, fun = median, digits = 1, ...) {
+    # dein Code
+  }
+solution: |
+  center <- function(x, fun = median, digits = 1, ...) {
+    round(fun(x, ...), digits)
+  }
+hints:
+  - "Die Funktion muss `na.rm` und `trim` nicht kennen; sie muss sie nur weitergeben."
+  - "`...` kann man im Funktionskörper selbst wieder als Argument eines Aufrufs verwenden."
+  - "`fun(x, ...)` und das Ergebnis mit `round(..., digits)` runden."
+explanation: |
+  `...` sammelt alle Argumente, die keinem benannten Parameter
+  zugeordnet werden, und `fun(x, ...)` reicht sie unverändert weiter.
+  So bleibt `center()` schlank und funktioniert mit jeder Funktion, die
+  ihre eigenen Optionen hat (`trim` gibt es nur bei `mean()`). Ein fest
+  eingebautes `na.rm = TRUE` versteckt fehlende Werte, die man oft
+  sehen will. Fallstrick: Argumente nach `...` (hier keine) müssen beim
+  Aufruf immer ausgeschrieben werden, und Tippfehler wie `na.mr = TRUE`
+  landen still in `...`; `median()` ignoriert sie dann, ohne zu warnen.
+misconception: "Eine Funktion muss jedes Argument, das sie weitergeben soll, selbst als Parameter deklarieren."
+check:
+  type: function
+  name: center
+  tests:
+    - args: "list(c(500, 700, 1200))"
+      expect: "700"
+    - args: "list(c(500, NA, 1200))"
+      expect: "NA_real_"
+    - args: "list(c(500, NA, 1200), na.rm = TRUE)"
+      expect: "850"
+    - args: "list(c(1, 2, 3, 10, 100), mean, trim = 0.2)"
+      expect: "5"
+    - args: "list(c(1.234, 2.345, 9.1), mean, digits = 2)"
+      expect: "4.23"
+    - args: "list(numeric())"
+      expect: "NA_real_"
+common_mistakes:
+  - pattern: "na\\.rm\\s*=\\s*TRUE"
+    message: "Ein festes `na.rm = TRUE` versteckt fehlende Werte und lässt sich nicht abschalten; `na.rm` soll über `...` kommen."
+  - pattern: "fun\\(\\s*x\\s*\\)"
+    message: "`fun(x)` ohne `...` verschluckt `na.rm` und `trim`; der Aufruf bricht mit `unbenutztes Argument` ab oder ignoriert sie."
+  - pattern: "\\bmedian\\(\\s*x"
+    message: "Du rufst `median()` direkt auf; damit wird das Argument `fun` ignoriert."
+  - pattern: "round\\([^\\n]*,\\s*1\\s*\\)"
+    message: "Gerundet wird auf `digits` Stellen, nicht fest auf 1."

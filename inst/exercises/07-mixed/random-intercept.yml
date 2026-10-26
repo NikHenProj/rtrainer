@@ -1,0 +1,53 @@
+id: mixed-random-intercept
+topic: mixed-models
+title: Bedingungsvergleich mit Zufallsintercept pro Person
+level: 1
+kind: write
+tags: [lme4, random-intercept, messwiederholung, konfidenzintervall, pseudoreplikation]
+packages: [lme4]
+seed: 1
+prompt: |
+  In der Statistik-Aufgabe zum gepaarten t-Test wurde pro Person
+  gemittelt. Ein Mixed Model nutzt alle Trials und berücksichtigt die
+  Abhängigkeit über einen Zufallsintercept pro Person.
+
+  Passe mit `lmer()` ein Modell für `rt_ms` mit `condition` als festem
+  Effekt (Referenz `auditiv`, wie voreingestellt) und einem
+  Zufallsintercept pro `vp_id` an. Liefere eine Matrix mit einer Zeile
+  pro fixem Effekt und den Spalten `estimate`, `2.5 %` und `97.5 %`
+  (Profil-KI über `confint()`, Wald-KI wird ebenfalls akzeptiert).
+setup: |
+  driving_sim <- read.csv(rtrainer_data("driving_sim.csv"))
+starter: |
+  # fit <- lmer(...)
+solution: |
+  fit <- lmer(rt_ms ~ condition + (1 | vp_id), data = driving_sim)
+  cbind(estimate = fixef(fit), confint(fit, parm = "beta_"))
+hints:
+  - "Die Zufallsstruktur steht in der Formel in Klammern: `(Effekte | Gruppe)`."
+  - "Ein Zufallsintercept pro Person ist `(1 | vp_id)`; `fixef()` liefert die Schätzer."
+  - "`confint(fit)` liefert auch Zeilen für die Varianzparameter; mit `parm = \"beta_\"` nur die fixen Effekte. Dann `cbind(estimate = fixef(fit), ...)`."
+explanation: |
+  `(1 | vp_id)` erlaubt jeder Person ein eigenes Grundniveau; die
+  Bedingungseffekte werden innerhalb der Personen geschätzt, ohne die
+  Trials als unabhängige Personen zu zählen. Visuell ist etwa 184 ms
+  langsamer als auditiv (95-%-KI [158, 210]), haptisch etwa 58 ms
+  schneller ([-84, -32]); visuell vs. haptisch ergibt rund 242 ms,
+  fast dieselbe Differenz wie der gepaarte t-Test auf Personenmitteln
+  (240 ms, [217, 263]). `lm(rt_ms ~ condition)` liefert gleiche
+  Schätzer, aber falsche Standardfehler, weil die Personenvarianz im
+  Fehlerterm landet. Ohne `parm = "beta_"` enthält `confint()` auch
+  `.sig01` (SD der Intercepts) und `.sigma`.
+misconception: "Mit allen Trials in einem `lm()` gewinnt man Power, die Abhängigkeit innerhalb der Personen spielt keine Rolle."
+check:
+  type: value
+  tolerance: 1.0e-3
+common_mistakes:
+  - pattern: "\\blm\\s*\\("
+    message: "`lm()` behandelt alle 468 Trials als unabhängig (Pseudoreplikation); die Schätzer stimmen zufällig fast, die Intervalle nicht. Nimm `lmer()` mit `(1 | vp_id)`."
+  - pattern: "\\(\\s*1\\s*\\|\\s*condition\\s*\\)"
+    message: "Gruppierungsvariable ist die Person (`vp_id`), nicht die Bedingung; `condition` ist der feste Effekt, den du vergleichen willst."
+  - pattern: "\\(\\s*1\\s*\\|\\s*trial\\s*\\)"
+    message: "`trial` ist eine Wiederholungsnummer, keine Gruppe: Trial 1 von Person A und Trial 1 von Person B haben nichts gemeinsam. Gruppiere nach `vp_id`."
+  - pattern: "^(?![\\s\\S]*beta_)[\\s\\S]*confint\\s*\\("
+    message: "`confint()` liefert ohne `parm = \"beta_\"` auch Zeilen für `.sig01` und `.sigma`; gefragt sind nur die fixen Effekte."

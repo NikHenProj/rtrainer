@@ -1,0 +1,52 @@
+id: purrr-map2-cutoff-debug
+topic: purrr
+title: Bedingungsspezifische Grenzwerte mit map2()
+level: 2
+kind: debug
+tags: [purrr, map2, map_dbl, recycling]
+packages: [purrr]
+seed: 1
+prompt: |
+  `rts` enthält die Reaktionszeiten pro Bedingung, `cutoffs` pro
+  Bedingung einen Grenzwert (gleiche Reihenfolge). Gesucht ist für jede
+  Bedingung der Anteil der gültigen Trials über ihrem **eigenen**
+  Grenzwert, auf 3 Stellen gerundet, als benannter Double-Vektor.
+  Der Code läuft, liefert aber falsche Anteile (und eine Warnung).
+  Repariere ihn.
+setup: |
+  library(purrr)
+  driving_sim <- read.csv(rtrainer_data("driving_sim.csv"))
+  rts <- split(driving_sim$rt_ms, driving_sim$condition)
+  cutoffs <- c(auditiv = 1100, haptisch = 1000, visuell = 1200)
+starter: |
+  map_dbl(rts, \(x, cut) round(mean(x > cut, na.rm = TRUE), 3), cut = cutoffs)
+solution: |
+  map2_dbl(rts, cutoffs, \(x, cut) round(mean(x > cut, na.rm = TRUE), 3))
+hints:
+  - "Welcher Wert steht in `cut`, wenn die Funktion für `rts$auditiv` aufgerufen wird? Teste mit `browser()` oder `print(cut)`."
+  - "Zusätzliche Argumente von `map()` werden unverändert an jeden Aufruf weitergegeben, nicht elementweise."
+  - "Um über zwei Vektoren parallel zu laufen, gibt es eine eigene Variante mit `2` im Namen."
+explanation: |
+  In `map_dbl(rts, f, cut = cutoffs)` bekommt jeder Aufruf den ganzen
+  Vektor `cutoffs`. `x > cut` vergleicht dann 160 Reaktionszeiten
+  reihum mit allen drei Grenzwerten (Recycling, daher die Warnung),
+  der Anteil ist ein Mischwert. `map2_dbl(rts, cutoffs, f)` läuft
+  parallel über beide Eingaben und übergibt pro Aufruf je ein Element.
+  Fallstrick: `map2()` paart nach Position, nicht nach Namen. Stünde
+  `cutoffs` in anderer Reihenfolge als `split()` (alphabetisch), wäre
+  `cutoffs[names(rts)]` nötig.
+misconception: "Zusätzliche Argumente in map() werden wie die Hauptliste elementweise durchlaufen."
+check:
+  type: value
+  tolerance: 1.0e-8
+  forbid: [sapply, vapply, mapply, Map, for]
+  require: [map2_dbl]
+common_mistakes:
+  - pattern: "cut\\s*=\\s*cutoffs"
+    message: "Über `cut = cutoffs` bekommt jeder Aufruf alle drei Grenzwerte; `x > cut` recycelt sie. Lass `map2_dbl()` parallel über `rts` und `cutoffs` laufen."
+  - pattern: "map2\\(\\s*rts"
+    message: "`map2()` liefert eine Liste; gesucht ist ein Double-Vektor (`map2_dbl()`)."
+  - pattern: "cutoffs\\[\\s*c\\("
+    message: "`map2()` paart nach Position. `rts` ist alphabetisch sortiert (wie `split()`), `cutoffs` auch; eine andere Reihenfolge ordnet Grenzwerte falschen Bedingungen zu."
+  - pattern: "cutoffs\\[\\[?\\s*1"
+    message: "Damit gilt ein Grenzwert für alle Bedingungen. Jede Bedingung braucht ihren eigenen."

@@ -1,0 +1,53 @@
+id: ggplot2-theme-predict
+topic: ggplot2
+title: Komplette Themes und theme()
+level: 2
+kind: predict
+tags: [ggplot2, theme]
+packages: [ggplot2]
+seed: 1
+prompt: |
+  Wo steht jeweils die Legende? Führe den Code nicht aus, sondern gib die
+  drei Positionen als Zeichenvektor ein, z. B. `c("top", "left", "none")`.
+
+  ```r
+  base <- ggplot(driving_sim, aes(condition, rt_ms, colour = gender)) +
+    geom_boxplot()
+
+  p1 <- base + theme_bw() + theme(legend.position = "bottom")
+  p2 <- base + theme(legend.position = "bottom") + theme_bw()
+  p3 <- base + theme(legend.position = "bottom") +
+    theme(panel.grid = element_blank())
+  ```
+
+  Gesucht: `c(<Position p1>, <Position p2>, <Position p3>)`.
+setup: |
+  library(ggplot2)
+  driving_sim <- read.csv(rtrainer_data("driving_sim.csv"))
+starter: |
+  # Deine Vorhersage als Wert, z. B. c("top", "left", "none")
+solution: |
+  c("bottom", "right", "bottom")
+hints:
+  - "Die Standardposition der Legende ist `\"right\"`. Welche Aufrufe können eine frühere Einstellung zurücksetzen?"
+  - "`theme_bw()` ist ein vollständiges Theme, `theme()` ändert nur die genannten Elemente."
+  - "Ein vollständiges Theme ersetzt alles, was vorher gesetzt wurde; die Reihenfolge der `+` entscheidet."
+explanation: |
+  `theme_bw()`, `theme_minimal()` usw. sind vollständige Themes: Sie
+  ersetzen beim Addieren das gesamte bisherige Theme. In `p2` wird
+  `legend.position = "bottom"` deshalb von `theme_bw()` überschrieben,
+  und die Legende steht wieder rechts. `theme()` dagegen ergänzt nur die
+  genannten Elemente; in `p3` bleibt die Position erhalten, obwohl
+  danach `panel.grid` geändert wird. Praxisregel: erst das vollständige
+  Theme, dann die eigenen `theme()`-Anpassungen; für ein ganzes Skript
+  `theme_set()` bzw. `theme_update()`.
+misconception: "Theme-Aufrufe addieren sich immer, egal in welcher Reihenfolge sie stehen."
+check:
+  type: value
+common_mistakes:
+  - pattern: "^[\\s\\S]*?c\\(\\s*[\"']bottom[\"']\\s*,\\s*[\"']bottom[\"']\\s*,"
+    message: "`theme_bw()` ist ein vollständiges Theme und ersetzt in `p2` alle vorherigen Einstellungen, auch die Legendenposition."
+  - pattern: "[\"']right[\"']\\s*\\)\\s*$"
+    message: "`theme()` ändert nur die genannten Elemente; `panel.grid` setzt die Legendenposition in `p3` nicht zurück."
+  - pattern: "^[\\s\\S]*?c\\(\\s*[\"']right[\"']"
+    message: "In `p1` steht `theme()` nach `theme_bw()`: die eigene Anpassung wird auf das vollständige Theme gelegt und bleibt erhalten."

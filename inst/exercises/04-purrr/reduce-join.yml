@@ -1,0 +1,64 @@
+id: purrr-reduce-join
+topic: purrr
+title: Mehrere Tabellen mit reduce() verbinden
+level: 2
+kind: write
+tags: [purrr, reduce, join, dplyr]
+packages: [dplyr, purrr]
+seed: 1
+prompt: |
+  `parts` ist eine Liste mit drei Tabellen auf Personenebene, jeweils
+  mit `vp_id`: `demo` (Alter, Geschlecht; alle 40 Personen), `rt`
+  (mittlere Reaktionszeit) und `lane` (mittlere Spurabweichung, nur
+  Personen ohne fehlende `lane_dev`). Verbinde alle Tabellen der Liste
+  zu einer, sodass **alle 40 Personen** erhalten bleiben (fehlende
+  Werte als `NA`). Spalten in der Reihenfolge der Liste: `vp_id`, `age`,
+  `gender`, `rt_mean`, `lane_mean`.
+
+  Verwende `reduce()`, sodass der Code auch für eine längere Liste
+  unverändert funktioniert.
+setup: |
+  library(dplyr)
+  library(purrr)
+  driving_sim <- read.csv(rtrainer_data("driving_sim.csv"))
+  parts <- list(
+    demo = distinct(driving_sim, vp_id, age, gender),
+    rt = summarise(driving_sim, rt_mean = mean(rt_ms, na.rm = TRUE), .by = vp_id),
+    lane = driving_sim |>
+      filter(!any(is.na(lane_dev)), .by = vp_id) |>
+      summarise(lane_mean = mean(lane_dev), .by = vp_id)
+  )
+starter: |
+  # parts zu einer Tabelle verbinden
+solution: |
+  reduce(parts, \(x, y) left_join(x, y, by = "vp_id"))
+hints:
+  - "`reduce()` wendet eine Funktion mit zwei Argumenten wiederholt an: erst auf Element 1 und 2, dann auf das Ergebnis und Element 3."
+  - "Welcher Join behält alle Zeilen der linken Tabelle?"
+  - "`reduce(parts, \\(x, y) ...)` mit einem Join über `vp_id`."
+explanation: |
+  `reduce(parts, f)` berechnet `f(f(demo, rt), lane)`. Weil `demo`
+  links steht und alle Personen enthält, hält `left_join()` die 40
+  Zeilen; Personen ohne `lane_mean` bekommen `NA`. Mit `inner_join()`
+  fielen die 9 Personen mit einem fehlenden Spurwert still aus der
+  ganzen Tabelle. `reduce(parts, left_join)` funktioniert auch, nutzt
+  aber alle gemeinsamen Spalten als Schlüssel (mit Meldung); `by`
+  explizit ist robuster, falls zwei Tabellen eine weitere Spalte
+  gemeinsam haben.
+misconception: "Beim Verbinden mehrerer Tabellen ist die Join-Art egal, solange der Schlüssel stimmt."
+check:
+  type: value
+  compare: data_frame
+  ignore_row_order: true
+  ignore_col_order: false
+  ignore_attributes: true
+  tolerance: 1.0e-8
+  forbid: [for, Reduce, do.call, bind_cols, cbind]
+  require: [reduce]
+common_mistakes:
+  - pattern: "inner_join"
+    message: "`inner_join()` behält nur Personen, die in allen Tabellen vorkommen; in `lane` fehlen 9 Personen."
+  - pattern: "\\bbind_rows|\\brbind\\("
+    message: "Zeilen anhängen stapelt die Tabellen untereinander; gesucht ist ein Join über `vp_id`."
+  - pattern: "right_join"
+    message: "`right_join()` behält die Zeilen der rechten Tabelle; beim letzten Schritt ist das `lane` mit nur 31 Personen."

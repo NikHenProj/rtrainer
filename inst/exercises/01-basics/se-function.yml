@@ -1,0 +1,54 @@
+id: basics-se-function
+topic: basics
+title: Funktion mit Default und NA-Behandlung
+level: 2
+kind: write
+tags: [funktionen, NA, randfaelle]
+seed: 1
+prompt: |
+  Schreibe eine Funktion `se(x, na.rm = TRUE)`, die den Standardfehler
+  des Mittelwerts berechnet: `sd(x) / sqrt(n)`.
+
+  - Mit `na.rm = TRUE` werden `NA` ignoriert, und `n` ist die Anzahl der
+    **nicht fehlenden** Werte.
+  - Mit `na.rm = FALSE` und mindestens einem `NA` ist das Ergebnis `NA`.
+  - Für einen leeren Vektor oder einen einzelnen Wert ist das Ergebnis `NA`.
+starter: |
+  se <- function(x, na.rm = TRUE) {
+    # dein Code
+  }
+solution: |
+  se <- function(x, na.rm = TRUE) {
+    if (na.rm) x <- x[!is.na(x)]
+    sd(x) / sqrt(length(x))
+  }
+hints:
+  - "Entferne die `NA` gleich am Anfang, wenn `na.rm` gesetzt ist; dann stimmt `n` automatisch."
+  - "`sd()` liefert für Länge 0 und 1 bereits `NA`. Prüfe, ob deine Division das erhält."
+  - "`if (na.rm) x <- x[!is.na(x)]`, danach `sd(x) / sqrt(length(x))`."
+explanation: |
+  Der klassische Fehler ist `sd(x, na.rm = TRUE) / sqrt(length(x))`: `sd()`
+  ignoriert die `NA`, `length()` zählt sie aber mit, der Standardfehler
+  wird also zu klein. Wer die `NA` einmal am Anfang entfernt, hält `sd()`
+  und `n` konsistent. Randfälle laufen ohne Sonderbehandlung durch:
+  `sd(numeric())` und `sd(5)` sind `NA`, und `NA / x` bleibt `NA`.
+misconception: "`length(x)` zählt nur gültige Werte; tatsächlich zählt es auch NA mit."
+check:
+  type: function
+  name: se
+  tests:
+    - args: "list(c(2, 4, 4, 6))"
+      expect: "sd(c(2, 4, 4, 6)) / 2"
+    - args: "list(c(2, NA, 4, NA, 9))"
+      expect: "sd(c(2, 4, 9)) / sqrt(3)"
+    - args: "list(c(2, NA, 4), na.rm = FALSE)"
+      expect: "NA_real_"
+    - args: "list(numeric())"
+      expect: "NA_real_"
+    - args: "list(5)"
+      expect: "NA_real_"
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*is\\.na)[\\s\\S]*sqrt\\(\\s*length\\(\\s*x\\s*\\)\\s*\\)"
+    message: "`length(x)` zählt auch die `NA` mit; `n` muss die Zahl der gültigen Werte sein."
+  - pattern: "sd\\([^)]*na\\.rm\\s*=\\s*TRUE"
+    message: "Ein festes `na.rm = TRUE` im Aufruf ignoriert das Argument deiner Funktion."

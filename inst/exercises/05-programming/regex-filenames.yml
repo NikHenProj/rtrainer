@@ -1,0 +1,69 @@
+id: programming-regex-filenames
+topic: programmierung
+title: Metadaten aus Dateinamen mit stringr
+level: 2
+kind: write
+tags: [stringr, regex, str_match]
+packages: [stringr]
+seed: 1
+prompt: |
+  Die Export-Dateien des Fahrsimulators wurden von Hand umbenannt;
+  `files` enthält die Namen. Gültig ist ein Name der Form
+  `vp<Nummer>_<bedingung>_t<Trial>.csv`, wobei die Trennzeichen `_`
+  oder `-` sein können und Groß-/Kleinschreibung egal ist.
+
+  Gib einen Data Frame mit einer Zeile pro **gültigem** Namen zurück
+  (Reihenfolge wie in `files`) und den Spalten `vp` (integer),
+  `condition` (kleingeschrieben) und `trial` (integer). Ungültige Namen
+  fallen weg.
+setup: |
+  library(stringr)
+  files <- c(
+    "VP01_visuell_t1.csv", "vp01-visuell-T2.CSV", "vp12_auditiv_t3.csv",
+    "notes_vp03.txt", "vp7_haptisch_t4.csv", "VP40_haptisch_t10.csv",
+    "vp05_auditiv_t2.csv.bak", "backup_vp05_auditiv_t2.csv"
+  )
+starter: |
+  # files ist bereits geladen
+solution: |
+  m <- str_match(
+    files,
+    regex("^vp(\\d+)[_-]([a-z]+)[_-]t(\\d+)\\.csv$", ignore_case = TRUE)
+  )
+  m <- m[!is.na(m[, 1]), , drop = FALSE]
+  data.frame(
+    vp = as.integer(m[, 2]),
+    condition = str_to_lower(m[, 3]),
+    trial = as.integer(m[, 4])
+  )
+hints:
+  - "`str_match()` liefert eine Matrix: Spalte 1 ist der ganze Treffer, danach je eine Spalte pro Klammergruppe; ohne Treffer steht `NA`."
+  - "Verankere das Muster mit `^` und `$`, sonst passen auch `.bak`-Dateien und Präfixe wie `backup_`. Der Punkt vor `csv` muss maskiert werden."
+  - "`regex(\"^vp(\\\\d+)[_-]([a-z]+)[_-]t(\\\\d+)\\\\.csv$\", ignore_case = TRUE)`, dann Zeilen mit `NA` in Spalte 1 entfernen."
+explanation: |
+  `str_match()` gibt pro Eingabe den Gesamttreffer und die Gruppen
+  zurück, sodass Filtern und Zerlegen in einem Schritt passieren. `^`
+  und `$` verankern das Muster am Anfang und Ende, sonst gelten
+  `backup_vp05...` und `....csv.bak` als Treffer; `\\.` maskiert den
+  Punkt, der sonst für ein beliebiges Zeichen steht. `\\d+` statt `\\d`
+  erfasst auch zweistellige Trials wie `t10`. `ignore_case = TRUE`
+  ersetzt umständliche Klassen wie `[Vv][Pp]`; deshalb muss `condition`
+  danach noch kleingeschrieben werden. `as.integer("01")` entfernt
+  führende Nullen von selbst.
+misconception: "Ein Regex muss nur irgendwo im String passen, um den ganzen String als gültig zu erkennen."
+check:
+  type: value
+  compare: data_frame
+  ignore_row_order: false
+  ignore_col_order: false
+  ignore_attributes: true
+  tolerance: 1.0e-8
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*\\^)(?![\\s\\S]*\\\\A)[\\s\\S]*(str_match|str_detect|str_extract)"
+    message: "Ohne Anker `^` am Anfang passt das Muster auch mitten im Namen (`backup_vp05_...`)."
+  - pattern: "(str_match|str_detect|str_extract|regex)\\([^\\n]*[^\\\\]\\.csv"
+    message: "Ein unmaskierter `.` passt auf jedes Zeichen; für einen echten Punkt braucht es `\\\\.`."
+  - pattern: "t\\(\\\\\\\\d\\)|\\\\\\\\d\\)\\\\\\\\\\."
+    message: "`\\\\d` passt auf genau eine Ziffer; `t10` braucht `\\\\d+`."
+  - pattern: "^(?![\\s\\S]*(ignore_case|\\(\\?i\\)|str_to_lower|tolower))[\\s\\S]*str_"
+    message: "Groß-/Kleinschreibung variiert (`VP01`, `.CSV`); nutze `regex(..., ignore_case = TRUE)` und schreibe `condition` klein."

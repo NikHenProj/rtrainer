@@ -1,0 +1,70 @@
+id: purrr-pmap-specs
+topic: purrr
+title: Eine Tabelle von Analysen mit pmap()
+level: 2
+kind: complete
+tags: [purrr, pmap, pmap_dbl, dots]
+packages: [purrr]
+seed: 1
+prompt: |
+  `specs` beschreibt pro Zeile eine Kennwertberechnung: Bedingung
+  (`condition`), Variable (`var`) und Trimmanteil (`trim`) für einen
+  getrimmten Mittelwert, dazu eine Beschriftung `label`. Ergänze in
+  `specs` die Spalte `value` mit dem jeweiligen Kennwert (auf 1 Stelle
+  gerundet) und gib `specs` zurück.
+
+  `cond_mean()` soll direkt zeilenweise mit den Spalten von `specs`
+  aufgerufen werden. Ergänze die Lücken `___` im Editor.
+setup: |
+  library(purrr)
+  driving_sim <- read.csv(rtrainer_data("driving_sim.csv"))
+  specs <- data.frame(
+    label = c("RT visuell", "RT visuell (getrimmt)", "Spur auditiv", "RT haptisch"),
+    condition = c("visuell", "visuell", "auditiv", "haptisch"),
+    var = c("rt_ms", "rt_ms", "lane_dev", "rt_ms"),
+    trim = c(0, 0.1, 0, 0.2)
+  )
+starter: |
+  cond_mean <- function(condition, var, trim, ___) {
+    x <- driving_sim[[var]][driving_sim$condition == condition]
+    round(mean(x, trim = trim, na.rm = TRUE), 1)
+  }
+  specs$value <- ___(___, cond_mean)
+  specs
+solution: |
+  cond_mean <- function(condition, var, trim, ...) {
+    x <- driving_sim[[var]][driving_sim$condition == condition]
+    round(mean(x, trim = trim, na.rm = TRUE), 1)
+  }
+  specs$value <- pmap_dbl(specs, cond_mean)
+  specs
+hints:
+  - "Ein Data Frame ist eine Liste gleich langer Spalten; genau das erwartet die `p`-Variante von `map`."
+  - "Die Spalten werden über ihre Namen den Argumenten zugeordnet. Was passiert mit der Spalte `label`, für die es kein Argument gibt?"
+  - "Die erste Lücke fängt überzählige Argumente ab (`...`); die Funktion liefert einen Double pro Zeile."
+explanation: |
+  `pmap_dbl(specs, cond_mean)` ruft `cond_mean()` einmal pro Zeile auf
+  und übergibt jede Spalte als gleichnamiges Argument, hier also
+  `label`, `condition`, `var` und `trim`. Ohne `...` bricht der Aufruf
+  ab (`unbenutztes Argument (label = ...)`), weil `label` keinen
+  Abnehmer hat; alternativ übergibt man nur die nötigen Spalten. Das
+  Muster trennt das Analysedesign (Tabelle) vom Code und eignet sich
+  für Simulationen oder Sensitivitätsanalysen: neue Zeile, neue Analyse.
+  `map2()` reicht nur für genau zwei parallele Eingaben.
+misconception: "pmap() verteilt die Spalten nach Position und ignoriert Spalten ohne passendes Argument."
+check:
+  type: value
+  compare: data_frame
+  ignore_row_order: false
+  ignore_col_order: false
+  ignore_attributes: true
+  tolerance: 1.0e-8
+common_mistakes:
+  - pattern: "___"
+    message: "Es sind noch Lücken `___` offen."
+  - pattern: "function\\(\\s*condition\\s*,\\s*var\\s*,\\s*trim\\s*\\)"
+    message: "`pmap()` übergibt auch `label` als Argument. Ohne `...` (oder ein Argument `label`) bricht der Aufruf ab."
+  - pattern: "pmap\\(\\s*specs"
+    message: "`pmap()` liefert eine Liste; `value` soll eine Double-Spalte sein (`pmap_dbl()`)."
+  - pattern: "map2"
+    message: "`map2()` läuft über genau zwei Eingaben; `cond_mean()` braucht drei. Dafür gibt es `pmap()`."

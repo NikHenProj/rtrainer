@@ -1,0 +1,13 @@
+id: fx-plot
+topic: plots
+title: Histogramm
+level: 2
+kind: write
+tags: [grafik]
+prompt: Zeichne ein Histogramm von `faithful$eruptions` mit `hist()`.
+solution: hist(faithful$eruptions)
+hints: []
+explanation: "`hist()` teilt die Werte in Klassen und zählt."
+check:
+  type: ast
+  require: [hist]

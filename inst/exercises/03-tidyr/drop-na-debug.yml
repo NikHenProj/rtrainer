@@ -1,0 +1,54 @@
+id: tidyr-drop-na-debug
+topic: tidyr
+title: drop_na() entfernt zu viel
+level: 2
+kind: debug
+tags: [tidyr, drop_na, na, summarise]
+packages: [dplyr, tidyr]
+seed: 1
+prompt: |
+  Gesucht ist pro Bedingung die mittlere Spurabweichung `lane_mean`
+  (auf 3 Stellen gerundet) und die Anzahl `n` der Trials mit gültiger
+  `lane_dev`. Nur fehlende `lane_dev`-Werte sollen ausgeschlossen
+  werden. Der Code liefert aber zu kleine `n`. Repariere ihn.
+  Ergebnis: Spalten `condition`, `lane_mean`, `n`.
+setup: |
+  library(dplyr)
+  library(tidyr)
+  driving_sim <- read.csv(rtrainer_data("driving_sim.csv"))
+starter: |
+  driving_sim |>
+    drop_na() |>
+    summarise(lane_mean = round(mean(lane_dev), 3), n = n(), .by = condition)
+solution: |
+  driving_sim |>
+    drop_na(lane_dev) |>
+    summarise(lane_mean = round(mean(lane_dev), 3), n = n(), .by = condition)
+hints:
+  - "Zähle mit `colSums(is.na(driving_sim))`, in welchen Spalten `NA` vorkommt."
+  - "`drop_na()` ohne Argumente prüft alle Spalten."
+  - "Gib `drop_na()` die Spalte an, auf die es ankommt."
+explanation: |
+  `drop_na()` ohne Spaltenangabe entfernt jede Zeile mit irgendeinem
+  `NA`, hier also auch Trials mit fehlender Reaktionszeit und alle
+  Trials von vp17 (Alter fehlt). Damit hängt die Stichprobe für
+  `lane_dev` an Ausfällen in ganz anderen Variablen (das ist
+  listenweiser Ausschluss und kann verzerren). `drop_na(lane_dev)` oder
+  `filter(!is.na(lane_dev))` schließt nur die relevanten Zeilen aus.
+  `mean(lane_dev, na.rm = TRUE)` allein reicht nicht, weil `n()` dann
+  weiter alle Zeilen zählt.
+misconception: "drop_na() ohne Argumente entfernt nur die NA der Spalte, die man danach auswertet."
+check:
+  type: value
+  compare: data_frame
+  ignore_row_order: true
+  ignore_col_order: false
+  ignore_attributes: true
+  tolerance: 1.0e-8
+common_mistakes:
+  - pattern: "na\\.omit\\("
+    message: "`na.omit()` entfernt wie `drop_na()` ohne Argumente jede Zeile mit irgendeinem `NA` (auch `rt_ms`, `age`)."
+  - pattern: "drop_na\\(\\s*\\)"
+    message: "`drop_na()` ohne Argumente prüft alle Spalten; Trials mit fehlender `rt_ms` oder fehlendem Alter fallen mit raus."
+  - pattern: "^(?![\\s\\S]*(drop_na\\(\\s*lane_dev|is\\.na\\(\\s*lane_dev))[\\s\\S]*na\\.rm"
+    message: "`na.rm = TRUE` korrigiert den Mittelwert, aber `n()` zählt weiter alle Zeilen. Entferne die Zeilen mit fehlender `lane_dev` vorher."

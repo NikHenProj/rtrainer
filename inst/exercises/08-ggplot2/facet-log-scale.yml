@@ -1,0 +1,59 @@
+id: ggplot2-facet-log-scale
+topic: ggplot2
+title: Facets und logarithmische Skala
+level: 2
+kind: write
+tags: [ggplot2, facets, skalen, transformation]
+packages: [ggplot2]
+seed: 1
+prompt: |
+  Reaktionszeiten sind rechtsschief. Zeichne ein Histogramm von `rt_ms`
+  mit `bins = 25`, ein Panel pro `condition`. Die x-Achse soll
+  logarithmisch (Basis 10) skaliert sein, aber in Millisekunden
+  beschriftet, mit Achsenmarken bei 500, 700, 1000 und 1500.
+
+  Der Plot ist der letzte Ausdruck deines Codes.
+setup: |
+  library(ggplot2)
+  driving_sim <- read.csv(rtrainer_data("driving_sim.csv"))
+starter: |
+  ggplot(driving_sim, aes(x = rt_ms))
+  # + Histogramm, Facets, Skala
+solution: |
+  ggplot(driving_sim, aes(rt_ms)) +
+    geom_histogram(bins = 25) +
+    facet_wrap(~ condition, ncol = 1) +
+    scale_x_log10(breaks = c(500, 700, 1000, 1500))
+hints:
+  - "Drei Bausteine: Geom, Facet und eine Skala für `x`."
+  - "Die Transformation gehört in die Skala, nicht in `aes()`: dann bleiben die Achsenbeschriftungen in ms."
+  - "`facet_wrap(~ condition)` und `scale_x_log10(breaks = c(500, 700, 1000, 1500))`."
+explanation: |
+  `scale_x_log10()` transformiert die Daten, bevor die Statistik
+  rechnet: Die 25 Bins sind auf der Log-Skala gleich breit, die Marken
+  bleiben aber in ms (500, 700, ...). `aes(x = log10(rt_ms))` liefert
+  dieselben Bins, die Achse zeigt dann jedoch 2,7 bis 3,2, was kaum
+  jemand liest. `coord_trans(x = "log10")` transformiert erst nach der
+  Statistik: Die Bins werden auf der ms-Skala gebildet und anschließend
+  verzerrt. Ob `facet_wrap()` oder `facet_grid(condition ~ .)` ist
+  Geschmackssache; untereinander (`ncol = 1`) lassen sich Verteilungen
+  auf gemeinsamer x-Achse am besten vergleichen.
+misconception: "Ob man die Daten oder die Achse transformiert, macht für den Plot keinen Unterschied."
+check:
+  type: plot
+  geoms: [bar]
+  mapping: {x: rt_ms}
+  facet: [condition]
+  scales: [x]
+  layers:
+    bar: [xmin, xmax, count, PANEL]
+  tolerance: 1.0e-6
+common_mistakes:
+  - pattern: "log10\\(\\s*rt_ms"
+    message: "Du transformierst die Daten in `aes()`; die Achse zeigt dann Log-Werte (2,7 bis 3,2) statt ms. `scale_x_log10()` transformiert und beschriftet in Originaleinheiten."
+  - pattern: "coord_trans(form)?\\("
+    message: "`coord_trans()` transformiert erst nach der Statistik: Die Bins werden auf der ms-Skala gebildet und dann verzerrt. Für gleich breite Bins auf der Log-Skala `scale_x_log10()` nutzen."
+  - pattern: "^(?![\\s\\S]*bins\\s*=\\s*25)[\\s\\S]*geom_histogram"
+    message: "Ohne `bins = 25` nimmt `geom_histogram()` 30 Bins (mit Warnung)."
+  - pattern: "^(?![\\s\\S]*breaks\\s*=)[\\s\\S]*scale_x"
+    message: "Die Achsenmarken legst du mit `breaks = c(500, 700, 1000, 1500)` in der Skala fest."

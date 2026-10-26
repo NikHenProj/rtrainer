@@ -1,0 +1,72 @@
+id: programming-vectorize-change
+topic: programmierung
+title: Schleife durch vektorisierten Code ersetzen
+level: 2
+kind: write
+tags: [vektorisierung, schleifen, funktionen, randfaelle]
+seed: 1
+prompt: |
+  Ein Kollege berechnet die prozentuale Veränderung der Reaktionszeit
+  gegenüber dem vorherigen Trial so:
+
+  ```r
+  rt_change_loop <- function(x) {
+    out <- NA
+    for (i in 2:length(x)) {
+      out <- c(out, (x[i] - x[i - 1]) / x[i - 1] * 100)
+    }
+    out
+  }
+  ```
+
+  Schreibe `rt_change(x)` **ohne Schleife** und ohne `apply`-/`map`-Familie.
+  Erwartet: gleiche Länge wie `x`, erster Wert `NA`, `NA` in `x` führt
+  zu `NA` an den betroffenen Stellen. Für einen leeren Vektor kommt
+  `numeric(0)` zurück, für einen einzelnen Wert `NA_real_`
+  (`rt_change_loop()` liefert in beiden Fällen Unsinn).
+starter: |
+  rt_change <- function(x) {
+    # dein Code
+  }
+solution: |
+  rt_change <- function(x) {
+    prev <- c(NA, x[-length(x)])
+    (x - prev) / prev * 100
+  }
+hints:
+  - "Arithmetik in R arbeitet elementweise auf ganzen Vektoren. Du brauchst nur einen zweiten Vektor mit dem jeweiligen Vorgänger."
+  - "Den Vorgänger-Vektor erhältst du, indem du vorne ein `NA` anhängst und hinten ein Element weglässt. Was macht `x[-length(x)]` bei Länge 0?"
+  - "`prev <- c(NA, x[-length(x)])`, danach `(x - prev) / prev * 100`."
+explanation: |
+  Statt Element für Element zu rechnen, verschiebt man `x` um eine
+  Stelle (`c(NA, x[-length(x)])`) und rechnet einmal mit beiden
+  Vektoren; die Schleife läuft dann in C. Die Randfälle ergeben sich
+  von selbst: Bei Länge 0 ist `prev` ein einzelnes `NA`, und Arithmetik
+  mit einem Vektor der Länge 0 ergibt `numeric(0)`. Die Schleife
+  scheitert genau dort, weil `2:length(x)` bei Länge 0 oder 1 rückwärts
+  zählt (`2:0`, `2:1`); `seq_len()`/`seq_along()` wären sicher. Zudem
+  wächst `out` mit `c()` in jedem Schritt, was jedes Mal kopiert.
+  `diff(x)` hat ein Element weniger und müsste mit `NA` aufgefüllt werden.
+misconception: "Die Schleife `for (i in 2:length(x))` läuft bei kurzen Vektoren einfach null Mal."
+check:
+  type: function
+  name: rt_change
+  forbid: [for, while, repeat, sapply, lapply, vapply, mapply, apply, map, map_dbl, Vectorize]
+  tests:
+    - args: "list(c(500, 600, 450))"
+      expect: "c(NA, 20, -25)"
+    - args: "list(c(800, NA, 1000, 900))"
+      expect: "c(NA, NA, NA, -10)"
+    - args: "list(numeric())"
+      expect: "numeric(0)"
+    - args: "list(1000)"
+      expect: "NA_real_"
+common_mistakes:
+  - pattern: "\\bdiff\\(\\s*x\\s*\\)\\s*/\\s*x\\b(?!\\s*\\[)"
+    message: "`diff(x)` hat ein Element weniger als `x`; die Division recycelt und teilt durch den falschen Wert."
+  - pattern: "diff\\(\\s*x\\s*\\)\\s*/\\s*(x\\[\\s*-\\s*1\\s*\\]|tail\\()"
+    message: "Geteilt wird durch den Vorgänger (`x[-length(x)]`), nicht durch den aktuellen Wert."
+  - pattern: "\\b(sapply|vapply|lapply|mapply|map\\w*)\\("
+    message: "`sapply()` und `map()` sind versteckte Schleifen; gesucht ist Arithmetik auf ganzen Vektoren mit einem verschobenen Vorgänger-Vektor."
+  - pattern: "1\\s*:\\s*length\\(|2\\s*:\\s*length\\("
+    message: "`1:length(x)` zählt bei einem leeren Vektor rückwärts (`1:0`); das bricht den Randfall."

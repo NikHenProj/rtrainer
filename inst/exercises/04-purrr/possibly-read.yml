@@ -1,0 +1,70 @@
+id: purrr-possibly-read
+topic: purrr
+title: Fehlende Dateien überspringen mit possibly()
+level: 3
+kind: complete
+tags: [purrr, possibly, safely, fehlerbehandlung, list_rbind]
+packages: [purrr]
+seed: 1
+prompt: |
+  Die Rohdaten liegen als eine CSV pro Versuchsperson vor; `paths`
+  enthält die erwarteten Dateien, eine davon fehlt. Lies alle
+  vorhandenen Dateien ein und füge sie zu einem Data Frame zusammen,
+  mit einer ersten Spalte `file` (Dateiname). Eine fehlende Datei soll
+  den Lauf nicht abbrechen, sondern übersprungen werden.
+
+  Ergänze die Lücken `___` im Editor.
+setup: |
+  library(purrr)
+  driving_sim <- read.csv(rtrainer_data("driving_sim.csv"))
+  raw_dir <- file.path(tempdir(), "raw")
+  dir.create(raw_dir, showWarnings = FALSE)
+  for (id in c("vp01", "vp02", "vp04", "vp05")) {
+    write.csv(driving_sim[driving_sim$vp_id == id, ],
+              file.path(raw_dir, paste0(id, ".csv")), row.names = FALSE)
+  }
+  paths <- file.path(raw_dir, paste0("vp0", 1:5, ".csv"))
+starter: |
+  read_maybe <- ___(read.csv, otherwise = ___)
+  paths |>
+    set_names(basename) |>
+    map(___) |>
+    list_rbind(names_to = "file")
+solution: |
+  read_maybe <- possibly(read.csv, otherwise = NULL)
+  paths |>
+    set_names(basename) |>
+    map(read_maybe) |>
+    list_rbind(names_to = "file")
+hints:
+  - "Gesucht ist ein Funktionsoperator: Er nimmt `read.csv` und gibt eine Funktion zurück, die bei einem Fehler einen Ersatzwert liefert."
+  - "Welcher Ersatzwert wird von `list_rbind()` einfach übergangen?"
+  - "`possibly(read.csv, otherwise = NULL)`; danach die neue Funktion in `map()` verwenden."
+explanation: |
+  `possibly()` umhüllt `read.csv()`: Tritt ein Fehler auf, kommt statt
+  des Abbruchs `otherwise` zurück. `NULL` ist der passende Ersatz, weil
+  `list_rbind()` `NULL`-Elemente übergeht; mit `NA` bricht es ab, weil
+  `NA` kein Data Frame ist. `set_names(basename)` benennt die Liste,
+  `names_to = "file"` macht die Namen zur Spalte. Fallstrick: Die fehlende
+  Datei verschwindet still. In der Praxis protokolliert man sie, etwa
+  mit `safely()`, das pro Aufruf `result` und `error` liefert, oder mit
+  `keep(paths, \(p) !file.exists(p))`.
+misconception: "Ein Fehler in einem Element lässt sich in map() nicht abfangen; dafür braucht es eine Schleife mit tryCatch()."
+check:
+  type: value
+  compare: data_frame
+  ignore_row_order: true
+  ignore_col_order: false
+  ignore_attributes: true
+  tolerance: 1.0e-8
+common_mistakes:
+  - pattern: "___"
+    message: "Es sind noch Lücken `___` offen."
+  - pattern: "otherwise\\s*=\\s*NA\\b"
+    message: "`list_rbind()` akzeptiert nur Data Frames oder `NULL`; `NA` als Ersatzwert bricht das Zusammenfügen ab."
+  - pattern: "safely\\("
+    message: "`safely()` liefert pro Datei eine Liste mit `result` und `error`, keinen Data Frame. Hier passt `possibly()` (oder danach `map(\"result\")`)."
+  - pattern: "map\\(\\s*read\\.csv\\s*\\)"
+    message: "Mit `read.csv` direkt bricht `map()` bei der fehlenden Datei ab. Verwende die umhüllte Funktion `read_maybe`."
+  - pattern: "^(?![\\s\\S]*names_to)[\\s\\S]*list_rbind"
+    message: "Ohne `names_to = \"file\"` gehen die Dateinamen beim Zusammenfügen verloren."

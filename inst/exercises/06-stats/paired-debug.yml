@@ -1,0 +1,60 @@
+id: stats-paired-debug
+topic: statistik
+title: Bedingungsvergleich bei Messwiederholung reparieren
+level: 2
+kind: debug
+tags: [t-test, gepaart, messwiederholung, aggregation, konfidenzintervall]
+packages: [dplyr, tidyr]
+seed: 1
+prompt: |
+  Der Code soll zeigen, um wie viel die Übernahme nach visueller Warnung
+  langsamer ist als nach haptischer, mit 95-%-KI. Er läuft, ignoriert
+  aber das Design: Dieselben 40 Personen haben beide Bedingungen
+  durchlaufen, jeweils mit 4 Trials.
+
+  Repariere die Analyse. Der letzte Ausdruck soll weiterhin
+  `c(res$estimate, res$conf.int)` sein, für die Differenz
+  `visuell - haptisch`.
+setup: |
+  library(dplyr)
+  library(tidyr)
+  driving_sim <- read.csv(rtrainer_data("driving_sim.csv"))
+starter: |
+  vis <- driving_sim$rt_ms[driving_sim$condition == "visuell"]
+  hap <- driving_sim$rt_ms[driving_sim$condition == "haptisch"]
+  res <- t.test(vis, hap)
+  c(res$estimate, res$conf.int)
+solution: |
+  wide <- driving_sim |>
+    filter(condition %in% c("visuell", "haptisch")) |>
+    summarise(rt = mean(rt_ms, na.rm = TRUE), .by = c(vp_id, condition)) |>
+    pivot_wider(names_from = condition, values_from = rt)
+  res <- t.test(wide$visuell, wide$haptisch, paired = TRUE)
+  c(res$estimate, res$conf.int)
+hints:
+  - "Zwei Probleme: Was ist die unabhängige Einheit, und welche Werte gehören zusammen?"
+  - "Mittle pro Person und Bedingung, bring beide Bedingungen nebeneinander (eine Zeile pro Person) und teste die Differenzen."
+  - "`summarise(..., .by = c(vp_id, condition))`, `pivot_wider()`, dann `t.test(wide$visuell, wide$haptisch, paired = TRUE)`."
+explanation: |
+  Der ursprüngliche Code behandelt 2 × 160 Trials als unabhängige
+  Stichproben: Personen zählen mehrfach (Pseudoreplikation), und die
+  großen Unterschiede zwischen Personen landen im Fehlerterm. Gepaart
+  auf Personenebene testet man die 40 Differenzen: visuell ist im
+  Mittel etwa 240 ms langsamer, 95-%-KI [217, 263] ms. Das ist ein
+  großer, präzise geschätzter Effekt; standardisiert ergibt
+  `d_z = mean(diff) / sd(diff)` etwa 3.3. `paired = TRUE` auf Trial-Ebene wäre
+  falsch, weil die Trials einer Person nicht unabhängig sind und Trial 1
+  visuell kein natürliches Paar zu Trial 1 haptisch ist.
+misconception: "Zwei Bedingungen sind zwei Stichproben, auch wenn dieselben Personen beide durchlaufen haben."
+check:
+  type: value
+  tolerance: 1.0e-6
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*vp_id)[\\s\\S]*paired\\s*=\\s*(TRUE|T)\\b"
+    message: "Gepaart ist richtig, aber die Einheit ist noch der Trial. Die 4 Trials einer Person sind nicht unabhängig: erst pro `vp_id` und Bedingung mitteln."
+  - pattern: "^(?![\\s\\S]*paired\\s*=\\s*(TRUE|T)\\b)[\\s\\S]*vp_id"
+    message: "Die Aggregation stimmt, aber dieselben Personen stecken in beiden Bedingungen. Der Test muss die Differenzen pro Person nutzen (`paired = TRUE`)."
+  - pattern: "^(?![\\s\\S]*vp_id)(?![\\s\\S]*paired)"
+    message: "Noch unverändert: Der Test zählt jeden Trial als eigene Person und ignoriert die Paarung."
+  - pattern: "t\\.test\\([^)]*~"
+    message: "Die Formel-Schnittstelle unterstützt `paired = TRUE` nicht mehr; übergib zwei Vektoren in derselben Personenreihenfolge."

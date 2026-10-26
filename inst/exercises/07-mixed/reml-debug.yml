@@ -1,0 +1,53 @@
+id: mixed-reml-debug
+topic: mixed-models
+title: Likelihood-Ratio-Test für feste Effekte reparieren
+level: 2
+kind: debug
+tags: [lme4, modellvergleich, likelihood-ratio, reml, ml, anova]
+packages: [lme4]
+seed: 1
+prompt: |
+  Der Code soll per Likelihood-Ratio-Test prüfen, ob `condition` die
+  Reaktionszeit erklärt (Nullmodell ohne `condition`, beide mit
+  Zufallsintercept pro `vp_id`). Er läuft, aber die Teststatistik ist
+  falsch.
+
+  Repariere ihn. Der letzte Ausdruck soll ein Vektor
+  `c(chisq = ..., df = ...)` sein.
+setup: |
+  driving_sim <- read.csv(rtrainer_data("driving_sim.csv"))
+starter: |
+  m0 <- lmer(rt_ms ~ 1 + (1 | vp_id), data = driving_sim)
+  m1 <- lmer(rt_ms ~ condition + (1 | vp_id), data = driving_sim)
+  chisq <- as.numeric(2 * (logLik(m1) - logLik(m0)))
+  c(chisq = chisq, df = 2)
+solution: |
+  m0 <- lmer(rt_ms ~ 1 + (1 | vp_id), data = driving_sim, REML = FALSE)
+  m1 <- lmer(rt_ms ~ condition + (1 | vp_id), data = driving_sim, REML = FALSE)
+  chisq <- as.numeric(2 * (logLik(m1) - logLik(m0)))
+  c(chisq = chisq, df = 2)
+hints:
+  - "Wie schätzt `lmer()` standardmäßig, und wovon hängt dieses Kriterium ab?"
+  - "Die REML-Likelihood hängt von der Matrix der festen Effekte ab. Modelle mit unterschiedlichen festen Effekten sind so nicht vergleichbar."
+  - "Mit `REML = FALSE` schätzen oder `anova(m0, m1)` nutzen, das automatisch mit ML neu schätzt."
+explanation: |
+  REML maximiert die Likelihood der Residuen nach Herausrechnen der
+  festen Effekte; ändert sich die Fixed-Effects-Matrix, ändert sich
+  die Likelihood selbst, und die Differenz ist kein LRT (hier 279 statt
+  265). Mit ML ergibt sich χ²(2) = 265, also starke Evidenz für
+  Bedingungsunterschiede; die Effektgröße steht aber in den
+  Koeffizienten (visuell +184 ms, 95-%-KI [158, 210], gegenüber
+  auditiv), nicht im p-Wert. `anova(m0, m1)` refittet automatisch mit
+  ML. Für Vergleiche verschiedener Zufallsstrukturen bei gleichen
+  festen Effekten ist REML dagegen richtig (`refit = FALSE`).
+misconception: "REML-Likelihoods lassen sich wie jede Likelihood zwischen beliebigen Modellen vergleichen."
+check:
+  type: value
+  tolerance: 1.0e-5
+common_mistakes:
+  - pattern: "refit\\s*=\\s*(FALSE|F)\\b"
+    message: "`refit = FALSE` vergleicht die REML-Fits; das ist nur bei gleichen festen Effekten zulässig. Hier unterscheiden sich die festen Effekte."
+  - pattern: "^(?![\\s\\S]*REML\\s*=\\s*(FALSE|F)\\b)(?![\\s\\S]*anova\\s*\\()"
+    message: "Beide Modelle sind noch mit REML geschätzt (Standard von `lmer()`). Die REML-Likelihood hängt von den festen Effekten ab; für diesen Vergleich braucht es ML."
+  - pattern: "^(?![\\s\\S]*m0\\s*<-[^\\n]*REML\\s*=\\s*(FALSE|F))[\\s\\S]*m1\\s*<-[^\\n]*REML\\s*=\\s*(FALSE|F)|^(?![\\s\\S]*m1\\s*<-[^\\n]*REML\\s*=\\s*(FALSE|F))[\\s\\S]*m0\\s*<-[^\\n]*REML\\s*=\\s*(FALSE|F)"
+    message: "Nur eines der Modelle ist mit ML geschätzt; beide müssen dasselbe Kriterium verwenden."

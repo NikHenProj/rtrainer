@@ -1,0 +1,43 @@
+id: stats-padjust-predict
+topic: statistik
+title: Holm-Korrektur vorhersagen
+level: 2
+kind: predict
+tags: [p.adjust, multiples-testen, holm]
+seed: 1
+prompt: |
+  Was liefert der folgende Code? Führe ihn nicht aus, sondern gib das
+  Ergebnis als R-Wert ein (z. B. `c(0.1, 0.2, 0.3)`).
+
+  ```r
+  p <- c(0.04, 0.01, 0.03)
+  p.adjust(p, method = "holm")
+  ```
+starter: |
+  # Deine Vorhersage als Wert, z. B. c(0.1, 0.2, 0.3)
+solution: |
+  c(0.06, 0.03, 0.06)
+hints:
+  - "Holm sortiert die p-Werte aufsteigend und multipliziert den kleinsten mit 3, den nächsten mit 2, den größten mit 1."
+  - "Sortiert: 0.01 × 3 = 0.03, 0.03 × 2 = 0.06, 0.04 × 1 = 0.04. Ein korrigierter Wert darf aber nicht kleiner sein als sein Vorgänger."
+  - "Nach der Monotonie-Regel wird aus 0.04 eine 0.06; das Ergebnis steht in der ursprünglichen Reihenfolge von `p`."
+explanation: |
+  Holm ist schrittweise: Sortiert werden die p-Werte mit 3, 2, 1
+  multipliziert und dann kumulativ maximiert, damit die Rangfolge der
+  korrigierten Werte erhalten bleibt (0.03, 0.06, 0.06). `p.adjust()`
+  gibt sie in der Eingabereihenfolge zurück: `c(0.06, 0.03, 0.06)`.
+  Bonferroni wäre `c(0.12, 0.03, 0.09)`; Holm kontrolliert dieselbe
+  familienweise Fehlerrate, ist aber nie strenger und deshalb fast
+  immer vorzuziehen. Korrigiert werden nur p-Werte; wer Intervalle
+  berichtet, braucht simultane KIs (z. B. Tukey).
+misconception: "Holm multipliziert jeden p-Wert einzeln mit seinem Rang, ohne die Reihenfolge zu wahren."
+check:
+  type: value
+  tolerance: 1.0e-8
+common_mistakes:
+  - pattern: "^[\\s\\S]*?c\\(\\s*0?\\.120*\\s*,\\s*0?\\.030*\\s*,\\s*0?\\.090*\\s*\\)\\s*$"
+    message: "Das ist Bonferroni (alle mal 3). Holm multipliziert schrittweise mit 3, 2, 1."
+  - pattern: "^[\\s\\S]*?c\\(\\s*0?\\.040*\\s*,\\s*0?\\.030*\\s*,\\s*0?\\.060*\\s*\\)\\s*$"
+    message: "Fast: Die Faktoren stimmen, aber Holm erzwingt Monotonie. Der größte p-Wert kann nicht kleiner korrigiert sein als der zweitgrößte (0.06)."
+  - pattern: "^[\\s\\S]*?c\\(\\s*0?\\.030*\\s*,\\s*0?\\.060*\\s*,\\s*0?\\.060*\\s*\\)\\s*$"
+    message: "Die Werte stimmen, aber `p.adjust()` gibt sie in der ursprünglichen Reihenfolge von `p` zurück, nicht sortiert."

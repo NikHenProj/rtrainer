@@ -1,0 +1,66 @@
+id: mixed-allfit-singular
+topic: mixed-models
+title: Singuläres Modell mit allFit() prüfen und vereinfachen
+level: 3
+kind: write
+tags: [lme4, konvergenz, allfit, singular, zufallsstruktur, modellvergleich, reml]
+packages: [lme4]
+seed: 1
+prompt: |
+  Das maximale Modell `fit_max` (im Setup geschätzt) meldet
+  `boundary (singular) fit`. Bei Konvergenzwarnungen ist das Vorgehen
+  dasselbe: erst prüfen, ob es am Optimierer liegt, dann die
+  Zufallsstruktur rechtfertigen.
+
+  1. Schätze `fit_max` mit `allFit()` mit allen verfügbaren Optimierern
+     neu und bestimme die größte Spannweite (max − min) eines festen
+     Effekts über die Optimierer (`fixef_range`).
+  2. Vergleiche `fit_max` per Likelihood-Ratio-Test mit dem Modell, das
+     nur einen Zufallsintercept pro `vp_id` hat (gleiche festen
+     Effekte).
+
+  Liefere `c(fixef_range = ..., chisq = ..., df = ...)`.
+setup: |
+  driving_sim <- read.csv(rtrainer_data("driving_sim.csv"))
+  driving_sim$trial_c <- driving_sim$trial - 2.5
+  fit_max <- suppressMessages(lmer(
+    rt_ms ~ condition * trial_c + (1 + condition + trial_c | vp_id),
+    data = driving_sim
+  ))
+starter: |
+  isSingular(fit_max)
+  # af <- allFit(...)
+solution: |
+  af <- suppressMessages(allFit(fit_max, verbose = FALSE))
+  fe <- summary(af)$fixef
+  fixef_range <- max(apply(fe, 2, function(x) max(x) - min(x)))
+  fit_ri <- lmer(rt_ms ~ condition * trial_c + (1 | vp_id), data = driving_sim)
+  lrt <- anova(fit_ri, fit_max, refit = FALSE)
+  c(fixef_range = fixef_range, chisq = lrt$Chisq[2], df = lrt$Df[2])
+hints:
+  - "`summary(allFit(fit_max))` enthält eine Matrix `fixef` mit einer Zeile pro Optimierer. Gleiche Werte bedeuten: kein Optimiererproblem."
+  - "Spannweite pro Spalte mit `apply(fe, 2, ...)`, davon das Maximum. Das reduzierte Modell hat dieselben festen Effekte und `(1 | vp_id)`."
+  - "Beim Vergleich von Zufallsstrukturen mit gleichen festen Effekten bleibt man bei REML: `anova(fit_ri, fit_max, refit = FALSE)`, dann `Chisq[2]` und `Df[2]`."
+explanation: |
+  Alle Optimierer landen bei denselben festen Effekten (Spannweite
+  praktisch 0) und alle singulär: Das ist kein numerisches Problem,
+  sondern die Daten tragen die 9 zusätzlichen Varianz- und
+  Korrelationsparameter nicht (Korrelationen ±1, Slope-SDs 8-13 ms
+  bei Residual-SD 112 ms). Der REML-Vergleich ergibt χ²(9) = 5.3,
+  p = .80; das reduzierte Modell ist gerechtfertigt (bei Tests auf dem
+  Rand des Parameterraums ist der LRT sogar konservativ). Ohne
+  `refit = FALSE` refittet `anova()` mit ML (χ² = 5.4); für
+  Zufallsstrukturen bei gleichen festen Effekten ist REML vorzuziehen.
+  Warnungen nur über `control` stummzuschalten löst nichts.
+misconception: "Eine Singularitäts- oder Konvergenzmeldung heißt, dass der Optimierer versagt hat; ein anderer Optimierer behebt das."
+check:
+  type: value
+  tolerance: 1.0e-4
+  require: [allFit]
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*refit\\s*=\\s*(FALSE|F)\\b)[\\s\\S]*anova\\s*\\("
+    message: "`anova()` refittet beide Modelle ohne `refit = FALSE` mit ML. Beim Vergleich von Zufallsstrukturen mit gleichen festen Effekten bleibt man bei REML."
+  - pattern: "\\$sdcor"
+    message: "`sdcor` enthält die Varianzparameter; gefragt ist die Spannweite der festen Effekte (`$fixef`)."
+  - pattern: "rt_ms\\s*~\\s*condition\\s*\\+\\s*trial_c\\s*\\+\\s*\\(\\s*1\\s*\\|"
+    message: "Das reduzierte Modell braucht dieselben festen Effekte wie `fit_max`, inklusive Interaktion (`condition * trial_c`); sonst testet der Vergleich zwei Dinge zugleich."

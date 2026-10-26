@@ -1,0 +1,52 @@
+id: dplyr-across
+topic: dplyr
+title: Mehrere Spalten mit across()
+level: 2
+kind: write
+tags: [dplyr, across, summarise, group_by]
+packages: [dplyr]
+seed: 1
+prompt: |
+  Berechne in `driving_sim` pro Bedingung (`condition`) den Mittelwert
+  von `rt_ms` und `lane_dev` (fehlende Werte ignorieren). Verwende
+  `across()`. Die Spalten heißen `condition`, `rt_ms_mean`,
+  `lane_dev_mean`.
+setup: |
+  library(dplyr)
+  driving_sim <- read.csv(rtrainer_data("driving_sim.csv"))
+starter: |
+  driving_sim |>
+    group_by(condition) |>
+    # dein Code
+solution: |
+  driving_sim |>
+    group_by(condition) |>
+    summarise(across(
+      c(rt_ms, lane_dev),
+      \(x) mean(x, na.rm = TRUE),
+      .names = "{.col}_mean"
+    ))
+hints:
+  - "`across(spalten, funktion)` wendet eine Funktion auf mehrere Spalten an."
+  - "Zusätzliche Argumente wie `na.rm = TRUE` übergibst du über eine anonyme Funktion: `\\(x) mean(x, na.rm = TRUE)`."
+  - "Die Namen steuerst du mit `.names = \"{.col}_mean\"`."
+explanation: |
+  `across()` erzeugt innerhalb von `summarise()` oder `mutate()` eine
+  Spalte pro ausgewählter Eingangsspalte. Ohne `.names` behielten die
+  Ergebnisse die Originalnamen und würden in `mutate()` die Rohdaten
+  überschreiben. Zusätzliche Argumente über `...` (`across(x, mean,
+  na.rm = TRUE)`) sind seit dplyr 1.1 veraltet; die anonyme Funktion
+  ist eindeutig und wird bei jeder Gruppe korrekt ausgewertet.
+misconception: "na.rm muss nicht gesetzt werden, weil summarise() fehlende Werte selbst überspringt."
+check:
+  type: value
+  compare: data_frame
+  ignore_row_order: true
+  ignore_col_order: false
+  ignore_attributes: true
+  tolerance: 1.0e-8
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*na\\.rm)[\\s\\S]*across"
+    message: "Ohne `na.rm = TRUE` liefert `mean()` bei jeder Gruppe mit einem `NA` ebenfalls `NA`."
+  - pattern: "^(?![\\s\\S]*\\.names)[\\s\\S]*across"
+    message: "Ohne `.names` behalten die Spalten ihre Originalnamen. Gefordert sind `rt_ms_mean` und `lane_dev_mean`."

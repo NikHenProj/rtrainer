@@ -1,0 +1,73 @@
+id: programming-trycatch-slope
+topic: programmierung
+title: Robuste Steigung pro Person mit tryCatch()
+level: 2
+kind: write
+tags: [trycatch, fehlerbehandlung, conditions, lm]
+seed: 1
+prompt: |
+  Für jede Versuchsperson soll der Lerneffekt über die Trials geschätzt
+  werden: die Steigung aus `lm(rt_ms ~ trial, data = d)`. Bei manchen
+  Teilmengen fehlen alle Reaktionszeiten, dann bricht `lm()` mit einem
+  Fehler ab.
+
+  Schreibe `rt_slope(d)`, die die Steigung (Koeffizient `trial`) als
+  einzelne Zahl zurückgibt und bei einem Fehler in `lm()` stattdessen
+  `NA_real_` liefert. Ein Beispielaufruf:
+  `rt_slope(driving_sim[driving_sim$vp_id == "vp01", ])`.
+setup: |
+  driving_sim <- read.csv(rtrainer_data("driving_sim.csv"))
+starter: |
+  rt_slope <- function(d) {
+    fit <- lm(rt_ms ~ trial, data = d)
+    unname(coef(fit)["trial"])
+  }
+solution: |
+  rt_slope <- function(d) {
+    tryCatch(
+      {
+        fit <- lm(rt_ms ~ trial, data = d)
+        unname(coef(fit)["trial"])
+      },
+      error = function(e) NA_real_
+    )
+  }
+hints:
+  - "Umschließe den Teil, der fehlschlagen kann, mit `tryCatch()`."
+  - "Ein Handler ist eine Funktion, die die Bedingung als Argument bekommt; ihr Rückgabewert wird zum Ergebnis von `tryCatch()`."
+  - "`tryCatch({ ... }, error = function(e) NA_real_)`, mit `lm()` und `coef()` im Block."
+explanation: |
+  `tryCatch()` wertet den Block aus; tritt ein `error` auf, ruft es den
+  Handler mit dem Bedingungsobjekt auf, und dessen Rückgabewert ersetzt
+  das Ergebnis. Der Handler muss eine Funktion sein: `error = NA_real_`
+  führt beim ersten Fehler selbst zu einem Fehler. Wichtig ist der
+  Typ: `NA_real_` hält die Funktion typstabil, damit z. B. `map_dbl()`
+  oder `vapply()` über alle Personen nicht abbrechen. Ein `warning =`
+  Handler fängt nur Warnungen ab, keine Fehler. Fallstrick: Wer jeden
+  Fehler still in `NA` verwandelt, übersieht auch echte Programmierfehler
+  (Tippfehler im Spaltennamen); `conditionMessage(e)` mitzuprotokollieren
+  hilft. Mit purrr erledigt `possibly()` dasselbe als Funktionsoperator.
+misconception: "Ein Handler in tryCatch() ist der Ersatzwert selbst; außerdem fängt warning = auch Fehler ab."
+check:
+  type: function
+  name: rt_slope
+  tests:
+    - args: "list(data.frame(trial = 1:4, rt_ms = c(1000, 980, 960, 940)))"
+      expect: "-20"
+    - args: "list(data.frame(trial = 1:4, rt_ms = c(900, NA, 860, NA)))"
+      expect: "-20"
+    - args: "list(data.frame(trial = 1:4, rt_ms = NA_real_))"
+      expect: "NA_real_"
+    - args: "list(data.frame(trial = integer(), rt_ms = numeric()))"
+      expect: "NA_real_"
+    - args: "list(read.csv(rtrainer_data(\"driving_sim.csv\")))"
+      expect: "unname(coef(lm(rt_ms ~ trial, data = read.csv(rtrainer_data(\"driving_sim.csv\"))))[\"trial\"])"
+common_mistakes:
+  - pattern: "error\\s*=\\s*NA"
+    message: "Der Handler muss eine Funktion sein (`function(e) NA_real_`); ein Wert wird beim Fehler aufgerufen und scheitert selbst."
+  - pattern: "function\\(\\s*\\w*\\s*\\)\\s*\\{?\\s*NA\\b(?!_)"
+    message: "`NA` ist logisch; die Funktion soll typstabil eine Zahl liefern (`NA_real_`)."
+  - pattern: "warning\\s*=\\s*function"
+    message: "Ein `warning`-Handler fängt keine Fehler ab; dafür braucht es `error = function(e) ...`."
+  - pattern: "\\btry\\("
+    message: "`try()` liefert bei einem Fehler ein Objekt der Klasse `try-error` statt `NA_real_`; nutze `tryCatch()` mit Handler."

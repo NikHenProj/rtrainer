@@ -1,0 +1,56 @@
+id: programming-closure-predict
+topic: programmierung
+title: Zähler-Funktionen und ihre Environments
+level: 1
+kind: predict
+tags: [environments, closures, scoping]
+seed: 1
+prompt: |
+  Für das Protokoll eines Fahrsimulator-Laufs soll jede Versuchsperson
+  einen eigenen Trial-Zähler bekommen. Was liefert der letzte Ausdruck?
+  Führe den Code nicht aus, sondern gib das Ergebnis als R-Wert ein.
+
+  ```r
+  make_counter <- function() {
+    n <- 0
+    function() {
+      n <<- n + 1
+      n
+    }
+  }
+  vp01 <- make_counter()
+  vp02 <- make_counter()
+  vp01()
+  vp01()
+  c(vp01(), vp02(), exists("n"))
+  ```
+starter: |
+  # Deine Vorhersage als Wert, z. B. c(1, 2)
+solution: |
+  c(3, 1, 0)
+hints:
+  - "Jeder Aufruf von `make_counter()` erzeugt ein neues Ausführungs-Environment mit eigenem `n`."
+  - "`<<-` sucht `n` in den umgebenden Environments der inneren Funktion, nicht im globalen Environment."
+  - "`vp01` wurde vorher schon zweimal aufgerufen; `c()` macht aus `TRUE`/`FALSE` eine Zahl."
+explanation: |
+  Jeder Aufruf von `make_counter()` legt ein frisches Environment mit
+  `n <- 0` an; die zurückgegebene Funktion behält es als Enclosure.
+  `<<-` sucht `n` ab dem Eltern-Environment der inneren Funktion und
+  findet es dort, also zählt jeder Zähler für sich: `vp01` steht nach
+  drei Aufrufen bei 3, `vp02` bei 1. Im globalen Environment entsteht
+  kein `n`, `exists("n")` ist `FALSE` und wird in `c()` zu 0. Fallstrick:
+  Findet `<<-` die Variable in keinem umgebenden Environment, legt es
+  sie global an; dann teilen sich alle Zähler still einen Wert.
+misconception: "`<<-` schreibt immer ins globale Environment, darum teilen sich alle Zähler ein n."
+check:
+  type: value
+  tolerance: 1.0e-8
+common_mistakes:
+  - pattern: "c\\(\\s*3\\s*,\\s*4\\b|c\\(\\s*3\\s*,\\s*3\\b"
+    message: "Die Zähler teilen sich kein `n`: Jeder Aufruf von `make_counter()` erzeugt ein eigenes Environment."
+  - pattern: "c\\(\\s*1\\s*,\\s*1\\b"
+    message: "`<<-` ändert das `n` im Enclosure dauerhaft; der Zähler beginnt nicht bei jedem Aufruf neu."
+  - pattern: "c\\(\\s*3\\s*,\\s*1\\s*,\\s*(1|TRUE)\\s*\\)"
+    message: "`<<-` findet `n` im Environment von `make_counter()`; ein globales `n` entsteht nicht."
+  - pattern: "TRUE|FALSE"
+    message: "`c()` mit Zahlen und einem logischen Wert ergibt einen numerischen Vektor (`FALSE` wird zu 0)."

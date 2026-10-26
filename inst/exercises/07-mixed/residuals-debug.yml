@@ -1,0 +1,56 @@
+id: mixed-residuals-debug
+topic: mixed-models
+title: Residuen mit fehlenden Werten an die Daten hängen
+level: 2
+kind: debug
+tags: [lme4, diagnostik, residuen, na.action, fehlende-werte, varianzhomogenitaet]
+packages: [lme4]
+seed: 1
+prompt: |
+  Zur Diagnostik sollen die Residuen des Modells als Spalte an
+  `driving_sim` gehängt werden, um ihre Streuung pro Bedingung zu
+  vergleichen (Varianzhomogenität). Der Code bricht ab.
+
+  Repariere ihn so, dass jede Zeile ihr eigenes Residuum bekommt (bei
+  fehlender `rt_ms` `NA`) und das Modell alle Zeilen mit vorhandener
+  `rt_ms` nutzt. Der letzte Ausdruck bleibt die Residual-SD pro
+  Bedingung (benannter Vektor aus `tapply()`).
+setup: |
+  driving_sim <- read.csv(rtrainer_data("driving_sim.csv"))
+starter: |
+  fit <- lmer(rt_ms ~ condition + (1 | vp_id), data = driving_sim)
+  driving_sim$resid <- residuals(fit)
+  tapply(driving_sim$resid, driving_sim$condition, sd)
+solution: |
+  fit <- lmer(rt_ms ~ condition + (1 | vp_id), data = driving_sim,
+              na.action = na.exclude)
+  driving_sim$resid <- residuals(fit)
+  tapply(driving_sim$resid, driving_sim$condition, sd, na.rm = TRUE)
+hints:
+  - "Wie viele Werte liefert `residuals(fit)`, und wie viele Zeilen hat `driving_sim`?"
+  - "`lmer()` entfernt die 12 Zeilen mit fehlender `rt_ms` (`na.omit`). Es gibt eine `na.action`, die die Lücken in Residuen und Vorhersagen wieder mit `NA` auffüllt."
+  - "`na.action = na.exclude` im Modell, danach `sd(..., na.rm = TRUE)`."
+explanation: |
+  Standardmäßig wirft `lmer()` Zeilen mit fehlenden Werten weg, und
+  `residuals()` liefert nur 468 Werte für 480 Zeilen. `na.exclude`
+  merkt sich die Positionen und füllt sie mit `NA`, sodass Residuen
+  und `fitted()` zeilengenau passen. Die Residual-SD liegt pro
+  Bedingung zwischen 105 (haptisch) und 118 ms (auditiv), ein
+  Verhältnis von 1.1, also kein Hinweis auf problematische
+  Heteroskedastizität. Fallstrick: `na.omit(driving_sim)` entfernt auch
+  die Zeilen mit fehlender `lane_dev` und ändert damit das Modell.
+  Zur weiteren Diagnostik: `plot(fit)` (Residuen gegen Vorhersage) und
+  `qqnorm(ranef(fit)$vp_id[[1]])` für die Personeneffekte.
+misconception: "Residuen haben immer so viele Elemente wie der Data Frame Zeilen hat."
+check:
+  type: value
+  tolerance: 1.0e-6
+common_mistakes:
+  - pattern: "rep\\s*\\(\\s*NA|c\\s*\\(\\s*residuals\\s*\\(|length\\s*\\([^)]*\\)\\s*<-"
+    message: "Mit `NA` am Ende aufgefüllt landen die Residuen in den falschen Zeilen: Die fehlenden `rt_ms` liegen mitten im Datensatz. Nutze `na.action = na.exclude`."
+  - pattern: "na\\.omit\\s*\\(\\s*driving_sim\\s*\\)|drop_na\\s*\\(\\s*\\)|complete\\.cases\\s*\\(\\s*driving_sim\\s*\\)"
+    message: "Das entfernt auch Zeilen, in denen nur `lane_dev` fehlt; das Modell verliert Trials mit gültiger `rt_ms`. Nur fehlende `rt_ms` dürfen wegfallen."
+  - pattern: "na\\.exclude(?![\\s\\S]*na\\.rm)"
+    message: "Die Residuen passen jetzt, enthalten aber `NA`; `sd()` braucht dann `na.rm = TRUE`."
+  - pattern: "^(?![\\s\\S]*na\\.(exclude|omit))(?![\\s\\S]*is\\.na)(?![\\s\\S]*drop_na)"
+    message: "`residuals(fit)` hat 468 Werte, `driving_sim` 480 Zeilen: `lmer()` hat die Zeilen mit fehlender `rt_ms` entfernt. Sorge dafür, dass die Residuen zeilengenau zu den Daten passen."

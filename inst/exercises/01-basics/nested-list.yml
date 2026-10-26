@@ -1,0 +1,42 @@
+id: basics-nested-list
+topic: basics
+title: Verschachtelte Listen indizieren
+level: 1
+kind: write
+tags: [listen, indizierung]
+seed: 1
+prompt: |
+  `studie` ist eine verschachtelte Liste (siehe Setup: `str(studie)`).
+  Gib die Reaktionszeit aus dem **dritten** Durchgang von `vp02` als
+  einzelne Zahl (numerischer Vektor der Länge 1) zurück.
+setup: |
+  studie <- list(
+    meta = list(name = "TOR-Pilot", jahr = 2025),
+    vps = list(
+      vp01 = list(alter = 34, rt = c(812, 765, 901, 744)),
+      vp02 = list(alter = 51, rt = c(1032, 987, 1104, 950)),
+      vp03 = list(alter = 27, rt = c(701, 688, 730, 676))
+    )
+  )
+starter: |
+  # studie ist schon geladen
+solution: |
+  studie[["vps"]][["vp02"]][["rt"]][3]
+hints:
+  - "Arbeite dich Ebene für Ebene vor: `studie` → `vps` → `vp02` → `rt`."
+  - "`[` liefert wieder eine Liste, `[[` bzw. `$` liefert das Element selbst."
+  - "Am Ende brauchst du einen atomaren Vektor, aus dem du mit `[3]` das dritte Element nimmst."
+explanation: |
+  `[[` (oder `$`) holt den Inhalt eines Listenelements, `[` dagegen eine
+  Teilliste. `studie["vps"]` ist also wieder eine Liste der Länge 1, und
+  `studie["vps"]["vp02"]` ergibt `list(NA = NULL)` statt eines Fehlers.
+  Erst auf dem atomaren Vektor `rt` wählt `[3]` ein Element aus.
+  `studie$vps$vp02$rt[3]` ist gleichwertig.
+misconception: "`[` und `[[` sind bei Listen austauschbar."
+check:
+  type: value
+common_mistakes:
+  - pattern: "studie\\[\\s*[\"']vps[\"']\\s*\\]"
+    message: "`studie[\"vps\"]` liefert eine Liste, die `vps` enthält, nicht `vps` selbst. Nutze `[[` oder `$`."
+  - pattern: "\\[\\[\\s*3\\s*\\]\\]\\s*$"
+    message: "`[[3]]` auf `vp02` wäre das dritte Listenelement; du brauchst das dritte Element des Vektors `rt`."

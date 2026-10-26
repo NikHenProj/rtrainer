@@ -1,0 +1,61 @@
+id: dplyr-window-cumsum
+topic: dplyr
+title: Laufende Kennwerte pro Person
+level: 3
+kind: write
+tags: [dplyr, window, lag, cumsum, arrange]
+packages: [dplyr]
+seed: 1
+prompt: |
+  Die Zeilen von `driving_sim` liegen in zufälliger Reihenfolge vor.
+  Berechne pro Person und Bedingung, in Trial-Reihenfolge:
+
+  - `diff_rt`: `rt_ms` minus `rt_ms` des vorherigen Trials,
+  - `n_kritisch`: laufende Anzahl der Trials mit `lane_dev > 0.4`
+    (fehlende `lane_dev` zählen als nicht kritisch).
+
+  Behalte die Spalten `vp_id`, `condition`, `trial`, `rt_ms`,
+  `diff_rt`, `n_kritisch`.
+setup: |
+  library(dplyr)
+  driving_sim <- read.csv(rtrainer_data("driving_sim.csv"))
+  set.seed(1)
+  driving_sim <- driving_sim[sample(nrow(driving_sim)), ]
+starter: |
+  driving_sim |>
+    # dein Code
+solution: |
+  driving_sim |>
+    arrange(vp_id, condition, trial) |>
+    mutate(
+      diff_rt = rt_ms - lag(rt_ms),
+      n_kritisch = cumsum(coalesce(lane_dev > 0.4, FALSE)),
+      .by = c(vp_id, condition)
+    ) |>
+    select(vp_id, condition, trial, rt_ms, diff_rt, n_kritisch)
+hints:
+  - "Window-Funktionen hängen von der Zeilenreihenfolge ab. Sortiere zuerst."
+  - "`lag()` und `cumsum()` in einem gruppierten `mutate()` (`.by = c(vp_id, condition)`)."
+  - "`cumsum()` wird ab dem ersten `NA` komplett `NA`. Ersetze fehlende Vergleiche mit `coalesce(lane_dev > 0.4, FALSE)`."
+explanation: |
+  `lag()` nimmt die vorherige Zeile, nicht den vorherigen Trial; ohne
+  `arrange()` (oder `order_by = trial`) rechnet man mit Zufallspartnern.
+  `cumsum()` über einen logischen Vektor zählt die `TRUE`, propagiert
+  aber `NA` bis zum Gruppenende. `coalesce(x, FALSE)` setzt die
+  fehlenden Vergleiche gezielt auf "nicht kritisch". Die Gruppierung
+  sorgt dafür, dass Zähler und Differenz an jedem Gruppenanfang neu
+  beginnen.
+misconception: "lag() bezieht sich automatisch auf den vorherigen Messzeitpunkt, unabhängig von der Zeilenreihenfolge."
+check:
+  type: value
+  compare: data_frame
+  ignore_row_order: true
+  ignore_col_order: false
+  ignore_attributes: true
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*(arrange|order_by))[\\s\\S]*lag\\("
+    message: "Die Zeilen sind gemischt. Ohne `arrange()` oder `order_by` ist die vorherige Zeile nicht der vorherige Trial."
+  - pattern: "^(?![\\s\\S]*(coalesce|is\\.na|replace_na|%in%|isTRUE|!!?is))[\\s\\S]*cumsum\\(\\s*lane_dev\\s*>"
+    message: "Ein `NA` in `lane_dev` macht `cumsum()` ab dort `NA`. Fehlende Werte sollen als nicht kritisch zählen."
+  - pattern: "lead\\("
+    message: "`lead()` liefert den nächsten Wert; gefragt ist die Differenz zum vorherigen Trial."

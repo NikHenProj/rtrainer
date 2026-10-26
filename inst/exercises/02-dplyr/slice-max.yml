@@ -1,0 +1,48 @@
+id: dplyr-slice-max
+topic: dplyr
+title: Größte Werte pro Gruppe
+level: 2
+kind: write
+tags: [dplyr, slice_max, group_by]
+packages: [dplyr]
+seed: 1
+prompt: |
+  Finde für jede Bedingung (`condition`) die 3 Trials mit der größten
+  Spurabweichung (`lane_dev`). Bei Gleichstand an der Grenze sollen
+  alle gleichwertigen Trials erhalten bleiben. Behalte die Spalten
+  `condition`, `vp_id`, `trial`, `lane_dev`.
+setup: |
+  library(dplyr)
+  driving_sim <- read.csv(rtrainer_data("driving_sim.csv"))
+starter: |
+  driving_sim |>
+    # dein Code
+solution: |
+  driving_sim |>
+    slice_max(lane_dev, n = 3, by = condition) |>
+    select(condition, vp_id, trial, lane_dev)
+hints:
+  - "Es gibt eine dplyr-Funktion, die pro Gruppe die n größten Zeilen auswählt."
+  - "`slice_max()` gruppiert über `by =` oder ein vorheriges `group_by()`."
+  - "`slice_max(lane_dev, n = 3, by = condition)`, danach `select()`."
+explanation: |
+  `slice_max(x, n = 3)` sortiert pro Gruppe absteigend und behält die
+  ersten drei Zeilen; `with_ties = TRUE` (Standard) behält auch
+  gleichwertige Werte an der Grenze, das Ergebnis kann also mehr als
+  3 Zeilen haben. `NA` landen ans Ende und werden nur gezogen, wenn zu
+  wenige gültige Werte da sind. `arrange(desc(lane_dev)) |> head(3)`
+  ohne Gruppierung liefert dagegen die 3 größten Werte insgesamt.
+misconception: "head() nach arrange() liefert die größten Werte pro Gruppe."
+check:
+  type: value
+  compare: data_frame
+  ignore_row_order: true
+  ignore_col_order: false
+  ignore_attributes: true
+common_mistakes:
+  - pattern: "with_ties\\s*=\\s*FALSE"
+    message: "Die Aufgabe verlangt, Gleichstände zu behalten. `with_ties = FALSE` schneidet sie ab."
+  - pattern: "^(?![\\s\\S]*(group_by|by\\s*=))[\\s\\S]*(slice_max|head)"
+    message: "Ohne Gruppierung bekommst du die größten Werte über alle Bedingungen, nicht pro Bedingung."
+  - pattern: "slice_min"
+    message: "`slice_min()` liefert die kleinsten Werte; gefragt sind die größten."
