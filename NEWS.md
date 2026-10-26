@@ -1,6 +1,6 @@
 # rtrainer (Quarto course)
 
-## Milestone 8, part 1: datasets 2–4, legacy triage (branch m8-wip)
+## Milestone 8, part 1: datasets 2–4, legacy triage (merged into main)
 
 - Milestones 6 and 7 accepted without changes; `m7-wip` fast-forwarded into `main`.
 - `survey` (`data-raw/survey.R`): 160 respondents, between `interface = touch/voice`; SUS (standard keying, even items negative), raw NASA-TLX (0–100 in steps of 5), trust scale with reverse-keyed `trust_3`/`trust_5`; built-in effects (voice about +9 SUS points, −12 TLX mental), item nonresponse, a skipped block, failed attention checks, one straightliner.
@@ -8,7 +8,7 @@
 - `raw_export` / `raw_export_xlsx` (`data-raw/raw_export.R`): the same messy survey-tool export as semicolon CSV with decimal comma and as Excel (title rows, total row, mixed Excel/text dates, codebook sheet). Decision: their `load` code sets only the file path, because reading the file is the exercise.
 - Decision: missing values in `survey.csv` are empty cells (as survey tools export them); `read.csv()` reads them as `NA` in numeric columns.
 - `data/*.xlsx` added to the site resources; `tools/tests/test-datasets.R` checks files, load code and the documented data problems.
-- Triage of the 65 legacy exercises in `docs/legacy-triage.md`: 54 keep (18 for the beginner path), 11 drop. Awaiting Nick's approval; nothing migrated.
+- Triage of the 65 legacy exercises in `docs/legacy-triage.md`: 54 keep (18 for the beginner path), 11 drop. Approved by Nick (2026-10-26); nothing migrated yet.
 
 ## Milestone 7: review, backup, English version, smoke test (merged into main)
 

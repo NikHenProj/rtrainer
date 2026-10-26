@@ -1,8 +1,8 @@
-# Triage der 65 alten Aufgaben (zur Freigabe)
+# Triage der 65 alten Aufgaben (freigegeben)
 
 Stand 2026-10-26, Meilenstein 8 Teil 1. Quelle: `legacy/exercises/` (Tag `v0-shiny`). **Noch nichts migriert.**
 
-Vorschlag: **54 behalten, 11 streichen.** 18 der behaltenen gehören in den Beginner-Pfad (M8), markiert mit **B**.
+**Freigegeben von Nick am 2026-10-26: 54 behalten, 11 streichen.** 18 der behaltenen gehören in den Beginner-Pfad (M8), markiert mit **B**.
 
 ## Gilt für jede behaltene Aufgabe
 - Neues Schema (`exercises/<slug>/<level>/`): `lesson`, `order`, `required`, Texte DE + EN, gestufte Hinweise, `common_mistakes` mit Begründung.

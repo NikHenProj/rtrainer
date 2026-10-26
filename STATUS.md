@@ -1,6 +1,6 @@
 # STATUS
 
-Stand (2026-10-26): **M6 + M7 abgenommen und in `main` (Fast-Forward auf 4cca3f5). Meilenstein 8 Teil 1 auf Branch `m8-wip`:** Datensätze 2–4 und Triage der alten Aufgaben (wartet auf Freigabe). Nichts gepusht; `main` ist 3 Commits vor `origin/main`. Entscheidungen: NEWS.md.
+Stand (2026-10-26): **M6 + M7 abgenommen und in `main` (Fast-Forward auf 4cca3f5). Meilenstein 8 Teil 1 ebenfalls in `main`:** Datensätze 2–4 und Triage der alten Aufgaben (freigegeben). Nichts gepusht; `main` ist 4 Commits vor `origin/main`. Entscheidungen: NEWS.md.
 
 ## Was steht
 - **Gerüst (M6):** Quarto-Website mit quarto-live/webR, Theme hell/dunkel (IBM Plex Sans, JetBrains Mono, Indigo), Kopfzeile Kursplan · Wiederholen (n fällig) · Pakete · Glossar · DE/EN · Hell/Dunkel · Suche.
@@ -12,10 +12,10 @@ Stand (2026-10-26): **M6 + M7 abgenommen und in `main` (Fast-Forward auf 4cca3f5
 - **Werkzeuge:** `tools/generate.R` (pre-render), `tools/checks.R`, `tools/selftest.R`, Tests `tools/tests/` (R) und `tests/js/` (Node), Browser-Rauchtest `tests/smoke-test.R`.
 - **CI** `.github/workflows/site.yaml`: Selbsttest, R- und Node-Tests, Render, Rauchtest, Pages-Deploy auf `main`.
 - **Daten (M8.1):** `driving_sim`, `survey` (Fragebogen: SUS, NASA-TLX, Vertrauen mit umgepolten Items, fehlende Werte, Aufmerksamkeitsfrage), `usability` (24 × 3 Prototypen × 4 Aufgaben, Lateinisches Quadrat, Timeout 180 s, p07 ohne C), `raw_export` (.csv mit `;`/Dezimalkomma) + `raw_export_xlsx` (gleiche Antworten, Titel-/Summenzeilen, gemischte Datumsformate, Codebook). Skripte in `data-raw/`, Einträge in `data/datasets.yml`, Tests `tools/tests/test-datasets.R`.
-- **Triage** `docs/legacy-triage.md`: 54 behalten (18 im Beginner-Pfad), 11 streichen. Wartet auf Freigabe, nichts migriert.
+- **Triage** `docs/legacy-triage.md`: 54 behalten (18 im Beginner-Pfad), 11 streichen. Freigegeben 2026-10-26, noch nichts migriert.
 - Alt: `legacy/exercises/` (65 Aufgaben), `legacy/driving_sim_v0.*`.
 
-## Geprüft (2026-10-26, m8-wip)
+## Geprüft (2026-10-26, M8 Teil 1)
 Über `rtrainer-verifier` (echte Ausgabe, gekürzt):
 - `Rscript tools/selftest.R`: 3/3 exercises ok
 - `testthat::test_dir("tools/tests")`: PASS 137, FAIL 0, SKIP 0; `node --test tests/js`: 11 pass, 0 fail
@@ -24,7 +24,6 @@ Stand (2026-10-26): **M6 + M7 abgenommen und in `main` (Fast-Forward auf 4cca3f5
 - Manuell im Browser (M7): Wiederholungsrunde (sicherer Fehler, Okay, Lösung angesehen → Box 1, Wiederaufnahme), Sprachumschalter landet am gleichen Abschnitt, Pakete/Glossar DE+EN.
 
 ## Offen / bekannte Lücken
-- **Freigabe Triage** (`docs/legacy-triage.md`) durch Nick.
 - Check-Typ `plot` fehlt noch (nötig für 4 Beginner-Visualisierungsaufgaben).
 - `lme4`/`lmerTest`/`here` im webR-Index prüfen, bevor Mixed-Model- und Reproduzierbarkeits-Aufgaben migriert werden.
 - **Push + Pages:** Repo-Einstellung Pages-Quelle = „GitHub Actions“ setzen, dann pushen (nur nach Rückfrage). Ladezeit online messen (lokal: webR + Pakete ca. 12 s bei warmem Cache, Erststart ca. 30 s).
@@ -34,7 +33,7 @@ Stand (2026-10-26): **M6 + M7 abgenommen und in `main` (Fast-Forward auf 4cca3f5
 - Kursplan: „nicht vorgesehen“-Zellen werden vom Screenreader einzeln vorgelesen (19×); ggf. kürzen.
 
 ## Als Nächstes
-1. Triage freigeben bzw. korrigieren; `m8-wip` nach `main` mergen; Pages einrichten, pushen (nur nach Rückfrage).
+1. Pages einrichten, pushen (nur nach Rückfrage).
 2. M8 Teil 2: Check-Typ `plot` (mit Tests), dann Beginner-Lektionen in Paketen à 3 (DE): working-with-r, import, cleaning → reshaping, visualisation, descriptives → scales, regression, reporting; freigegebene alte Aufgaben migrieren, neue für scales/reporting/raw_export schreiben.
 3. Nach Abnahme EN-Fassung, Mini-Projekt Beginner.
 
