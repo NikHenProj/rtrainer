@@ -53,6 +53,17 @@ jobs:
             any::report
             any::gtsummary
             any::broom.helpers
+            any::haven
+            any::purrr
+            any::naniar
+            any::mice
+            any::patchwork
+            any::modelbased
+            any::GPArotation
+            any::lavaan
+            any::semTools
+            any::afex
+            any::emmeans
             any::chromote
             any::processx
 
