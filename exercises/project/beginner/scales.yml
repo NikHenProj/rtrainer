@@ -1,0 +1,99 @@
+id: pj-b-scales
+lesson: project-beginner
+order: 3
+title:
+  de: Drei Skalenwerte bilden
+  en: Compute three scale scores
+kind: write
+required: true
+packages: [dplyr, datawizard]
+data: [survey]
+setup: |
+  library(dplyr)
+  library(datawizard)
+  cleaned <- survey |>
+    filter(attention_check == 4)
+prompt:
+  de: |
+    Ergänze den Code so, dass `scored` neben dem SUS-Wert `sus` zwei weitere
+    Skalenwerte enthält:
+
+    - `trust`: Mittelwert von `trust_1` bis `trust_6` (1–7), nachdem
+      `trust_3` und `trust_5` umgepolt wurden; nur bei mindestens 5
+      gültigen Items, sonst `NA`.
+    - `tlx`: Raw-TLX, der Mittelwert der sechs Subskalen `tlx_*` (0–100),
+      fehlende Subskalen ignoriert (`na.rm = TRUE`). Keine Subskala wird
+      umgepolt.
+
+    `scored` behält nur `respondent`, `interface`, `age`, `gender`,
+    `tech_affinity`, `sus`, `trust` und `tlx`.
+  en: |
+    Extend the code so that `scored` contains two more scale scores next to
+    the SUS score `sus`:
+
+    - `trust`: mean of `trust_1` to `trust_6` (1–7) after reversing `trust_3`
+      and `trust_5`; only with at least 5 valid items, otherwise `NA`.
+    - `tlx`: raw TLX, the mean of the six subscales `tlx_*` (0–100), missing
+      subscales ignored (`na.rm = TRUE`). No subscale is reversed.
+
+    `scored` keeps only `respondent`, `interface`, `age`, `gender`,
+    `tech_affinity`, `sus`, `trust` and `tlx`.
+starter: |
+  scored <- cleaned |>
+    mutate(
+      across(c(sus_01, sus_03, sus_05, sus_07, sus_09), \(x) x - 1),
+      across(c(sus_02, sus_04, sus_06, sus_08, sus_10), \(x) 5 - x),
+      sus = 25 * rowMeans(pick(sus_01:sus_10), na.rm = TRUE)
+    ) |>
+    select(respondent, interface, age, gender, tech_affinity, sus)
+solution: |
+  scored <- cleaned |>
+    mutate(
+      across(c(sus_01, sus_03, sus_05, sus_07, sus_09), \(x) x - 1),
+      across(c(sus_02, sus_04, sus_06, sus_08, sus_10), \(x) 5 - x),
+      across(c(trust_3, trust_5), \(x) 8 - x),
+      sus = 25 * rowMeans(pick(sus_01:sus_10), na.rm = TRUE),
+      trust = row_means(pick(trust_1:trust_6), min_valid = 5),
+      tlx = rowMeans(pick(starts_with("tlx_")), na.rm = TRUE)
+    ) |>
+    select(respondent, interface, age, gender, tech_affinity, sus, trust, tlx)
+hints:
+  - de: "Drei Ergänzungen in `mutate()`: umpolen, `trust` bilden, `tlx` bilden; dazu `trust` und `tlx` in `select()`."
+    en: "Three additions in `mutate()`: reverse, compute `trust`, compute `tlx`; plus `trust` and `tlx` in `select()`."
+  - de: "Umpolen auf einer 1–7-Skala: `8 - x`. Mindestzahl gültiger Items: `row_means(pick(trust_1:trust_6), min_valid = 5)`."
+    en: "Reversing on a 1–7 scale: `8 - x`. Minimum number of valid items: `row_means(pick(trust_1:trust_6), min_valid = 5)`."
+  - de: "`tlx = rowMeans(pick(starts_with(\"tlx_\")), na.rm = TRUE)`; das Umpolen muss vor der Zeile mit `trust =` stehen."
+    en: "`tlx = rowMeans(pick(starts_with(\"tlx_\")), na.rm = TRUE)`; the reversal must come before the line with `trust =`."
+explanation:
+  de: |
+    `mutate()` arbeitet die Zeilen der Reihe nach ab: Erst werden die Items
+    umgepolt, dann die Skalenwerte daraus gebildet. Vier Befragte haben zu
+    wenige Vertrauensitems und bekommen `trust = NA`. Beim Raw-TLX steht hoher
+    Wert überall für hohe Beanspruchung, auch bei `tlx_performance` (0 =
+    perfekt, 100 = gescheitert); umgepolt wird deshalb nichts. Mittelwerte:
+    SUS 56,3, Vertrauen 3,95, TLX 38,1. Halte die Regeln (Umpolung,
+    Mindestzahl, Umgang mit fehlenden Werten) im Methodenteil fest.
+  en: |
+    `mutate()` works through its lines in order: first the items are
+    reversed, then the scale scores are computed from them. Four respondents
+    have too few trust items and get `trust = NA`. In the raw TLX a high value
+    means high workload everywhere, including `tlx_performance` (0 = perfect,
+    100 = failure), so nothing is reversed. Means: SUS 56.3, trust 3.95, TLX
+    38.1. Record the rules (reversal, minimum number of items, handling of
+    missing values) in the methods section.
+check:
+  type: object
+  name: scored
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*8\\s*-)[\\s\\S]*trust\\s*="
+    message:
+      de: "`trust_3` und `trust_5` sind umgepolt formuliert. Polt sie mit `8 - x` um, bevor du den Mittelwert bildest."
+      en: "`trust_3` and `trust_5` are reverse-keyed. Reverse them with `8 - x` before computing the mean."
+  - pattern: "trust\\s*=\\s*rowMeans"
+    message:
+      de: "`rowMeans()` kennt keine Mindestzahl gültiger Items. Nimm `row_means(..., min_valid = 5)`."
+      en: "`rowMeans()` has no minimum number of valid items. Use `row_means(..., min_valid = 5)`."
+  - pattern: "100\\s*-"
+    message:
+      de: "Im Raw-TLX wird nichts umgepolt: Auch bei `tlx_performance` bedeutet ein hoher Wert hohe Beanspruchung (100 = gescheitert)."
+      en: "Nothing is reversed in the raw TLX: for `tlx_performance` too, a high value means high workload (100 = failure)."

@@ -1,0 +1,19 @@
+# Lesson metadata; exercises are the other *.yml files in this folder
+# (sorted by `order`), the knowledge check is quiz.yml.
+# Mini project: one analysis of `survey` from the file to the report; the
+# page (de/project-beginner.qmd) places each exercise in its step.
+lesson: project-beginner
+minutes: 60
+prerequisites: [reporting-beginner]
+langs: [de]
+packages: [dplyr, readr, datawizard, effectsize, report, gtsummary]
+data: [survey]
+goals:
+  de:
+    - Eine Fragebogenstudie vollständig in R auswerten, von der Datei bis zum Bericht
+    - Ausschlüsse und Skalenregeln festlegen und begründen
+    - Hauptergebnis mit Effektgröße und KI berichten, Nebenergebnisse vorsichtig deuten
+  en:
+    - Analyse a questionnaire study completely in R, from the file to the report
+    - Define and justify exclusions and scoring rules
+    - Report the main result with effect size and CI, read secondary results cautiously

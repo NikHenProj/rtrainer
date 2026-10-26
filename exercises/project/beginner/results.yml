@@ -1,0 +1,95 @@
+id: pj-b-results
+lesson: project-beginner
+order: 7
+title:
+  de: Ergebnisse deuten
+  en: Interpret the results
+kind: interpret
+required: true
+packages: []
+data: []
+setup: ""
+prompt:
+  de: |
+    Die Auswertung liefert (touch − voice, Cohen's d mit 95-%-KI):
+
+    | Maß | touch M | voice M | d [95-%-KI] | p (Welch) |
+    |---|---|---|---|---|
+    | SUS (Hauptmaß) | 51,1 | 61,5 | −0,43 [−0,74; −0,11] | .008 |
+    | Vertrauen | 3,86 | 4,04 | −0,14 [−0,45; 0,18] | .40 |
+    | TLX | 39,6 | 36,6 | 0,21 [−0,10; 0,53] | .18 |
+
+    Welche Sätze darfst du so in den Ergebnisteil schreiben?
+
+    1. Voice wurde als besser benutzbar bewertet als touch (SUS 61,5 vs. 51,1; d = 0,43, 95-%-KI [0,11; 0,74]).
+    2. Vertrauen und Beanspruchung unterscheiden sich nicht zwischen den Bedienarten.
+    3. Für die Beanspruchung sind die Daten sowohl mit keinem Unterschied als auch mit einem mittleren Vorteil für voice vereinbar.
+    4. Weil p < .05 ist, ist der SUS-Unterschied praktisch bedeutsam.
+
+    Gib die Nummern der zulässigen Sätze aufsteigend als Vektor ein, z. B. `c(1, 2)`.
+  en: |
+    The analysis returns (touch − voice, Cohen's d with 95% CI):
+
+    | Measure | touch M | voice M | d [95% CI] | p (Welch) |
+    |---|---|---|---|---|
+    | SUS (main outcome) | 51.1 | 61.5 | −0.43 [−0.74, −0.11] | .008 |
+    | Trust | 3.86 | 4.04 | −0.14 [−0.45, 0.18] | .40 |
+    | TLX | 39.6 | 36.6 | 0.21 [−0.10, 0.53] | .18 |
+
+    Which sentences may you write like this in the results section?
+
+    1. Voice was rated as more usable than touch (SUS 61.5 vs. 51.1; d = 0.43, 95% CI [0.11, 0.74]).
+    2. Trust and workload do not differ between the interfaces.
+    3. For workload, the data are compatible both with no difference and with a medium advantage for voice.
+    4. Because p < .05, the SUS difference is practically meaningful.
+
+    Type the numbers of the acceptable sentences in ascending order as a
+    vector, e.g. `c(1, 2)`.
+starter: |
+  # Nummern der zulässigen Sätze / numbers of the acceptable sentences
+solution: |
+  c(1, 3)
+hints:
+  - de: "Bei Satz 1 ist das Vorzeichen umgedreht. Passt das zur Richtung „voice besser“?"
+    en: "In sentence 1 the sign is flipped. Does that fit the direction \"voice better\"?"
+  - de: "Ein nicht signifikantes Ergebnis zeigt nicht, dass kein Unterschied besteht. Schau auf die Breite der KIs."
+    en: "A non-significant result does not show that there is no difference. Look at the width of the CIs."
+  - de: "Ob ein Unterschied praktisch bedeutsam ist, sagt der p-Wert nicht."
+    en: "The p-value does not tell whether a difference is practically meaningful."
+explanation:
+  de: |
+    Zulässig sind 1 und 3. Satz 1 dreht das Vorzeichen, damit es zur
+    genannten Richtung passt, und berichtet Mittelwerte, d und KI. Satz 2
+    schließt aus einem nicht signifikanten Test auf „kein Unterschied“; die
+    KIs reichen aber bis d = −0,45 bzw. 0,53, also bis zu mittleren Effekten.
+    Satz 3 beschreibt genau das. Satz 4 verwechselt Signifikanz mit
+    Bedeutsamkeit: Ob 10 SUS-Punkte zählen, beurteilst du inhaltlich, z. B.
+    am Richtwert 68 (beide Gruppen liegen darunter). Vertrauen und TLX sind
+    Nebenmaße; nenne sie im Bericht als solche.
+  en: |
+    Sentences 1 and 3 are acceptable. Sentence 1 flips the sign to match the
+    stated direction and reports means, d and CI. Sentence 2 concludes "no
+    difference" from a non-significant test; but the CIs reach d = −0.45 and
+    0.53, i.e. medium effects. Sentence 3 describes exactly that. Sentence 4
+    confuses significance with importance: whether 10 SUS points matter is a
+    substantive judgement, e.g. against the benchmark of 68 (both groups are
+    below it). Trust and TLX are secondary outcomes; name them as such in the
+    report.
+misconception:
+  de: "Ein nicht signifikanter Test zeigt, dass es keinen Unterschied gibt, und ein signifikanter, dass der Unterschied wichtig ist."
+  en: "A non-significant test shows that there is no difference, and a significant one that the difference matters."
+check:
+  type: value
+common_mistakes:
+  - pattern: "\\b2\\b"
+    message:
+      de: "Satz 2 ist nicht zulässig: Ein nicht signifikanter Test belegt keinen fehlenden Unterschied; die KIs schließen mittlere Effekte ein."
+      en: "Sentence 2 is not acceptable: a non-significant test does not show the absence of a difference; the CIs include medium effects."
+  - pattern: "\\b4\\b"
+    message:
+      de: "Satz 4 ist nicht zulässig: p sagt nichts über die praktische Bedeutung; die beurteilst du inhaltlich."
+      en: "Sentence 4 is not acceptable: p says nothing about practical importance; judge that on substantive grounds."
+  - pattern: "c\\(\\s*3\\s*,\\s*1\\s*\\)"
+    message:
+      de: "Die Auswahl stimmt, aber bitte aufsteigend: `c(1, 3)`."
+      en: "The selection is right, but please in ascending order: `c(1, 3)`."

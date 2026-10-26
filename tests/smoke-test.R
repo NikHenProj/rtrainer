@@ -184,6 +184,39 @@ invisible(js("(() => {
 checked <- wait_for("!!document.querySelector('#ex-rp-b-table1 .exercise-grade.alert-success')", timeout = 120)
 step("reporting: gtsummary table graded correct", !is.na(checked), sprintf("%s s", checked))
 
+# 7. Mini project: linked as its own row; reading the CSV with readr in webR
+# passes, a character `interface` fails the type check.
+goto("/de/index.html")
+project_row <- wait_for("!!document.querySelector('tr.rt-plan-project a[href*=\"project-beginner\"]')", timeout = 15)
+step("project: own row in the German course plan", !is.na(project_row))
+goto("/de/project-beginner.html")
+loaded <- wait_for(
+  "document.querySelectorAll('#ex-pj-b-import .exercise-editor-btn-run-code').length > 0 &&
+   document.querySelectorAll('.exercise-editor-btn-run-code.disabled').length === 0",
+  timeout = 300
+)
+step("project: webR and packages ready", !is.na(loaded), sprintf("%s s", loaded))
+run_import <- function(code) {
+  invisible(js(sprintf("(() => {
+    const ex = document.querySelector('#ex-pj-b-import');
+    ex.querySelector('.exercise-grade')?.remove();
+    const v = ex.querySelector('.cm-content').cmView.view;
+    v.dispatch({changes: {from: 0, to: v.state.doc.length, insert: %s}});
+    ex.querySelector('.exercise-editor-btn-run-code').click();
+    return true;
+  })()", jsonlite::toJSON(code, auto_unbox = TRUE))))
+}
+run_import('survey_raw <- read_csv("data/survey.csv")')
+typed <- wait_for("(document.querySelector('#ex-pj-b-import .exercise-grade')?.textContent || '').includes('factor')", timeout = 60)
+step("project: character interface gets the type hint", !is.na(typed))
+run_import(paste(
+  'survey_raw <- read_csv("data/survey.csv") |>',
+  '  mutate(interface = factor(interface, levels = c("touch", "voice")))',
+  sep = "\n"
+))
+checked <- wait_for("!!document.querySelector('#ex-pj-b-import .exercise-grade.alert-success')", timeout = 60)
+step("project: import from the CSV graded correct", !is.na(checked), sprintf("%s s", checked))
+
 goto("/en/index.html")
 Sys.sleep(1)
 beginner <- c(

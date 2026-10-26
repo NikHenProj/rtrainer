@@ -1,0 +1,63 @@
+id: pj-b-tlx-subscales
+lesson: project-beginner
+order: 5
+title:
+  de: Was der Gesamt-TLX verdeckt
+  en: What the overall TLX hides
+kind: write
+required: false
+packages: [dplyr]
+data: [survey]
+setup: |
+  library(dplyr)
+  cleaned <- survey |>
+    filter(attention_check == 4)
+prompt:
+  de: |
+    Der Gesamt-TLX unterscheidet sich kaum zwischen den Gruppen (39,6 vs.
+    36,6). Prüfe zwei Subskalen: Berechne aus `cleaned` je `interface` die
+    Mittelwerte von `tlx_mental` und `tlx_frustration` (fehlende Werte
+    ignoriert, auf eine Nachkommastelle gerundet, Spalten mit denselben
+    Namen).
+  en: |
+    The overall TLX barely differs between the groups (39.6 vs. 36.6).
+    Check two subscales: from `cleaned`, compute the means of `tlx_mental`
+    and `tlx_frustration` per `interface` (missing values ignored, rounded to
+    one decimal, columns with the same names).
+starter: |
+  cleaned |>
+    summarise(tlx_mental = mean(tlx_mental), .by = interface)
+solution: |
+  cleaned |>
+    summarise(
+      across(c(tlx_mental, tlx_frustration), \(x) round(mean(x, na.rm = TRUE), 1)),
+      .by = interface
+    )
+hints:
+  - de: "Beide Subskalen haben fehlende Werte: `mean(x, na.rm = TRUE)`."
+    en: "Both subscales have missing values: `mean(x, na.rm = TRUE)`."
+  - de: "`across(c(tlx_mental, tlx_frustration), \\(x) round(mean(x, na.rm = TRUE), 1))` behält die Spaltennamen."
+    en: "`across(c(tlx_mental, tlx_frustration), \\(x) round(mean(x, na.rm = TRUE), 1))` keeps the column names."
+explanation:
+  de: |
+    Die Subskalen laufen gegeneinander: Voice senkt die geistige Anforderung
+    deutlich (39,5 vs. 52,5), erhöht aber die Frustration (43,2 vs. 34,3),
+    vermutlich durch Erkennungsfehler. Im Mittelwert über sechs Subskalen
+    heben sich solche Effekte teilweise auf. Wenn Subskalen inhaltlich
+    verschiedene Fragen beantworten, berichte sie getrennt, und lege das
+    vorab im Analyseplan fest; nachträglich gesucht ist es explorativ.
+  en: |
+    The subscales go in opposite directions: voice clearly lowers mental
+    demand (39.5 vs. 52.5) but raises frustration (43.2 vs. 34.3), probably
+    through recognition errors. In the mean over six subscales such effects
+    partly cancel out. When subscales answer different questions, report
+    them separately and decide this in advance in the analysis plan; looked
+    for afterwards, it is exploratory.
+check:
+  type: value
+  ignore_row_order: true
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*na\\.rm)[\\s\\S]*mean\\("
+    message:
+      de: "Ohne `na.rm = TRUE` liefert `mean()` bei einem einzigen fehlenden Wert `NA`."
+      en: "Without `na.rm = TRUE`, `mean()` returns `NA` as soon as one value is missing."

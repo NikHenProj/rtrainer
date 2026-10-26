@@ -1,6 +1,17 @@
 # rtrainer (Quarto course)
 
-## Milestone 8, part 3c: English beginner lessons scales, regression, reporting (awaiting acceptance)
+## Milestone 8, part 4: mini project beginner (DE) (awaiting acceptance)
+
+- Page `de/project-beginner.qmd` (`langs: [de]`): one analysis of `survey` from `data/survey.csv` to the report. Sections: brief with analysis plan (table of decisions) → 1 import → 2 exclusions → 3 scale scores → 4 group comparison → 5 report → full script (one live block, all steps; "Run locally" box with a Quarto document `format: docx` and inline R) → knowledge check (5 questions on analysis decisions) → checklist. Each exercise sits in its step and starts from the correct result of the previous step, so an error does not carry over.
+- Exercises (`exercises/project/beginner/`, 6 required + 1 optional): `pj-b-import` (readr + factor, graded with the new `check_types`), `pj-b-exclude` (attention check only, no `drop_na()`: 85 of 157 have a missing item), `pj-b-scales` (SUS, trust with reversal and `min_valid = 5`, raw TLX without reversing `tlx_performance`), `pj-b-ttest` (Welch), optional `pj-b-tlx-subscales` (mental demand and frustration go in opposite directions, the overall TLX hides it), `pj-b-table1` (six rows, `type`, `statistic`), `pj-b-results` (interpret: which result sentences are acceptable; non-significant ≠ no difference, p ≠ importance).
+- Course plan: `curriculum.yml` topics may have `kind: project`; such rows come after the 23 topics, without a number, set apart by a rule (`rt-plan-project`). Recommended path: reporting-beginner → project-beginner. Lesson id `project-beginner`, same completion rule as lessons (required exercises + knowledge check ≥ 80 %).
+- Generator: additionally writes one file per exercise (`_generated/<lang>/<lesson>/exercise-<id>.qmd`, numbered as in `exercises.qmd`), so a page can place exercises between its own sections. Tests.
+- Check option `check_types` (types `value`/`object`): column types must match too (factor with the same levels, numeric for integer and double, character, logical; other types not checked). Without it, data-frame comparison stays as before (values as text). Tests.
+- Review cards: `md_html()` renders pipe tables, `-`/`1.` lists and `>` quotes (before: everything as one paragraph per block, e.g. the numbered statements in `rp-b-report-read`). Card CSS for tables and quotes. Tests.
+- Smoke test: section 7 (project row in the German course plan, import exercise: type hint for character `interface`, solution graded correct).
+- Decision: no Cronbach's α exercise in the project (already graded in scales-beginner); instead the optional TLX subscale exercise, which adds a new interpretation point.
+
+## Milestone 8, part 3c: English beginner lessons scales, regression, reporting (accepted, merged into main)
 
 - English pages `en/scales-beginner.qmd`, `en/regression-beginner.qmd`, `en/reporting-beginner.qmd` (incl. the "Run locally" box for Word export), translated from the German lessons with identical code, data and exercise IDs; `langs: [de]` removed from their `lesson.yml`. All ten beginner lessons are now available in German and English.
 - Proofread the English texts of the 14 exercises and 3 quizzes. Fix: `rp-b-tbl-regression` expected the German label `"Technikaffinität (1–5)"` in both languages (one shared solution); now `"Tech affinity (1–5)"` (code stays English), and the near-miss regex flags any other label for `tech_affinity`.

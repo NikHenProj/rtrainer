@@ -1,0 +1,81 @@
+id: pj-b-table1
+lesson: project-beginner
+order: 6
+title:
+  de: Tabelle 1 für den Bericht
+  en: Table 1 for the report
+kind: write
+required: true
+packages: [dplyr, datawizard, gtsummary]
+data: [survey]
+setup: |
+  library(dplyr)
+  library(gtsummary)
+  scored <- survey |>
+    filter(attention_check == 4) |>
+    mutate(
+      across(c(sus_01, sus_03, sus_05, sus_07, sus_09), \(x) x - 1),
+      across(c(sus_02, sus_04, sus_06, sus_08, sus_10), \(x) 5 - x),
+      across(c(trust_3, trust_5), \(x) 8 - x),
+      sus = 25 * rowMeans(pick(sus_01:sus_10), na.rm = TRUE),
+      trust = datawizard::row_means(pick(trust_1:trust_6), min_valid = 5),
+      tlx = rowMeans(pick(starts_with("tlx_")), na.rm = TRUE)
+    ) |>
+    select(respondent, interface, age, gender, tech_affinity, sus, trust, tlx)
+prompt:
+  de: |
+    Erstelle aus `scored` die Tabelle 1 getrennt nach `interface` mit den
+    Zeilen `age`, `gender`, `tech_affinity`, `sus`, `trust` und `tlx` (in
+    dieser Reihenfolge). `tech_affinity` soll als stetige Variable erscheinen,
+    und alle stetigen Variablen als Mittelwert (SD).
+  en: |
+    Create Table 1 from `scored`, separately by `interface`, with the rows
+    `age`, `gender`, `tech_affinity`, `sus`, `trust` and `tlx` (in this
+    order). `tech_affinity` should appear as a continuous variable, and all
+    continuous variables as mean (SD).
+starter: |
+  tbl_summary(scored, by = interface, include = c(age, gender, tech_affinity))
+solution: |
+  tbl_summary(
+    scored,
+    by = interface,
+    include = c(age, gender, tech_affinity, sus, trust, tlx),
+    type = tech_affinity ~ "continuous",
+    statistic = all_continuous() ~ "{mean} ({sd})"
+  )
+hints:
+  - de: "Drei Argumente zusätzlich zum Starter: längeres `include`, `type` und `statistic`."
+    en: "Three arguments on top of the starter: a longer `include`, `type` and `statistic`."
+  - de: "`type = tech_affinity ~ \"continuous\"` und `statistic = all_continuous() ~ \"{mean} ({sd})\"`."
+    en: "`type = tech_affinity ~ \"continuous\"` and `statistic = all_continuous() ~ \"{mean} ({sd})\"`."
+explanation:
+  de: |
+    Die Kopfzeile nennt n je Gruppe (79 und 78). Fehlende Werte erscheinen
+    als Zeile „Unknown“: eine Altersangabe und vier Vertrauenswerte.
+    `all_continuous()` erfasst `tech_affinity` nur, weil `type` es zur
+    stetigen Variable macht. Für das Manuskript ergänzt du `label = list(...)` mit Einheiten
+    (z. B. „SUS (0–100)“) und exportierst lokal mit `as_flex_table()`.
+    Tests zwischen randomisierten Gruppen (`add_p()`) gehören nicht in die
+    Tabelle 1.
+  en: |
+    The header gives n per group (79 and 78). Missing values appear as an
+    "Unknown" row: one age and four trust scores. `all_continuous()` catches
+    `tech_affinity` only because `type` makes it continuous. For the manuscript, add
+    `label = list(...)` with units (e.g. "SUS (0–100)") and export locally
+    with `as_flex_table()`. Tests between randomised groups (`add_p()`) do
+    not belong in Table 1.
+check:
+  type: value
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*\\bby\\s*=)[\\s\\S]*tbl_summary"
+    message:
+      de: "Ohne `by = interface` beschreibt die Tabelle alle Befragten zusammen."
+      en: "Without `by = interface`, the table describes all respondents together."
+  - pattern: "^(?![\\s\\S]*continuous\")[\\s\\S]*tbl_summary"
+    message:
+      de: "`tech_affinity` hat nur fünf Werte und wird sonst als kategorial gezeigt: `type = tech_affinity ~ \"continuous\"`."
+      en: "`tech_affinity` has only five values and is shown as categorical otherwise: `type = tech_affinity ~ \"continuous\"`."
+  - pattern: "add_p\\("
+    message:
+      de: "Tests zwischen randomisierten Gruppen gehören nicht in die Tabelle 1; die Aufgabe verlangt nur die Beschreibung."
+      en: "Tests between randomised groups do not belong in Table 1; the task asks only for the description."

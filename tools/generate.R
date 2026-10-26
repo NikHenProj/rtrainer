@@ -384,12 +384,49 @@ inline_md <- function(x) {
 }
 
 # Paragraphs (blank-line separated) of inline Markdown as HTML.
+# Markdown subset for review cards: paragraphs, pipe tables, "- " and "1. "
+# lists, "> " quotes; inline code and emphasis.
 md_html <- function(x) {
   if (is.null(x)) {
     return(NULL)
   }
-  paragraphs <- strsplit(trimws(x), "\n[ \t]*\n")[[1]]
-  paste0("<p>", vapply(gsub("\n", " ", paragraphs), inline_md, character(1)), "</p>", collapse = "")
+  lines <- strsplit(trimws(x), "\n")[[1]]
+  kind <- ifelse(grepl("^\\s*$", lines), "blank",
+    ifelse(grepl("^\\s*\\|", lines), "table",
+      ifelse(grepl("^\\s*[-*] ", lines), "ul",
+        ifelse(grepl("^\\s*[0-9]+\\. ", lines), "ol",
+          ifelse(grepl("^\\s*> ?", lines), "quote", "text")
+        )
+      )
+    )
+  )
+  runs <- rle(kind)
+  ends <- cumsum(runs$lengths)
+  starts <- ends - runs$lengths + 1
+  blocks <- Map(function(k, from, to) md_block(k, lines[from:to]), runs$values, starts, ends)
+  paste(unlist(blocks), collapse = "")
+}
+
+md_block <- function(kind, lines) {
+  lines <- trimws(lines)
+  switch(kind,
+    blank = NULL,
+    text = paste0("<p>", inline_md(paste(lines, collapse = " ")), "</p>"),
+    quote = paste0("<blockquote><p>", inline_md(paste(sub("^> ?", "", lines), collapse = " ")), "</p></blockquote>"),
+    ul = paste0("<ul>", paste0("<li>", vapply(sub("^[-*] ", "", lines), inline_md, character(1)), "</li>", collapse = ""), "</ul>"),
+    ol = paste0("<ol>", paste0("<li>", vapply(sub("^[0-9]+\\. ", "", lines), inline_md, character(1)), "</li>", collapse = ""), "</ol>"),
+    table = {
+      cells <- lapply(lines, function(l) trimws(strsplit(gsub("^\\||\\|$", "", l), "|", fixed = TRUE)[[1]]))
+      is_rule <- vapply(cells, function(c) all(grepl("^:?-+:?$", c)), logical(1))
+      row <- function(c, tag) paste0("<tr>", paste0("<", tag, ">", vapply(c, inline_md, character(1)), "</", tag, ">", collapse = ""), "</tr>")
+      head <- if (length(cells) > 1 && is_rule[2]) row(cells[[1]], "th") else NULL
+      body <- cells[if (is.null(head)) !is_rule else -(1:2)]
+      paste0(
+        "<table>", if (!is.null(head)) paste0("<thead>", head, "</thead>"),
+        "<tbody>", paste(vapply(body, row, character(1), tag = "td"), collapse = ""), "</tbody></table>"
+      )
+    }
+  )
 }
 
 bilingual_html <- function(x) {
@@ -654,6 +691,9 @@ render_course_plan <- function(curriculum, course_lessons, lang) {
       level_ids, vapply(level_ids, level_title, character(1), curriculum = curriculum, lang = lang)
     ), collapse = "")
   )
+  # Topics are numbered; extra rows such as mini projects (`kind: project`) not.
+  is_project <- vapply(curriculum$topics, function(t) identical(t$kind, "project"), logical(1))
+  topic_no <- cumsum(!is_project)
   rows <- vapply(seq_along(curriculum$topics), function(i) {
     topic <- curriculum$topics[[i]]
     cells <- vapply(level_ids, function(level) {
@@ -677,9 +717,15 @@ render_course_plan <- function(curriculum, course_lessons, lang) {
         html_escape(topic$title[[lang]]), level_title(curriculum, level, lang)
       )
     }, character(1))
+    if (is_project[i]) {
+      return(sprintf(
+        "<tr class=\"rt-plan-project\"><th scope=\"row\">%s</th>%s</tr>",
+        html_escape(topic$title[[lang]]), paste(cells, collapse = "")
+      ))
+    }
     sprintf(
       "<tr><th scope=\"row\"><span class=\"rt-topic-no\">%d</span> %s</th>%s</tr>",
-      i, html_escape(topic$title[[lang]]), paste(cells, collapse = "")
+      topic_no[i], html_escape(topic$title[[lang]]), paste(cells, collapse = "")
     )
   }, character(1))
 
@@ -899,6 +945,12 @@ generate <- function(root = ".", out = file.path(root, "_generated"), langs = c(
         write_file(render_runtime(lesson, course$datasets, file.path(root, "tools", "checks.R")), file.path(dir, "runtime.qmd")),
         write_file(render_header(lesson, course$curriculum, lessons, lang), file.path(dir, "header.qmd")),
         write_file(render_exercises(lesson, lang, course$datasets), file.path(dir, "exercises.qmd")),
+        # One file per exercise, for pages that place exercises between their
+        # own sections (mini projects); numbering as in exercises.qmd.
+        vapply(seq_along(lesson$exercises), function(i) {
+          ex <- lesson$exercises[[i]]
+          write_file(render_exercise(ex, i, lang, course$datasets), file.path(dir, paste0("exercise-", ex$id, ".qmd")))
+        }, character(1)),
         write_file(render_footer(lesson, course$curriculum, lessons, lang), file.path(dir, "footer.qmd"))
       )
       if (!is.null(lesson$quiz)) {

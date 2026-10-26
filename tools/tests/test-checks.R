@@ -17,6 +17,24 @@ test_that("rt_compare handles data frames: row order, factors, columns", {
   expect_match(rt_compare(1, expected), "falschen Typ")
 })
 
+test_that("rt_compare checks column types only with check_types", {
+  expected <- data.frame(g = factor(c("touch", "voice"), levels = c("touch", "voice")), n = c(1, 2))
+  as_text <- data.frame(g = c("touch", "voice"), n = 1:2)
+  expect_null(rt_compare(as_text, expected))
+  expect_match(rt_compare(as_text, expected, check_types = TRUE), "Spalte `g` hat den Typ character, erwartet: factor")
+  expect_match(rt_compare(as_text, expected, check_types = TRUE, lang = "en"), "Column `g` has type character")
+  as_factor <- transform(as_text, g = factor(g, levels = c("touch", "voice")))
+  expect_null(rt_compare(as_factor, expected, check_types = TRUE)) # integer and double both numeric
+  other_levels <- transform(as_text, g = factor(g, levels = c("voice", "touch")))
+  expect_match(rt_compare(other_levels, expected, check_types = TRUE), "Stufen")
+  dates <- data.frame(d = as.Date("2026-01-01"))
+  expect_null(rt_compare(dates, dates, check_types = TRUE)) # unknown types are not checked
+  env <- new.env()
+  env$.envir_result <- list2env(list(x = as_text))
+  env$.envir_solution <- list2env(list(x = expected))
+  expect_match(rt_problem(list(type = "object", name = "x", check_types = TRUE), "de", env), "Typ character")
+})
+
 test_that("rt_compare checks factor levels, their order and values", {
   expected <- factor(c("v", "a", "h"), levels = c("a", "v", "h"))
   expect_null(rt_compare(expected, expected))

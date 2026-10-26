@@ -1,0 +1,209 @@
+---
+title: "Mini-Projekt: Sprach- oder Touchbedienung?"
+subtitle: "Beginner · eine Fragebogenstudie vollständig auswerten, von der Datei bis zum Bericht"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, readr, datawizard, effectsize, report, gtsummary]
+resources:
+  - ../data/survey.csv
+---
+
+{{< include /_generated/de/project-beginner/runtime.qmd >}}
+
+{{< include /_generated/de/project-beginner/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R läuft hier direkt im Browser. Das Projekt lädt alle Pakete der Beginner-Stufe; beim ersten Besuch dauert es bis zu einer Minute (Anzeige unten rechts), danach geht es schneller.
+:::
+
+## Auftrag {#brief}
+
+**Forschungsfrage:** Bewerten Fahrerinnen und Fahrer ein Infotainment-System mit Sprachbedienung (voice) als besser benutzbar als mit Touchbedienung (touch)?
+
+160 Personen haben nach einer Testfahrt online einen Fragebogen ausgefüllt, zufällig einer der beiden Bedienarten zugeteilt. Du wertest die Studie einmal vollständig aus, mit den Werkzeugen der Beginner-Lektionen. Neu ist nur, dass alles zusammenhängt: Jede Zahl im Bericht entsteht in einer durchgehenden Kette aus der Rohdatei.
+
+**Analyseplan** (vor der Auswertung festgelegt):
+
+| Schritt | Entscheidung |
+|---|---|
+| 1 Einlesen | `data/survey.csv`, `interface` als Faktor (touch = Referenz) |
+| 2 Ausschluss | nur wer die Aufmerksamkeitsfrage nicht mit 4 beantwortet; fehlende Einzelitems sind kein Grund |
+| 3 Skalen | SUS (0–100); Vertrauen (1–7, `trust_3`/`trust_5` umgepolt, ≥ 5 von 6 Items); Raw-TLX (0–100) |
+| 4 Hauptfrage | SUS zwischen den Gruppen, Welch-t-Test, Cohen's d mit 95-%-KI |
+| 5 Nebenmaße | Vertrauen und TLX, gleich ausgewertet, als Nebenmaße berichtet |
+| 6 Bericht | Tabelle 1 je Gruppe, Ergebnisabsatz im APA-Stil |
+
+**So arbeitest du:** Jeder Schritt hat eine Pflichtübung. Sie beginnt immer mit dem richtigen Ergebnis des vorigen Schritts; ein Fehler in Schritt 2 zieht sich also nicht durch. Am Ende steht das [Gesamtskript](#script), das alle Schritte in einem Stück ausführt.
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 600 90" role="img" aria-labelledby="fig-pj-title fig-pj-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-pj-title">Analysekette</title>
+  <desc id="fig-pj-desc">Fünf Kästen nacheinander mit Pfeilen: survey.csv, survey_raw, cleaned, scored, dann Test und Bericht.</desc>
+  <rect x="5" y="20" width="100" height="50" rx="6" class="rt-fig-box" />
+  <rect x="130" y="20" width="100" height="50" rx="6" class="rt-fig-box" />
+  <rect x="255" y="20" width="100" height="50" rx="6" class="rt-fig-box" />
+  <rect x="380" y="20" width="100" height="50" rx="6" class="rt-fig-box" />
+  <rect x="505" y="20" width="90" height="50" rx="6" class="rt-fig-box-accent" />
+  <text x="55" y="50" text-anchor="middle" class="rt-fig-code">.csv</text>
+  <text x="180" y="50" text-anchor="middle" class="rt-fig-code">survey_raw</text>
+  <text x="305" y="50" text-anchor="middle" class="rt-fig-code">cleaned</text>
+  <text x="430" y="50" text-anchor="middle" class="rt-fig-code">scored</text>
+  <text x="550" y="50" text-anchor="middle" class="rt-fig-label">Bericht</text>
+  <line x1="105" y1="45" x2="128" y2="45" class="rt-fig-arrow" />
+  <line x1="230" y1="45" x2="253" y2="45" class="rt-fig-arrow" />
+  <line x1="355" y1="45" x2="378" y2="45" class="rt-fig-arrow" />
+  <line x1="480" y1="45" x2="503" y2="45" class="rt-fig-arrow" />
+</svg>
+<figcaption>Ein Objekt pro Schritt: Rohdaten, bereinigt, mit Skalenwerten; daraus Test, Tabelle und Text.</figcaption>
+</figure>
+```
+
+## 1 Einlesen {#import}
+
+Wiederholung aus [Daten einlesen](import-beginner.qmd): `read_csv()` erkennt die Spaltentypen und meldet sie. Prüfe danach mit `glimpse()`, ob Zahlen Zahlen sind und die Gruppe die richtigen Stufen hat.
+
+{{< include /_generated/de/project-beginner/exercise-pj-b-import.qmd >}}
+
+## 2 Bereinigen {#cleaning}
+
+Wiederholung aus [Daten bereinigen](cleaning-beginner.qmd) und [Skalen](scales-beginner.qmd): Ausschlüsse folgen einer vorab festgelegten Regel, nicht dem Ergebnis. Notiere die Zahl der Ausgeschlossenen je Grund; sie gehört in den Methodenteil.
+
+{{< include /_generated/de/project-beginner/exercise-pj-b-exclude.qmd >}}
+
+## 3 Skalen bilden {#scales}
+
+Wiederholung aus [Fragebögen und Skalen](scales-beginner.qmd): erst umpolen, dann mitteln; für jede Skala eine Regel für fehlende Items. Der SUS-Teil steht schon im Starter.
+
+{{< include /_generated/de/project-beginner/exercise-pj-b-scales.qmd >}}
+
+## 4 Gruppen vergleichen {#compare}
+
+Wiederholung aus [Gruppenvergleiche](group-comparisons-beginner.qmd): Welch-t-Test für die Hauptfrage, dazu die Effektgröße mit KI. Die Nebenmaße wertest du gleich aus, berichtest sie aber als Nebenmaße.
+
+{{< include /_generated/de/project-beginner/exercise-pj-b-ttest.qmd >}}
+
+{{< include /_generated/de/project-beginner/exercise-pj-b-tlx-subscales.qmd >}}
+
+## 5 Berichten {#report}
+
+Wiederholung aus [Ergebnisse berichten](reporting-beginner.qmd): Tabelle 1 beschreibt die ausgewertete Stichprobe, der Ergebnistext nennt Richtung, Größe und Unsicherheit.
+
+{{< include /_generated/de/project-beginner/exercise-pj-b-table1.qmd >}}
+
+{{< include /_generated/de/project-beginner/exercise-pj-b-results.qmd >}}
+
+## Gesamtskript {#script}
+
+Die ganze Analyse in einem Block, von der Datei bis zum Text. Ändere eine Regel (z. B. `min_valid = 6` oder ohne Ausschluss) und führe den Block neu aus: Alle Zahlen ändern sich mit.
+
+```{webr}
+# 1 Import
+survey_raw <- read_csv("data/survey.csv", show_col_types = FALSE) |>
+  mutate(interface = factor(interface, levels = c("touch", "voice")))
+
+# 2 Exclusions (attention check)
+cleaned <- survey_raw |>
+  filter(attention_check == 4)
+
+# 3 Scale scores
+scored <- cleaned |>
+  mutate(
+    across(c(sus_01, sus_03, sus_05, sus_07, sus_09), \(x) x - 1),
+    across(c(sus_02, sus_04, sus_06, sus_08, sus_10), \(x) 5 - x),
+    across(c(trust_3, trust_5), \(x) 8 - x),
+    sus = 25 * rowMeans(pick(sus_01:sus_10), na.rm = TRUE),
+    trust = row_means(pick(trust_1:trust_6), min_valid = 5),
+    tlx = rowMeans(pick(starts_with("tlx_")), na.rm = TRUE)
+  ) |>
+  select(respondent, interface, age, gender, tech_affinity, sus, trust, tlx)
+
+# 4 Main question and effect sizes
+sus_test <- t.test(sus ~ interface, data = scored)
+cohens_d(sus ~ interface, data = scored)
+cohens_d(trust ~ interface, data = scored)
+cohens_d(tlx ~ interface, data = scored)
+
+# 5 Report: sample, result text, Table 1
+c(raw = nrow(survey_raw), excluded = nrow(survey_raw) - nrow(cleaned), analysed = nrow(scored))
+report(sus_test, data = scored)
+tbl_summary(
+  scored,
+  by = interface,
+  include = c(age, gender, tech_affinity, sus, trust, tlx),
+  type = tech_affinity ~ "continuous",
+  statistic = all_continuous() ~ "{mean} ({sd})",
+  label = list(
+    age ~ "Alter (Jahre)", gender ~ "Geschlecht", tech_affinity ~ "Technikaffinität (1–5)",
+    sus ~ "SUS (0–100)", trust ~ "Vertrauen (1–7)", tlx ~ "NASA-TLX roh (0–100)"
+  )
+)
+```
+
+**So berichtest du es:**
+
+> *Methode.* Von 160 Befragten wurden drei wegen einer falsch beantworteten Aufmerksamkeitsfrage ausgeschlossen; ausgewertet wurden 157 (79 touch, 78 voice). Vertrauen wurde gebildet, wenn mindestens fünf von sechs Items beantwortet waren (vier Personen ohne Wert). Tabelle 1 beschreibt die Stichprobe je Gruppe.
+>
+> *Ergebnisse.* Die Sprachbedienung wurde als besser benutzbar bewertet als die Touchbedienung (SUS M = 61,5 vs. 51,1; Differenz 10,4 Punkte, 95-%-KI [2,7; 18,0], t(154,85) = 2,67, p = .008, d = 0,43, 95-%-KI [0,11; 0,74]). Beide Mittelwerte liegen unter dem Richtwert 68. Bei den Nebenmaßen waren die Unterschiede klein und unsicher (Vertrauen: d = 0,14 [−0,18; 0,45]; Beanspruchung: d = −0,21 [−0,53; 0,10], jeweils voice − touch).
+
+::: {.callout-note appearance="simple"}
+## Lokal ausführen
+
+Im Browser bleibt der Bericht auf der Seite. Lokal schreibst du ihn als Quarto-Dokument; Text, Zahlen und Tabelle kommen dann direkt aus R und ändern sich mit den Daten:
+
+````markdown
+---
+title: "Sprach- vs. Touchbedienung"
+format: docx
+---
+
+```{r}
+#| include: false
+library(tidyverse)
+library(datawizard)
+library(effectsize)
+library(gtsummary)
+# ... Schritte 1–3 aus dem Gesamtskript ...
+sus_test <- t.test(sus ~ interface, data = scored)
+sus_d <- cohens_d(sus ~ voice_first, data = mutate(scored, voice_first = fct_rev(interface)))
+```
+
+Voice wurde um `r round(diff(sus_test$estimate), 1)` SUS-Punkte besser
+bewertet, d = `r round(sus_d$Cohens_d, 2)`.
+
+```{r}
+#| label: tbl-sample
+tbl_summary(scored, by = interface, include = c(age, gender, tech_affinity))
+```
+````
+
+Ergebnis: eine Word-Datei, die beim nächsten Rendern mit neuen Daten oder geänderten Regeln automatisch stimmt. `fct_rev()` dreht die Stufen, damit d positiv für einen Vorteil von voice ist.
+:::
+
+## Wissenscheck {#check}
+
+{{< include /_generated/de/project-beginner/quiz.qmd >}}
+
+## Checkliste {#cheatsheet}
+
+```r
+# Ein Objekt pro Schritt, jedes aus dem vorigen
+survey_raw <- read_csv("data/survey.csv") |> mutate(interface = factor(...))
+cleaned    <- survey_raw |> filter(attention_check == 4)
+scored     <- cleaned |> mutate(<umpolen>, <Skalenwerte>) |> select(...)
+
+t.test(sus ~ interface, data = scored)        # Hauptfrage
+cohens_d(sus ~ interface, data = scored)      # Effektgröße + KI
+tbl_summary(scored, by = interface, ...)      # Tabelle 1
+report(t.test(...), data = scored)            # Textentwurf, dann prüfen
+```
+
+- Analyseplan vor der Auswertung: Ausschlüsse, Skalenregeln, Haupt- und Nebenmaße.
+- Nach dem Einlesen `glimpse()`: Typen, Faktorstufen, Zeilenzahl.
+- Ausschlüsse mit Zahl und Grund berichten; Tabelle 1 und Test mit derselben Stichprobe.
+- Vorzeichen prüfen (erste Faktorstufe minus zweite), Richtung in Worten.
+- Nicht signifikant heißt nicht „kein Unterschied“: KI ansehen.
+- Alles in einem Skript oder Quarto-Dokument, keine abgetippten Zahlen.
+
+{{< include /_generated/de/project-beginner/footer.qmd >}}

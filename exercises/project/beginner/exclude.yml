@@ -1,0 +1,67 @@
+id: pj-b-exclude
+lesson: project-beginner
+order: 2
+title:
+  de: Ausschlüsse anwenden
+  en: Apply the exclusions
+kind: write
+required: true
+packages: [dplyr]
+data: [survey]
+setup: |
+  library(dplyr)
+  survey_raw <- survey
+prompt:
+  de: |
+    Laut Analyseplan wird nur ausgeschlossen, wer die Aufmerksamkeitsfrage
+    nicht mit der vorgegebenen Antwort 4 beantwortet hat. Fehlende Werte in
+    einzelnen Items sind kein Ausschlussgrund. Speichere die verbleibenden
+    Befragten in `cleaned` und gib zum Schluss die Zahl der Befragten je
+    `interface` in `cleaned` aus (`count()`).
+  en: |
+    According to the analysis plan, only respondents who did not give the
+    instructed answer 4 to the attention check are excluded. Missing values in
+    single items are not a reason for exclusion. Save the remaining
+    respondents in `cleaned` and finally print the number of respondents per
+    `interface` in `cleaned` (`count()`).
+starter: |
+  cleaned <- survey_raw |>
+    filter(attention_check > 3)
+solution: |
+  cleaned <- survey_raw |>
+    filter(attention_check == 4)
+  count(cleaned, interface)
+hints:
+  - de: "Behalte genau die Zeilen mit der vorgegebenen Antwort: Vergleich mit `==`."
+    en: "Keep exactly the rows with the instructed answer: compare with `==`."
+  - de: "`count(cleaned, interface)` zählt die Befragten je Gruppe."
+    en: "`count(cleaned, interface)` counts the respondents per group."
+explanation:
+  de: |
+    Drei Befragte fallen heraus (r027 mit 2, r088 mit 6, r133 mit 3; r133 hat
+    außerdem bei allen Items dieselbe Antwort gegeben). Es bleiben 157: 79
+    touch, 78 voice. `attention_check > 3` hätte r088 (Antwort 6) behalten.
+    `drop_na()` an dieser Stelle würde jede Person mit einem einzigen
+    fehlenden Item entfernen, 85 von 157 Befragten, und die
+    Ergebnisse verzerren, wenn das Fehlen nicht zufällig ist. Im Methodenteil
+    nennst du Regel und Zahl: „Drei Personen wurden wegen einer falsch
+    beantworteten Aufmerksamkeitsfrage ausgeschlossen (N = 157).“
+  en: |
+    Three respondents drop out (r027 with 2, r088 with 6, r133 with 3; r133
+    also gave the same answer to every item). 157 remain: 79 touch, 78 voice.
+    `attention_check > 3` would have kept r088 (answer 6). `drop_na()` at
+    this point would remove everyone with a single missing item, 85 of 157
+    respondents, and bias the results if the missingness is not random. In the methods section, state the rule and the number: "Three
+    respondents were excluded for failing the attention check (N = 157)."
+check:
+  type: object
+  name: cleaned
+common_mistakes:
+  - pattern: "attention_check\\s*(>|>=|!=)"
+    message:
+      de: "Ausgeschlossen wird jede andere Antwort als 4, auch höhere: Behalte nur `attention_check == 4`."
+      en: "Any answer other than 4 is excluded, including higher ones: keep only `attention_check == 4`."
+  - pattern: "drop_na|na\\.omit|complete\\.cases"
+    message:
+      de: "Fehlende Einzelitems sind laut Plan kein Ausschlussgrund; `drop_na()` würde viele gültige Befragte entfernen."
+      en: "According to the plan, missing single items are no reason for exclusion; `drop_na()` would remove many valid respondents."

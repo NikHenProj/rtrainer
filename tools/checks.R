@@ -18,6 +18,7 @@ rt_messages <- list(
     col_order = "Die Spalten stehen in einer anderen Reihenfolge: erwartet %s.",
     rows = "Die Anzahl der Zeilen stimmt nicht: erwartet %d, erhalten %d.",
     column_values = "Die Werte in Spalte `%s` stimmen noch nicht.",
+    column_type = "Spalte `%s` hat den Typ %s, erwartet: %s.",
     length = "Die Länge stimmt nicht: erwartet %d, erhalten %d.",
     values = "Die Werte stimmen noch nicht.",
     levels = "Die Stufen (`levels`) stimmen nicht: erwartet %s, erhalten %s.",
@@ -49,6 +50,7 @@ rt_messages <- list(
     col_order = "The columns are in a different order: expected %s.",
     rows = "The number of rows does not match: expected %d, got %d.",
     column_values = "The values in column `%s` are not right yet.",
+    column_type = "Column `%s` has type %s, expected: %s.",
     length = "The length does not match: expected %d, got %d.",
     values = "The values are not right yet.",
     levels = "The levels do not match: expected %s, got %s.",
@@ -109,11 +111,42 @@ rt_sort_rows <- function(x) {
   x[do.call(order, unname(as.list(x))), , drop = FALSE]
 }
 
+# Column types for check_types: factor (with the same levels), numeric
+# (integer and double alike), character, logical; other types are not checked.
+rt_type_name <- function(x) {
+  if (is.factor(x)) {
+    "factor"
+  } else if (is.numeric(x)) {
+    "numeric"
+  } else if (is.character(x)) {
+    "character"
+  } else if (is.logical(x)) {
+    "logical"
+  } else {
+    NA_character_
+  }
+}
+
+rt_column_type <- function(result, expected, col, lang) {
+  want <- rt_type_name(expected)
+  got <- rt_type_name(result)
+  if (is.na(want)) {
+    return(NULL)
+  }
+  if (!identical(want, got)) {
+    return(rt_msg("column_type", lang, col, if (is.na(got)) class(result)[1] else got, want))
+  }
+  if (want == "factor" && !identical(levels(result), levels(expected))) {
+    return(rt_msg("levels", lang, rt_collapse(levels(expected)), rt_collapse(levels(result))))
+  }
+  NULL
+}
+
 # Compare a result with the expected value.
 # Returns NULL when they match, otherwise a feedback message.
 rt_compare <- function(result, expected, tolerance = 1e-6,
                        ignore_row_order = FALSE, ignore_col_order = TRUE,
-                       lang = "de") {
+                       check_types = FALSE, lang = "de") {
   if (is.null(result)) {
     return(rt_msg("no_result", lang))
   }
@@ -147,13 +180,21 @@ rt_compare <- function(result, expected, tolerance = 1e-6,
     if (!is.data.frame(result)) {
       return(rt_msg("class", lang, "data frame", class(result)[1]))
     }
-    result <- rt_plain_df(result)
-    expected <- rt_plain_df(expected)
     if (!setequal(names(result), names(expected))) {
       return(rt_msg(
         "columns", lang, rt_collapse(names(expected)), rt_collapse(names(result))
       ))
     }
+    if (check_types) {
+      for (col in names(expected)) {
+        problem <- rt_column_type(result[[col]], expected[[col]], col, lang)
+        if (!is.null(problem)) {
+          return(problem)
+        }
+      }
+    }
+    result <- rt_plain_df(result)
+    expected <- rt_plain_df(expected)
     if (!ignore_col_order && !identical(names(result), names(expected))) {
       return(rt_msg("col_order", lang, rt_collapse(names(expected))))
     }
@@ -385,6 +426,7 @@ rt_problem <- function(spec, lang, env) {
         tolerance = spec$tolerance %||% 1e-6,
         ignore_row_order = isTRUE(spec$ignore_row_order),
         ignore_col_order = !isFALSE(spec$ignore_col_order),
+        check_types = isTRUE(spec$check_types),
         lang = lang
       ),
       object = {
@@ -398,6 +440,7 @@ rt_problem <- function(spec, lang, env) {
             tolerance = spec$tolerance %||% 1e-6,
             ignore_row_order = isTRUE(spec$ignore_row_order),
             ignore_col_order = !isFALSE(spec$ignore_col_order),
+            check_types = isTRUE(spec$check_types),
             lang = lang
           )
         }

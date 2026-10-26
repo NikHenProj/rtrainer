@@ -73,6 +73,9 @@ test_that("generate writes lesson parts, course plan and review cards", {
   files <- generate(dir, langs = "de")
   gen <- file.path(dir, "_generated", "de", "toy-beginner")
   expect_true(all(file.exists(file.path(gen, c("runtime.qmd", "header.qmd", "exercises.qmd", "quiz.qmd", "footer.qmd")))))
+  single <- paste(readLines(file.path(gen, "exercise-toy-b-mean.qmd")), collapse = "\n")
+  expect_match(single, "#ex-toy-b-mean", fixed = TRUE)
+  expect_match(single, "Übung 1:", fixed = TRUE)
   plan <- readLines(file.path(dir, "_generated", "de", "course-plan.qmd"))
   expect_true(any(grepl("data-lesson=\"toy-beginner\"", plan)))
   expect_true(any(grepl("rt-cell-planned", plan)))
@@ -109,6 +112,19 @@ test_that("generate stops on invalid content and lists all problems", {
 test_that("md_html splits paragraphs and escapes", {
   expect_equal(md_html("a `x`\nb\n\nc <d>"), "<p>a <code>x</code> b</p><p>c &lt;d&gt;</p>")
   expect_null(md_html(NULL))
+})
+
+test_that("md_html renders pipe tables, lists and quotes", {
+  table <- md_html("Werte:\n\n| a | `b` |\n|---|---|\n| 1 | <2 |\n\nEnde")
+  expect_equal(table, paste0(
+    "<p>Werte:</p><table><thead><tr><th>a</th><th><code>b</code></th></tr></thead>",
+    "<tbody><tr><td>1</td><td>&lt;2</td></tr></tbody></table><p>Ende</p>"
+  ))
+  expect_equal(md_html("- x\n- `y`"), "<ul><li>x</li><li><code>y</code></li></ul>")
+  expect_equal(md_html("Frage\n1. ja\n2. nein\nAntwort"), "<p>Frage</p><ol><li>ja</li><li>nein</li></ol><p>Antwort</p>")
+  expect_equal(md_html("> zitat\n> weiter\nText"), "<blockquote><p>zitat weiter</p></blockquote><p>Text</p>")
+  expect_equal(md_html("| 1 | 2 |"), "<table><tbody><tr><td>1</td><td>2</td></tr></tbody></table>") # no header row
+  expect_equal(md_html("a - b\n3. Mai"), "<p>a - b</p><ol><li>Mai</li></ol>")
 })
 
 test_that("English pages get English labels and checks", {
@@ -198,4 +214,22 @@ test_that("lesson.yml `langs` limits pages to the listed languages", {
   meta$langs <- list("fr")
   yaml::write_yaml(meta, lesson_file)
   expect_error(generate(dir, langs = c("de", "en")), "`langs` must be a subset of de, en")
+})
+
+test_that("course plan numbers topics but not project rows", {
+  curriculum <- list(
+    levels = list(list(id = "beginner", title = list(de = "Beginner", en = "Beginner"))),
+    topics = list(
+      list(slug = "toy", levels = list("beginner"), title = list(de = "Spielzeug", en = "Toy")),
+      list(slug = "project", kind = "project", levels = list("beginner"), title = list(de = "Mini-Projekt", en = "Mini project")),
+      list(slug = "next", levels = list("beginner"), title = list(de = "Danach", en = "Next"))
+    )
+  )
+  lessons <- list(`project-beginner` = list(meta = list(lesson = "project-beginner"), exercises = list()))
+  plan <- render_course_plan(curriculum, lessons, "de")
+  expect_match(plan, "<tr class=\"rt-plan-project\"><th scope=\"row\">Mini-Projekt</th>", fixed = TRUE)
+  expect_match(plan, "<span class=\"rt-topic-no\">2</span> Danach", fixed = TRUE)
+  expect_no_match(plan, "rt-topic-no\">3")
+  expect_match(plan, "data-lesson=\"project-beginner\"", fixed = TRUE)
+  expect_equal(level_sequence(curriculum, "beginner"), c("toy-beginner", "project-beginner", "next-beginner"))
 })

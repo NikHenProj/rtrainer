@@ -1,0 +1,67 @@
+id: pj-b-import
+lesson: project-beginner
+order: 1
+title:
+  de: Rohdaten einlesen
+  en: Read the raw data
+kind: write
+required: true
+packages: [dplyr, readr]
+data: [survey]
+setup: |
+  library(dplyr)
+  library(readr)
+prompt:
+  de: |
+    Die Umfrage liegt als `data/survey.csv` vor (Komma als Trennzeichen,
+    Punkt als Dezimalzeichen). Lies sie mit readr in das Objekt `survey_raw`
+    ein und mache `interface` zu einem Faktor mit den Stufen `touch` und
+    `voice` (in dieser Reihenfolge). Alle anderen Spalten bleiben, wie readr
+    sie erkennt.
+  en: |
+    The survey is stored as `data/survey.csv` (comma as separator, point as
+    decimal mark). Read it with readr into the object `survey_raw` and make
+    `interface` a factor with the levels `touch` and `voice` (in this order).
+    All other columns stay as readr detects them.
+starter: |
+  survey_raw <- read_csv("data/survey.csv")
+solution: |
+  survey_raw <- read_csv("data/survey.csv") |>
+    mutate(interface = factor(interface, levels = c("touch", "voice")))
+hints:
+  - de: "`read_csv()` liest die Datei; danach ändert `mutate()` die Spalte `interface`."
+    en: "`read_csv()` reads the file; then `mutate()` changes the column `interface`."
+  - de: "`factor(interface, levels = c(\"touch\", \"voice\"))` legt die Stufen und ihre Reihenfolge fest."
+    en: "`factor(interface, levels = c(\"touch\", \"voice\"))` sets the levels and their order."
+explanation:
+  de: |
+    `read_csv()` meldet die erkannten Spaltentypen: `respondent`, `interface`
+    und `gender` als Text, alles andere als Zahl. 160 Zeilen, 28 Spalten. Die
+    Gruppe wird ausdrücklich zum Faktor, weil die Reihenfolge der Stufen später
+    das Vorzeichen im t-Test und die Spaltenfolge in Tabelle 1 bestimmt
+    (erste Stufe = Referenz). Mit `glimpse(survey_raw)` siehst du Typen und
+    erste Werte auf einen Blick; das lohnt sich nach jedem Einlesen.
+  en: |
+    `read_csv()` reports the detected column types: `respondent`, `interface`
+    and `gender` as text, everything else as numbers. 160 rows, 28 columns. The
+    group is made a factor explicitly because the order of its levels later
+    sets the sign in the t-test and the column order in Table 1 (first level =
+    reference). `glimpse(survey_raw)` shows types and first values at a glance;
+    it is worth running after every import.
+check:
+  type: object
+  name: survey_raw
+  check_types: true
+common_mistakes:
+  - pattern: "read_csv2|read_delim\\([^)]*;"
+    message:
+      de: "Diese Datei nutzt Kommas als Trennzeichen; `read_csv2()` und `delim = \";\"` sind für Semikolon-Dateien."
+      en: "This file uses commas as separators; `read_csv2()` and `delim = \";\"` are for semicolon files."
+  - pattern: "^(?![\\s\\S]*factor)[\\s\\S]*read_csv"
+    message:
+      de: "`interface` ist nach dem Einlesen Text. Mach es mit `factor(..., levels = c(\"touch\", \"voice\"))` zum Faktor."
+      en: "After reading, `interface` is text. Make it a factor with `factor(..., levels = c(\"touch\", \"voice\"))`."
+  - pattern: "levels\\s*=\\s*c\\(\\s*\"voice\""
+    message:
+      de: "Die Stufen sollen in der Reihenfolge `touch`, `voice` stehen; touch ist die Referenz."
+      en: "The levels should be in the order `touch`, `voice`; touch is the reference."

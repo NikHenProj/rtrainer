@@ -31,3 +31,5 @@ topics:
   - {slug: reporting, levels: [beginner, intermediate, expert], title: {de: Ergebnisse berichten, en: Reporting results}}
   - {slug: reproducibility, levels: [intermediate, expert], title: {de: Reproduzierbar arbeiten, en: Reproducible workflows}}
   - {slug: programming, levels: [intermediate, expert], title: {de: R-Programmierung für Analysen, en: Programming for analysis}}
+  # Mini project: one complete analysis per level, after the level's lessons.
+  - {slug: project, kind: project, levels: [beginner], title: {de: Mini-Projekt, en: Mini project}}

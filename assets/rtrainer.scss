@@ -190,6 +190,16 @@ code {
     color: var(--rt-muted);
     font-variant-numeric: tabular-nums;
   }
+
+  // Mini projects: after the topics, set apart by a rule, no number.
+  .rt-plan-project th,
+  .rt-plan-project td {
+    border-top: 2px solid var(--rt-text);
+  }
+
+  .rt-plan-project th {
+    font-weight: 600;
+  }
 }
 
 .rt-cell-none {
@@ -734,6 +744,31 @@ table {
   .rt-card-source {
     color: var(--rt-muted);
     font-size: 0.9rem;
+  }
+
+  // Tables and quotes from md_html() in card prompts.
+  .rt-card-prompt {
+    table {
+      margin: 0.5rem 0 1rem;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 0.3rem 0.75rem 0.3rem 0;
+      border-bottom: 1px solid var(--rt-border);
+      text-align: left;
+    }
+
+    th {
+      border-bottom-color: var(--rt-text);
+      font-weight: 600;
+    }
+
+    blockquote {
+      margin: 0.5rem 0 1rem;
+      padding-left: 1rem;
+      border-left: 3px solid var(--rt-border);
+    }
   }
 }
 

@@ -1,0 +1,73 @@
+id: pj-b-ttest
+lesson: project-beginner
+order: 4
+title:
+  de: Hauptfrage testen
+  en: Test the main question
+kind: write
+required: true
+packages: [dplyr, datawizard]
+data: [survey]
+setup: |
+  library(dplyr)
+  scored <- survey |>
+    filter(attention_check == 4) |>
+    mutate(
+      across(c(sus_01, sus_03, sus_05, sus_07, sus_09), \(x) x - 1),
+      across(c(sus_02, sus_04, sus_06, sus_08, sus_10), \(x) 5 - x),
+      across(c(trust_3, trust_5), \(x) 8 - x),
+      sus = 25 * rowMeans(pick(sus_01:sus_10), na.rm = TRUE),
+      trust = datawizard::row_means(pick(trust_1:trust_6), min_valid = 5),
+      tlx = rowMeans(pick(starts_with("tlx_")), na.rm = TRUE)
+    ) |>
+    select(respondent, interface, age, gender, tech_affinity, sus, trust, tlx)
+prompt:
+  de: |
+    Hauptfrage laut Analyseplan: Unterscheidet sich die Benutzbarkeit (SUS)
+    zwischen touch und voice? Rechne mit `scored` den passenden Test für zwei
+    unabhängige Gruppen ohne Annahme gleicher Varianzen.
+  en: |
+    Main question according to the analysis plan: does usability (SUS)
+    differ between touch and voice? Using `scored`, run the appropriate test
+    for two independent groups without assuming equal variances.
+starter: |
+  t.test(sus ~ interface, data = scored, var.equal = TRUE)
+solution: |
+  t.test(sus ~ interface, data = scored)
+hints:
+  - de: "Jede Person hat genau einen SUS-Wert und gehört zu einer Gruppe: Welch-t-Test."
+    en: "Each respondent has exactly one SUS score and belongs to one group: Welch's t-test."
+  - de: "`t.test()` rechnet ohne weitere Optionen den Welch-Test."
+    en: "Without further options, `t.test()` runs Welch's test."
+explanation:
+  de: |
+    Ergebnis: t(154,85) = −2,67, p = .008. Das Vorzeichen ist negativ, weil
+    `t.test()` touch − voice rechnet (erste Faktorstufe minus zweite). Voice
+    wird im Mittel 10,4 SUS-Punkte besser bewertet, 95-%-KI [2,7; 18,0].
+    Weil jede Person genau einmal eingeht, ist hier keine Aggregation nötig,
+    anders als bei den Messwiederholungen im Fahrsimulator. Die Effektgröße
+    berechnest du mit `effectsize::cohens_d(sus ~ interface, data = scored)`:
+    d = −0,43, 95-%-KI [−0,74; −0,11].
+  en: |
+    Result: t(154.85) = −2.67, p = .008. The sign is negative because
+    `t.test()` computes touch − voice (first factor level minus second).
+    Voice is rated 10.4 SUS points higher on average, 95% CI [2.7, 18.0].
+    Because each respondent enters exactly once, no aggregation is needed
+    here, unlike the repeated measures in the driving simulator. Compute the
+    effect size with `effectsize::cohens_d(sus ~ interface, data = scored)`:
+    d = −0.43, 95% CI [−0.74, −0.11].
+check:
+  type: value
+common_mistakes:
+  - pattern: "var\\.equal\\s*=\\s*(TRUE|T)\\b"
+    message:
+      de: "`var.equal = TRUE` erzwingt den Student-t-Test. Laut Plan ohne Annahme gleicher Varianzen: Option weglassen."
+      en: "`var.equal = TRUE` forces Student's t-test. The plan assumes no equal variances: drop the option."
+  - pattern: "paired\\s*=\\s*(TRUE|T)\\b"
+    message:
+      de: "touch und voice wurden von verschiedenen Personen bewertet, die Gruppen sind unabhängig: kein `paired = TRUE`."
+      en: "touch and voice were rated by different respondents, so the groups are independent: no `paired = TRUE`."
+  - pattern: "data\\s*=\\s*(survey|cleaned)\\b"
+    message:
+      de: "Der SUS-Wert steht nur in `scored`."
+      en: "The SUS score is only in `scored`."

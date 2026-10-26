@@ -1,0 +1,134 @@
+# Knowledge check: passed at >= `pass` share of correctly answered questions.
+lesson: project-beginner
+pass: 0.8
+questions:
+  - id: pj-b-q-plan
+    prompt:
+      de: "Wann legst du Ausschlussregeln und Skalenregeln (z. B. mindestens 5 von 6 Items) fest?"
+      en: "When do you set exclusion and scoring rules (e.g. at least 5 of 6 items)?"
+    options:
+      - text:
+          de: "Vor der Auswertung, im Analyseplan; Abweichungen berichtest du."
+          en: "Before the analysis, in the analysis plan; you report deviations."
+        correct: true
+        explain:
+          de: "So hängen die Regeln nicht vom Ergebnis ab. Idealerweise ist der Plan präregistriert."
+          en: "This way the rules do not depend on the result. Ideally the plan is preregistered."
+      - text:
+          de: "Nach dem Test, je nachdem, welche Regel das klarere Ergebnis liefert."
+          en: "After the test, depending on which rule gives the clearer result."
+        correct: false
+        explain:
+          de: "Das ist ein Freiheitsgrad des Forschenden (p-Hacking): Die Fehlerrate stimmt dann nicht mehr."
+          en: "That is a researcher degree of freedom (p-hacking): the error rate is no longer valid."
+      - text:
+          de: "Gar nicht; man nimmt immer alle Daten."
+          en: "Never; you always use all data."
+        correct: false
+        explain:
+          de: "Unaufmerksame Antworten verwässern Effekte. Ausschlüsse sind legitim, wenn sie vorab festgelegt und berichtet werden."
+          en: "Inattentive answers dilute effects. Exclusions are legitimate when set in advance and reported."
+  - id: pj-b-q-order
+    prompt:
+      de: "Warum filterst du die Aufmerksamkeitsfrage, bevor du Tabelle 1 und den Test rechnest?"
+      en: "Why do you filter on the attention check before computing Table 1 and the test?"
+    options:
+      - text:
+          de: "Damit Tabelle 1 genau die Stichprobe beschreibt, die in den Test eingeht."
+          en: "So that Table 1 describes exactly the sample that enters the test."
+        correct: true
+        explain:
+          de: "Beschreibung und Analyse müssen dieselben N haben (hier 157), sonst passen Methoden- und Ergebnisteil nicht zusammen."
+          en: "Description and analysis must have the same N (here 157), otherwise the methods and results sections do not match."
+      - text:
+          de: "Weil `t.test()` sonst einen Fehler meldet."
+          en: "Because `t.test()` throws an error otherwise."
+        correct: false
+        explain:
+          de: "`t.test()` rechnet auch mit den unaufmerksamen Personen, nur eben mit der falschen Stichprobe."
+          en: "`t.test()` also runs with the inattentive respondents, just with the wrong sample."
+      - text:
+          de: "Die Reihenfolge ist egal."
+          en: "The order does not matter."
+        correct: false
+        explain:
+          de: "Wird erst nach Tabelle 1 gefiltert, beschreibt die Tabelle 160 statt 157 Personen."
+          en: "If you filter after Table 1, the table describes 160 instead of 157 respondents."
+  - id: pj-b-q-script
+    prompt:
+      de: "Warum gehört die ganze Analyse in ein Skript bzw. Quarto-Dokument, statt Zwischenergebnisse zu kopieren?"
+      en: "Why does the whole analysis belong in one script or Quarto document instead of copying intermediate results?"
+    options:
+      - text:
+          de: "Jede Zahl im Bericht lässt sich von der Rohdatei aus nachvollziehen und neu erzeugen."
+          en: "Every number in the report can be traced back to the raw file and reproduced."
+        correct: true
+        explain:
+          de: "Ändert sich eine Regel oder kommen Daten hinzu, läuft alles neu, ohne Abtippfehler."
+          en: "When a rule changes or data are added, everything reruns without typing errors."
+      - text:
+          de: "Weil R ein Skript schneller ausführt als einzelne Befehle."
+          en: "Because R runs a script faster than single commands."
+        correct: false
+        explain:
+          de: "Die Geschwindigkeit ist gleich; es geht um Nachvollziehbarkeit."
+          en: "The speed is the same; it is about traceability."
+      - text:
+          de: "Weil Zwischenergebnisse in R nicht gespeichert werden können."
+          en: "Because intermediate results cannot be saved in R."
+        correct: false
+        explain:
+          de: "Das geht (`write_csv()`, `saveRDS()`), ersetzt aber nicht den Weg von der Rohdatei zum Ergebnis."
+          en: "They can (`write_csv()`, `saveRDS()`), but that does not replace the path from the raw file to the result."
+  - id: pj-b-q-secondary
+    prompt:
+      de: "SUS ist das Hauptmaß, Vertrauen und TLX sind Nebenmaße. Was folgt daraus für den Bericht?"
+      en: "SUS is the main outcome, trust and TLX are secondary. What follows for the report?"
+    options:
+      - text:
+          de: "Das Hauptergebnis steht vorn; Nebenmaße werden alle berichtet, als solche gekennzeichnet und vorsichtiger gedeutet."
+          en: "The main result comes first; secondary outcomes are all reported, labelled as such and interpreted more cautiously."
+        correct: true
+        explain:
+          de: "Mit jedem weiteren Test steigt die Chance auf ein Zufallsergebnis; die Kennzeichnung macht das sichtbar."
+          en: "Each further test raises the chance of a chance finding; labelling makes this visible."
+      - text:
+          de: "Nur signifikante Nebenmaße werden berichtet."
+          en: "Only significant secondary outcomes are reported."
+        correct: false
+        explain:
+          de: "Selektives Berichten verzerrt das Gesamtbild; berichte alle geplanten Maße."
+          en: "Selective reporting distorts the overall picture; report all planned outcomes."
+      - text:
+          de: "Ist das Hauptmaß signifikant, braucht es die Nebenmaße nicht."
+          en: "If the main outcome is significant, the secondary outcomes are not needed."
+        correct: false
+        explain:
+          de: "Geplante Maße gehören in den Bericht, auch wenn sie nichts zeigen."
+          en: "Planned outcomes belong in the report even if they show nothing."
+  - id: pj-b-q-table1
+    prompt:
+      de: "Ein Gutachter fragt, warum Tabelle 1 keine p-Werte für Alter und Geschlecht enthält. Was antwortest du?"
+      en: "A reviewer asks why Table 1 has no p-values for age and gender. What do you answer?"
+    options:
+      - text:
+          de: "Die Gruppen wurden zufällig zugeteilt; Unterschiede in Tabelle 1 sind per Definition Zufall, ein Test beantwortet keine sinnvolle Frage."
+          en: "The groups were randomly assigned; differences in Table 1 are chance by definition, so a test answers no meaningful question."
+        correct: true
+        explain:
+          de: "Wichtig ist, ob Unterschiede groß genug sind, um das Ergebnis zu beeinflussen; das zeigt die Beschreibung, nicht p."
+          en: "What matters is whether differences are large enough to affect the result; the description shows that, not p."
+      - text:
+          de: "gtsummary kann keine p-Werte berechnen."
+          en: "gtsummary cannot compute p-values."
+        correct: false
+        explain:
+          de: "Kann es, mit `add_p()`; es ist hier nur nicht sinnvoll."
+          en: "It can, with `add_p()`; it is just not meaningful here."
+      - text:
+          de: "Weil alle Unterschiede nicht signifikant waren."
+          en: "Because all differences were non-significant."
+        correct: false
+        explain:
+          de: "Das wäre ein Test, den du dann doch gerechnet hättest, und kein Grund, ihn wegzulassen."
+          en: "That would be a test you ran after all, and no reason to leave it out."
