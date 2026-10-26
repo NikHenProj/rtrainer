@@ -17,6 +17,16 @@ test_that("rt_compare handles data frames: row order, factors, columns", {
   expect_match(rt_compare(1, expected), "falschen Typ")
 })
 
+test_that("rt_compare checks factor levels, their order and values", {
+  expected <- factor(c("v", "a", "h"), levels = c("a", "v", "h"))
+  expect_null(rt_compare(expected, expected))
+  expect_match(rt_compare(factor(c("v", "a", "h")), expected), "Stufen.*erwartet `a`, `v`, `h`")
+  expect_match(rt_compare(c("v", "a", "h"), expected), "falschen Typ")
+  swapped <- factor(c("a", "v", "h"), levels = c("a", "v", "h"))
+  expect_match(rt_compare(swapped, expected), "Werte")
+  expect_match(rt_compare(factor("a"), expected, lang = "en"), "levels")
+})
+
 test_that("rt_compare compares htest results and explains wrong df", {
   df <- data.frame(y = c(1, 2, 3, 4, 5, 6, 7, 9), g = rep(c("a", "b"), each = 4))
   welch <- t.test(y ~ g, data = df)
@@ -73,4 +83,73 @@ test_that("rt_checker evaluates check code with quarto-live's arguments", {
   wrong <- rt_checker("ex", "1", code, new.env(), last_value = 1, solution = 2)
   expect_false(wrong$correct)
   expect_null(rt_checker("ex", "1", NULL, new.env(), last_value = 1))
+})
+
+test_that("rt_compare_plot accepts the same plot written differently", {
+  skip_if_not_installed("ggplot2")
+  d <- data.frame(x = c(1, 2, 3, 4), y = c(2, 4, 3, 5), g = c("a", "a", "b", "b"))
+  expected <- ggplot2::ggplot(d, ggplot2::aes(x, y, colour = g)) +
+    ggplot2::geom_point() +
+    ggplot2::geom_smooth(method = "lm", se = FALSE)
+  # mapping split between ggplot() and the layer, named arguments
+  written <- ggplot2::ggplot(d, ggplot2::aes(x = x, y = y)) +
+    ggplot2::geom_point(ggplot2::aes(colour = g)) +
+    ggplot2::geom_smooth(ggplot2::aes(colour = g), method = "lm", se = FALSE)
+  expect_null(rt_compare_plot(written, expected, params = list("method", "se")))
+})
+
+test_that("rt_compare_plot names wrong layers, mappings, settings and params", {
+  skip_if_not_installed("ggplot2")
+  d <- data.frame(x = c(1, 2, 3, 4), y = c(2, 4, 3, 5), g = c("a", "a", "b", "b"))
+  base <- ggplot2::ggplot(d, ggplot2::aes(g, y))
+  expected <- base + ggplot2::geom_boxplot(fill = "steelblue")
+  expect_match(rt_compare_plot(base + ggplot2::geom_point(), expected), "geom_boxplot")
+  expect_match(rt_compare_plot(base, expected), "erhalten keine")
+  mapped <- base + ggplot2::geom_boxplot(ggplot2::aes(fill = "steelblue"))
+  expect_match(rt_compare_plot(mapped, expected), "Ebene 1 \\(geom_boxplot\\).*`fill = \"steelblue\"`")
+  expect_match(rt_compare_plot(base + ggplot2::geom_boxplot(), expected), "festen Einstellungen")
+
+  smooth <- ggplot2::ggplot(d, ggplot2::aes(x, y)) + ggplot2::geom_smooth(method = "lm", se = FALSE)
+  loess <- ggplot2::ggplot(d, ggplot2::aes(x, y)) + ggplot2::geom_smooth(method = "loess", se = FALSE)
+  expect_match(rt_compare_plot(loess, smooth, params = list("method")), "Argument `method`")
+  expect_null(rt_compare_plot(loess, smooth))
+  expect_match(rt_compare_plot(loess, smooth, params = list("method"), lang = "en"), "argument `method`")
+})
+
+test_that("rt_compare_plot checks facets, scales and optionally data", {
+  skip_if_not_installed("ggplot2")
+  d <- data.frame(x = c(1, 2, 3, 4) * 100, g = c("a", "a", "b", "b"))
+  hist <- ggplot2::ggplot(d, ggplot2::aes(x)) + ggplot2::geom_histogram(bins = 5)
+  expected <- hist + ggplot2::facet_wrap(~g) + ggplot2::scale_x_log10()
+  expect_match(rt_compare_plot(hist + ggplot2::scale_x_log10(), expected), "facet_wrap\\(g\\)")
+  expect_match(rt_compare_plot(hist + ggplot2::facet_wrap(~g), expected), "log-10")
+  expect_null(rt_compare_plot(hist + ggplot2::facet_wrap(ggplot2::vars(g)) + ggplot2::scale_x_log10(), expected))
+
+  other <- ggplot2::ggplot(d[1:3, ], ggplot2::aes(x)) + ggplot2::geom_histogram(bins = 5)
+  expect_null(rt_compare_plot(other, hist))
+  expect_match(rt_compare_plot(other, hist, check_data = TRUE), "Daten des Plots")
+})
+
+test_that("rt_check plot type: last value, named object, no plot", {
+  skip_if_not_installed("ggplot2")
+  d <- data.frame(x = c(1, 2), y = c(3, 4))
+  p <- ggplot2::ggplot(d, ggplot2::aes(x, y)) + ggplot2::geom_point()
+  env <- new.env()
+  env$.result <- p
+  env$.solution <- p
+  expect_true(rt_check(list(type = "plot"), env = env)$correct)
+
+  env$.result <- d
+  wrong <- rt_check(list(type = "plot"), env = env)
+  expect_false(wrong$correct)
+  expect_match(wrong$message, "kein ggplot")
+
+  user <- new.env()
+  sol <- new.env()
+  sol$fig <- p
+  env$.envir_result <- user
+  env$.envir_solution <- sol
+  expect_match(rt_check(list(type = "plot", name = "fig"), env = env)$message, "`fig`")
+  user$fig <- p
+  expect_true(rt_check(list(type = "plot", name = "fig"), env = env)$correct)
 })

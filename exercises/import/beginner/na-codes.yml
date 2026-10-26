@@ -1,0 +1,75 @@
+id: imp-b-na-codes
+lesson: import-beginner
+order: 4
+title:
+  de: Fehlwert-Codes beim Einlesen
+  en: Missing-value codes when reading
+kind: write
+required: false
+packages: [readr]
+data: [raw_export]
+setup: |
+  library(readr)
+  header <- read_delim(raw_export_csv, delim = ";", skip = 3, n_max = 0, show_col_types = FALSE)
+prompt:
+  de: |
+    Im Export steht `-99` für „keine Angabe“ (in `Q5 (0-10)`, der
+    Weiterempfehlung) und `n/a` beim Alter. Lies die Datei wie in Übung 1 ein, aber
+    so, dass leere Zellen, `NA`, `n/a` und `-99` als fehlend gelten. Gib dann die
+    mittlere Weiterempfehlung (`Q5 (0-10)`) auf 2 Stellen gerundet zurück.
+  en: |
+    In the export, `-99` means "no answer" (in `Q5 (0-10)`, the likelihood to
+    recommend) and `n/a` appears for age. Read the file as in exercise 1, but so
+    that empty cells, `NA`, `n/a` and `-99` count as missing. Then return the mean
+    likelihood to recommend (`Q5 (0-10)`), rounded to 2 decimals.
+starter: |
+  raw <- read_delim(
+    raw_export_csv,
+    delim = ";",
+    skip = 5,
+    col_names = names(header),
+    locale = locale(decimal_mark = ","),
+    show_col_types = FALSE
+  )
+  round(mean(raw$`Q5 (0-10)`, na.rm = TRUE), 2)
+solution: |
+  raw <- read_delim(
+    raw_export_csv,
+    delim = ";",
+    skip = 5,
+    col_names = names(header),
+    locale = locale(decimal_mark = ","),
+    na = c("", "NA", "n/a", "-99"),
+    show_col_types = FALSE
+  )
+  round(mean(raw$`Q5 (0-10)`, na.rm = TRUE), 2)
+hints:
+  - de: "Der Startcode liefert 3.16 auf einer Skala von 0 bis 10. Welche Werte ziehen den Mittelwert so weit nach unten?"
+    en: "The starter returns 3.16 on a 0 to 10 scale. Which values drag the mean down that far?"
+  - de: "`read_delim()` hat ein Argument `na`, das festlegt, welche Einträge als fehlend gelten."
+    en: "`read_delim()` has an argument `na` that sets which entries count as missing."
+  - de: "`na = c(\"\", \"NA\", ______, ______)`"
+    en: "`na = c(\"\", \"NA\", ______, ______)`"
+explanation:
+  de: |
+    Viele Umfragetools und Statistikprogramme kodieren fehlende Antworten als Zahl
+    (`-99`, `999`). Für R sind das gültige Werte, und drei `-99` reichen, um den
+    Mittelwert von 7.04 auf 3.16 zu drücken. Mit `na = ...` werden sie beim
+    Einlesen zu `NA`. Gib dabei die Voreinstellung `c("", "NA")` wieder mit an,
+    sonst gelten leere Zellen nicht mehr als fehlend. Die Backticks in
+    `` raw$`Q5 (0-10)` `` brauchst du, weil der Name Leerzeichen und Klammern enthält;
+    nach `janitor::clean_names()` heißt die Spalte `q5_0_10`.
+  en: |
+    Many survey tools and statistics programs code missing answers as a number
+    (`-99`, `999`). To R these are valid values, and three `-99` are enough to push
+    the mean from 7.04 down to 3.16. With `na = ...` they become `NA` when reading.
+    Include the default `c("", "NA")` again, otherwise empty cells no longer count as
+    missing. You need the backticks in `` raw$`Q5 (0-10)` `` because the name contains
+    spaces and brackets; after `janitor::clean_names()` the column is `q5_0_10`.
+check:
+  type: value
+common_mistakes:
+  - pattern: "na\\s*=\\s*c\\([^)]*\\b-?99\\b(?!\")"
+    message:
+      de: "Schreibe die Codes als Text in Anführungszeichen: `\"-99\"`. `na` vergleicht den Text in der Datei."
+      en: "Write the codes as text in quotes: `\"-99\"`. `na` compares the text in the file."

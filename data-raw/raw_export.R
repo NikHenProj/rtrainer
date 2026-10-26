@@ -47,7 +47,8 @@ format_start <- function(x, wave) {
       format(x, "%d.%m.%Y %H:%M"),
       paste(
         as.integer(format(x, "%m")), "/", as.integer(format(x, "%d")), "/",
-        format(x, "%Y "), format(x, "%I:%M %p"),
+        format(x, "%Y "), format(x, "%I:%M "),
+        ifelse(as.integer(format(x, "%H")) < 12, "AM", "PM"),
         sep = ""
       )
     )

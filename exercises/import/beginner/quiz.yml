@@ -1,0 +1,135 @@
+# Knowledge check: passed at >= `pass` share of correctly answered questions.
+lesson: import-beginner
+pass: 0.8
+questions:
+  - id: imp-b-q-decimal
+    prompt:
+      de: "Du liest eine deutsche CSV mit `read_csv()` ein. Die Dauer `308,5` erscheint als `3085`. Was ist passiert?"
+      en: "You read a German CSV with `read_csv()`. The duration `308,5` shows up as `3085`. What happened?"
+    options:
+      - text:
+          de: "readr hat das Komma als Tausendertrennzeichen gelesen; nötig ist `locale(decimal_mark = \",\")` bzw. `read_csv2()`."
+          en: "readr read the comma as a thousands separator; you need `locale(decimal_mark = \",\")` or `read_csv2()`."
+        correct: true
+        explain:
+          de: "Genau, und das passiert ohne Warnung. Prüfe Wertebereiche nach dem Einlesen."
+          en: "Exactly, and it happens without a warning. Check value ranges after reading."
+      - text:
+          de: "Die Datei ist beschädigt."
+          en: "The file is corrupt."
+        correct: false
+        explain:
+          de: "Die Datei ist in Ordnung; nur das Zahlenformat passt nicht zur Voreinstellung."
+          en: "The file is fine; only the number format does not match the default."
+      - text:
+          de: "readr rundet Dezimalzahlen beim Einlesen."
+          en: "readr rounds decimal numbers when reading."
+        correct: false
+        explain:
+          de: "readr rundet nicht. 3085 ist zehnmal so groß, nicht gerundet."
+          en: "readr does not round. 3085 is ten times as large, not rounded."
+  - id: imp-b-q-spec
+    prompt:
+      de: "Nach dem Einlesen ist `Q1_Age` vom Typ `<chr>` statt `<dbl>`. Was ist der sinnvollste nächste Schritt?"
+      en: "After reading, `Q1_Age` has type `<chr>` instead of `<dbl>`. What is the most sensible next step?"
+    options:
+      - text:
+          de: "Mit `unique()` oder `count()` nachsehen, welche Einträge keine Zahlen sind (z. B. `34 years`, `n/a`)."
+          en: "Use `unique()` or `count()` to see which entries are not numbers (e.g. `34 years`, `n/a`)."
+        correct: true
+        explain:
+          de: "Erst verstehen, dann bereinigen: Codes als `NA` einlesen, Text mit `parse_number()` umwandeln."
+          en: "Understand first, then clean: read codes as `NA`, convert text with `parse_number()`."
+      - text:
+          de: "Sofort `as.numeric(Q1_Age)` anwenden."
+          en: "Apply `as.numeric(Q1_Age)` right away."
+        correct: false
+        explain:
+          de: "Dann wird `34 years` still zu `NA` (nur mit Warnung), obwohl die Zahl rettbar ist."
+          en: "Then `34 years` silently becomes `NA` (only with a warning), although the number could be saved."
+      - text:
+          de: "Die Spalte löschen, weil sie fehlerhaft ist."
+          en: "Delete the column because it is faulty."
+        correct: false
+        explain:
+          de: "Fast alle Werte sind gültig; ein paar Einträge lassen sich gezielt bereinigen."
+          en: "Almost all values are valid; a few entries can be cleaned specifically."
+  - id: imp-b-q-excel
+    prompt:
+      de: "Welche Angaben helfen, aus einem Excel-Blatt nur die Tabelle zu lesen? (Mehrere möglich)"
+      en: "Which arguments help to read only the table from an Excel sheet? (Several possible)"
+    multiple: true
+    options:
+      - text:
+          de: "`sheet = \"Export\"`"
+          en: "`sheet = \"Export\"`"
+        correct: true
+        explain:
+          de: "Wählt das Blatt per Name; robuster als eine Nummer."
+          en: "Selects the sheet by name; more robust than a number."
+      - text:
+          de: "`range = \"A4:N86\"`"
+          en: "`range = \"A4:N86\"`"
+        correct: true
+        explain:
+          de: "Legt den Zellbereich fest, inklusive Kopfzeile."
+          en: "Sets the cell range, including the header."
+      - text:
+          de: "`delim = \";\"`"
+          en: "`delim = \";\"`"
+        correct: false
+        explain:
+          de: "Trennzeichen gibt es nur in Textdateien wie CSV; Excel-Zellen sind schon getrennt."
+          en: "Delimiters exist only in text files such as CSV; Excel cells are already separate."
+  - id: imp-b-q-na-codes
+    prompt:
+      de: "Die Weiterempfehlung (0–10) hat im Mittel 3.16. Im Codebook steht: `-99 = keine Angabe`. Was folgt?"
+      en: "The likelihood to recommend (0–10) has a mean of 3.16. The codebook says: `-99 = no answer`. What follows?"
+    options:
+      - text:
+          de: "Der Mittelwert ist verzerrt; `-99` muss beim Einlesen (`na = ...`) oder danach zu `NA` werden."
+          en: "The mean is biased; `-99` has to become `NA` when reading (`na = ...`) or afterwards."
+        correct: true
+        explain:
+          de: "Richtig. Fehlwert-Codes sind für R normale Zahlen."
+          en: "Right. Missing-value codes are ordinary numbers to R."
+      - text:
+          de: "Die Befragten waren unzufrieden."
+          en: "The respondents were dissatisfied."
+        correct: false
+        explain:
+          de: "Werte unter 0 gibt es auf der Skala nicht; der Mittelwert ist durch die Codes verzerrt."
+          en: "Values below 0 do not exist on the scale; the mean is biased by the codes."
+      - text:
+          de: "`mean(..., na.rm = TRUE)` löst das Problem."
+          en: "`mean(..., na.rm = TRUE)` solves the problem."
+        correct: false
+        explain:
+          de: "`na.rm` entfernt nur echte `NA`. `-99` ist für R kein fehlender Wert."
+          en: "`na.rm` only removes real `NA`. To R, `-99` is not a missing value."
+  - id: imp-b-q-factor
+    prompt:
+      de: "`x <- factor(c(\"10\", \"5\", \"10\"))`. Was liefert `as.numeric(x)`?"
+      en: "`x <- factor(c(\"10\", \"5\", \"10\"))`. What does `as.numeric(x)` return?"
+    options:
+      - text:
+          de: "`c(1, 2, 1)`"
+          en: "`c(1, 2, 1)`"
+        correct: true
+        explain:
+          de: "Die Stufen sind alphabetisch `\"10\" \"5\"`; geliefert werden die Codes."
+          en: "The levels are sorted alphabetically `\"10\" \"5\"`; you get the codes."
+      - text:
+          de: "`c(10, 5, 10)`"
+          en: "`c(10, 5, 10)`"
+        correct: false
+        explain:
+          de: "Das liefert erst `as.numeric(as.character(x))`."
+          en: "Only `as.numeric(as.character(x))` returns this."
+      - text:
+          de: "`c(2, 1, 2)`"
+          en: "`c(2, 1, 2)`"
+        correct: false
+        explain:
+          de: "Als Text sortiert steht `\"10\"` vor `\"5\"`, also hat `\"10\"` den Code 1."
+          en: "Sorted as text, `\"10\"` comes before `\"5\"`, so `\"10\"` has code 1."

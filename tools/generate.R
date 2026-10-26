@@ -11,8 +11,9 @@
 # Stops with a list of problems if any exercise, quiz or lesson is invalid.
 
 langs <- c("de", "en")
+all_langs <- langs
 kinds <- c("write", "interpret", "debug", "complete", "predict")
-check_types <- c("value", "object", "output")
+check_types <- c("value", "object", "output", "plot")
 levels_all <- c("beginner", "intermediate", "expert")
 
 labels <- list(
@@ -195,6 +196,8 @@ validate_exercise <- function(ex, datasets = list(), lesson = NULL) {
     add("`check` of type `object` needs `name`")
   } else if (check$type == "output" && !(has_text(check$pattern) && regex_ok(check$pattern))) {
     add("`check` of type `output` needs a valid regex `pattern`")
+  } else if (check$type == "plot" && !is.null(check$params) && !is.character(unlist(check$params))) {
+    add("`check$params` of type `plot` must be a list of argument names")
   }
 
   for (i in seq_along(ex$common_mistakes)) {
@@ -259,6 +262,13 @@ read_lesson <- function(dir) {
   )
 }
 
+# Languages a lesson page exists in: lesson.yml `langs`, default all.
+lesson_langs <- function(lesson) as.character(unlist(lesson$meta$langs %||% langs))
+
+lessons_in_lang <- function(lessons, lang) {
+  Filter(function(lesson) lang %in% lesson_langs(lesson), lessons)
+}
+
 read_course <- function(root = ".") {
   lesson_dirs <- dirname(list.files(
     file.path(root, "exercises"),
@@ -296,6 +306,12 @@ validate_course <- function(course, langs = c("de")) {
     if (!grepl(paste0(expected_dir, "$"), lesson$dir)) {
       problems <- c(problems, sprintf("%s: lesson.yml must live in %s", lesson_id, expected_dir))
     }
+    bad_langs <- setdiff(lesson_langs(lesson), all_langs)
+    if (length(lesson_langs(lesson)) == 0 || length(bad_langs) > 0) {
+      problems <- c(problems, sprintf(
+        "%s: `langs` must be a subset of %s", lesson_id, paste(all_langs, collapse = ", ")
+      ))
+    }
     if (!parts$slug %in% topics || !parts$level %in% levels_all) {
       problems <- c(problems, sprintf("%s: not a topic x level of curriculum.yml", lesson_id))
     }
@@ -314,7 +330,7 @@ validate_course <- function(course, langs = c("de")) {
       p <- validate_quiz(lesson$quiz)
       problems <- c(problems, if (length(p) > 0) paste0(lesson_id, "/quiz.yml: ", p))
     }
-    for (lang in langs) {
+    for (lang in intersect(langs, lesson_langs(lesson))) {
       page <- file.path(course$root, lang, paste0(lesson_id, ".qmd"))
       if (!file.exists(page)) {
         problems <- c(problems, sprintf("%s: page %s is missing", lesson_id, rel(page)))
@@ -708,6 +724,7 @@ review_cards <- function(course, checks_file) {
       cards[[ex$id]] <- list(
         id = ex$id,
         lesson = ex$lesson,
+        lesson_langs = I(lesson_langs(lesson)),
         lesson_title = lesson_titles,
         kind = ex$kind,
         kind_label = list(de = labels$de$kinds[[ex$kind]], en = labels$en$kinds[[ex$kind]]),
@@ -874,14 +891,15 @@ generate <- function(root = ".", out = file.path(root, "_generated"), langs = c(
   unlink(out, recursive = TRUE)
   written <- character()
   for (lang in langs) {
-    for (lesson in course$lessons) {
+    lessons <- lessons_in_lang(course$lessons, lang)
+    for (lesson in lessons) {
       dir <- file.path(out, lang, lesson$meta$lesson)
       written <- c(
         written,
         write_file(render_runtime(lesson, course$datasets, file.path(root, "tools", "checks.R")), file.path(dir, "runtime.qmd")),
-        write_file(render_header(lesson, course$curriculum, course$lessons, lang), file.path(dir, "header.qmd")),
+        write_file(render_header(lesson, course$curriculum, lessons, lang), file.path(dir, "header.qmd")),
         write_file(render_exercises(lesson, lang, course$datasets), file.path(dir, "exercises.qmd")),
-        write_file(render_footer(lesson, course$curriculum, course$lessons, lang), file.path(dir, "footer.qmd"))
+        write_file(render_footer(lesson, course$curriculum, lessons, lang), file.path(dir, "footer.qmd"))
       )
       if (!is.null(lesson$quiz)) {
         written <- c(written, write_file(render_quiz(lesson$quiz, lesson$meta$lesson, lang), file.path(dir, "quiz.qmd")))
@@ -889,9 +907,9 @@ generate <- function(root = ".", out = file.path(root, "_generated"), langs = c(
     }
     written <- c(
       written,
-      write_file(render_course_plan(course$curriculum, course$lessons, lang), file.path(out, lang, "course-plan.qmd")),
-      write_file(render_packages(packages, course$curriculum, course$lessons, lang), file.path(out, lang, "packages.qmd")),
-      write_file(render_glossary(glossary, course$curriculum, course$lessons, lang), file.path(out, lang, "glossary.qmd"))
+      write_file(render_course_plan(course$curriculum, lessons, lang), file.path(out, lang, "course-plan.qmd")),
+      write_file(render_packages(packages, course$curriculum, lessons, lang), file.path(out, lang, "packages.qmd")),
+      write_file(render_glossary(glossary, course$curriculum, lessons, lang), file.path(out, lang, "glossary.qmd"))
     )
   }
   cards_path <- file.path(root, "assets", "review-cards.json")

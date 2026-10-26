@@ -1,5 +1,15 @@
 # rtrainer (Quarto course)
 
+## Milestone 8, part 2a: plot checks, beginner lessons 1–3 (DE) (branch m8-part2)
+
+- Check type `plot` (`tools/checks.R`, base R only): compares the ggplot with the solution's by layers (geoms in order), effective `aes()` per layer (plot mapping inherited, so `aes()` may sit in `ggplot()` or the layer), names of fixed settings outside `aes()` (catches `aes(fill = "steelblue")`), facets and scales incl. transformation; optional `params` (e.g. `method`, `se`), `check_data`, and `name` for a plot stored in an object. Decision: setting values (which colour) are not compared, only whether something is mapped or set.
+- Fix: `rt_compare()` now compares factor levels and their order (before, `all.equal(check.attributes = FALSE)` ignored them, so a wrong `levels<-` passed).
+- Decision: lesson.yml `langs` (default all). German-only lessons get no English page parts and are "planned" in the English course plan; review cards carry `lesson_langs`, and the review page links such cards to the German page (`lessonHref()` in `assets/logic.js`). Exercise YAML stays bilingual, so the English pages need only the page text.
+- webR index checked (repo.r-wasm.org, R 4.5 and 4.6): readr, readxl, haven, janitor, forcats, lubridate, stringr, dplyr, tidyr, purrr, here, ggplot2, lme4, lmerTest, psych, datawizard, report, gtsummary, correlation, parameters, naniar are all available.
+- Lessons (German): `working-with-r-beginner` (objects, functions, `NA`, error messages, help; 3 required + 1 optional), `import-beginner` (CSV with `;`/decimal comma/second header row, Excel with title and total rows, factor codes, missing-value codes; 3 + 1), `cleaning-beginner` (filter/select, case_when, test responses and duplicates, free-text categories, reference level, outlier inspection, mixed date formats; 4 + 3). Migrated from legacy: na-index, factor-numeric, filter-select, case-when, factor-relevel, slice-max.
+- Fix: `data-raw/raw_export.R` wrote AM/PM via `%p`, which is empty under a German locale; now explicit.
+- Smoke test: section 4 solves an exercise of the cleaning lesson in webR (6 packages, raw export file) and checks that the English course plan does not link German-only lessons.
+
 ## Milestone 8, part 1: datasets 2–4, legacy triage (merged into main)
 
 - Milestones 6 and 7 accepted without changes; `m7-wip` fast-forwarded into `main`.

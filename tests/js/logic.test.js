@@ -116,3 +116,10 @@ test("nextLesson resumes a started lesson, else the next new one", () => {
   data.lessons.c = { completedAt: "t" };
   assert.equal(L.nextLesson(data, order, lessons), null);
 });
+
+test("lessonHref links to the same language or falls back to an existing page", () => {
+  assert.equal(L.lessonHref({ lesson: "a-beginner", lesson_langs: ["de", "en"] }, "en"), "a-beginner.html");
+  assert.equal(L.lessonHref({ lesson: "a-beginner", lesson_langs: ["de"] }, "en"), "../de/a-beginner.html");
+  assert.equal(L.lessonHref({ lesson: "a-beginner", lesson_langs: ["de"] }, "de"), "a-beginner.html");
+  assert.equal(L.lessonHref({ lesson: "a-beginner" }, "en"), "a-beginner.html");
+});

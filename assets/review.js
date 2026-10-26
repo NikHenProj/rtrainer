@@ -142,6 +142,7 @@
 
   const L = window.rtLogic;
   const schedule = (data, id, result, meta) => L.schedule(data, id, result, meta, P.isoDate());
+  const lessonHref = L.lessonHref;
   const dueQueue = (data, cards) => L.dueQueue(data, cards, P.isoDate());
   const currentStreak = (data) => L.currentStreak(data, P.isoDate());
 
@@ -335,7 +336,7 @@ rt_review_run <- function(setup, solution, user_code, check_code) {
     const position = el("p", { class: "rt-card-position" }, t.cardOf(session.index + 1, session.queue.length));
     const source = el("p", { class: "rt-card-source" },
       `${t.from}: `,
-      el("a", { href: `${card.lesson}.html` }, card.lesson_title[lang]),
+      el("a", { href: lessonHref(card, lang) }, card.lesson_title[lang]),
       " · ",
       el("span", { class: "rt-tag" }, card.kind_label[lang]));
 

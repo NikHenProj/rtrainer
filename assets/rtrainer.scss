@@ -402,6 +402,9 @@ code {
   .rt-fig-arrowhead { fill: var(--rt-text); }
   .rt-fig-label { fill: var(--rt-text); font-size: 14px; font-family: inherit; }
   .rt-fig-muted { fill: var(--rt-muted); }
+  .rt-fig-box { fill: none; stroke: var(--rt-muted); stroke-width: 1.2; }
+  .rt-fig-box-accent { fill: none; stroke: var(--rt-accent); stroke-width: 2; }
+  .rt-fig-code { fill: var(--rt-text); font-size: 13px; font-family: "JetBrains Mono", monospace; }
 }
 
 table {

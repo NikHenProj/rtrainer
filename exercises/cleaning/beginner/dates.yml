@@ -1,0 +1,78 @@
+id: cl-b-dates
+lesson: cleaning-beginner
+order: 7
+title:
+  de: Gemischte Datumsformate
+  en: Mixed date formats
+kind: write
+required: false
+packages: [dplyr, lubridate]
+data: [raw_export]
+setup: |
+  library(dplyr)
+  library(stringr)
+  header <- readr::read_delim(raw_export_csv, delim = ";", skip = 3, n_max = 0, show_col_types = FALSE)
+  responses <- readr::read_delim(
+    raw_export_csv,
+    delim = ";",
+    skip = 5,
+    col_names = names(header),
+    locale = readr::locale(decimal_mark = ","),
+    na = c("", "NA", "n/a", "-99"),
+    show_col_types = FALSE
+  ) |>
+    janitor::clean_names()
+  library(lubridate)
+prompt:
+  de: |
+    Die Spalte `start_date` stammt aus zwei Exporten mit verschiedenen Formaten:
+    `2026-03-04 10:15:22`, `13.03.2026 15:25` und `3/14/2026 05:19 PM`. Wandle sie
+    in die Datum-Zeit-Spalte `start` um (alle drei Formate, Zeitzone UTC) und gib
+    eine Zeile mit `n_missing` (Anzahl nicht erkannter Werte), `first` und `last`
+    (früheste und späteste Startzeit) zurück.
+  en: |
+    The column `start_date` comes from two exports with different formats:
+    `2026-03-04 10:15:22`, `13.03.2026 15:25` and `3/14/2026 05:19 PM`. Convert it
+    into the date-time column `start` (all three formats, time zone UTC) and return
+    one row with `n_missing` (number of values not recognised), `first` and `last`
+    (earliest and latest start time).
+starter: |
+  responses |>
+    mutate(start = ymd_hms(start_date)) |>
+    summarise(n_missing = sum(is.na(start)), first = min(start, na.rm = TRUE), last = max(start, na.rm = TRUE))
+solution: |
+  responses |>
+    mutate(start = parse_date_time(start_date, orders = c("Ymd HMS", "dmY HM", "mdY IMp"))) |>
+    summarise(n_missing = sum(is.na(start)), first = min(start), last = max(start))
+hints:
+  - de: "Der Startcode meldet, dass viele Werte nicht erkannt wurden: `ymd_hms()` kennt nur ein Format."
+    en: "The starter reports that many values were not recognised: `ymd_hms()` knows only one format."
+  - de: "`parse_date_time()` probiert mehrere Formate (`orders`) der Reihe nach. `Y` Jahr, `m` Monat, `d` Tag, `H`/`I` Stunde (24 h / 12 h), `M` Minute, `S` Sekunde, `p` AM/PM."
+    en: "`parse_date_time()` tries several formats (`orders`) in turn. `Y` year, `m` month, `d` day, `H`/`I` hour (24 h / 12 h), `M` minute, `S` second, `p` AM/PM."
+  - de: "`orders = c(\"Ymd HMS\", \"dmY HM\", \"______\")`"
+    en: "`orders = c(\"Ymd HMS\", \"dmY HM\", \"______\")`"
+explanation:
+  de: |
+    `parse_date_time()` erkennt pro Wert, welches der angegebenen Formate passt.
+    Die Reihenfolge der Bestandteile (`dmY` gegen `mdY`) musst du aus den Daten
+    kennen: `03.04.2026` kann der 3. April oder der 4. März sein; hier verraten der
+    Punkt bzw. der Schrägstrich die Herkunft. Prüfe immer `n_missing` und den
+    Wertebereich: Der Zeitraum 1. bis 23. März passt zum Feldzeitraum. Die frühesten
+    Werte am 1. März sind die beiden Testantworten.
+  en: |
+    `parse_date_time()` detects for each value which of the given formats fits. You
+    have to know the order of the parts (`dmY` versus `mdY`) from the data:
+    `03.04.2026` can be 3 April or 4 March; here the dot or the slash reveals the
+    source. Always check `n_missing` and the range: 1 to 23 March matches the field
+    period. The earliest values on 1 March are the two test responses.
+check:
+  type: value
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*parse_date_time)"
+    message:
+      de: "Eine einzelne Funktion wie `ymd_hms()` oder `dmy_hm()` kennt nur ein Format. `parse_date_time()` nimmt mehrere."
+      en: "A single function such as `ymd_hms()` or `dmy_hm()` knows only one format. `parse_date_time()` takes several."
+  - pattern: "\"mdY HM\"(?![\\s\\S]*\"mdY IMp\")"
+    message:
+      de: "Bei `05:19 PM` ist die Stunde im 12-Stunden-Format: Nimm `I` statt `H` und `p` für AM/PM (`\"mdY IMp\"`)."
+      en: "In `05:19 PM` the hour is in 12-hour format: use `I` instead of `H` and `p` for AM/PM (`\"mdY IMp\"`)."

@@ -1,0 +1,63 @@
+id: imp-b-factor-numeric
+lesson: import-beginner
+order: 2
+title:
+  de: Zahlen, die als Faktor ankamen
+  en: Numbers that arrived as a factor
+kind: debug
+required: true
+packages: []
+data: []
+setup: |
+  speed_kmh <- factor(c("80", "130", "100", "130", "80", "100", "130"))
+prompt:
+  de: |
+    `speed_kmh` enthält die Geschwindigkeit (km/h), bei der die Übernahme ausgelöst
+    wurde. Beim Einlesen mit einem älteren Skript wurde die Spalte zu einem Faktor.
+    Der Code soll die mittlere Geschwindigkeit berechnen, liefert aber einen falschen
+    Wert. Repariere ihn; das Ergebnis ist eine einzelne Zahl.
+  en: |
+    `speed_kmh` holds the speed (km/h) at which the take-over was triggered. When it
+    was read with an older script, the column became a factor. The code should
+    compute the mean speed but returns a wrong value. Fix it; the result is a single
+    number.
+starter: |
+  mean(as.numeric(speed_kmh))
+solution: |
+  mean(as.numeric(as.character(speed_kmh)))
+hints:
+  - de: "Schau dir `as.numeric(speed_kmh)` und `levels(speed_kmh)` an."
+    en: "Look at `as.numeric(speed_kmh)` and `levels(speed_kmh)`."
+  - de: "Ein Faktor speichert ganze Zahlen (Codes 1, 2, 3) und eine Liste von Beschriftungen (`levels`)."
+    en: "A factor stores whole numbers (codes 1, 2, 3) and a list of labels (`levels`)."
+  - de: "Wandle erst in die Beschriftungen um, dann in Zahlen: `as.numeric(as.character(______))`."
+    en: "Convert to the labels first, then to numbers: `as.numeric(as.character(______))`."
+misconception:
+  de: "`as.numeric()` auf einem Faktor liefert nicht die angezeigten Werte, sondern die internen Codes der Stufen."
+  en: "`as.numeric()` on a factor does not return the displayed values but the internal codes of the levels."
+explanation:
+  de: |
+    Ein Faktor ist intern ein Vektor ganzer Zahlen mit einer Tabelle von
+    Beschriftungen. Die Stufen sind hier alphabetisch sortiert (`"100" "130" "80"`),
+    deshalb steht der Code 3 für 80 km/h, und `as.numeric()` liefert die Codes.
+    `as.numeric(as.character(x))` nimmt den Umweg über die Beschriftungen. Besser ist
+    es, das Problem beim Einlesen zu vermeiden: readr erzeugt nie automatisch
+    Faktoren, und `readr::parse_number()` holt Zahlen auch aus Text wie `"130 km/h"`.
+  en: |
+    Internally, a factor is a vector of whole numbers plus a table of labels. The
+    levels are sorted alphabetically here (`"100" "130" "80"`), so code 3 stands for
+    80 km/h, and `as.numeric()` returns the codes. `as.numeric(as.character(x))`
+    takes the detour via the labels. Better still, avoid the problem when reading:
+    readr never creates factors automatically, and `readr::parse_number()` extracts
+    numbers even from text such as `"130 km/h"`.
+check:
+  type: value
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*(as\\.character|levels|parse_number))[\\s\\S]*as\\.(numeric|integer)\\(\\s*speed_kmh\\s*\\)"
+    message:
+      de: "`as.numeric(speed_kmh)` liefert die Codes der Stufen (1, 2, 3), nicht die km/h-Werte."
+      en: "`as.numeric(speed_kmh)` returns the level codes (1, 2, 3), not the km/h values."
+  - pattern: "as\\.numeric\\(\\s*levels\\(\\s*speed_kmh\\s*\\)\\s*\\)\\s*\\)\\s*$"
+    message:
+      de: "`levels(speed_kmh)` enthält jeden Wert nur einmal; der Mittelwert der drei Stufen ist nicht der Mittelwert der sieben Messungen."
+      en: "`levels(speed_kmh)` holds each value once; the mean of the three levels is not the mean of the seven measurements."

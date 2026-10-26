@@ -1,0 +1,82 @@
+id: cl-b-remove-tests
+lesson: cleaning-beginner
+order: 3
+title:
+  de: Testantworten und Duplikate entfernen
+  en: Removing test responses and duplicates
+kind: write
+required: true
+packages: [dplyr]
+data: [raw_export]
+setup: |
+  library(dplyr)
+  library(stringr)
+  header <- readr::read_delim(raw_export_csv, delim = ";", skip = 3, n_max = 0, show_col_types = FALSE)
+  responses <- readr::read_delim(
+    raw_export_csv,
+    delim = ";",
+    skip = 5,
+    col_names = names(header),
+    locale = readr::locale(decimal_mark = ","),
+    na = c("", "NA", "n/a", "-99"),
+    show_col_types = FALSE
+  ) |>
+    janitor::clean_names()
+prompt:
+  de: |
+    `responses` enthält den eingelesenen Export (82 Zeilen, Namen mit
+    `clean_names()`). Darin stecken zwei Testantworten aus der Vorschau
+    (`status == "Survey Preview"`) und zwei Antworten, die doppelt abgeschickt
+    wurden (identische Zeilen). Entferne beides. Das Ergebnis behält alle Spalten.
+  en: |
+    `responses` holds the imported export (82 rows, names via `clean_names()`). It
+    contains two test responses from the preview (`status == "Survey Preview"`) and
+    two answers that were submitted twice (identical rows). Remove both. The result
+    keeps all columns.
+starter: |
+  responses |>
+    count(status)
+solution: |
+  responses |>
+    filter(status != "Survey Preview") |>
+    distinct()
+hints:
+  - de: "Der Startcode zeigt, welche Werte `status` hat. Welche Zeilen sollen bleiben?"
+    en: "The starter shows the values of `status`. Which rows should stay?"
+  - de: "`filter()` mit `!=` entfernt die Vorschau; `distinct()` ohne Argumente entfernt vollständig gleiche Zeilen."
+    en: "`filter()` with `!=` removes the preview; `distinct()` without arguments removes completely identical rows."
+  - de: "`responses |> filter(status != \"______\") |> distinct()`"
+    en: "`responses |> filter(status != \"______\") |> distinct()`"
+explanation:
+  de: |
+    Übrig bleiben 78 Antworten. `distinct()` ohne Spalten vergleicht ganze Zeilen
+    und behält jeweils die erste. Mit `distinct(response_id)` bliebe nur die
+    ID-Spalte übrig; willst du nach der ID entfernen und alle Spalten behalten,
+    schreibst du `distinct(response_id, .keep_all = TRUE)`. Prüfe vorher, ob die
+    doppelten Zeilen wirklich gleich sind
+    (`responses |> filter(n() > 1, .by = response_id)`): Unterscheiden sie sich,
+    musst du entscheiden, welche gilt, und das im Methodenteil berichten.
+  en: |
+    78 answers remain. `distinct()` without columns compares whole rows and keeps
+    the first of each. `distinct(response_id)` would keep only the ID column; to
+    remove by ID and keep all columns, write
+    `distinct(response_id, .keep_all = TRUE)`. Check first whether the duplicated
+    rows really are identical (`responses |> filter(n() > 1, .by = response_id)`):
+    if they differ, you have to decide which one counts and report that in the
+    methods section.
+check:
+  type: value
+  ignore_row_order: true
+common_mistakes:
+  - pattern: "distinct\\(\\s*response_id\\s*\\)"
+    message:
+      de: "`distinct(response_id)` behält nur die ID-Spalte. Ohne Argumente (oder mit `.keep_all = TRUE`) bleiben alle Spalten."
+      en: "`distinct(response_id)` keeps only the ID column. Without arguments (or with `.keep_all = TRUE`), all columns stay."
+  - pattern: "^(?![\\s\\S]*(Survey Preview|IP Address|TEST))"
+    message:
+      de: "Die zwei Testantworten (`status == \"Survey Preview\"`) sind noch enthalten."
+      en: "The two test responses (`status == \"Survey Preview\"`) are still included."
+  - pattern: "^(?![\\s\\S]*(distinct|duplicated))"
+    message:
+      de: "Die doppelten Einsendungen sind noch enthalten. `distinct()` entfernt gleiche Zeilen."
+      en: "The duplicate submissions are still included. `distinct()` removes identical rows."

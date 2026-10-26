@@ -12,6 +12,8 @@ test_that("validate_exercise finds missing and wrong fields", {
   expect_match(validate_exercise(toy_exercise(title = list(de = "Nur DE")), ds), "lacks text for: en", all = FALSE)
   expect_match(validate_exercise(toy_exercise(starter = "mean(toy$x)"), ds), "identical", all = FALSE)
   expect_match(validate_exercise(toy_exercise(kind = "debug"), ds), "misconception", all = FALSE)
+  expect_length(validate_exercise(toy_exercise(check = list(type = "plot", params = list("method"))), ds), 0)
+  expect_match(validate_exercise(toy_exercise(check = list(type = "plot", params = list(1))), ds), "argument names", all = FALSE)
   expect_match(validate_exercise(toy_exercise(kind = "complete"), ds), "______", all = FALSE)
   expect_match(validate_exercise(toy_exercise(check = list(type = "object")), ds), "needs `name`", all = FALSE)
   expect_match(validate_exercise(toy_exercise(check = list(type = "output", pattern = "(")), ds), "regex", all = FALSE)
@@ -172,4 +174,28 @@ test_that("glossary: validation, sorting by page language", {
   expect_lt(regexpr("Apfel", de), regexpr("Zebra", de))
   en <- render_glossary(terms, curriculum, list(), "en")
   expect_lt(regexpr("Apple", en), regexpr("Zoo", en))
+})
+
+test_that("lesson.yml `langs` limits pages to the listed languages", {
+  dir <- withr::local_tempdir()
+  make_course(dir)
+  lesson_file <- file.path(dir, "exercises", "toy", "beginner", "lesson.yml")
+  err <- tryCatch(generate(dir, langs = c("de", "en")), error = conditionMessage)
+  expect_match(err, "page en/toy-beginner.qmd is missing")
+
+  meta <- yaml::read_yaml(lesson_file)
+  meta$langs <- list("de")
+  yaml::write_yaml(meta, lesson_file)
+  generate(dir, langs = c("de", "en"))
+  expect_true(file.exists(file.path(dir, "_generated", "de", "toy-beginner", "header.qmd")))
+  expect_false(dir.exists(file.path(dir, "_generated", "en", "toy-beginner")))
+  plan_en <- paste(readLines(file.path(dir, "_generated", "en", "course-plan.qmd")), collapse = "\n")
+  expect_no_match(plan_en, "data-lesson=\"toy-beginner\"")
+  expect_match(plan_en, "rt-cell-planned")
+  card <- jsonlite::read_json(file.path(dir, "assets", "review-cards.json"))$cards[["toy-b-mean"]]
+  expect_equal(unlist(card$lesson_langs), "de")
+
+  meta$langs <- list("fr")
+  yaml::write_yaml(meta, lesson_file)
+  expect_error(generate(dir, langs = c("de", "en")), "`langs` must be a subset of de, en")
 })

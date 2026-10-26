@@ -1,5 +1,5 @@
 # Browser smoke test of the rendered site (_site) with headless Chrome:
-# a lesson exercise is solved and checked in webR, progress is stored,
+# lesson exercises are solved and checked in webR, progress is stored,
 # a review card is checked, the English page and language switch work.
 #
 #   quarto render && Rscript tests/smoke-test.R
@@ -105,6 +105,29 @@ Sys.sleep(1)
 step("en: lesson page in English", js("document.documentElement.lang.startsWith('en') && document.querySelector('h1').textContent.includes('Group comparisons')"))
 step("en: navbar translated", js("[...document.querySelectorAll('.navbar .nav-link')].some(a => a.textContent.includes('Course plan'))"))
 step("en: switch points to German page", js("document.querySelector('a#rt-nav-lang').getAttribute('href').startsWith('../de/group-comparisons-beginner.html')"))
+
+# 4. A German-only lesson with many packages and a data file read in webR.
+goto("/de/cleaning-beginner.html")
+loaded <- wait_for(
+  "document.querySelectorAll('#ex-cl-b-remove-tests .exercise-editor-btn-run-code').length > 0 &&
+   document.querySelectorAll('.exercise-editor-btn-run-code.disabled').length === 0",
+  timeout = 300
+)
+step("cleaning: webR and 6 packages ready", !is.na(loaded), sprintf("%s s", loaded))
+invisible(js("(() => {
+  const ex = document.querySelector('#ex-cl-b-remove-tests');
+  const v = ex.querySelector('.cm-content').cmView.view;
+  v.dispatch({changes: {from: 0, to: v.state.doc.length, insert:
+    'responses |>\\n  filter(status != \"Survey Preview\") |>\\n  distinct()'}});
+  ex.querySelector('.exercise-editor-btn-run-code').click();
+  return true;
+})()"))
+checked <- wait_for("!!document.querySelector('#ex-cl-b-remove-tests .exercise-grade.alert-success')", timeout = 90)
+step("cleaning: raw export read and solution graded correct", !is.na(checked), sprintf("%s s", checked))
+
+goto("/en/index.html")
+Sys.sleep(1)
+step("en: German-only lesson not linked in course plan", js("!document.querySelector('a[href*=\"cleaning-beginner\"]')"))
 
 cat(sprintf("\n%d failure(s)\n", length(failures)))
 if (length(failures) > 0) quit(status = 1)

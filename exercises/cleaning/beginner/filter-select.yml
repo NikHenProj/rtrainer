@@ -1,0 +1,64 @@
+id: cl-b-filter-select
+lesson: cleaning-beginner
+order: 1
+title:
+  de: Zeilen filtern, Spalten wählen
+  en: Filter rows, select columns
+kind: write
+required: true
+packages: [dplyr]
+data: [driving_sim]
+setup: |
+  library(dplyr)
+prompt:
+  de: |
+    Wähle aus `driving_sim` alle Durchgänge der Bedingungen `visual` und `auditory`
+    mit einer Reaktionszeit über 1300 ms. Behalte nur die Spalten `participant`,
+    `condition`, `trial` und `rt_ms`, in dieser Reihenfolge.
+  en: |
+    Select from `driving_sim` all trials of the conditions `visual` and `auditory`
+    with a reaction time above 1300 ms. Keep only the columns `participant`,
+    `condition`, `trial` and `rt_ms`, in this order.
+starter: |
+  driving_sim
+solution: |
+  driving_sim |>
+    filter(condition %in% c("visual", "auditory"), rt_ms > 1300) |>
+    select(participant, condition, trial, rt_ms)
+hints:
+  - de: "`filter()` wählt Zeilen, `select()` wählt Spalten."
+    en: "`filter()` selects rows, `select()` selects columns."
+  - de: "Mehrere Bedingungen in `filter()` trennst du mit Komma (= und). Für mehrere erlaubte Werte gibt es `%in%`."
+    en: "Separate several conditions in `filter()` with commas (= and). For several allowed values there is `%in%`."
+  - de: "`filter(condition %in% c(\"visual\", \"auditory\"), rt_ms > ______)`, danach `select()`."
+    en: "`filter(condition %in% c(\"visual\", \"auditory\"), rt_ms > ______)`, then `select()`."
+explanation:
+  de: |
+    `%in%` prüft für jede Zeile, ob der Wert in der Menge liegt. Der Fallstrick ist
+    `condition == c("visual", "auditory")`: Das vergleicht abwechselnd mit
+    `"visual"` und `"auditory"` (Zeile 1 mit dem ersten, Zeile 2 mit dem zweiten
+    Wert, …) und verliert still etwa die Hälfte der Treffer. Zeilen mit fehlender
+    `rt_ms` entfernt `filter()` automatisch, weil `NA > 1300` nicht `TRUE` ist.
+  en: |
+    `%in%` checks for each row whether the value is in the set. The trap is
+    `condition == c("visual", "auditory")`: it compares alternately with `"visual"`
+    and `"auditory"` (row 1 with the first, row 2 with the second value, …) and
+    silently loses about half of the matches. `filter()` drops rows with missing
+    `rt_ms` automatically, because `NA > 1300` is not `TRUE`.
+check:
+  type: value
+  ignore_row_order: true
+  ignore_col_order: false
+common_mistakes:
+  - pattern: "condition\\s*==\\s*c\\("
+    message:
+      de: "`==` mit mehreren Werten vergleicht abwechselnd, statt beide zu erlauben. Nutze `%in%`."
+      en: "`==` with several values compares alternately instead of allowing both. Use `%in%`."
+  - pattern: "condition\\s*==\\s*\"visual\"\\s*&\\s*condition\\s*==\\s*\"auditory\""
+    message:
+      de: "Eine Zeile kann nicht zugleich beide Bedingungen haben. Du brauchst „oder“ (`|`) bzw. `%in%`."
+      en: "A row cannot have both conditions at once. You need \"or\" (`|`) or `%in%`."
+  - pattern: "rt_ms\\s*>=\\s*1300"
+    message:
+      de: "„Über 1300 ms“ heißt `> 1300`; genau 1300 gehört nicht dazu."
+      en: "\"Above 1300 ms\" means `> 1300`; exactly 1300 is not included."

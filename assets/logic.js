@@ -124,6 +124,14 @@
   }
 
   // Imported files must be rtrainer progress of a known version.
+  // Link from a review card to its lesson; falls back to the first language
+  // the lesson page exists in (pages are written German first).
+  function lessonHref(card, lang) {
+    const available = card.lesson_langs || [];
+    if (available.length === 0 || available.includes(lang)) return `${card.lesson}.html`;
+    return `../${available[0]}/${card.lesson}.html`;
+  }
+
   function validProgress(data) {
     return Boolean(
       data && typeof data === "object" && data.version === VERSION &&
@@ -134,7 +142,7 @@
   const api = {
     VERSION, INTERVALS, MAX_HISTORY, emptyProgress, isoDate, addDays, nextBox, effectiveResult,
     updateStreak, currentStreak, schedule, dueIds, dueQueue, lessonStatus, updateCompletion, validProgress,
-    nextLesson,
+    nextLesson, lessonHref,
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.rtLogic = api;

@@ -1,0 +1,62 @@
+id: wr-b-mean
+lesson: working-with-r-beginner
+order: 1
+title:
+  de: Ein Kennwert als Objekt
+  en: A statistic as an object
+kind: write
+required: true
+packages: []
+data: [driving_sim]
+setup: ""
+prompt:
+  de: |
+    Berechne die mittlere Reaktionszeit `rt_ms` über alle Zeilen von `driving_sim`.
+    Fehlende Werte sollen nicht stören. Runde auf eine Nachkommastelle und speichere
+    das Ergebnis im Objekt `mean_rt`.
+  en: |
+    Compute the mean reaction time `rt_ms` across all rows of `driving_sim`.
+    Missing values should not get in the way. Round to one decimal place and store
+    the result in the object `mean_rt`.
+starter: |
+  mean_rt <- mean(driving_sim$rt_ms)
+  mean_rt
+solution: |
+  mean_rt <- round(mean(driving_sim$rt_ms, na.rm = TRUE), 1)
+  mean_rt
+hints:
+  - de: "Führe den Code aus: Warum kommt `NA` heraus? `driving_sim$rt_ms` enthält einige fehlende Werte."
+    en: "Run the code: why is the result `NA`? `driving_sim$rt_ms` contains a few missing values."
+  - de: "`mean()` hat ein Argument, das fehlende Werte vor dem Rechnen entfernt. `?mean` zeigt es."
+    en: "`mean()` has an argument that removes missing values before computing. `?mean` shows it."
+  - de: "Verschachtle: `round(mean(..., na.rm = TRUE), digits = ______)`."
+    en: "Nest the calls: `round(mean(..., na.rm = TRUE), digits = ______)`."
+explanation:
+  de: |
+    `mean()` gibt `NA` zurück, sobald ein Wert fehlt: Ein unbekannter Wert macht auch
+    den Mittelwert unbekannt. `na.rm = TRUE` rechnet mit den vorhandenen Werten.
+    Das ist eine bewusste Entscheidung; schau vorher mit `sum(is.na(driving_sim$rt_ms))`,
+    wie viele Werte fehlen (hier 12 von 480). `round(x, 1)` rundet erst am Ende,
+    damit keine Genauigkeit verloren geht.
+  en: |
+    `mean()` returns `NA` as soon as one value is missing: an unknown value makes the
+    mean unknown, too. `na.rm = TRUE` computes with the values that are there. That is
+    a deliberate decision; check first with `sum(is.na(driving_sim$rt_ms))` how many
+    values are missing (here 12 of 480). `round(x, 1)` rounds only at the end so no
+    precision is lost.
+check:
+  type: object
+  name: mean_rt
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*na\\.rm\\s*=\\s*(TRUE|T)\\b)[\\s\\S]*mean\\("
+    message:
+      de: "Ohne `na.rm = TRUE` liefert `mean()` hier `NA`, weil 12 Reaktionszeiten fehlen."
+      en: "Without `na.rm = TRUE`, `mean()` returns `NA` here because 12 reaction times are missing."
+  - pattern: "round\\(\\s*mean\\([^()]*\\)\\s*\\)"
+    message:
+      de: "`round()` ohne zweites Argument rundet auf ganze Zahlen. Gib die Stellen an: `round(x, 1)`."
+      en: "`round()` without a second argument rounds to whole numbers. Give the digits: `round(x, 1)`."
+  - pattern: "mean\\([^)]*na\\.rm\\s*=\\s*\"TRUE\""
+    message:
+      de: "`\"TRUE\"` in Anführungszeichen ist Text, kein logischer Wert. Schreibe `TRUE` ohne Anführungszeichen."
+      en: "`\"TRUE\"` in quotes is text, not a logical value. Write `TRUE` without quotes."

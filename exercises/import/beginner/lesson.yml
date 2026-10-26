@@ -1,0 +1,17 @@
+# Lesson metadata; exercises are the other *.yml files in this folder
+# (sorted by `order`), the knowledge check is quiz.yml.
+lesson: import-beginner
+minutes: 40
+prerequisites: [working-with-r-beginner]
+langs: [de]
+packages: [readr, readxl, janitor]
+data: [raw_export, raw_export_xlsx]
+goals:
+  de:
+    - CSV-Exporte mit Trennzeichen, Kopfzeilenmüll und Dezimalkomma einlesen
+    - Excel-Blätter mit Titel- und Summenzeilen gezielt einlesen
+    - Spaltentypen und Fehlwert-Codes nach dem Einlesen prüfen
+  en:
+    - Read CSV exports with delimiters, header junk and decimal commas
+    - Read Excel sheets with title and total rows in a targeted way
+    - Check column types and missing-value codes after reading

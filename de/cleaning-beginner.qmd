@@ -1,0 +1,161 @@
+---
+title: "Daten bereinigen"
+subtitle: "Beginner · Auswählen, umkodieren, Testantworten und Duplikate entfernen"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, stringr, forcats, lubridate, readr, janitor]
+resources:
+  - ../data/driving_sim.csv
+  - ../data/raw_export.csv
+---
+
+{{< include /_generated/de/cleaning-beginner/runtime.qmd >}}
+
+{{< include /_generated/de/cleaning-beginner/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R läuft hier direkt im Browser. Beim ersten Besuch lädt es 10–30 Sekunden (Anzeige unten rechts), danach geht es schneller.
+:::
+
+## Wozu? {#why}
+
+**Forschungsfrage:** Wie viele gültige Antworten hat die Feedback-Umfrage, und wie verteilen sie sich auf die Geschlechter?
+
+Der eingelesene Export (Lektion „Daten einlesen“) ist noch nicht auswertbar: Zwei Testantworten aus der Vorschau, zwei doppelte Einsendungen, `female`, `Female`, `F` und `woman` für dieselbe Angabe. Bereinigen heißt, solche Probleme zu finden, sie nachvollziehbar zu beheben und im Methodenteil zu berichten. Für die Grundwerkzeuge nutzt die Lektion außerdem die Fahrsimulator-Daten `driving_sim`.
+
+## Konzept {#concept}
+
+Fast jede Bereinigung besteht aus wenigen dplyr-Verben, verbunden mit `|>`:
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 170" role="img" aria-labelledby="fig-cl-title fig-cl-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-cl-title">Bereinigungs-Pipeline</title>
+  <desc id="fig-cl-desc">Vier Schritte nacheinander: filter behält Zeilen, select wählt Spalten, mutate bildet neue oder umkodierte Spalten, distinct entfernt doppelte Zeilen. Darunter die Zeilenzahlen für den Export: 82, nach filter 80, nach distinct 78.</desc>
+  <rect x="10" y="30" width="120" height="50" rx="6" class="rt-fig-box-accent" />
+  <rect x="150" y="30" width="120" height="50" rx="6" class="rt-fig-box" />
+  <rect x="290" y="30" width="120" height="50" rx="6" class="rt-fig-box" />
+  <rect x="430" y="30" width="120" height="50" rx="6" class="rt-fig-box-accent" />
+  <text x="70" y="52" text-anchor="middle" class="rt-fig-code">filter()</text>
+  <text x="70" y="70" text-anchor="middle" class="rt-fig-label rt-fig-muted">Zeilen</text>
+  <text x="210" y="52" text-anchor="middle" class="rt-fig-code">select()</text>
+  <text x="210" y="70" text-anchor="middle" class="rt-fig-label rt-fig-muted">Spalten</text>
+  <text x="350" y="52" text-anchor="middle" class="rt-fig-code">mutate()</text>
+  <text x="350" y="70" text-anchor="middle" class="rt-fig-label rt-fig-muted">neue Werte</text>
+  <text x="490" y="52" text-anchor="middle" class="rt-fig-code">distinct()</text>
+  <text x="490" y="70" text-anchor="middle" class="rt-fig-label rt-fig-muted">Duplikate</text>
+  <line x1="130" y1="55" x2="148" y2="55" class="rt-fig-arrow" />
+  <line x1="270" y1="55" x2="288" y2="55" class="rt-fig-arrow" />
+  <line x1="410" y1="55" x2="428" y2="55" class="rt-fig-arrow" />
+  <text x="10" y="120" class="rt-fig-label">Export: 82 Zeilen</text>
+  <text x="10" y="145" class="rt-fig-label rt-fig-muted">− 2 Testantworten (filter) − 2 Duplikate (distinct) = 78 Antworten</text>
+</svg>
+<figcaption>Jeder Schritt erzeugt eine neue Tabelle; die Rohdaten bleiben unverändert. Zeilenzahlen nach jedem Schritt prüfen.</figcaption>
+</figure>
+```
+
+- **`filter()`** behält Zeilen, für die alle Bedingungen `TRUE` sind. `NA` zählt nicht als `TRUE`, solche Zeilen fallen weg.
+- **`select()`** wählt, ordnet und benennt Spalten (`select(id = response_id, ...)`).
+- **`mutate()`** bildet neue Spalten oder überschreibt bestehende. Mit **`case_when()`** kodierst du nach Regeln um, von oben nach unten.
+- **Text vereinheitlichen** mit stringr: `str_trim()` (Leerzeichen am Rand), `str_to_lower()`, `str_detect()`.
+- **Faktoren** mit forcats: feste Stufen und ihre Reihenfolge (`factor(x, levels = ...)`, `fct_relevel()`).
+- **`distinct()`** entfernt identische Zeilen. Vorher nachsehen, ob „doppelt“ wirklich gleich heißt.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## Mehr dazu: nachvollziehbar bereinigen
+
+- Rohdaten nie überschreiben: Die bereinigte Tabelle bekommt einen eigenen Namen (`responses_clean`).
+- Jede Ausschlussregel als Code, nicht als Handarbeit in Excel. Dann lässt sie sich prüfen und wiederholen.
+- Nach jedem Schritt die Zeilenzahl festhalten; daraus entsteht das Flussdiagramm im Methodenteil („82 exportiert, 2 Tests, 2 Duplikate, 78 ausgewertet“).
+- Kontrolltabellen wie `count(q2_gender, gender)` zeigen, ob jede Rohangabe richtig umkodiert wurde.
+:::
+
+## Beispiel {#example}
+
+Der Export, eingelesen wie in der Lektion „Daten einlesen“:
+
+```{webr}
+header <- read_delim(raw_export_csv, delim = ";", skip = 3, n_max = 0, show_col_types = FALSE)
+responses <- read_delim(
+  raw_export_csv, delim = ";", skip = 5, col_names = names(header),
+  locale = locale(decimal_mark = ","), na = c("", "NA", "n/a", "-99"),
+  show_col_types = FALSE
+) |>
+  clean_names()
+count(responses, status)
+```
+
+Testantworten entfernen, Duplikate entfernen, die leere Spalte `x` weglassen und dabei die Zeilenzahl prüfen:
+
+```{webr}
+responses_clean <- responses |>
+  filter(status != "Survey Preview") |>
+  distinct() |>
+  select(-x)
+nrow(responses_clean)
+```
+
+Das Alter steht als Text in `q1_age` (`34 years`, `230`). `parse_number()` holt die Zahl heraus, unplausible Werte werden zu `NA`:
+
+```{webr}
+responses_clean |>
+  mutate(
+    age = parse_number(q1_age),
+    age = if_else(age >= 18 & age <= 99, age, NA)
+  ) |>
+  count(q1_age, age) |>
+  filter(is.na(age) | q1_age != as.character(age))
+```
+
+**So berichtest du es (Methodenteil):** Von 82 exportierten Datensätzen wurden 2 Testantworten und 2 doppelte Einsendungen ausgeschlossen; ausgewertet wurden 78 Antworten. Ein unplausibles Alter (230) wurde als fehlend behandelt.
+
+## Paketvergleich {#packages}
+
+| Aufgabe | Empfehlung | Alternative |
+|---|---|---|
+| Zeilen, Spalten, neue Werte | **dplyr** (`filter`, `select`, `mutate`, `case_when`) | Basis-R mit `[ ]` und `ifelse()`: kürzer für Einzelfälle, schwerer zu lesen |
+| Spaltennamen | **janitor** `clean_names()` | `dplyr::rename()` für einzelne Namen |
+| Text | **stringr** (`str_trim`, `str_to_lower`, `str_detect`) | Basis-R `trimws()`, `tolower()`, `grepl()` (gleiches Ergebnis) |
+| Kategorien | **forcats** (`fct_relevel`, `fct_collapse`, `fct_lump`) | `factor(x, levels = ...)` |
+| Datum und Zeit | **lubridate** (`ymd_hms`, `parse_date_time`) | `as.POSIXct(x, format = ...)`, nur ein Format pro Aufruf |
+| Duplikate prüfen | `janitor::get_dupes()` | `filter(n() > 1, .by = id)` |
+
+## Übungen {#exercises}
+
+Vier Pflichtübungen und drei Zusatzübungen. **Ausführen und prüfen** startet deinen Code und prüft ihn sofort. Hinweise deckst du einzeln auf (**Hinweis zeigen**), die Lösung erst danach.
+
+{{< include /_generated/de/cleaning-beginner/exercises.qmd >}}
+
+## Wissenscheck {#check}
+
+{{< include /_generated/de/cleaning-beginner/quiz.qmd >}}
+
+## Spickzettel {#cheatsheet}
+
+```r
+responses_clean <- responses |>
+  filter(status != "Survey Preview") |>            # Zeilen
+  distinct() |>                                    # identische Zeilen
+  select(-x) |>                                    # Spalten
+  mutate(
+    gender = str_to_lower(str_trim(q2_gender)),    # Text vereinheitlichen
+    gender = case_when(
+      gender %in% c("female", "f", "woman") ~ "female",
+      gender %in% c("male", "m") ~ "male",
+      gender == "diverse" ~ "diverse"
+    ),
+    gender = factor(gender, levels = c("female", "male", "diverse")),
+    age = parse_number(q1_age),
+    start = parse_date_time(start_date, orders = c("Ymd HMS", "dmY HM", "mdY IMp"))
+  )
+
+count(responses_clean, q2_gender, gender)          # Kontrolle
+```
+
+- Mehrere erlaubte Werte: `%in%`, nicht `==`.
+- `case_when()` ohne Auffangfall, wenn `NA` erhalten bleiben soll.
+- Stufen umsortieren mit `fct_relevel()`, nie mit `levels(x) <-`.
+- Nach jedem Schritt Zeilenzahl prüfen und für den Methodenteil festhalten.
+
+{{< include /_generated/de/cleaning-beginner/footer.qmd >}}

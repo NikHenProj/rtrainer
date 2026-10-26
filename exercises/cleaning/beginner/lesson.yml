@@ -1,0 +1,17 @@
+# Lesson metadata; exercises are the other *.yml files in this folder
+# (sorted by `order`), the knowledge check is quiz.yml.
+lesson: cleaning-beginner
+minutes: 50
+prerequisites: [import-beginner]
+langs: [de]
+packages: [dplyr, stringr, forcats, lubridate, readr, janitor]
+data: [driving_sim, raw_export]
+goals:
+  de:
+    - Zeilen und Spalten gezielt auswählen (`filter()`, `select()`)
+    - Neue Variablen bilden und Werte umkodieren (`mutate()`, `case_when()`)
+    - Testantworten, Duplikate und uneinheitliche Kategorien bereinigen
+  en:
+    - Select rows and columns on purpose (`filter()`, `select()`)
+    - Create new variables and recode values (`mutate()`, `case_when()`)
+    - Clean test responses, duplicates and inconsistent categories

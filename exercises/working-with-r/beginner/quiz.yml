@@ -1,0 +1,135 @@
+# Knowledge check: passed at >= `pass` share of correctly answered questions.
+lesson: working-with-r-beginner
+pass: 0.8
+questions:
+  - id: wr-b-q-na
+    prompt:
+      de: "`mean(c(2, NA, 4))` liefert `NA`. Warum?"
+      en: "`mean(c(2, NA, 4))` returns `NA`. Why?"
+    options:
+      - text:
+          de: "Ein fehlender Wert macht das Ergebnis unbekannt, solange du nicht `na.rm = TRUE` angibst."
+          en: "A missing value makes the result unknown unless you set `na.rm = TRUE`."
+        correct: true
+        explain:
+          de: "Genau. R entscheidet nicht still für dich, fehlende Werte wegzulassen."
+          en: "Exactly. R does not silently decide for you to drop missing values."
+      - text:
+          de: "`NA` zählt als 0, und der Mittelwert ist deshalb ungültig."
+          en: "`NA` counts as 0, so the mean is invalid."
+        correct: false
+        explain:
+          de: "`NA` ist nicht 0, sondern „unbekannt“. Mit 0 käme 2 heraus."
+          en: "`NA` is not 0 but \"unknown\". With 0 the result would be 2."
+      - text:
+          de: "Der Vektor ist zu kurz für einen Mittelwert."
+          en: "The vector is too short for a mean."
+        correct: false
+        explain:
+          de: "Die Länge spielt keine Rolle; schon `mean(c(1, NA))` ist `NA`."
+          en: "Length does not matter; even `mean(c(1, NA))` is `NA`."
+  - id: wr-b-q-error
+    prompt:
+      de: "R meldet `could not find function \"clean_names\"`. Was ist die wahrscheinlichste Ursache?"
+      en: "R reports `could not find function \"clean_names\"`. What is the most likely cause?"
+    options:
+      - text:
+          de: "Das Paket, aus dem die Funktion stammt (janitor), ist nicht geladen."
+          en: "The package the function comes from (janitor) is not loaded."
+        correct: true
+        explain:
+          de: "Richtig: `library(janitor)` laden oder `janitor::clean_names()` schreiben."
+          en: "Right: load `library(janitor)` or write `janitor::clean_names()`."
+      - text:
+          de: "In den Daten fehlt eine Spalte `clean_names`."
+          en: "The data lack a column `clean_names`."
+        correct: false
+        explain:
+          de: "Dann hieße die Meldung `object ... not found`. Hier fehlt eine Funktion."
+          en: "Then the message would read `object ... not found`. Here a function is missing."
+      - text:
+          de: "Die Daten haben fehlende Werte."
+          en: "The data contain missing values."
+        correct: false
+        explain:
+          de: "Fehlende Werte führen zu `NA` oder Warnungen, nicht zu dieser Meldung."
+          en: "Missing values lead to `NA` or warnings, not to this message."
+  - id: wr-b-q-pipe
+    prompt:
+      de: "Was bedeutet `driving_sim |> filter(trial == 1)`?"
+      en: "What does `driving_sim |> filter(trial == 1)` mean?"
+    options:
+      - text:
+          de: "Dasselbe wie `filter(driving_sim, trial == 1)`: Die Pipe reicht das Objekt links als erstes Argument weiter."
+          en: "The same as `filter(driving_sim, trial == 1)`: the pipe passes the object on the left as the first argument."
+        correct: true
+        explain:
+          de: "Genau. Lies `|>` als „und dann“."
+          en: "Exactly. Read `|>` as \"and then\"."
+      - text:
+          de: "`driving_sim` wird dauerhaft auf den ersten Durchgang verkleinert."
+          en: "`driving_sim` is permanently reduced to the first trial."
+        correct: false
+        explain:
+          de: "Ohne `<-` wird nichts gespeichert; `driving_sim` bleibt unverändert."
+          en: "Without `<-` nothing is stored; `driving_sim` stays unchanged."
+      - text:
+          de: "Die Zeilen mit `trial == 1` werden entfernt."
+          en: "Rows with `trial == 1` are removed."
+        correct: false
+        explain:
+          de: "`filter()` behält die Zeilen, für die die Bedingung `TRUE` ist."
+          en: "`filter()` keeps the rows for which the condition is `TRUE`."
+  - id: wr-b-q-quotes
+    prompt:
+      de: "Welche Zeilen sind richtig geschrieben? (Mehrere möglich)"
+      en: "Which lines are written correctly? (Several possible)"
+    multiple: true
+    options:
+      - text:
+          de: "`filter(driving_sim, condition == \"haptic\")`"
+          en: "`filter(driving_sim, condition == \"haptic\")`"
+        correct: true
+        explain:
+          de: "Spalte ohne, Wert mit Anführungszeichen."
+          en: "Column without quotes, value in quotes."
+      - text:
+          de: "`filter(driving_sim, \"condition\" == haptic)`"
+          en: "`filter(driving_sim, \"condition\" == haptic)`"
+        correct: false
+        explain:
+          de: "Vertauscht: `\"condition\"` ist hier nur Text, und das Objekt `haptic` gibt es nicht."
+          en: "Swapped: `\"condition\"` is just text here, and there is no object `haptic`."
+      - text:
+          de: "`mean(driving_sim$rt_ms, na.rm = TRUE)`"
+          en: "`mean(driving_sim$rt_ms, na.rm = TRUE)`"
+        correct: true
+        explain:
+          de: "`$` greift auf eine Spalte zu; `TRUE` ist ein logischer Wert ohne Anführungszeichen."
+          en: "`$` accesses a column; `TRUE` is a logical value without quotes."
+  - id: wr-b-q-project
+    prompt:
+      de: "Du arbeitest lokal. Warum lohnt sich ein R-Projekt (`.Rproj` bzw. ein Projektordner in Positron)?"
+      en: "You work locally. Why is an R project (`.Rproj` or a project folder in Positron) worth it?"
+    options:
+      - text:
+          de: "Der Projektordner ist das Arbeitsverzeichnis; relative Pfade wie `data/survey.csv` funktionieren auf jedem Rechner."
+          en: "The project folder is the working directory; relative paths like `data/survey.csv` work on every computer."
+        correct: true
+        explain:
+          de: "Genau. Feste Pfade wie `C:/Users/...` brechen, sobald jemand anderes den Code ausführt."
+          en: "Exactly. Fixed paths like `C:/Users/...` break as soon as someone else runs the code."
+      - text:
+          de: "R rechnet in einem Projekt schneller."
+          en: "R computes faster inside a project."
+        correct: false
+        explain:
+          de: "Die Rechengeschwindigkeit ändert sich nicht."
+          en: "Computation speed does not change."
+      - text:
+          de: "Ohne Projekt lassen sich keine Pakete laden."
+          en: "Without a project, packages cannot be loaded."
+        correct: false
+        explain:
+          de: "Pakete lassen sich immer laden; das Projekt regelt Ordner und Pfade."
+          en: "Packages can always be loaded; the project handles folders and paths."

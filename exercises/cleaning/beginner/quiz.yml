@@ -1,0 +1,135 @@
+# Knowledge check: passed at >= `pass` share of correctly answered questions.
+lesson: cleaning-beginner
+pass: 0.8
+questions:
+  - id: cl-b-q-in
+    prompt:
+      de: "Warum liefert `filter(condition == c(\"visual\", \"auditory\"))` zu wenige Zeilen?"
+      en: "Why does `filter(condition == c(\"visual\", \"auditory\"))` return too few rows?"
+    options:
+      - text:
+          de: "`==` vergleicht abwechselnd mit dem ersten und zweiten Wert, statt beide zu erlauben; richtig ist `%in%`."
+          en: "`==` compares alternately with the first and second value instead of allowing both; `%in%` is correct."
+        correct: true
+        explain:
+          de: "Genau. Der kurze Vektor wird wiederholt, und etwa die Hälfte der Treffer fällt still weg."
+          en: "Exactly. The short vector is recycled and about half of the matches silently drop out."
+      - text:
+          de: "`filter()` erlaubt nur eine Bedingung."
+          en: "`filter()` allows only one condition."
+        correct: false
+        explain:
+          de: "`filter()` nimmt beliebig viele Bedingungen, durch Komma getrennt."
+          en: "`filter()` takes any number of conditions, separated by commas."
+      - text:
+          de: "Die Werte müssten großgeschrieben werden."
+          en: "The values would have to be capitalised."
+        correct: false
+        explain:
+          de: "Die Werte heißen `visual` und `auditory`; das Problem ist `==`."
+          en: "The values are `visual` and `auditory`; the problem is `==`."
+  - id: cl-b-q-default
+    prompt:
+      de: "`case_when(rt_ms < 900 ~ \"fast\", .default = \"slow\")`: Was passiert mit fehlenden `rt_ms`?"
+      en: "`case_when(rt_ms < 900 ~ \"fast\", .default = \"slow\")`: what happens to missing `rt_ms`?"
+    options:
+      - text:
+          de: "Sie werden zu `\"slow\"`."
+          en: "They become `\"slow\"`."
+        correct: true
+        explain:
+          de: "`NA < 900` ist nicht `TRUE`, also greift der Auffangfall. Fehlende Werte werden so unbemerkt umkodiert."
+          en: "`NA < 900` is not `TRUE`, so the catch-all applies. Missing values get recoded without notice."
+      - text:
+          de: "Sie bleiben `NA`."
+          en: "They stay `NA`."
+        correct: false
+        explain:
+          de: "Nur ohne Auffangfall. `.default` erfasst alles, was keinen anderen Fall erfüllt, auch `NA`."
+          en: "Only without a catch-all. `.default` captures everything that meets no other case, including `NA`."
+      - text:
+          de: "R bricht mit einem Fehler ab."
+          en: "R stops with an error."
+        correct: false
+        explain:
+          de: "Es gibt keinen Fehler und keine Warnung; genau das macht den Fall tückisch."
+          en: "There is no error and no warning; that is exactly what makes the case tricky."
+  - id: cl-b-q-distinct
+    prompt:
+      de: "Was liefert `responses |> distinct(response_id)`?"
+      en: "What does `responses |> distinct(response_id)` return?"
+    options:
+      - text:
+          de: "Eine Tabelle nur mit der Spalte `response_id`, jede ID einmal."
+          en: "A table with only the column `response_id`, each ID once."
+        correct: true
+        explain:
+          de: "Richtig. Für alle Spalten: `distinct(response_id, .keep_all = TRUE)` oder `distinct()` für ganze Zeilen."
+          en: "Right. For all columns: `distinct(response_id, .keep_all = TRUE)`, or `distinct()` for whole rows."
+      - text:
+          de: "Alle Spalten, doppelte IDs entfernt."
+          en: "All columns, duplicate IDs removed."
+        correct: false
+        explain:
+          de: "Dafür braucht es `.keep_all = TRUE`."
+          en: "That needs `.keep_all = TRUE`."
+      - text:
+          de: "Nur die doppelten IDs."
+          en: "Only the duplicate IDs."
+        correct: false
+        explain:
+          de: "Doppelte findest du mit `filter(n() > 1, .by = response_id)`."
+          en: "You find duplicates with `filter(n() > 1, .by = response_id)`."
+  - id: cl-b-q-trim
+    prompt:
+      de: "`count(q2_gender)` zeigt `male` (29) und `Male ` (4). Welche Schritte vereinheitlichen das? (Mehrere möglich)"
+      en: "`count(q2_gender)` shows `male` (29) and `Male ` (4). Which steps harmonise this? (Several possible)"
+    multiple: true
+    options:
+      - text:
+          de: "`str_trim()`"
+          en: "`str_trim()`"
+        correct: true
+        explain:
+          de: "Entfernt das Leerzeichen am Ende."
+          en: "Removes the trailing space."
+      - text:
+          de: "`str_to_lower()`"
+          en: "`str_to_lower()`"
+        correct: true
+        explain:
+          de: "Macht aus `Male` ein `male`."
+          en: "Turns `Male` into `male`."
+      - text:
+          de: "`as.numeric()`"
+          en: "`as.numeric()`"
+        correct: false
+        explain:
+          de: "Text wird damit zu `NA`; die Angaben gingen verloren."
+          en: "This turns text into `NA`; the answers would be lost."
+  - id: cl-b-q-levels
+    prompt:
+      de: "`f` hat die Stufen `visual, auditory, haptic`. Du schreibst `levels(f) <- c(\"auditory\", \"visual\", \"haptic\")`. Was ist passiert?"
+      en: "`f` has the levels `visual, auditory, haptic`. You write `levels(f) <- c(\"auditory\", \"visual\", \"haptic\")`. What happened?"
+    options:
+      - text:
+          de: "Die Stufen wurden umbenannt: Alle visuellen Messungen heißen jetzt `auditory` und umgekehrt."
+          en: "The levels were renamed: all visual measurements are now called `auditory` and vice versa."
+        correct: true
+        explain:
+          de: "Genau, ohne Warnung. Zum Umsortieren: `fct_relevel(f, \"auditory\")`."
+          en: "Exactly, without a warning. To reorder: `fct_relevel(f, \"auditory\")`."
+      - text:
+          de: "`auditory` ist jetzt die Referenzstufe, die Daten sind unverändert."
+          en: "`auditory` is now the reference level; the data are unchanged."
+        correct: false
+        explain:
+          de: "Das wäre `fct_relevel()`. `levels<-` ändert die Beschriftungen."
+          en: "That would be `fct_relevel()`. `levels<-` changes the labels."
+      - text:
+          de: "R meldet einen Fehler, weil die Reihenfolge nicht passt."
+          en: "R reports an error because the order does not match."
+        correct: false
+        explain:
+          de: "Es gibt keinen Fehler, solange die Anzahl der Stufen stimmt."
+          en: "There is no error as long as the number of levels matches."

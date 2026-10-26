@@ -1,0 +1,66 @@
+id: wr-b-na-index
+lesson: working-with-r-beginner
+order: 2
+title:
+  de: NA in einer Bedingung
+  en: NA in a condition
+kind: predict
+required: true
+packages: []
+data: []
+setup: ""
+prompt:
+  de: |
+    Was liefert der folgende Code? Führe ihn nicht aus, sondern gib das Ergebnis als
+    R-Wert ein, z. B. `c(1, 2)`.
+
+    ```r
+    x <- c(4, NA, 7, 1)
+    x[x > 3]
+    ```
+  en: |
+    What does the following code return? Do not run it; type the result as an R value,
+    e.g. `c(1, 2)`.
+
+    ```r
+    x <- c(4, NA, 7, 1)
+    x[x > 3]
+    ```
+starter: |
+  # Deine Vorhersage als Wert / your prediction as a value, e.g. c(1, 2)
+solution: |
+  c(4, NA, 7)
+hints:
+  - de: "Werte zuerst `x > 3` Element für Element aus. Was ergibt `NA > 3`?"
+    en: "First evaluate `x > 3` element by element. What is `NA > 3`?"
+  - de: "`x > 3` ist `c(TRUE, NA, TRUE, FALSE)`."
+    en: "`x > 3` is `c(TRUE, NA, TRUE, FALSE)`."
+  - de: "Ein `NA` in den eckigen Klammern wählt nichts ab, sondern erzeugt ein `NA` im Ergebnis."
+    en: "An `NA` inside the square brackets does not drop anything; it produces an `NA` in the result."
+misconception:
+  de: "Ein `NA` in einer Bedingung wird nicht wie `FALSE` behandelt. Bei `x[...]` erzeugt es ein `NA` im Ergebnis."
+  en: "An `NA` in a condition is not treated like `FALSE`. With `x[...]` it produces an `NA` in the result."
+explanation:
+  de: |
+    `NA > 3` ist `NA`: Ob ein unbekannter Wert größer als 3 ist, ist unbekannt. Beim
+    Auswählen mit `[ ]` liefert jedes `NA` in der Bedingung ein `NA` im Ergebnis,
+    deshalb wäre auch `mean(x[x > 3])` hier `NA`. `dplyr::filter()` verhält sich
+    anders: Es behält nur Zeilen, bei denen die Bedingung `TRUE` ist, und lässt
+    `NA` still weg. Beides ist gut zu wissen, wenn Zahlen „verschwinden“.
+  en: |
+    `NA > 3` is `NA`: whether an unknown value is greater than 3 is unknown. When
+    selecting with `[ ]`, each `NA` in the condition yields an `NA` in the result,
+    so `mean(x[x > 3])` would be `NA` here as well. `dplyr::filter()` behaves
+    differently: it keeps only rows where the condition is `TRUE` and silently drops
+    `NA`. Both are worth knowing when numbers "disappear".
+check:
+  type: value
+common_mistakes:
+  - pattern: "^[\\s\\S]*?c\\(\\s*4\\s*,\\s*7\\s*\\)\\s*$"
+    message:
+      de: "Das `NA` fällt nicht weg: `NA > 3` ist `NA`, und ein `NA` in der Auswahl liefert ein `NA` im Ergebnis."
+      en: "The `NA` does not disappear: `NA > 3` is `NA`, and an `NA` in the selection yields an `NA` in the result."
+  - pattern: "^[\\s\\S]*?c\\(\\s*4\\s*,\\s*7\\s*,\\s*NA\\s*\\)\\s*$"
+    message:
+      de: "Die Reihenfolge bleibt erhalten: Das Ergebnis folgt den Positionen in `x`."
+      en: "The order is kept: the result follows the positions in `x`."

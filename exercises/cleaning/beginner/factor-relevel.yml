@@ -1,0 +1,61 @@
+id: cl-b-factor-relevel
+lesson: cleaning-beginner
+order: 5
+title:
+  de: Die Referenzstufe festlegen
+  en: Setting the reference level
+kind: write
+required: false
+packages: [forcats]
+data: [driving_sim]
+setup: |
+  library(forcats)
+prompt:
+  de: |
+    In `driving_sim` ist `condition` ein Faktor mit den Stufen `visual`, `auditory`,
+    `haptic`. Für ein späteres Modell soll `auditory` die Referenz sein, also die
+    erste Stufe; die Reihenfolge der übrigen bleibt. Speichere die umsortierte
+    Spalte im Objekt `condition_ref`. Die Zuordnung der Messungen darf sich dabei
+    nicht ändern.
+  en: |
+    In `driving_sim`, `condition` is a factor with the levels `visual`, `auditory`,
+    `haptic`. For a later model, `auditory` should be the reference, i.e. the first
+    level; the other levels keep their order. Store the reordered column in the
+    object `condition_ref`. The assignment of measurements must not change.
+starter: |
+  condition_ref <- driving_sim$condition
+  levels(condition_ref)
+solution: |
+  condition_ref <- fct_relevel(driving_sim$condition, "auditory")
+  levels(condition_ref)
+hints:
+  - de: "Die Reihenfolge der Stufen bestimmt, welche Stufe in Modellen und Grafiken zuerst kommt."
+    en: "The order of the levels determines which level comes first in models and plots."
+  - de: "`forcats::fct_relevel()` schiebt die genannten Stufen nach vorn."
+    en: "`forcats::fct_relevel()` moves the named levels to the front."
+  - de: "`fct_relevel(driving_sim$condition, \"______\")`"
+    en: "`fct_relevel(driving_sim$condition, \"______\")`"
+explanation:
+  de: |
+    `fct_relevel(f, "auditory")` verschiebt nur die Stufe, jede Messung behält ihre
+    Bedingung. Gefährlich ist `levels(f) <- c("auditory", "visual", "haptic")`:
+    Das sortiert nicht um, sondern **benennt** die Stufen um. Aus allen visuellen
+    Durchgängen würden ohne Fehlermeldung auditive. Im Data Frame schreibst du
+    `mutate(condition = fct_relevel(condition, "auditory"))`.
+  en: |
+    `fct_relevel(f, "auditory")` only moves the level; every measurement keeps its
+    condition. `levels(f) <- c("auditory", "visual", "haptic")` is dangerous: it
+    does not reorder but **renames** the levels. All visual trials would silently
+    become auditory. Inside a data frame you write
+    `mutate(condition = fct_relevel(condition, "auditory"))`.
+misconception:
+  de: "`levels(f) <- neue_reihenfolge` sortiert die Stufen nicht um, sondern benennt sie um."
+  en: "`levels(f) <- new_order` does not reorder the levels; it renames them."
+check:
+  type: object
+  name: condition_ref
+common_mistakes:
+  - pattern: "levels\\(\\s*condition_ref\\s*\\)\\s*<-"
+    message:
+      de: "`levels(condition_ref) <-` benennt die Stufen um, statt sie umzusortieren. Dadurch tragen Messungen falsche Bedingungen."
+      en: "`levels(condition_ref) <-` renames the levels instead of reordering them. Measurements then carry the wrong conditions."

@@ -1,0 +1,89 @@
+id: cl-b-gender
+lesson: cleaning-beginner
+order: 4
+title:
+  de: Uneinheitliche Kategorien vereinheitlichen
+  en: Harmonising inconsistent categories
+kind: write
+required: true
+packages: [dplyr, stringr]
+data: [raw_export]
+setup: |
+  library(dplyr)
+  library(stringr)
+  header <- readr::read_delim(raw_export_csv, delim = ";", skip = 3, n_max = 0, show_col_types = FALSE)
+  responses <- readr::read_delim(
+    raw_export_csv,
+    delim = ";",
+    skip = 5,
+    col_names = names(header),
+    locale = readr::locale(decimal_mark = ","),
+    na = c("", "NA", "n/a", "-99"),
+    show_col_types = FALSE
+  ) |>
+    janitor::clean_names()
+prompt:
+  de: |
+    Im Freitextfeld `q2_gender` stehen Angaben wie `female`, `Female`, `F`, `woman`,
+    `male`, `M`, `Male ` (mit Leerzeichen) und `diverse`. Bilde daraus die Spalte
+    `gender` mit genau den Stufen `female`, `male` und `diverse` (in dieser
+    Reihenfolge, als Faktor). Leere Angaben bleiben `NA`. Gib dann
+    `count(gender)` zurück.
+  en: |
+    The free-text field `q2_gender` contains entries such as `female`, `Female`,
+    `F`, `woman`, `male`, `M`, `Male ` (with a space) and `diverse`. Create the
+    column `gender` with exactly the levels `female`, `male` and `diverse` (in this
+    order, as a factor). Empty entries stay `NA`. Then return `count(gender)`.
+starter: |
+  responses |>
+    count(q2_gender)
+solution: |
+  responses |>
+    mutate(
+      gender = str_to_lower(str_trim(q2_gender)),
+      gender = case_when(
+        gender %in% c("female", "f", "woman") ~ "female",
+        gender %in% c("male", "m") ~ "male",
+        gender == "diverse" ~ "diverse"
+      ),
+      gender = factor(gender, levels = c("female", "male", "diverse"))
+    ) |>
+    count(gender)
+hints:
+  - de: "Vereinheitliche zuerst die Schreibweise: Leerzeichen am Rand weg (`str_trim()`), alles klein (`str_to_lower()`)."
+    en: "First harmonise the spelling: remove spaces at the edges (`str_trim()`), make everything lower case (`str_to_lower()`)."
+  - de: "Danach ordnet `case_when()` mit `%in%` mehrere Schreibweisen einer Kategorie zu."
+    en: "Then `case_when()` with `%in%` maps several spellings to one category."
+  - de: "Zum Schluss `factor(gender, levels = c(\"female\", \"male\", \"diverse\"))` und `count(gender)`."
+    en: "Finally `factor(gender, levels = c(\"female\", \"male\", \"diverse\"))` and `count(gender)`."
+explanation:
+  de: |
+    Freitextfelder brauchen zwei Schritte: erst die Schreibweise vereinheitlichen
+    (Leerzeichen, Groß-/Kleinschreibung), dann gleichbedeutende Werte
+    zusammenfassen. `"Male "` mit Leerzeichen ist für R ein anderer Wert als
+    `"male"`; ohne `str_trim()` bleibt er als eigene Kategorie stehen. Ergebnis:
+    38 female, 33 male, 5 diverse, 6 ohne Angabe. Vergleiche danach immer mit
+    `count(q2_gender, gender)`, ob jede Rohangabe richtig gelandet ist. Eine
+    Alternative ist `forcats::fct_collapse()`. In der eigenen Umfrage verhindert
+    eine geschlossene Frage mit festen Antwortoptionen das Problem.
+  en: |
+    Free-text fields need two steps: first harmonise the spelling (spaces, upper
+    and lower case), then merge values with the same meaning. `"Male "` with a
+    space is a different value from `"male"` to R; without `str_trim()` it stays a
+    category of its own. Result: 38 female, 33 male, 5 diverse, 6 without an
+    answer. Afterwards always compare with `count(q2_gender, gender)` whether every
+    raw entry ended up in the right place. An alternative is
+    `forcats::fct_collapse()`. In your own survey, a closed question with fixed
+    answer options prevents the problem.
+check:
+  type: value
+  ignore_row_order: true
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*str_(trim|squish))"
+    message:
+      de: "`\"Male \"` endet mit einem Leerzeichen und passt deshalb zu keinem Fall. Entferne Leerzeichen mit `str_trim()`."
+      en: "`\"Male \"` ends with a space and therefore matches no case. Remove spaces with `str_trim()`."
+  - pattern: "(\\.default\\s*=|TRUE\\s*~)"
+    message:
+      de: "Ein Auffangfall ordnet auch leere Angaben (`NA`) einer Kategorie zu. Die sollen `NA` bleiben."
+      en: "A catch-all also assigns empty entries (`NA`) to a category. They should stay `NA`."

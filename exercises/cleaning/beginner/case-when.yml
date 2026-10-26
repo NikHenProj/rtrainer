@@ -1,0 +1,70 @@
+id: cl-b-case-when
+lesson: cleaning-beginner
+order: 2
+title:
+  de: Reaktionszeiten einteilen
+  en: Categorising reaction times
+kind: write
+required: true
+packages: [dplyr]
+data: [driving_sim]
+setup: |
+  library(dplyr)
+prompt:
+  de: |
+    Ergänze `driving_sim` um die Spalte `rt_category`: `"fast"` bei `rt_ms` unter
+    900, `"medium"` von 900 bis unter 1200, `"slow"` ab 1200. Fehlende
+    Reaktionszeiten bleiben `NA`. Alle übrigen Spalten bleiben erhalten.
+  en: |
+    Add the column `rt_category` to `driving_sim`: `"fast"` for `rt_ms` below 900,
+    `"medium"` from 900 to below 1200, `"slow"` from 1200 on. Missing reaction
+    times stay `NA`. All other columns are kept.
+starter: |
+  driving_sim |>
+    mutate()
+solution: |
+  driving_sim |>
+    mutate(rt_category = case_when(
+      rt_ms < 900 ~ "fast",
+      rt_ms < 1200 ~ "medium",
+      rt_ms >= 1200 ~ "slow"
+    ))
+hints:
+  - de: "`case_when()` prüft die Bedingungen von oben nach unten; die erste zutreffende gewinnt."
+    en: "`case_when()` checks the conditions from top to bottom; the first one that applies wins."
+  - de: "Wegen der Reihenfolge reicht für `\"medium\"` die Bedingung `rt_ms < 1200`."
+    en: "Because of the order, `rt_ms < 1200` is enough for `\"medium\"`."
+  - de: "Vorsicht mit `.default` oder `TRUE ~ ...` als letztem Fall: Das fängt auch `NA` ein."
+    en: "Careful with `.default` or `TRUE ~ ...` as the last case: it also catches `NA`."
+explanation:
+  de: |
+    `case_when()` wertet die Fälle der Reihe nach aus, deshalb muss die mittlere
+    Kategorie die untere Grenze nicht wiederholen. Zeilen, auf die kein Fall
+    zutrifft, werden `NA`. Ein Auffangfall (`.default = "slow"`) würde fehlende
+    Reaktionszeiten als langsam einstufen, weil `NA < 900` nicht `TRUE` ist und sie
+    bis nach unten durchrutschen. Für Tabellen und Grafiken machst du die Kategorie
+    danach zum geordneten Faktor:
+    `factor(rt_category, levels = c("fast", "medium", "slow"))`.
+  en: |
+    `case_when()` evaluates the cases in order, so the middle category does not
+    need to repeat the lower bound. Rows that match no case become `NA`. A
+    catch-all (`.default = "slow"`) would classify missing reaction times as slow,
+    because `NA < 900` is not `TRUE` and they slip all the way down. For tables and
+    plots, then turn the category into an ordered factor:
+    `factor(rt_category, levels = c("fast", "medium", "slow"))`.
+misconception:
+  de: "Ein Auffangfall in `case_when()` lässt fehlende Werte nicht unberührt, er kodiert sie mit um."
+  en: "A catch-all in `case_when()` does not leave missing values alone; it recodes them too."
+check:
+  type: value
+  ignore_row_order: true
+  ignore_col_order: false
+common_mistakes:
+  - pattern: "(\\.default\\s*=|TRUE\\s*~)"
+    message:
+      de: "Der Auffangfall erfasst auch fehlende `rt_ms`. Formuliere die letzte Kategorie ausdrücklich (`rt_ms >= 1200`)."
+      en: "The catch-all also captures missing `rt_ms`. State the last category explicitly (`rt_ms >= 1200`)."
+  - pattern: "rt_ms\\s*<=\\s*900|rt_ms\\s*>\\s*1200|rt_ms\\s*<=\\s*1200"
+    message:
+      de: "Prüfe die Grenzen: 900 gehört zu `\"medium\"`, 1200 zu `\"slow\"`."
+      en: "Check the bounds: 900 belongs to `\"medium\"`, 1200 to `\"slow\"`."

@@ -1,0 +1,94 @@
+id: imp-b-read-delim
+lesson: import-beginner
+order: 1
+title:
+  de: Ein europäischer CSV-Export
+  en: A European CSV export
+kind: complete
+required: true
+packages: [readr]
+data: [raw_export]
+setup: |
+  library(readr)
+prompt:
+  de: |
+    `raw_export_csv` ist der Pfad zum Export der Feedback-Umfrage. Die Datei hat
+    3 Zeilen Exportinfo, dann die Kopfzeile, dann eine **zweite** Kopfzeile mit dem
+    Fragetext; die Antworten beginnen in Zeile 6. Die Spalten sind durch `;`
+    getrennt, Dezimalzahlen haben ein Komma (`308,5`).
+
+    Der Code liest zuerst nur die Spaltennamen (`header`). Ergänze die Lücken
+    `______` im zweiten Aufruf so, dass die 82 Antworten mit diesen Namen und
+    richtigen Zahlen eingelesen werden.
+  en: |
+    `raw_export_csv` is the path to the export of the feedback survey. The file has
+    3 lines of export info, then the header, then a **second** header row with the
+    question text; the answers start on line 6. Columns are separated by `;`,
+    decimal numbers use a comma (`308,5`).
+
+    The code first reads only the column names (`header`). Fill in the gaps
+    `______` in the second call so that the 82 answers are read with these names
+    and correct numbers.
+starter: |
+  header <- read_delim(raw_export_csv, delim = ";", skip = 3, n_max = 0, show_col_types = FALSE)
+
+  read_delim(
+    raw_export_csv,
+    delim = "______",
+    skip = ______,
+    col_names = names(header),
+    locale = locale(decimal_mark = "______"),
+    show_col_types = FALSE
+  )
+solution: |
+  header <- read_delim(raw_export_csv, delim = ";", skip = 3, n_max = 0, show_col_types = FALSE)
+
+  read_delim(
+    raw_export_csv,
+    delim = ";",
+    skip = 5,
+    col_names = names(header),
+    locale = locale(decimal_mark = ","),
+    show_col_types = FALSE
+  )
+hints:
+  - de: "Öffne die Datei gedanklich: Welche Zeichen trennen die Spalten, wie viele Zeilen stehen vor der ersten Antwort?"
+    en: "Picture the file: which character separates the columns, and how many lines come before the first answer?"
+  - de: "Vor den Antworten stehen 3 Infozeilen, die Kopfzeile und die Fragetextzeile, also 5 Zeilen."
+    en: "Before the answers there are 3 info lines, the header and the question-text row, so 5 lines."
+  - de: "`delim = \";\"`, `skip = 5` und `locale(decimal_mark = \"______\")` mit dem Dezimalzeichen der Datei."
+    en: "`delim = \";\"`, `skip = 5` and `locale(decimal_mark = \"______\")` with the file's decimal mark."
+explanation:
+  de: |
+    `read_delim()` braucht drei Angaben zur Datei: das Trennzeichen (`delim`), wie
+    viele Zeilen zu überspringen sind (`skip`) und das Zahlenformat (`locale`).
+    Die zweite Kopfzeile mit Fragetext ist typisch für Umfragetools (Qualtrics,
+    LimeSurvey); würdest du sie mitlesen, wären alle Spalten Text. Deshalb erst die
+    Namen holen, dann ab Zeile 6 mit diesen Namen lesen. Der Fallstrick ist das
+    Komma: Ohne `decimal_mark = ","` liest readr `308,0` als 3080, weil es das
+    Komma für ein Tausendertrennzeichen hält, und es gibt keine Warnung.
+    `read_csv2()` setzt `;` und Dezimalkomma auf einmal.
+  en: |
+    `read_delim()` needs three facts about the file: the delimiter (`delim`), how
+    many lines to skip (`skip`) and the number format (`locale`). The second header
+    row with question text is typical of survey tools (Qualtrics, LimeSurvey); if
+    you read it as data, every column becomes text. So get the names first, then
+    read from line 6 with these names. The trap is the comma: without
+    `decimal_mark = ","`, readr reads `308,0` as 3080 because it takes the comma for
+    a thousands separator, and there is no warning. `read_csv2()` sets `;` and the
+    decimal comma at once.
+check:
+  type: value
+common_mistakes:
+  - pattern: "decimal_mark\\s*=\\s*\"\\.\""
+    message:
+      de: "Die Datei nutzt das Komma als Dezimalzeichen (`308,5`). Mit `.` wird aus `308,0` die Zahl 3080."
+      en: "The file uses a comma as decimal mark (`308,5`). With `.`, `308,0` becomes 3080."
+  - pattern: "delim\\s*=\\s*\",\""
+    message:
+      de: "Die Spalten sind durch `;` getrennt, nicht durch `,`. Das Komma ist hier das Dezimalzeichen."
+      en: "The columns are separated by `;`, not `,`. Here the comma is the decimal mark."
+  - pattern: "skip\\s*=\\s*[34]\\b"
+    message:
+      de: "Zu wenig übersprungen: Auch die Kopfzeile und die Fragetextzeile müssen weg, die Namen kommen aus `header`."
+      en: "Too few lines skipped: the header and the question-text row must go as well; the names come from `header`."

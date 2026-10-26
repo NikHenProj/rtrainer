@@ -1,6 +1,6 @@
 # Triage der 65 alten Aufgaben (freigegeben)
 
-Stand 2026-10-26, Meilenstein 8 Teil 1. Quelle: `legacy/exercises/` (Tag `v0-shiny`). **Noch nichts migriert.**
+Stand 2026-10-26. Quelle: `legacy/exercises/` (Tag `v0-shiny`). Migriert: 6 von 54 (markiert).
 
 **Freigegeben von Nick am 2026-10-26: 54 behalten, 11 streichen.** 18 der behaltenen gehören in den Beginner-Pfad (M8), markiert mit **B**.
 
@@ -15,17 +15,17 @@ Stand 2026-10-26, Meilenstein 8 Teil 1. Quelle: `legacy/exercises/` (Tag `v0-shi
 
 | # | Alte Aufgabe | Art | Neue Lektion | Anpassung |
 |---|---|---|---|---|
-| 1 | 01-basics/factor-numeric | debug | import-beginner **B** | Kontext: Zahl wurde beim Einlesen zum Faktor; `readr::parse_number()` als Alternative nennen. |
-| 2 | 01-basics/factor-relevel | write | cleaning-beginner **B** | `forcats::fct_relevel()` statt `factor(levels =)`; englische Stufen. |
-| 3 | 01-basics/na-index | predict | working-with-r-beginner **B** | Unverändert; in der Erklärung auf `filter()` verweisen (lässt `NA` weg). |
+| 1 | 01-basics/factor-numeric | debug | import-beginner **B** | Kontext: Zahl wurde beim Einlesen zum Faktor; `readr::parse_number()` als Alternative nennen. | **Migriert (M8.2a).**
+| 2 | 01-basics/factor-relevel | write | cleaning-beginner **B** | `forcats::fct_relevel()` statt `factor(levels =)`; englische Stufen. | **Migriert (M8.2a).**
+| 3 | 01-basics/na-index | predict | working-with-r-beginner **B** | Unverändert; in der Erklärung auf `filter()` verweisen (lässt `NA` weg). | **Migriert (M8.2a).**
 | 4 | 01-basics/nested-list | write | programming-intermediate | Kontext: Modell- oder JSON-Objekt statt einer erfundenen `studie`-Liste. |
 | 5 | 02-dplyr/across | write | descriptives-intermediate | Mit `survey` (mehrere Skalen auf einmal) statt `driving_sim`. |
-| 6 | 02-dplyr/case-when | write | cleaning-beginner **B** | Stufen englisch (`fast/medium/slow`), Ergebnis als geordneter Faktor. |
+| 6 | 02-dplyr/case-when | write | cleaning-beginner **B** | Stufen englisch (`fast/medium/slow`), Ergebnis als geordneter Faktor. | **Migriert (M8.2a).**
 | 7 | 02-dplyr/count-units | write | descriptives-beginner **B** | Unverändert (Person statt Zeile zählen); gut für Tabelle 1. |
-| 8 | 02-dplyr/filter-select | write | cleaning-beginner **B** | Englische Stufen. |
+| 8 | 02-dplyr/filter-select | write | cleaning-beginner **B** | Englische Stufen. | **Migriert (M8.2a).**
 | 9 | 02-dplyr/join | write | reshaping-beginner **B** | `anti_join()` zur Kontrolle der nicht verknüpften Personen ergänzen. |
 | 10 | 02-dplyr/lag-predict | predict | reshaping-intermediate | Unverändert. |
-| 11 | 02-dplyr/slice-max | write | cleaning-beginner **B** | Kontext: auffällige Durchgänge vor dem Bereinigen sichten. |
+| 11 | 02-dplyr/slice-max | write | cleaning-beginner **B** | Kontext: auffällige Durchgänge vor dem Bereinigen sichten. | **Migriert (M8.2a).**
 | 12 | 02-dplyr/summarise-regroup | debug | descriptives-beginner **B** | Unverändert (Gruppierung nach `summarise()`, `.groups`). |
 | 13 | 02-dplyr/window-cumsum | write | reshaping-intermediate | Unverändert. |
 | 14 | 03-tidyr/complete-trials | complete | missing-intermediate | Implizit fehlende Zeilen; Bezug zu `naniar` herstellen. |
@@ -89,4 +89,4 @@ Stand 2026-10-26, Meilenstein 8 Teil 1. Quelle: `legacy/exercises/` (Tag `v0-shi
 ## Folgen für den Beginner-Pfad (M8)
 - Abgedeckt durch alte Aufgaben: working-with-r (1), import (1), cleaning (4), reshaping (3), visualisation (4), descriptives (3), regression (2). Group comparisons hat schon die 3 Übungen des Prototyps.
 - Ohne alte Aufgabe, also neu zu schreiben: **scales-beginner** (mit `survey`: umpolen, SUS-Score, `psych::alpha()`) und **reporting-beginner** (`report`, `gtsummary`). Neu dazu kommen Übungen für import/cleaning mit `raw_export` und für visualisation mit `usability`.
-- Voraussetzung für 4 der Beginner-Aufgaben: Check-Typ `plot` in `tools/checks.R` (mit Tests).
+- Check-Typ `plot` ist seit M8.2a vorhanden (nötig für die 4 Beginner-Visualisierungsaufgaben).

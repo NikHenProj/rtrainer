@@ -1,0 +1,67 @@
+id: wr-b-error-message
+lesson: working-with-r-beginner
+order: 3
+title:
+  de: Die Fehlermeldung lesen
+  en: Reading the error message
+kind: debug
+required: true
+packages: [dplyr]
+data: [driving_sim]
+setup: |
+  library(dplyr)
+prompt:
+  de: |
+    Der Code soll die mittlere Reaktionszeit (`mean_rt`, fehlende Werte ignorieren)
+    für die visuelle Warnung berechnen. Er bricht mit
+    `object 'visual' not found` ab. Lies die Meldung und repariere den Code.
+    Das Ergebnis ist eine Tabelle mit einer Zeile und der Spalte `mean_rt`.
+  en: |
+    The code should compute the mean reaction time (`mean_rt`, ignoring missing values)
+    for the visual warning. It stops with `object 'visual' not found`. Read the
+    message and fix the code. The result is a table with one row and the column
+    `mean_rt`.
+starter: |
+  driving_sim |>
+    filter(condition == visual) |>
+    summarise(mean_rt = mean(rt_ms, na.rm = TRUE))
+solution: |
+  driving_sim |>
+    filter(condition == "visual") |>
+    summarise(mean_rt = mean(rt_ms, na.rm = TRUE))
+hints:
+  - de: "Die Meldung nennt den Namen, den R nicht findet: `visual`. Ist `visual` eine Spalte, ein Objekt oder ein Wert in einer Spalte?"
+    en: "The message names what R cannot find: `visual`. Is `visual` a column, an object or a value inside a column?"
+  - de: "Spaltennamen schreibst du ohne Anführungszeichen, Werte (Text) mit."
+    en: "Column names go without quotes, values (text) go in quotes."
+  - de: "`filter(condition == \"______\")`"
+    en: "`filter(condition == \"______\")`"
+misconception:
+  de: "Ohne Anführungszeichen sucht R nach einem Objekt oder einer Spalte mit diesem Namen, nicht nach dem Text."
+  en: "Without quotes, R looks for an object or column of that name, not for the text."
+explanation:
+  de: |
+    `object '...' not found` heißt: R sucht ein Objekt mit diesem Namen und findet
+    keines. In `filter()` sucht R zuerst unter den Spalten von `driving_sim`, dann
+    in deiner Umgebung. `visual` ist aber keine Spalte, sondern ein **Wert** in der
+    Spalte `condition`, und Werte vom Typ Text stehen in Anführungszeichen. Die
+    häufigsten Ursachen dieser Meldung sind fehlende Anführungszeichen, Tippfehler
+    (`rt_m` statt `rt_ms`) und Code, der noch nicht ausgeführt wurde.
+  en: |
+    `object '...' not found` means: R looks for an object of that name and finds
+    none. Inside `filter()`, R looks among the columns of `driving_sim` first, then
+    in your environment. But `visual` is not a column; it is a **value** in the
+    column `condition`, and text values go in quotes. The most common causes of this
+    message are missing quotes, typos (`rt_m` instead of `rt_ms`) and code that has
+    not been run yet.
+check:
+  type: value
+common_mistakes:
+  - pattern: "condition\\s*=\\s*\"visual\""
+    message:
+      de: "Ein einfaches `=` ist eine Zuweisung bzw. ein Argument. Zum Vergleichen brauchst du `==`."
+      en: "A single `=` assigns or names an argument. To compare you need `==`."
+  - pattern: "\"Visual\"|'Visual'"
+    message:
+      de: "R unterscheidet Groß- und Kleinschreibung: Der Wert heißt `visual`."
+      en: "R is case-sensitive: the value is `visual`."

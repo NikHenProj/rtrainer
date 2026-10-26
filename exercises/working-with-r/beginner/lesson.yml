@@ -1,0 +1,17 @@
+# Lesson metadata; exercises are the other *.yml files in this folder
+# (sorted by `order`), the knowledge check is quiz.yml.
+lesson: working-with-r-beginner
+minutes: 30
+prerequisites: []
+langs: [de]
+packages: [dplyr]
+data: [driving_sim]
+goals:
+  de:
+    - Objekte anlegen und Funktionen mit Argumenten aufrufen
+    - Fehlende Werte (`NA`) erkennen und gezielt behandeln
+    - Fehlermeldungen lesen und die Ursache finden
+  en:
+    - Create objects and call functions with arguments
+    - Recognise missing values (`NA`) and handle them on purpose
+    - Read error messages and find the cause

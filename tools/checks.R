@@ -20,10 +20,20 @@ rt_messages <- list(
     column_values = "Die Werte in Spalte `%s` stimmen noch nicht.",
     length = "Die Länge stimmt nicht: erwartet %d, erhalten %d.",
     values = "Die Werte stimmen noch nicht.",
+    levels = "Die Stufen (`levels`) stimmen nicht: erwartet %s, erhalten %s.",
     htest = "Der Test liefert andere Werte (%s) als erwartet. Prüfe Variablen, Daten und Optionen.",
     htest_df = "Die Freiheitsgrade stimmen nicht: erwartet etwa %s, erhalten %s. Wie viele unabhängige Beobachtungen gehen in den Test ein?",
     missing_object = "Das Objekt `%s` fehlt. Hast du es mit `<-` gespeichert?",
     output = "Die Ausgabe enthält noch nicht das Erwartete.",
+    plot_class = "Das Ergebnis ist kein ggplot. Steht der Plot in der letzten Zeile (bzw. im Objekt `%s`)?",
+    plot_layers = "Die Ebenen stimmen nicht: erwartet %s, erhalten %s.",
+    plot_mapping = "Ebene %d (%s): Die Zuordnung (`aes()`) stimmt nicht. Erwartet %s, erhalten %s.",
+    plot_setting = "Ebene %d (%s): Die festen Einstellungen außerhalb von `aes()` stimmen nicht. Erwartet %s, erhalten %s.",
+    plot_param = "Ebene %d (%s): Das Argument `%s` stimmt nicht.",
+    plot_facet = "Die Aufteilung in Panels (facet) stimmt nicht: erwartet %s, erhalten %s.",
+    plot_scale = "Die Skalen stimmen nicht: erwartet %s, erhalten %s.",
+    plot_data = "Die Daten des Plots stimmen nicht: %s",
+    none = "keine",
     check_error = "Beim Prüfen ist ein Fehler aufgetreten: %s"
   ),
   en = list(
@@ -36,10 +46,20 @@ rt_messages <- list(
     column_values = "The values in column `%s` are not right yet.",
     length = "The length does not match: expected %d, got %d.",
     values = "The values are not right yet.",
+    levels = "The levels do not match: expected %s, got %s.",
     htest = "The test returns different values (%s) than expected. Check variables, data and options.",
     htest_df = "The degrees of freedom do not match: expected about %s, got %s. How many independent observations enter the test?",
     missing_object = "The object `%s` is missing. Did you save it with `<-`?",
     output = "The output does not contain what was expected yet.",
+    plot_class = "The result is not a ggplot. Is the plot on the last line (or in the object `%s`)?",
+    plot_layers = "The layers do not match: expected %s, got %s.",
+    plot_mapping = "Layer %d (%s): the mapping (`aes()`) does not match. Expected %s, got %s.",
+    plot_setting = "Layer %d (%s): the fixed settings outside `aes()` do not match. Expected %s, got %s.",
+    plot_param = "Layer %d (%s): the argument `%s` does not match.",
+    plot_facet = "The panels (facets) do not match: expected %s, got %s.",
+    plot_scale = "The scales do not match: expected %s, got %s.",
+    plot_data = "The plot data do not match: %s",
+    none = "none",
     check_error = "An error occurred while checking: %s"
   )
 )
@@ -144,6 +164,22 @@ rt_compare <- function(result, expected, tolerance = 1e-6,
     return(NULL)
   }
 
+  if (is.factor(expected)) {
+    if (!is.factor(result)) {
+      return(rt_msg("class", lang, "factor", class(result)[1]))
+    }
+    if (!identical(levels(result), levels(expected))) {
+      return(rt_msg("levels", lang, rt_collapse(levels(expected)), rt_collapse(levels(result))))
+    }
+    if (length(result) != length(expected)) {
+      return(rt_msg("length", lang, length(expected), length(result)))
+    }
+    if (!identical(as.character(result), as.character(expected))) {
+      return(rt_msg("values", lang))
+    }
+    return(NULL)
+  }
+
   if (is.numeric(expected)) {
     if (!is.numeric(result)) {
       return(rt_msg("class", lang, class(expected)[1], class(result)[1]))
@@ -163,6 +199,116 @@ rt_compare <- function(result, expected, tolerance = 1e-6,
   NULL
 }
 
+# ggplot2 objects are inspected with `$` only, so this stays base R.
+rt_snake <- function(x) tolower(gsub("([a-z0-9])([A-Z])", "\\1_\\2", x))
+
+rt_aes_text <- function(x) {
+  expr <- if (inherits(x, "formula")) unclass(x)[[2]] else x
+  paste(deparse(expr), collapse = " ")
+}
+
+# Effective mapping of a layer: plot mapping (if inherited) + layer mapping,
+# as named character vector aesthetic = expression, sorted by name.
+rt_layer_mapping <- function(plot, layer) {
+  mapping <- list()
+  if (isTRUE(layer$inherit.aes)) mapping <- unclass(plot$mapping)
+  for (aes_name in names(layer$mapping)) mapping[[aes_name]] <- layer$mapping[[aes_name]]
+  out <- vapply(mapping, rt_aes_text, character(1))
+  out[order(names(out))]
+}
+
+rt_layer_settings <- function(layer) {
+  settings <- vapply(layer$aes_params, function(x) paste(format(x), collapse = ", "), character(1))
+  settings[order(names(settings))]
+}
+
+rt_format_pairs <- function(x, lang) {
+  if (length(x) == 0) {
+    return(rt_msg("none", lang))
+  }
+  paste0("`", names(x), " = ", x, "`", collapse = ", ")
+}
+
+rt_facet_text <- function(plot) {
+  facet <- plot$facet
+  type <- rt_snake(class(facet)[1])
+  if (type == "facet_null") {
+    return(rt_msg("none", "en"))
+  }
+  vars <- c(names(facet$params$facets), names(facet$params$rows), names(facet$params$cols))
+  sprintf("%s(%s)", type, paste(vars, collapse = ", "))
+}
+
+rt_scale_text <- function(plot) {
+  scales <- plot$scales$scales
+  if (length(scales) == 0) {
+    return(character(0))
+  }
+  out <- vapply(scales, function(scale) {
+    transform <- tryCatch(scale$get_transformation()$name, error = function(e) NULL)
+    transform <- transform %||% tryCatch(scale$trans$name, error = function(e) NULL)
+    paste0(scale$aesthetics[1], if (!is.null(transform)) paste0(" (", transform, ")"))
+  }, character(1))
+  sort(out)
+}
+
+# Compare a ggplot with the expected one: layers (geoms, in order), mapping
+# and fixed settings per layer, facets, scales; optionally named layer
+# parameters (`params`, e.g. method, se) and the plot data.
+rt_compare_plot <- function(result, expected, params = NULL, check_data = FALSE,
+                            name = NULL, lang = "de") {
+  if (!inherits(result, "ggplot")) {
+    return(rt_msg("plot_class", lang, name %||% "p"))
+  }
+  geoms <- function(p) vapply(p$layers, function(l) rt_snake(class(l$geom)[1]), character(1))
+  result_geoms <- geoms(result)
+  expected_geoms <- geoms(expected)
+  if (!identical(result_geoms, expected_geoms)) {
+    shown <- function(x) if (length(x) == 0) rt_msg("none", lang) else rt_collapse(x)
+    return(rt_msg("plot_layers", lang, shown(expected_geoms), shown(result_geoms)))
+  }
+  for (i in seq_along(expected$layers)) {
+    got <- result$layers[[i]]
+    want <- expected$layers[[i]]
+    mapping_got <- rt_layer_mapping(result, got)
+    mapping_want <- rt_layer_mapping(expected, want)
+    if (!identical(mapping_got, mapping_want)) {
+      return(rt_msg(
+        "plot_mapping", lang, i, expected_geoms[i],
+        rt_format_pairs(mapping_want, lang), rt_format_pairs(mapping_got, lang)
+      ))
+    }
+    settings_got <- rt_layer_settings(got)
+    settings_want <- rt_layer_settings(want)
+    if (!identical(names(settings_got), names(settings_want))) {
+      return(rt_msg(
+        "plot_setting", lang, i, expected_geoms[i],
+        rt_format_pairs(settings_want, lang), rt_format_pairs(settings_got, lang)
+      ))
+    }
+    for (param in unlist(params)) {
+      value <- function(l) l$stat_params[[param]] %||% l$geom_params[[param]]
+      if (!isTRUE(all.equal(value(got), value(want)))) {
+        return(rt_msg("plot_param", lang, i, expected_geoms[i], param))
+      }
+    }
+  }
+  if (!identical(rt_facet_text(result), rt_facet_text(expected))) {
+    return(rt_msg("plot_facet", lang, rt_facet_text(expected), rt_facet_text(result)))
+  }
+  if (!identical(rt_scale_text(result), rt_scale_text(expected))) {
+    shown <- function(x) if (length(x) == 0) rt_msg("none", lang) else rt_collapse(x)
+    return(rt_msg("plot_scale", lang, shown(rt_scale_text(expected)), shown(rt_scale_text(result))))
+  }
+  if (isTRUE(check_data)) {
+    problem <- rt_compare(result$data, expected$data, ignore_row_order = TRUE, lang = lang)
+    if (!is.null(problem)) {
+      return(rt_msg("plot_data", lang, problem))
+    }
+  }
+  NULL
+}
+
 # First matching common mistake (regex on the user's code), or NULL.
 rt_match_mistake <- function(user_code, mistakes, lang = "de") {
   for (mistake in mistakes) {
@@ -176,7 +322,9 @@ rt_match_mistake <- function(user_code, mistakes, lang = "de") {
 # Check the current attempt. `spec` is the exercise's `check` field:
 # type = "value" (last value vs. solution), "object" (object `name` in the
 # user's environment vs. the solution's) or "output" (printed output matches
-# regex `pattern`).
+# regex `pattern`) or "plot" (ggplot vs. the solution's: layers, aes(),
+# settings, facets, scales; optional `params`, `check_data`, and `name` for
+# a plot stored in an object instead of the last value).
 rt_check <- function(spec, mistakes = list(), lang = "de", env = parent.frame()) {
   problem <- tryCatch(
     switch(spec$type,
@@ -206,6 +354,22 @@ rt_check <- function(spec, mistakes = list(), lang = "de", env = parent.frame())
       output = {
         printed <- paste(utils::capture.output(print(get0(".result", env))), collapse = "\n")
         if (grepl(spec$pattern, printed, perl = TRUE)) NULL else rt_msg("output", lang)
+      },
+      plot = {
+        if (is.null(spec$name)) {
+          result <- get0(".result", env)
+          expected <- get0(".solution", env)
+        } else {
+          result <- get0(spec$name, envir = get0(".envir_result", env) %||% emptyenv())
+          expected <- get0(spec$name, envir = get0(".envir_solution", env) %||% emptyenv())
+        }
+        rt_compare_plot(
+          result, expected,
+          params = spec$params,
+          check_data = isTRUE(spec$check_data),
+          name = spec$name,
+          lang = lang
+        )
       },
       stop("Unknown check type: ", spec$type)
     ),

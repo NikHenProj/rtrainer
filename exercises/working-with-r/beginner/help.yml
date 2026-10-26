@@ -1,0 +1,51 @@
+id: wr-b-help
+lesson: working-with-r-beginner
+order: 4
+title:
+  de: Ein Argument in der Hilfe finden
+  en: Finding an argument in the help
+kind: write
+required: false
+packages: []
+data: [driving_sim]
+setup: ""
+prompt:
+  de: |
+    `quantile()` berechnet Perzentile. Berechne das 10. und das 90. Perzentil von
+    `rt_ms` (fehlende Werte ignorieren). Das Ergebnis ist ein Vektor mit zwei Zahlen.
+    Welches Argument du für die Perzentile brauchst, steht in der Hilfe (`?quantile`).
+  en: |
+    `quantile()` computes percentiles. Compute the 10th and the 90th percentile of
+    `rt_ms` (ignoring missing values). The result is a vector of two numbers. The
+    help (`?quantile`) tells you which argument sets the percentiles.
+starter: |
+  quantile(driving_sim$rt_ms)
+solution: |
+  quantile(driving_sim$rt_ms, probs = c(0.1, 0.9), na.rm = TRUE)
+hints:
+  - de: "Führe `?quantile` aus und lies den Abschnitt **Arguments**."
+    en: "Run `?quantile` and read the **Arguments** section."
+  - de: "Das Argument heißt `probs` und erwartet Anteile zwischen 0 und 1."
+    en: "The argument is `probs` and expects proportions between 0 and 1."
+  - de: "`quantile(x, probs = c(______, ______), na.rm = TRUE)`"
+    en: "`quantile(x, probs = c(______, ______), na.rm = TRUE)`"
+explanation:
+  de: |
+    Die Hilfe einer Funktion zeigt unter **Usage** alle Argumente mit ihren
+    Voreinstellungen (`probs = seq(0, 1, 0.25)`, `na.rm = FALSE`) und unter
+    **Examples** lauffähigen Code. Perzentile werden als Anteile angegeben: 0.1
+    statt 10. Ohne `na.rm = TRUE` bricht `quantile()` hier sogar mit einer
+    Fehlermeldung ab, statt `NA` zu liefern.
+  en: |
+    A function's help lists all arguments with their defaults under **Usage**
+    (`probs = seq(0, 1, 0.25)`, `na.rm = FALSE`) and runnable code under
+    **Examples**. Percentiles are given as proportions: 0.1 instead of 10. Without
+    `na.rm = TRUE`, `quantile()` even stops with an error here instead of returning
+    `NA`.
+check:
+  type: value
+common_mistakes:
+  - pattern: "probs\\s*=\\s*c\\(\\s*10\\s*,\\s*90\\s*\\)"
+    message:
+      de: "`probs` erwartet Anteile zwischen 0 und 1: `c(0.1, 0.9)` statt `c(10, 90)`."
+      en: "`probs` expects proportions between 0 and 1: `c(0.1, 0.9)` instead of `c(10, 90)`."

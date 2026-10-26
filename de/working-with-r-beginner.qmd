@@ -1,0 +1,158 @@
+---
+title: "Arbeiten mit R"
+subtitle: "Beginner · Objekte, Funktionen, fehlende Werte, Fehlermeldungen"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr]
+resources:
+  - ../data/driving_sim.csv
+---
+
+{{< include /_generated/de/working-with-r-beginner/runtime.qmd >}}
+
+{{< include /_generated/de/working-with-r-beginner/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R läuft hier direkt im Browser. Beim ersten Besuch lädt es 10–30 Sekunden (Anzeige unten rechts), danach geht es schneller.
+:::
+
+## Wozu? {#why}
+
+**Forschungsfrage:** Wie schnell reagieren Fahrende im Mittel auf eine Übernahmeaufforderung, und wie viele Messungen fehlen?
+
+Bevor du Gruppen vergleichst oder Modelle rechnest, schaust du dir die Daten an: Was steht drin, welche Werte fehlen, was sagt R, wenn etwas schiefgeht? Diese Lektion zeigt die Grundbausteine, die in jeder weiteren Lektion vorkommen. Grundlage ist die Fahrsimulator-Studie `driving_sim`: 40 Personen, je 12 Übernahmen, Reaktionszeit `rt_ms`.
+
+## Konzept {#concept}
+
+R-Code besteht aus wenigen Bausteinen:
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 150" role="img" aria-labelledby="fig-wr-title fig-wr-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-wr-title">Aufbau einer Zeile R-Code</title>
+  <desc id="fig-wr-desc">Die Zeile mean_rt gets mean of driving_sim dollar rt_ms, na.rm equals TRUE. Beschriftet sind: Objekt links vom Zuweisungspfeil, Funktion, Spalte einer Tabelle und Argument.</desc>
+  <text x="20" y="80" class="rt-fig-code">mean_rt &lt;- mean(driving_sim$rt_ms, na.rm = TRUE)</text>
+  <rect x="14" y="62" width="64" height="26" rx="4" class="rt-fig-box-accent" />
+  <rect x="102" y="62" width="38" height="26" rx="4" class="rt-fig-box" />
+  <rect x="141" y="62" width="140" height="26" rx="4" class="rt-fig-box" />
+  <rect x="289" y="62" width="101" height="26" rx="4" class="rt-fig-box" />
+  <text x="46" y="45" text-anchor="middle" class="rt-fig-label">Objekt</text>
+  <text x="121" y="45" text-anchor="middle" class="rt-fig-label">Funktion</text>
+  <text x="211" y="120" text-anchor="middle" class="rt-fig-label">Tabelle$Spalte</text>
+  <text x="339" y="120" text-anchor="middle" class="rt-fig-label">Argument</text>
+  <text x="90" y="120" text-anchor="middle" class="rt-fig-label rt-fig-muted">&lt;- speichert</text>
+</svg>
+<figcaption>Links vom Pfeil steht der Name, rechts die Berechnung. Argumente steuern, wie eine Funktion rechnet.</figcaption>
+</figure>
+```
+
+- **Objekte** speichern Ergebnisse: `mean_rt <- ...`. Ohne `<-` wird nur angezeigt, nicht gespeichert.
+- **Funktionen** rechnen: `mean(x)`. Ihre **Argumente** stehen in der Hilfe (`?mean`), mit Voreinstellungen wie `na.rm = FALSE`.
+- **Vektoren und Tabellen:** Eine Spalte ist ein Vektor (`driving_sim$rt_ms`), eine Tabelle (Data Frame, Tibble) ist eine Liste gleich langer Spalten.
+- **Fehlende Werte** heißen `NA` („nicht verfügbar“). Rechnen mit `NA` ergibt `NA`, bis du ausdrücklich etwas anderes sagst.
+- **Text in Anführungszeichen, Namen ohne:** `condition == "visual"` vergleicht die Spalte `condition` mit dem Text `"visual"`.
+- **Die Pipe `|>`** reicht das Ergebnis links als erstes Argument nach rechts weiter. Lies sie als „und dann“.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## Mehr dazu: Fehlermeldungen lesen
+
+R-Meldungen sind kurz, aber genau. Die häufigsten:
+
+| Meldung | Bedeutet meist |
+|---|---|
+| `object 'x' not found` | Tippfehler, fehlende Anführungszeichen oder Code noch nicht ausgeführt |
+| `could not find function "f"` | Paket nicht geladen (`library(pkg)` oder `pkg::f()`) |
+| `unexpected symbol` / `unexpected ')'` | Klammer oder Komma fehlt bzw. ist zu viel |
+| `argument "x" is missing, with no default` | Pflichtargument vergessen |
+| `Warning: NAs introduced by coercion` | Text ließ sich nicht in Zahlen umwandeln; prüfe die Werte |
+
+Eine **Warnung** (Warning) bricht nicht ab, verdient aber einen Blick. Ein **Fehler** (Error) stoppt den Code.
+:::
+
+## Beispiel {#example}
+
+Ein erster Blick auf die Daten: Spalten, Typen und die ersten Werte. Klicke auf **Ausführen**; du kannst den Code ändern und neu ausführen.
+
+```{webr}
+glimpse(driving_sim)
+```
+
+Wie viele Reaktionszeiten fehlen? `is.na()` liefert für jeden Wert `TRUE` oder `FALSE`, `sum()` zählt die `TRUE`:
+
+```{webr}
+sum(is.na(driving_sim$rt_ms))
+```
+
+Der Mittelwert ist deshalb erst einmal `NA`, mit `na.rm = TRUE` rechnet er mit den vorhandenen Werten:
+
+```{webr}
+mean(driving_sim$rt_ms)
+mean(driving_sim$rt_ms, na.rm = TRUE)
+```
+
+Dasselbe als Pipeline mit **dplyr**, pro Warnmodalität:
+
+```{webr}
+driving_sim |>
+  summarise(mean_rt = mean(rt_ms, na.rm = TRUE), n_missing = sum(is.na(rt_ms)), .by = condition)
+```
+
+**So berichtest du es:** Die mittlere Reaktionszeit lag bei 1004 ms; 12 von 480 Messungen (2,5 %) fehlten wegen Sensorausfällen.
+
+## Paketvergleich {#packages}
+
+| Weg | Stärke | Wann |
+|---|---|---|
+| Basis-R: `mean(driving_sim$rt_ms, na.rm = TRUE)` | Kurz, ohne Pakete, in fremdem Code überall | Einzelne Kennwerte, schnelle Kontrollen |
+| dplyr: `driving_sim |> summarise(...)` | Lesbar von oben nach unten, Gruppen mit `.by`, Ergebnis ist eine Tabelle | **Empfehlung** für alles, was über einen Wert hinausgeht |
+| `glimpse()` / `str()` / `summary()` | Überblick über Spalten, Typen, fehlende Werte | Immer direkt nach dem Einlesen |
+
+::: {.callout-note appearance="simple"}
+## Lokal ausführen
+
+Im Browser ist alles vorbereitet. Lokal arbeitest du am besten so:
+
+1. **Projekt anlegen:** In RStudio *File → New Project*, in Positron einen Ordner öffnen. Der Projektordner ist dann das Arbeitsverzeichnis, Pfade wie `"data/driving_sim.csv"` funktionieren auf jedem Rechner.
+2. **Quarto-Dokument statt loser Skripte:** *File → New File → Quarto Document*. Text, Code und Ergebnisse stehen zusammen und lassen sich als HTML oder Word ausgeben.
+3. **Pakete einmal installieren, in jeder Sitzung laden:**
+
+```r
+install.packages(c("tidyverse", "easystats"))
+library(dplyr)
+```
+:::
+
+## Übungen {#exercises}
+
+Drei Pflichtübungen und eine Zusatzübung. **Ausführen und prüfen** startet deinen Code und prüft ihn sofort. Hinweise deckst du einzeln auf (**Hinweis zeigen**), die Lösung erst danach.
+
+{{< include /_generated/de/working-with-r-beginner/exercises.qmd >}}
+
+## Wissenscheck {#check}
+
+{{< include /_generated/de/working-with-r-beginner/quiz.qmd >}}
+
+## Spickzettel {#cheatsheet}
+
+```r
+# Überblick
+glimpse(driving_sim)
+summary(driving_sim$rt_ms)
+
+# Fehlende Werte zählen und bewusst weglassen
+sum(is.na(driving_sim$rt_ms))
+mean_rt <- round(mean(driving_sim$rt_ms, na.rm = TRUE), 1)
+
+# Text vergleichen: Spalte ohne, Wert mit Anführungszeichen
+driving_sim |> filter(condition == "visual")
+
+# Hilfe
+?quantile
+```
+
+- `<-` speichert, ohne `<-` wird nur angezeigt.
+- `NA` steckt an: Rechnen mit `NA` ergibt `NA`. Erst zählen, dann bewusst `na.rm = TRUE`.
+- Fehlermeldung zuerst lesen: Welcher Name, welche Funktion, welche Zeile?
+
+{{< include /_generated/de/working-with-r-beginner/footer.qmd >}}

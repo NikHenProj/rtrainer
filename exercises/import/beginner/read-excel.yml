@@ -1,0 +1,75 @@
+id: imp-b-read-excel
+lesson: import-beginner
+order: 3
+title:
+  de: Ein Excel-Blatt mit Titel- und Summenzeile
+  en: An Excel sheet with title and total rows
+kind: write
+required: true
+packages: [readxl, janitor]
+data: [raw_export_xlsx]
+setup: |
+  library(readxl)
+  library(janitor)
+prompt:
+  de: |
+    `raw_export_xlsx` ist dieselbe Umfrage als Excel-Datei. Im Blatt `"Export"`
+    stehen zwei Titelzeilen und eine Leerzeile, die Kopfzeile in Zeile 4, darunter
+    82 Antworten, dann eine Leerzeile und die Zeile `Total responses: 82`.
+
+    Lies genau die 82 Antworten aus dem Blatt `"Export"` ein und mache die
+    Spaltennamen mit `clean_names()` R-tauglich (`Response ID` → `response_id`).
+  en: |
+    `raw_export_xlsx` is the same survey as an Excel file. The sheet `"Export"` has
+    two title rows and an empty row, the header in row 4, then 82 answers, then an
+    empty row and the row `Total responses: 82`.
+
+    Read exactly the 82 answers from the sheet `"Export"` and make the column names
+    R-friendly with `clean_names()` (`Response ID` → `response_id`).
+starter: |
+  read_excel(raw_export_xlsx)
+solution: |
+  read_excel(raw_export_xlsx, sheet = "Export", skip = 3, n_max = 82) |>
+    clean_names()
+hints:
+  - de: "Führe den Startcode aus: Welche Zeile hält `read_excel()` für die Kopfzeile, und was steht ganz unten?"
+    en: "Run the starter code: which row does `read_excel()` take as the header, and what is at the very bottom?"
+  - de: "`skip` überspringt Zeilen oben, `n_max` begrenzt die Zahl der Datenzeilen. Alternativ legt `range = \"A4:N86\"` den Bereich fest."
+    en: "`skip` skips rows at the top, `n_max` limits the number of data rows. Alternatively, `range = \"A4:N86\"` sets the cell range."
+  - de: "`read_excel(raw_export_xlsx, sheet = \"Export\", skip = ______, n_max = ______) |> clean_names()`"
+    en: "`read_excel(raw_export_xlsx, sheet = \"Export\", skip = ______, n_max = ______) |> clean_names()`"
+explanation:
+  de: |
+    `read_excel()` nimmt ohne weitere Angaben die erste nicht leere Zeile als
+    Kopfzeile, hier den Titel. `skip = 3` überspringt die drei Zeilen über der
+    Kopfzeile, `n_max = 82` hört vor der Summenzeile auf; `range = "A4:N86"` macht
+    dasselbe in einem Schritt. Prüfe danach mit `tail()`, ob keine Summen- oder
+    Fußzeile mitgekommen ist, sonst wird sie später als Antwort gezählt.
+    `clean_names()` macht aus Namen mit Leerzeichen und Klammern einheitliche
+    Kleinbuchstaben mit `_`, die du ohne Backticks schreiben kannst. Das Blatt
+    `"Codebook"` liest du mit `sheet = "Codebook"`; `excel_sheets()` listet alle
+    Blätter.
+  en: |
+    Without further arguments, `read_excel()` takes the first non-empty row as the
+    header, here the title. `skip = 3` skips the three rows above the header,
+    `n_max = 82` stops before the total row; `range = "A4:N86"` does the same in one
+    step. Then check with `tail()` that no total or footer row came along, otherwise
+    it will later count as an answer. `clean_names()` turns names with spaces and
+    brackets into consistent lower case with `_` that you can type without
+    backticks. You read the sheet `"Codebook"` with `sheet = "Codebook"`;
+    `excel_sheets()` lists all sheets.
+check:
+  type: value
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*(n_max|range))[\\s\\S]*read_excel\\("
+    message:
+      de: "Ohne `n_max` (oder `range`) kommen die Leerzeile und die Zeile `Total responses: 82` als Antworten mit."
+      en: "Without `n_max` (or `range`), the empty row and the row `Total responses: 82` come along as answers."
+  - pattern: "skip\\s*=\\s*4\\b"
+    message:
+      de: "Mit `skip = 4` überspringst du auch die Kopfzeile; dann wird die erste Antwort zu Spaltennamen."
+      en: "With `skip = 4` you also skip the header; the first answer then becomes the column names."
+  - pattern: "^(?![\\s\\S]*clean_names)"
+    message:
+      de: "Die Spaltennamen sollen noch mit `clean_names()` vereinheitlicht werden."
+      en: "The column names still need to be standardised with `clean_names()`."

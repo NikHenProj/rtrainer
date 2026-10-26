@@ -1,0 +1,154 @@
+---
+title: "Daten einlesen"
+subtitle: "Beginner · CSV- und Excel-Exporte aus Umfragetools"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [readr, readxl, janitor]
+resources:
+  - ../data/raw_export.csv
+  - ../data/raw_export.xlsx
+---
+
+{{< include /_generated/de/import-beginner/runtime.qmd >}}
+
+{{< include /_generated/de/import-beginner/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R läuft hier direkt im Browser. Beim ersten Besuch lädt es 10–30 Sekunden (Anzeige unten rechts), danach geht es schneller.
+:::
+
+## Wozu? {#why}
+
+**Forschungsfrage:** Wie zufrieden waren die Teilnehmenden der Remote-Studie mit der App?
+
+Die Antworten liegen als Export des Umfragetools vor, einmal als CSV, einmal als Excel-Datei. Beide sehen nicht aus wie eine saubere Tabelle: Infozeilen über der Kopfzeile, eine zweite Kopfzeile mit dem Fragetext, Dezimalkomma, `-99` für „keine Angabe“, eine Summenzeile. Wer hier unaufmerksam einliest, rechnet später mit falschen Zahlen, oft ohne Fehlermeldung.
+
+## Konzept {#concept}
+
+Einlesen heißt, R vier Dinge über die Datei zu sagen:
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 190" role="img" aria-labelledby="fig-imp-title fig-imp-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-imp-title">Aufbau des CSV-Exports</title>
+  <desc id="fig-imp-desc">Zeilen 1 bis 3 sind Exportinfo und werden übersprungen, Zeile 4 ist die Kopfzeile mit den Spaltennamen, Zeile 5 der Fragetext, ab Zeile 6 folgen die Antworten mit Semikolon als Trennzeichen und Komma als Dezimalzeichen.</desc>
+  <rect x="20" y="10" width="330" height="44" rx="4" class="rt-fig-box" />
+  <text x="32" y="28" class="rt-fig-code rt-fig-muted">Survey export: App feedback …</text>
+  <text x="32" y="46" class="rt-fig-code rt-fig-muted">Exported: 2026-03-24 …</text>
+  <rect x="20" y="62" width="330" height="24" rx="4" class="rt-fig-box-accent" />
+  <text x="32" y="79" class="rt-fig-code">"Response ID";"Start Date";…</text>
+  <rect x="20" y="94" width="330" height="24" rx="4" class="rt-fig-box" />
+  <text x="32" y="111" class="rt-fig-code rt-fig-muted">"Response ID";"How old are…</text>
+  <rect x="20" y="126" width="330" height="52" rx="4" class="rt-fig-box-accent" />
+  <text x="32" y="144" class="rt-fig-code">"R_0001";…;"308,0";…</text>
+  <text x="32" y="166" class="rt-fig-code">"R_0002";…;"-99";…</text>
+  <text x="365" y="37" class="rt-fig-label">skip (Zeilen 1–3)</text>
+  <text x="365" y="79" class="rt-fig-label">Spaltennamen</text>
+  <text x="365" y="111" class="rt-fig-label">Fragetext: überspringen</text>
+  <text x="365" y="144" class="rt-fig-label">delim = ";"</text>
+  <text x="365" y="166" class="rt-fig-label">decimal_mark, na</text>
+</svg>
+<figcaption>Erst die Datei ansehen, dann Trennzeichen, zu überspringende Zeilen, Zahlenformat und Fehlwert-Codes angeben.</figcaption>
+</figure>
+```
+
+- **Trennzeichen (`delim`):** In deutschen und vielen europäischen Exporten `;`, weil das Komma Dezimalzeichen ist.
+- **Zeilen überspringen (`skip`), Länge begrenzen (`n_max`):** Für Infozeilen oben und Summenzeilen unten.
+- **Zahlenformat (`locale`):** `locale(decimal_mark = ",")`. Ohne diese Angabe wird `308,0` still zu 3080.
+- **Fehlwert-Codes (`na`):** `-99`, `n/a` oder `999` sind für R gültige Werte, bis du sie als fehlend angibst.
+- **Danach prüfen:** Typen (`<dbl>`, `<chr>`, `<lgl>`), Zeilenzahl, Wertebereiche. Eine Textspalte, wo Zahlen stehen sollten, zeigt fast immer ein Problem in den Daten.
+
+## Beispiel {#example}
+
+Vor dem Einlesen ein Blick in die rohe Datei, Zeile für Zeile:
+
+```{webr}
+readLines(raw_export_csv, n = 6)
+```
+
+Dann einlesen. Die Spaltennamen stehen in Zeile 4, die Antworten ab Zeile 6:
+
+```{webr}
+header <- read_delim(raw_export_csv, delim = ";", skip = 3, n_max = 0, show_col_types = FALSE)
+raw <- read_delim(
+  raw_export_csv,
+  delim = ";",
+  skip = 5,
+  col_names = names(header),
+  locale = locale(decimal_mark = ","),
+  na = c("", "NA", "n/a", "-99"),
+  show_col_types = FALSE
+)
+raw
+```
+
+Welche Typen hat readr erkannt? `spec()` zeigt es; Textspalten (`col_character()`) mit Zahlen darin sind Kandidaten fürs Bereinigen:
+
+```{webr}
+spec(raw)
+```
+
+Dieselben Antworten aus Excel. `excel_sheets()` zeigt die Blätter, `range` legt den Tabellenbereich fest, `clean_names()` macht die Namen R-tauglich:
+
+```{webr}
+excel_sheets(raw_export_xlsx)
+read_excel(raw_export_xlsx, sheet = "Export", range = "A4:N86") |>
+  clean_names()
+```
+
+**So berichtest du es (Methodenteil):** Von 82 exportierten Datensätzen waren 2 Testantworten und 2 doppelte Einsendungen; ausgewertet wurden 78 Antworten. Fehlwert-Codes (`-99`) wurden als fehlend behandelt. (Das Entfernen folgt in der Lektion „Daten bereinigen“.)
+
+## Paketvergleich {#packages}
+
+| Weg | Stärke | Wann |
+|---|---|---|
+| `readr::read_delim()` / `read_csv()` / `read_csv2()` | Schnell, keine automatischen Faktoren, meldet Typen und Probleme (`problems()`) | **Empfehlung** für CSV und Text |
+| `utils::read.csv()` / `read.csv2()` | Ohne Pakete; in älterem Code häufig | Wenn keine Pakete erlaubt sind; Spaltennamen werden verändert (`Response.ID`) |
+| `readxl::read_excel()` | Liest `.xls` und `.xlsx` ohne Excel, Bereiche und Blätter gezielt | **Empfehlung** für Excel |
+| `haven::read_sav()` | SPSS-Dateien mit Wertelabels (Qualtrics, LimeSurvey, SoSci Survey) | Wenn das Tool SPSS exportiert: Labels bleiben erhalten |
+
+::: {.callout-note appearance="simple"}
+## Lokal ausführen
+
+Im Browser liegen die Dateien schon bereit. Lokal liest du aus dem Projektordner, z. B. `read_delim("data/raw_export.csv", ...)`. Für SPSS-Exporte:
+
+```r
+survey <- haven::read_sav("data/export.sav")
+haven::as_factor(survey)   # Wertelabels als Faktorstufen
+```
+:::
+
+## Übungen {#exercises}
+
+Drei Pflichtübungen und eine Zusatzübung. **Ausführen und prüfen** startet deinen Code und prüft ihn sofort. Hinweise deckst du einzeln auf (**Hinweis zeigen**), die Lösung erst danach.
+
+{{< include /_generated/de/import-beginner/exercises.qmd >}}
+
+## Wissenscheck {#check}
+
+{{< include /_generated/de/import-beginner/quiz.qmd >}}
+
+## Spickzettel {#cheatsheet}
+
+```r
+# Erst ansehen
+readLines("data/raw_export.csv", n = 6)
+
+# CSV mit ; und Dezimalkomma, Infozeilen und Fehlwert-Codes
+header <- read_delim(file, delim = ";", skip = 3, n_max = 0)
+raw <- read_delim(file, delim = ";", skip = 5, col_names = names(header),
+                  locale = locale(decimal_mark = ","), na = c("", "NA", "-99"))
+
+# Excel: Blatt und Bereich
+read_excel(file, sheet = "Export", range = "A4:N86") |> janitor::clean_names()
+
+# Danach prüfen
+spec(raw); problems(raw); nrow(raw); tail(raw)
+```
+
+- Dezimalkomma → `locale(decimal_mark = ",")` oder `read_csv2()`.
+- Fehlwert-Codes beim Einlesen mit `na = ...` (Voreinstellung `""` und `"NA"` mitnehmen).
+- Nach dem Einlesen immer Typen, Zeilenzahl und das Tabellenende prüfen.
+
+{{< include /_generated/de/import-beginner/footer.qmd >}}

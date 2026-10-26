@@ -1,0 +1,68 @@
+id: cl-b-slice-max
+lesson: cleaning-beginner
+order: 6
+title:
+  de: Auffällige Durchgänge sichten
+  en: Inspecting conspicuous trials
+kind: write
+required: false
+packages: [dplyr]
+data: [driving_sim]
+setup: |
+  library(dplyr)
+prompt:
+  de: |
+    Bevor du Ausreißer behandelst, schaust du sie dir an. Finde für jede Bedingung
+    (`condition`) die 3 Durchgänge mit der größten Spurabweichung (`lane_dev`). Bei
+    Gleichstand an der Grenze bleiben alle gleichwertigen Durchgänge erhalten.
+    Behalte die Spalten `condition`, `participant`, `trial`, `lane_dev`.
+  en: |
+    Before you handle outliers, you look at them. Find for each condition
+    (`condition`) the 3 trials with the largest lane deviation (`lane_dev`). With
+    ties at the boundary, all equal trials are kept. Keep the columns `condition`,
+    `participant`, `trial`, `lane_dev`.
+starter: |
+  driving_sim |>
+    arrange(desc(lane_dev))
+solution: |
+  driving_sim |>
+    slice_max(lane_dev, n = 3, by = condition) |>
+    select(condition, participant, trial, lane_dev)
+hints:
+  - de: "Es gibt eine dplyr-Funktion, die pro Gruppe die n größten Zeilen auswählt."
+    en: "There is a dplyr function that selects the n largest rows per group."
+  - de: "`slice_max()` gruppiert über `by =`."
+    en: "`slice_max()` groups via `by =`."
+  - de: "`slice_max(lane_dev, n = 3, by = ______)`, danach `select()`."
+    en: "`slice_max(lane_dev, n = 3, by = ______)`, then `select()`."
+explanation:
+  de: |
+    `slice_max(x, n = 3, by = g)` sortiert pro Gruppe absteigend und behält die
+    ersten drei Zeilen; Gleichstände an der Grenze bleiben erhalten
+    (`with_ties = TRUE`), das Ergebnis kann also mehr als 3 Zeilen pro Gruppe haben.
+    `arrange(desc(lane_dev)) |> head(3)` liefert dagegen die drei größten Werte
+    insgesamt. Wenn dieselbe Person mehrfach auftaucht, lohnt ein Blick auf ihre
+    übrigen Werte, bevor du etwas ausschließt.
+  en: |
+    `slice_max(x, n = 3, by = g)` sorts each group in descending order and keeps the
+    first three rows; ties at the boundary are kept (`with_ties = TRUE`), so the
+    result can have more than 3 rows per group. `arrange(desc(lane_dev)) |> head(3)`
+    instead returns the three largest values overall. If the same person shows up
+    several times, look at their other values before you exclude anything.
+check:
+  type: value
+  ignore_row_order: true
+  ignore_col_order: false
+common_mistakes:
+  - pattern: "with_ties\\s*=\\s*FALSE"
+    message:
+      de: "Gleichstände sollen erhalten bleiben; `with_ties = FALSE` schneidet sie ab."
+      en: "Ties should be kept; `with_ties = FALSE` cuts them off."
+  - pattern: "^(?![\\s\\S]*(group_by|by\\s*=))[\\s\\S]*(slice_max|head)"
+    message:
+      de: "Ohne Gruppierung bekommst du die größten Werte über alle Bedingungen, nicht pro Bedingung."
+      en: "Without grouping you get the largest values across all conditions, not per condition."
+  - pattern: "slice_min"
+    message:
+      de: "`slice_min()` liefert die kleinsten Werte; gefragt sind die größten."
+      en: "`slice_min()` returns the smallest values; the largest are asked for."
