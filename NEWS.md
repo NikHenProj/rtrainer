@@ -1,6 +1,6 @@
 # rtrainer (Quarto course)
 
-## Milestone 8, part 2a: plot checks, beginner lessons 1–3 (DE) (branch m8-part2)
+## Milestone 8, part 2a: plot checks, beginner lessons 1–3 (DE) (accepted, merged into main)
 
 - Check type `plot` (`tools/checks.R`, base R only): compares the ggplot with the solution's by layers (geoms in order), effective `aes()` per layer (plot mapping inherited, so `aes()` may sit in `ggplot()` or the layer), names of fixed settings outside `aes()` (catches `aes(fill = "steelblue")`), facets and scales incl. transformation; optional `params` (e.g. `method`, `se`), `check_data`, and `name` for a plot stored in an object. Decision: setting values (which colour) are not compared, only whether something is mapped or set.
 - Fix: `rt_compare()` now compares factor levels and their order (before, `all.equal(check.attributes = FALSE)` ignored them, so a wrong `levels<-` passed).

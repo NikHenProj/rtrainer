@@ -1,6 +1,6 @@
 # STATUS
 
-Stand (2026-10-26): **M6–M8.1 in `main`. Meilenstein 8 Teil 2a auf Branch `m8-part2`:** Check-Typ `plot`, `langs` pro Lektion, Beginner-Lektionen working-with-r, import, cleaning (nur DE). Wartet auf Abnahme. Nichts gepusht (`main` ist `origin/main` voraus). Entscheidungen: NEWS.md.
+Stand (2026-10-26): **M6 bis M8 Teil 2a abgenommen und in `main`:** Check-Typ `plot`, `langs` pro Lektion, Beginner-Lektionen working-with-r, import, cleaning (nur DE). Nichts gepusht (`main` ist `origin/main` voraus). Entscheidungen: NEWS.md.
 
 ## Was steht
 - **Gerüst (M6):** Quarto-Website mit quarto-live/webR, Theme hell/dunkel (IBM Plex Sans, JetBrains Mono, Indigo), Kopfzeile Kursplan · Wiederholen (n fällig) · Pakete · Glossar · DE/EN · Hell/Dunkel · Suche.
@@ -15,7 +15,7 @@ Stand (2026-10-26): **M6–M8.1 in `main`. Meilenstein 8 Teil 2a auf Branch `m8-
 - **Triage** `docs/legacy-triage.md`: 54 behalten (18 im Beginner-Pfad), 11 streichen, freigegeben. Migriert: 6 (markiert).
 - Alt: `legacy/exercises/` (65 Aufgaben), `legacy/driving_sim_v0.*`.
 
-## Geprüft (2026-10-26, m8-part2)
+## Geprüft (2026-10-26, M8 Teil 2a)
 Über `rtrainer-verifier` (echte Ausgabe, gekürzt):
 - `Rscript tools/selftest.R`: 18/18 exercises ok
 - `testthat::test_dir("tools/tests")`: 170 Erwartungen, 0 failed, 0 skipped, 0 error; `node --test tests/js`: 12 pass, 0 fail
@@ -24,7 +24,7 @@ Stand (2026-10-26): **M6–M8.1 in `main`. Meilenstein 8 Teil 2a auf Branch `m8-
 - Manuell im Browser (M7): Wiederholungsrunde (sicherer Fehler, Okay, Lösung angesehen → Box 1, Wiederaufnahme), Sprachumschalter landet am gleichen Abschnitt, Pakete/Glossar DE+EN.
 
 ## Offen / bekannte Lücken
-- **Abnahme M8.2a** durch Nick (drei Lektionen DE, Inhalt und Umfang). Neue Lektionen nicht manuell im Browser durchgeklickt, nur Rauchtest (eine Übung in cleaning).
+- Neue Lektionen nicht manuell im Browser durchgeklickt, nur Rauchtest (eine Übung in cleaning).
 - Check-Typ `plot` ist nur mit Unit-Tests geprüft, noch in keiner Lektion im Browser.
 - webR-Index geprüft (alle Kurspakete inkl. lme4, lmerTest, here vorhanden); Ladezeiten großer Pakete (lme4, gtsummary) noch nicht gemessen.
 - **Push + Pages:** Repo-Einstellung Pages-Quelle = „GitHub Actions“ setzen, dann pushen (nur nach Rückfrage). Ladezeit online messen (lokal: webR + Pakete ca. 12 s bei warmem Cache, Erststart ca. 30 s).
@@ -34,10 +34,9 @@ Stand (2026-10-26): **M6–M8.1 in `main`. Meilenstein 8 Teil 2a auf Branch `m8-
 - Kursplan: „nicht vorgesehen“-Zellen werden vom Screenreader einzeln vorgelesen (19×); ggf. kürzen.
 
 ## Als Nächstes
-1. Abnahme der drei Lektionen; Änderungen einarbeiten; `m8-part2` nach `main` mergen.
-2. M8 Teil 2b: Beginner-Lektionen reshaping, visualisation, descriptives (DE) mit den freigegebenen alten Aufgaben (Check `plot` für 4 Visualisierungsaufgaben); danach 2c: scales, regression, reporting (neu: survey, usability).
-3. Nach Abnahme EN-Fassung aller Beginner-Lektionen (`langs` entfernen), Mini-Projekt Beginner.
-4. Pages einrichten, pushen (nur nach Rückfrage).
+1. M8 Teil 2b: Beginner-Lektionen reshaping, visualisation, descriptives (DE) mit den freigegebenen alten Aufgaben (Check `plot` für 4 Visualisierungsaufgaben); danach 2c: scales, regression, reporting (neu: survey, usability).
+2. Nach Abnahme EN-Fassung aller Beginner-Lektionen (`langs` entfernen), Mini-Projekt Beginner.
+3. Pages einrichten, pushen (nur nach Rückfrage).
 
 ## Umgebung
 - Quarto 1.10.19, R 4.6.1, Node 18, quarto-live 0.1.3-dev (`_extensions/r-wasm/live`, webR 0.6.0).
