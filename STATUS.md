@@ -19,6 +19,10 @@ Stand (2026-10-26): **M6 bis M8 Teil 5 und M9 Paket P1 (DE: import-, cleaning-, 
 - **Triage** `docs/legacy-triage.md`: 54 behalten (18 im Beginner-Pfad), 11 streichen, freigegeben. Migriert: 34 (markiert): alle Beginner-Aufgaben der Triage, P1 (10, 13, 18, 23, 24, 26), P2 (5, 14, 15, 48, 52) und P3 (30, 31, 36, 37, 38).
 - Alt: `legacy/exercises/` (65 Aufgaben), `legacy/driving_sim_v0.*`.
 
+## Online (2026-10-26, M9 P3)
+- Gepusht (692fa09, CI-Fix 25686f4: alle Übungspakete ausdrücklich im Workflow, erster Lauf scheiterte an fehlendem `afex`). CI-Lauf 40361912320 grün (build 6,5 min, deploy ok): 95/95, `[ FAIL 0 | WARN 8 | SKIP 0 | PASS 243 ]`, Node 12/0, Rauchtest 0 failure(s).
+- Ladezeit im CI-Rauchtest (headless, Runner): scales-intermediate 10,1 s, sem-intermediate 9,6 s, group-comparisons-intermediate 18,1 s, missing 16,6 s.
+
 ## Geprüft (2026-10-26, M9 P3)
 Über Verifier-Subagent (echte Ausgabe, gekürzt):
 - `Rscript tools/generate.R`: Generated 313 files, 95 exercises. `Rscript tools/selftest.R`: 95/95 exercises ok (längste 0,92 s; Warnungen erwartet wie bisher)
@@ -67,7 +71,7 @@ Stand (2026-10-26): **M6 bis M8 Teil 5 und M9 Paket P1 (DE: import-, cleaning-, 
 - Kursplan: „nicht vorgesehen“-Zellen werden vom Screenreader einzeln vorgelesen (19×); ggf. kürzen.
 
 ## Als Nächstes
-1. Abnahme M9 P3 durch Nick (Lektionen im Browser durchsehen); nach Rückfrage pushen, CI-Lauf und Online-Ladezeit (afex) prüfen.
+1. Abnahme M9 P3 durch Nick (Lektionen im Browser durchsehen; online seit CI-Lauf 40361912320).
 2. M9 Paket P4 (DE): robust-, regression-, glm-intermediate (Altaufgabe 35); vorher `usability` auf Erfolg/Fehlerzahl für glm prüfen.
 
 ## Umgebung
