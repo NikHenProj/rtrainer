@@ -20,7 +20,7 @@ Stand (2026-10-26): Meilensteine 1-5 erledigt, 65 Paket-Aufgaben. Meilenstein 5,
 
 ## Meilenstein 5, Teil 2 (erledigt, Details: NEWS.md)
 - Vignetten `vignettes/erste-schritte.Rmd` (Modi, Ablauf, Fortschritt/Leitner, Dashboard) und `vignettes/eigene-aufgaben.Rmd` (Felder, Arten, Check-Typen, `forbid`/`require`/`post`, Selbsttest, Registrieren, learnr-Export). Entscheidung: litedown-Engine statt `rmarkdown::html_vignette`, damit `R CMD check` ohne Pandoc läuft; litedown in Suggests.
-- `.github/workflows/R-CMD-check.yaml`: r-lib/actions v2, ubuntu/macOS/Windows, R release; gradethis über `extra-repositories` (r-universe); Pandoc (`setup-pandoc`) und Chrome (`browser-actions/setup-chrome` -> `CHROMOTE_CHROME`), `NOT_CRAN: true`. Badge im README mit Platzhalter `OWNER`.
+- `.github/workflows/R-CMD-check.yaml`: r-lib/actions v2, ubuntu/macOS/Windows, R release; gradethis über `extra-repositories` (r-universe); Pandoc (`setup-pandoc`) und Chrome (`browser-actions/setup-chrome` -> `CHROMOTE_CHROME`), `NOT_CRAN: true`. Badge im README (NikHenProj/rtrainer).
 - shinytest2-Smoke-Test läuft jetzt: Er startet die App aus einem temporären `app.R` (vorher scheiterte er mit „no package called rtrainer“, und die Fortschritts-Option erreichte den App-Prozess nicht). Chrome bekommt ein eigenes TMPDIR und wird danach geschlossen (sonst NOTE „detritus in the temp directory“).
 - Lokaler Browser ohne Systeminstallation: Playwright-Chromium unter `~/.cache/ms-playwright/chromium-1243/chrome-linux64/chrome`. `CHROMOTE_CHROME` zeigt seit 2026-10-26 per `~/.Renviron` auf diesen Pfad (bei einem Playwright-Update ändert sich `chromium-1243`, dann anpassen); `NOT_CRAN=true` setzt `devtools::test()` selbst.
 

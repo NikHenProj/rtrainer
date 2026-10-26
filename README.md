@@ -1,7 +1,7 @@
 # rtrainer
 
 <!-- badges: start -->
-[![R-CMD-check](https://github.com/OWNER/rtrainer/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/OWNER/rtrainer/actions/workflows/R-CMD-check.yaml)
+[![R-CMD-check](https://github.com/NikHenProj/rtrainer/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/NikHenProj/rtrainer/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
 Lokaler, offline nutzbarer Trainer für fortgeschrittenes R: eine Shiny-App mit
