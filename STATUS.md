@@ -1,6 +1,6 @@
 # STATUS
 
-Stand (2026-10-26): **M6 bis M8 Teil 5 abgenommen und in `main`** (alle 10 Beginner-Lektionen und Mini-Projekt Beginner, DE + EN). **Online seit 2026-10-26:** https://nikhenproj.github.io/rtrainer/ (Pages-Quelle GitHub Actions, CI-Lauf 40326391796 grün). M9 geplant: `docs/M9-plan.md`. Entscheidungen: NEWS.md.
+Stand (2026-10-26): **M6 bis M8 Teil 5 abgenommen und in `main`** (alle 10 Beginner-Lektionen und Mini-Projekt Beginner, DE + EN). **Online seit 2026-10-26:** https://nikhenproj.github.io/rtrainer/ (Pages-Quelle GitHub Actions, CI-Lauf 40326391796 grün). M9-Plan abgenommen (inkl. Datensatz `acceptance`): `docs/M9-plan.md`. Entscheidungen: NEWS.md.
 
 ## Was steht
 - **Gerüst (M6):** Quarto-Website mit quarto-live/webR, Theme hell/dunkel (IBM Plex Sans, JetBrains Mono, Indigo), Kopfzeile Kursplan · Wiederholen (n fällig) · Pakete · Glossar · DE/EN · Hell/Dunkel · Suche.
@@ -39,8 +39,7 @@ Stand (2026-10-26): **M6 bis M8 Teil 5 abgenommen und in `main`** (alle 10 Begin
 - Kursplan: „nicht vorgesehen“-Zellen werden vom Screenreader einzeln vorgelesen (19×); ggf. kürzen.
 
 ## Als Nächstes
-1. Abnahme M9-Plan (`docs/M9-plan.md`), offene Punkte dort (Datensatz `acceptance`, Mediation).
-2. M9 Paket P1 (DE): import-, cleaning-, reshaping-intermediate.
+1. M9 Paket P1 (DE): import-, cleaning-, reshaping-intermediate.
 
 ## Umgebung
 - Quarto 1.10.19, R 4.6.1, Node 18, quarto-live 0.1.3-dev (`_extensions/r-wasm/live`, webR 0.6.0).

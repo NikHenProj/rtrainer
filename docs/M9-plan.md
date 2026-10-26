@@ -1,4 +1,4 @@
-# M9: Intermediate-Stufe (Plan, 2026-10-26)
+# M9: Intermediate-Stufe (Plan, abgenommen 2026-10-26)
 
 Grundlage: SPEC.md „Struktur: Themen × Stufen“ und „Meilensteine“, `curriculum.yml`, `docs/legacy-triage.md`.
 Ablauf wie M8: DE in Paketen zu 3 Lektionen (je eine Sitzung, danach Verifier + Abnahme), dann EN, dann Mini-Projekt.
@@ -38,5 +38,5 @@ Voraussetzungen: jeweilige Beginner-Lektion; sem → scales-intermediate; mixed-
 - Kursplan: Spalte Intermediate wird aktiv, sobald die erste Lektion existiert (vorhanden); Pfadlogik „Als Nächstes“ über Stufen hinweg testen.
 
 ## Offen (bei Abnahme klären, keine Blockade)
-- `acceptance` als TAM-Fragebogen zum Assistenzsystem passt? Alternativ Erweiterung von `survey`.
+- `acceptance` als TAM-Fragebogen: abgenommen.
 - Mediation mit lavaan (SPEC) oder zusätzlich `mediation`-Paket im Vergleich zeigen.
