@@ -1,0 +1,145 @@
+---
+title: "Descriptive statistics, Table 1"
+subtitle: "Beginner · Unit of analysis, summaries in two steps, describing the sample"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, datawizard]
+resources:
+  - ../data/driving_sim.csv
+  - ../data/survey.csv
+  - ../data/usability.csv
+---
+
+{{< include /_generated/en/descriptives-beginner/runtime.qmd >}}
+
+{{< include /_generated/en/descriptives-beginner/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R runs directly in your browser. On the first visit it takes 10–30 seconds to load (status at the bottom right); after that it is faster.
+:::
+
+## Why? {#why}
+
+**Research question:** Who took part in the driving simulator study and in the survey, and how fast did people react in the three warning conditions?
+
+Every results section starts with a description: the sample (Table 1), then means and spreads of the measures. The most common source of error is not the formula but the unit. `driving_sim` has 480 rows but only 40 people; counting rows reports twelve times too many participants and standard errors that are too small.
+
+## Concept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 170" role="img" aria-labelledby="fig-ds-title fig-ds-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-ds-title">Two steps of summarising</title>
+  <desc id="fig-ds-desc">Three boxes in a row. 480 trials are summarised with summarise by participant and condition into 120 person means, these with summarise by condition into 3 rows with M, SD, n equal to 40 and SE.</desc>
+  <rect x="10" y="30" width="150" height="60" rx="6" class="rt-fig-box" />
+  <rect x="205" y="30" width="150" height="60" rx="6" class="rt-fig-box-accent" />
+  <rect x="400" y="30" width="150" height="60" rx="6" class="rt-fig-box" />
+  <text x="85" y="56" text-anchor="middle" class="rt-fig-label">480 trials</text>
+  <text x="85" y="76" text-anchor="middle" class="rt-fig-label rt-fig-muted">raw data</text>
+  <text x="280" y="56" text-anchor="middle" class="rt-fig-label">120 person means</text>
+  <text x="280" y="76" text-anchor="middle" class="rt-fig-label rt-fig-muted">40 × 3 conditions</text>
+  <text x="475" y="56" text-anchor="middle" class="rt-fig-label">3 rows</text>
+  <text x="475" y="76" text-anchor="middle" class="rt-fig-label rt-fig-muted">M, SD, n = 40, SE</text>
+  <line x1="160" y1="60" x2="203" y2="60" class="rt-fig-arrow" />
+  <line x1="355" y1="60" x2="398" y2="60" class="rt-fig-arrow" />
+  <text x="10" y="125" class="rt-fig-code">summarise(.by = c(participant, condition))</text>
+  <text x="10" y="150" class="rt-fig-code">summarise(.by = condition)</text>
+</svg>
+<figcaption>With repeated measures, first average per person, then across people. Only then is n the number of people.</figcaption>
+</figure>
+```
+
+- **Unit of analysis:** what is an independent observation? Usually the person. Count with `distinct(participant, ...)` or `n_distinct(participant)`.
+- **`summarise(.by = ...)`** computes summaries per group: `mean()`, `sd()`, `median()`, `IQR()`, `n()`. Exclude missing values with `na.rm = TRUE` and report how many were missing.
+- **Two steps** with repeated measures: first per person × condition, then per condition.
+- **`.by` instead of `group_by()`:** the result is no longer grouped afterwards. `group_by()` + `summarise()` leaves the outer levels grouped.
+- **Proportions** are means of conditions: `mean(gender == "female")`, `mean(success)`.
+- **Skewed data** (times, timeouts): median and IQR instead of mean and SD.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## More: SD or SE?
+
+- **SD** describes how different the people are; it belongs in Table 1 and in text such as "M = 37.2, SD = 11.0".
+- **SE** = SD / √n describes how precisely the mean is estimated; it belongs with error bars. Better still: a 95 % confidence interval (lesson "Group comparisons").
+- Always state in the caption what the bars show.
+:::
+
+## Example {#example}
+
+`datawizard::describe_distribution()` describes several variables at once, including missing values:
+
+```{webr}
+survey |>
+  describe_distribution(select = c(age, tech_affinity, starts_with("tlx_")))
+```
+
+The sample of the driving simulator study: first one row per person, then summaries by experience.
+
+```{webr}
+persons <- driving_sim |>
+  distinct(participant, experience, age, gender)
+nrow(persons)
+
+persons |>
+  summarise(
+    n = n(),
+    age_m = round(mean(age), 1),
+    age_sd = round(sd(age), 1),
+    female = sum(gender == "female"),
+    .by = experience
+  )
+```
+
+**How to report it (methods section):** 40 people took part in the driving simulator study (20 each with low and high driving experience). Age and gender by group are shown in Table 1.
+
+## Package comparison {#packages}
+
+| Task | Recommended | Alternative |
+|---|---|---|
+| Summaries per group | **dplyr** `summarise(.by = ...)` | `aggregate()`: shorter for one variable, awkward for several summaries |
+| Many variables at once | **datawizard** `describe_distribution()` | `psych::describe()`, `skimr::skim()` (with mini histograms) |
+| Table 1 for publication | **gtsummary** `tbl_summary(by = ...)` (lesson "Reporting results") | `tableone`, `modelsummary::datasummary()` |
+| Frequencies | **dplyr** `count()` | `table()`, `janitor::tabyl()` (with percentages) |
+
+## Exercises {#exercises}
+
+Four required exercises and one optional exercise. **Run and check** runs your code and checks it right away. Reveal hints one at a time (**Show Hint**), the solution only after that.
+
+{{< include /_generated/en/descriptives-beginner/exercises.qmd >}}
+
+## Knowledge check {#check}
+
+{{< include /_generated/en/descriptives-beginner/quiz.qmd >}}
+
+## Cheat sheet {#cheatsheet}
+
+```r
+# count people, not rows
+driving_sim |> distinct(participant, gender) |> count(gender)
+
+# two steps with repeated measures
+driving_sim |>
+  summarise(rt_ms = mean(rt_ms, na.rm = TRUE), .by = c(participant, condition)) |>
+  summarise(m = mean(rt_ms), sd = sd(rt_ms), n = n(), se = sd / sqrt(n), .by = condition)
+
+# Table 1
+survey |>
+  summarise(
+    n = n(),
+    age_m = mean(age, na.rm = TRUE), age_sd = sd(age, na.rm = TRUE),
+    female_pct = 100 * mean(gender == "female"),
+    .by = interface
+  )
+
+# skewed data
+usability |>
+  summarise(time_md = median(time_s), time_iqr = IQR(time_s), .by = prototype)
+```
+
+- Clarify the unit first, then count.
+- `.by` instead of `group_by()`, then no grouping is left over.
+- Proportion = `mean(x == "a")`, count = `sum(x == "a")`.
+- Table 1: SD; error bars: SE or CI.
+
+{{< include /_generated/en/descriptives-beginner/footer.qmd >}}

@@ -1,0 +1,142 @@
+---
+title: "Visualising data"
+subtitle: "Beginner · ggplot2: mappings, layers, facets, scales, error bars"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, ggplot2]
+resources:
+  - ../data/driving_sim.csv
+  - ../data/usability.csv
+---
+
+{{< include /_generated/en/visualisation-beginner/runtime.qmd >}}
+
+{{< include /_generated/en/visualisation-beginner/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R runs directly in your browser. On the first visit it takes 10–30 seconds to load (status at the bottom right); after that it is faster.
+:::
+
+## Why? {#why}
+
+**Research question:** Which prototype is fastest to use in which task, and where do people give up?
+
+A table of means does not reveal that some times stick to the 180 s timeout, or that a line through all points suggests a relationship that does not exist within the conditions. A plot shows distribution, outliers and patterns before you calculate anything, and in a report it is often the first thing readers look at. ggplot2 builds every plot from the same few building blocks.
+
+## Concept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 190" role="img" aria-labelledby="fig-vi-title fig-vi-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-vi-title">Building blocks of a ggplot</title>
+  <desc id="fig-vi-desc">Four building blocks joined by plus signs: ggplot with data and aes sets the data and mappings that all layers inherit. Then come layers such as geom_boxplot and geom_hline, then facets and scales. Below, the note: aes maps columns, values outside aes are fixed settings.</desc>
+  <rect x="10" y="30" width="170" height="60" rx="6" class="rt-fig-box-accent" />
+  <rect x="200" y="30" width="150" height="60" rx="6" class="rt-fig-box" />
+  <rect x="370" y="30" width="180" height="60" rx="6" class="rt-fig-box" />
+  <text x="95" y="55" text-anchor="middle" class="rt-fig-code">ggplot(data, aes())</text>
+  <text x="95" y="76" text-anchor="middle" class="rt-fig-label rt-fig-muted">data, mappings</text>
+  <text x="275" y="55" text-anchor="middle" class="rt-fig-code">+ geom_*()</text>
+  <text x="275" y="76" text-anchor="middle" class="rt-fig-label rt-fig-muted">layers</text>
+  <text x="460" y="50" text-anchor="middle" class="rt-fig-code">+ facet_*()</text>
+  <text x="460" y="66" text-anchor="middle" class="rt-fig-code">+ scale_*()</text>
+  <text x="460" y="83" text-anchor="middle" class="rt-fig-label rt-fig-muted">panels, axes</text>
+  <text x="10" y="130" class="rt-fig-code">aes(fill = prototype)</text>
+  <text x="200" y="130" class="rt-fig-label">Mapping: value comes from a column, with legend</text>
+  <text x="10" y="160" class="rt-fig-code">fill = "steelblue"</text>
+  <text x="200" y="160" class="rt-fig-label">Setting: one fixed value for all, outside aes()</text>
+</svg>
+<figcaption>What is in <code>ggplot(aes())</code> is inherited by all layers. What is in <code>geom_*(aes())</code> applies only there.</figcaption>
+</figure>
+```
+
+- **Data in long format:** every variable that should go on x, colour or panels is a column (lesson "Reshaping").
+- **`aes()` (mapping)** maps columns to aesthetics: `x`, `y`, `colour`, `fill`, `group`. Each mapping gets a scale with a legend.
+- **Setting:** fixed values (`alpha = 0.4`, `fill = "steelblue"`, `linetype = "dashed"`) go outside `aes()`.
+- **Layers** (`geom_point()`, `geom_boxplot()`, `geom_col()`, `geom_smooth()`, `geom_hline()`) are stacked on top of each other in the order of the code.
+- **Facets** split into panels (`facet_wrap(~condition)`), **scales** control axes and colours (`scale_x_log10()`).
+- **Summarise before plotting:** compute means and error bars with `summarise()`, with the person as the unit.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## More: plots for the report
+
+- Show individual values where possible (points over box plots) instead of only bars with error bars.
+- Label axes with units: `labs(x = NULL, y = "Task time (s)", fill = "Prototype")`.
+- Calm theme: `theme_minimal(base_size = 12)`; colours for colour vision deficiency: `scale_fill_viridis_d()`.
+- Save locally with `ggsave("fig1.png", width = 16, height = 10, units = "cm", dpi = 300)`.
+:::
+
+## Example {#example}
+
+Task times by task and prototype, individual values over the boxes. Change `fill` to `colour` or remove `geom_point()` and run the code again:
+
+```{webr}
+ggplot(usability, aes(task, time_s, fill = prototype)) +
+  geom_boxplot(outlier.shape = NA) +
+  geom_point(
+    position = position_jitterdodge(jitter.width = 0.15, dodge.width = 0.75),
+    alpha = 0.3, size = 1
+  ) +
+  labs(x = NULL, y = "Task time (s)", fill = "Prototype") +
+  theme_minimal(base_size = 12)
+```
+
+Means with error bars: first average per person, then across people.
+
+```{webr}
+seq_summary <- usability |>
+  summarise(seq = mean(seq, na.rm = TRUE), .by = c(participant, prototype)) |>
+  summarise(m = mean(seq), se = sd(seq) / sqrt(n()), n = n(), .by = prototype)
+seq_summary
+
+ggplot(seq_summary, aes(prototype, m)) +
+  geom_point(size = 3) +
+  geom_errorbar(aes(ymin = m - se, ymax = m + se), width = 0.15) +
+  labs(x = "Prototype", y = "Ease (SEQ, 1–7), M ± SE") +
+  theme_minimal(base_size = 12)
+```
+
+**How to report it (figure caption):** Figure 1. Mean ease rating (SEQ, 1–7) by prototype; error bars show ± 1 standard error across people (n = 24, for C n = 23).
+
+## Package comparison {#packages}
+
+| Task | Recommended | Alternative |
+|---|---|---|
+| Statistical graphics | **ggplot2** | Base R `plot()`, `boxplot()`: quick for a first look, hard to combine and style |
+| Several plots in one figure | **patchwork** (`p1 + p2`) | `cowplot::plot_grid()` |
+| Plotting model results | **see** (`plot(estimate_means(...))`) | `ggeffects` |
+| Interactive graphics | `plotly::ggplotly()` | web only, not for the paper |
+
+## Exercises {#exercises}
+
+Four required exercises and two optional exercises. The checks look at how your plot is built (layers, mappings, fixed settings, facets, scales) and, where stated, at the plotted data. Reveal hints one at a time (**Show Hint**), the solution only after that.
+
+{{< include /_generated/en/visualisation-beginner/exercises.qmd >}}
+
+## Knowledge check {#check}
+
+{{< include /_generated/en/visualisation-beginner/quiz.qmd >}}
+
+## Cheat sheet {#cheatsheet}
+
+```r
+ggplot(usability, aes(task, time_s, fill = prototype)) +   # data + mappings (inherited)
+  geom_boxplot(outlier.shape = NA) +                       # layer
+  geom_hline(yintercept = 180, linetype = "dashed") +      # reference, fixed value
+  facet_wrap(~expertise) +                                 # panels
+  scale_y_log10() +                                        # scale
+  labs(x = NULL, y = "Time (s)", fill = "Prototype") +
+  theme_minimal()
+
+# error bars: person as the unit
+rt_summary <- driving_sim |>
+  summarise(rt_ms = mean(rt_ms, na.rm = TRUE), .by = c(participant, condition)) |>
+  summarise(m = mean(rt_ms), se = sd(rt_ms) / sqrt(n()), .by = condition)
+```
+
+- Column → inside `aes()`; fixed value → outside.
+- Shared mappings in `ggplot(aes())`, otherwise `geom_smooth()` does not know the groups.
+- `geom_col()` for precomputed values, `geom_bar()` counts rows; side by side with `position = "dodge"`.
+- Log axis with `scale_x_log10()`, not `aes(x = log10(...))`.
+
+{{< include /_generated/en/visualisation-beginner/footer.qmd >}}

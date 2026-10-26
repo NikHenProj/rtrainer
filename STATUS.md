@@ -1,11 +1,11 @@
 # STATUS
 
-Stand (2026-10-26): **M6 bis M8 Teil 2c abgenommen und in `main`.** **M8 Teil 3a fertig, wartet auf Abnahme:** EN-Fassung der Beginner-Lektionen working-with-r, import, cleaning (Übungs- und Quiztexte EN gegengelesen). Nichts gepusht (`main` ist `origin/main` voraus). Entscheidungen: NEWS.md.
+Stand (2026-10-26): **M6 bis M8 Teil 3a abgenommen und in `main`.** **M8 Teil 3b fertig, wartet auf Abnahme:** EN-Fassung der Beginner-Lektionen reshaping, visualisation, descriptives (Übungs- und Quiztexte EN gegengelesen). Nichts gepusht (`main` ist `origin/main` voraus). Entscheidungen: NEWS.md.
 
 ## Was steht
 - **Gerüst (M6):** Quarto-Website mit quarto-live/webR, Theme hell/dunkel (IBM Plex Sans, JetBrains Mono, Indigo), Kopfzeile Kursplan · Wiederholen (n fällig) · Pakete · Glossar · DE/EN · Hell/Dunkel · Suche.
 - **Kursplan** (`de/index.qmd`, `en/index.qmd`): Matrix 23 Themen × 3 Stufen, Status je Zelle, „Weitermachen mit / Als Nächstes“, „Heute wiederholen (n)“.
-- **Lektionen:** `working-with-r-beginner`, `import-beginner`, `cleaning-beginner`, `reshaping-beginner`, `visualisation-beginner`, `descriptives-beginner`, `scales-beginner`, `regression-beginner`, `reporting-beginner` (33 Pflicht- + 13 Zusatzübungen, je 5 Fragen Wissenscheck). In DE und EN: `working-with-r`, `import`, `cleaning`, `group-comparisons` (je `-beginner`); die übrigen 6 nur DE (`langs: [de]`). Aufbau: Breadcrumb, Lektionskasten mit Fortschritt, links „Abschnitt x von 7“ (ab 1200 px), rechts Inhaltsverzeichnis, 3 Pflichtübungen (YAML), Wissenscheck (5 Fragen, ≥ 80 %), Spickzettel, Zurück/Weiter.
+- **Lektionen:** `working-with-r-beginner`, `import-beginner`, `cleaning-beginner`, `reshaping-beginner`, `visualisation-beginner`, `descriptives-beginner`, `scales-beginner`, `regression-beginner`, `reporting-beginner` (33 Pflicht- + 13 Zusatzübungen, je 5 Fragen Wissenscheck). In DE und EN: `working-with-r`, `import`, `cleaning`, `reshaping`, `visualisation`, `descriptives`, `group-comparisons` (je `-beginner`); `scales`, `regression`, `reporting` nur DE (`langs: [de]`). Aufbau: Breadcrumb, Lektionskasten mit Fortschritt, links „Abschnitt x von 7“ (ab 1200 px), rechts Inhaltsverzeichnis, 3 Pflichtübungen (YAML), Wissenscheck (5 Fragen, ≥ 80 %), Spickzettel, Zurück/Weiter.
 - **Wiederholung** (`review.qmd`): Leitner Boxen 1–5 (0/1/3/7/21 Tage), Sicherheits-Rating vor dem Prüfen, Leicht/Okay/Schwer, Serie, Mischen nach Lektionen; R lädt erst beim Start. Export/Import des Fortschritts (`#backup`).
 - **Pakete und Glossar** aus YAML (`content/packages/*.yml`, `content/glossary.yml`), Vorlagen für weitere Einträge.
 - **Sprachen:** `/de/` und `/en/`; Umschalter führt zur gleichen Seite und zum gleichen Abschnitt; Fortschritt sprachübergreifend.
@@ -15,14 +15,14 @@ Stand (2026-10-26): **M6 bis M8 Teil 2c abgenommen und in `main`.** **M8 Teil 3a
 - **Triage** `docs/legacy-triage.md`: 54 behalten (18 im Beginner-Pfad), 11 streichen, freigegeben. Migriert: 18 (markiert), damit alle Beginner-Aufgaben der Triage.
 - Alt: `legacy/exercises/` (65 Aufgaben), `legacy/driving_sim_v0.*`.
 
-## Geprüft (2026-10-26, M8 Teil 3a)
+## Geprüft (2026-10-26, M8 Teil 3b)
 Über Verifier-Subagent (echte Ausgabe, gekürzt):
 - `Rscript tools/selftest.R`: 49/49 exercises ok
-- `testthat::test_dir("tools/tests")`: FAIL 0 | WARN 4 | SKIP 0 | PASS 190 (WARN: erwartete Meldungen der scheiternden Starter, `ymd_hms` in cleaning/dates, psych-Hinweis in sc-b-alpha); `node --test tests/js`: 12 pass, 0 fail
-- `quarto render`: Exit 0, 23 Seiten, 0 Warnungen
-- `Rscript tests/smoke-test.R`: 19/19 ok, 0 failure(s); EN-Kursplan verlinkt cleaning, nicht reshaping.
-- Statisch: die drei EN-Seiten existieren, keine deutschen UI-Texte („Ausführen“, „Hinweis zeigen“) im HTML.
-- Nicht manuell im Browser geprüft (EN-Seiten 3a).
+- `testthat::test_dir("tools/tests")`: FAIL 0 | WARN 4 | SKIP 0 | PASS 190 (WARN: erwartete Meldungen, u. a. psych-Hinweis in sc-b-alpha); `node --test tests/js`: 12 pass, 0 fail
+- `quarto render`: erster Lauf Exit 1 („Include directive failed“, `_generated/en/descriptives-beginner/runtime.qmd` fehlte), nach `Rscript tools/generate.R` Exit 0, 0 Warnungen. Ursache: Quarto löst Includes vor dem pre-render-Hook auf; CI ruft `generate.R` jetzt vor dem Render auf (in CI noch nicht gelaufen).
+- `Rscript tests/smoke-test.R`: 19/19 ok, 0 failure(s); EN-Kursplan verlinkt descriptives, nicht scales.
+- Statisch: die drei EN-Seiten existieren, keine deutschen UI-Texte („Ausführen“, „Hinweis zeigen“, „Wissenscheck“, „Spickzettel“) im HTML.
+- Nicht manuell im Browser geprüft (EN-Seiten 3a und 3b).
 
 ## Offen / bekannte Lücken
 - Beginner-Lektionen 1–6 nicht manuell im Browser durchgeklickt (7–9 nur die Übungen, nicht Wissenscheck/Optik), nur Rauchtest (je eine Übung in cleaning und visualisation); Beispiel-Plots und SVG-Abbildungen von reshaping/visualisation/descriptives optisch nicht geprüft.
@@ -35,8 +35,8 @@ Stand (2026-10-26): **M6 bis M8 Teil 2c abgenommen und in `main`.** **M8 Teil 3a
 - Kursplan: „nicht vorgesehen“-Zellen werden vom Screenreader einzeln vorgelesen (19×); ggf. kürzen.
 
 ## Als Nächstes
-1. Abnahme M8 Teil 3a durch Nick (EN-Seiten working-with-r, import, cleaning im Browser ansehen).
-2. M8 Teil 3b: EN-Fassung reshaping, visualisation, descriptives (`langs` entfernen, `en/<slug>-beginner.qmd`, EN-Texte im Übungs-YAML gegenlesen; Rauchtest-Schritt „translated lesson linked, German-only lesson not“ auf eine noch deutsche Lektion umstellen, z. B. scales). Danach 3c: scales, regression, reporting (Schritt dann entfernen oder umdrehen).
+1. Abnahme M8 Teil 3b durch Nick (EN-Seiten reshaping, visualisation, descriptives im Browser ansehen; Plots/SVGs optisch).
+2. M8 Teil 3c: EN-Fassung scales, regression, reporting (`langs` entfernen, `en/<slug>-beginner.qmd`, EN-Texte im Übungs-YAML gegenlesen; Rauchtest-Schritt „translated lesson linked, German-only lesson not“ danach entfernen oder auf „alle Beginner-Lektionen verlinkt“ umstellen).
 3. Mini-Projekt Beginner (vollständige Analyse `survey` oder `usability`: Import → Bereinigung → Skalen → Vergleich → Bericht).
 4. Pages einrichten, pushen (nur nach Rückfrage).
 

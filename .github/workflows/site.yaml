@@ -73,6 +73,11 @@ jobs:
         with:
           version: 1.10.19
 
+      # Quarto resolves {{< include >}} before the pre-render hook runs,
+      # so _generated/ has to exist before the first render.
+      - name: Generate lesson blocks and review cards
+        run: Rscript tools/generate.R
+
       - name: Render site
         run: quarto render
 

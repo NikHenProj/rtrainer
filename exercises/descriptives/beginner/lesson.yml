@@ -3,7 +3,6 @@
 lesson: descriptives-beginner
 minutes: 45
 prerequisites: [reshaping-beginner]
-langs: [de]
 packages: [dplyr, datawizard]
 data: [driving_sim, survey, usability]
 goals:

@@ -1,0 +1,155 @@
+---
+title: "Reshaping and joining"
+subtitle: "Beginner · Long and wide, pivot_longer(), pivot_wider(), joins"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, tidyr]
+resources:
+  - ../data/driving_sim.csv
+  - ../data/survey.csv
+  - ../data/usability.csv
+---
+
+{{< include /_generated/en/reshaping-beginner/runtime.qmd >}}
+
+{{< include /_generated/en/reshaping-beginner/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R runs directly in your browser. On the first visit it takes 10–30 seconds to load (status at the bottom right); after that it is faster.
+:::
+
+## Why? {#why}
+
+**Research question:** Does perceived workload (NASA-TLX) differ between touch and voice control, and on which dimensions?
+
+In the questionnaire `survey` each TLX dimension has its own column (`tlx_mental`, `tlx_physical`, …), one row per respondent. For a plot or a model "rating by dimension and interface" the six columns have to be stacked. Conversely, for a report table you want the conditions side by side, and for an analysis with driving experience you have to attach a second questionnaire to the driving simulator data. Reshaping and joining come up in almost every analysis.
+
+## Concept {#concept}
+
+The same data can be stored long or wide:
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 200" role="img" aria-labelledby="fig-rs-title fig-rs-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-rs-title">Wide format and long format</title>
+  <desc id="fig-rs-desc">On the left a wide table with the columns respondent, mental and physical and two rows. On the right the same values in long format with the columns respondent, dimension and rating and four rows. An arrow to the right is labelled pivot_longer, an arrow to the left pivot_wider.</desc>
+  <rect x="10" y="40" width="214" height="28" class="rt-fig-box-accent" />
+  <rect x="10" y="68" width="214" height="56" class="rt-fig-box" />
+  <text x="16" y="59" class="rt-fig-code">respondent mental physical</text>
+  <text x="16" y="87" class="rt-fig-code">r001       30     0</text>
+  <text x="16" y="111" class="rt-fig-code">r002       50     20</text>
+  <text x="10" y="28" class="rt-fig-label">wide: 1 row per person</text>
+  <rect x="326" y="40" width="228" height="28" class="rt-fig-box-accent" />
+  <rect x="326" y="68" width="228" height="104" class="rt-fig-box" />
+  <text x="332" y="59" class="rt-fig-code">respondent dimension rating</text>
+  <text x="332" y="87" class="rt-fig-code">r001       mental    30</text>
+  <text x="332" y="111" class="rt-fig-code">r001       physical  0</text>
+  <text x="332" y="135" class="rt-fig-code">r002       mental    50</text>
+  <text x="332" y="159" class="rt-fig-code">r002       physical  20</text>
+  <text x="326" y="28" class="rt-fig-label">long: 1 row per person × dimension</text>
+  <line x1="230" y1="80" x2="320" y2="80" class="rt-fig-arrow" />
+  <text x="275" y="72" text-anchor="middle" class="rt-fig-code" style="font-size: 12px">pivot_longer()</text>
+  <line x1="320" y1="130" x2="230" y2="130" class="rt-fig-arrow" />
+  <text x="275" y="150" text-anchor="middle" class="rt-fig-code" style="font-size: 12px">pivot_wider()</text>
+</svg>
+<figcaption>Same values, different arrangement. Long for ggplot2 and models, wide for tables and differences per person.</figcaption>
+</figure>
+```
+
+- **Long format** (tidy): one row per observation, one column per variable. The dimension is a variable, so it is a column. This is what ggplot2, `summarise(.by = ...)` and model formulas need.
+- **`pivot_longer(cols, names_to, values_to)`** stacks columns. `names_prefix` removes a shared prefix along the way.
+- **`pivot_wider(names_from, values_from)`** spreads values across new columns. All remaining columns identify the rows (`id_cols`), so condense to one row per unit first.
+- **Mutating joins** add columns from a second table: `left_join()` keeps all rows on the left, `inner_join()` only those with a match, `full_join()` all rows from both.
+- **Filtering joins** add nothing: `anti_join()` shows rows without a match, `semi_join()` those with a match.
+- **`join_by(participant == pid)`** connects keys with different names.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## More: checking joins
+
+- Before the join, check that the key on the right is unique: `count(pre_survey, pid) |> filter(n > 1)`.
+- `relationship = "one-to-one"` (or `"many-to-one"`) makes R stop if the data do not match the expectation.
+- Compare `nrow()` after the join. More rows than before almost always means duplicate keys.
+- Count unmatched cases with `anti_join()` in both directions and report them in the methods section.
+:::
+
+## Example {#example}
+
+Bring the TLX columns into long format and summarise by dimension and interface:
+
+```{webr}
+tlx_long <- survey |>
+  select(respondent, interface, starts_with("tlx_")) |>
+  pivot_longer(
+    starts_with("tlx_"),
+    names_to = "dimension", names_prefix = "tlx_", values_to = "rating"
+  )
+tlx_long
+```
+
+```{webr}
+tlx_summary <- tlx_long |>
+  summarise(m = round(mean(rating, na.rm = TRUE), 1), .by = c(dimension, interface))
+tlx_summary
+```
+
+For the report the two interfaces are better placed side by side. `pivot_wider()` turns this into one row per dimension; the difference is then a simple calculation:
+
+```{webr}
+tlx_summary |>
+  pivot_wider(names_from = interface, values_from = m) |>
+  mutate(diff = voice - touch) |>
+  arrange(diff)
+```
+
+**How to report it (results section, descriptive):** Voice control was rated lower than touch control on mental (−13 points) and physical demand (−9), but higher on frustration (+9). Whether the differences go beyond chance is tested by a group comparison (lesson "Group comparisons").
+
+## Package comparison {#packages}
+
+| Task | Recommended | Alternative |
+|---|---|---|
+| Long ↔ wide | **tidyr** `pivot_longer()`, `pivot_wider()` | `data.table::melt()`/`dcast()` (fast with millions of rows); `reshape2` and `gather()`/`spread()` are superseded |
+| Joining tables | **dplyr** `left_join()` etc. with `join_by()` | Base R `merge()`: join type via `all.x`/`all.y`, reorders the result |
+| Unmatched cases | **dplyr** `anti_join()` | `setdiff(a$participant, b$pid)` for plain ID vectors |
+| Making missing combinations visible | **tidyr** `complete()` | `expand_grid()` + `left_join()` |
+
+## Exercises {#exercises}
+
+Four required exercises and two optional exercises. **Run and check** runs your code and checks it right away. Reveal hints one at a time (**Show Hint**), the solution only after that.
+
+{{< include /_generated/en/reshaping-beginner/exercises.qmd >}}
+
+## Knowledge check {#check}
+
+{{< include /_generated/en/reshaping-beginner/quiz.qmd >}}
+
+## Cheat sheet {#cheatsheet}
+
+```r
+# wide -> long
+survey |>
+  pivot_longer(
+    starts_with("tlx_"),                   # which columns
+    names_to = "dimension",                # column names -> values
+    names_prefix = "tlx_",                 # remove prefix
+    values_to = "rating"                   # cell values
+  )
+
+# long -> wide: one row per unit first
+driving_sim |>
+  summarise(rt_ms = mean(rt_ms, na.rm = TRUE), .by = c(participant, condition)) |>
+  pivot_wider(names_from = condition, values_from = rt_ms)
+
+# join
+rt_by_person |>
+  left_join(pre_survey, by = join_by(participant == pid), relationship = "one-to-one")
+rt_by_person |>
+  anti_join(pre_survey, by = join_by(participant == pid))   # without a match
+```
+
+- ggplot2 and models: long format. Tables and differences per person: wide format.
+- `pivot_wider()` identifies rows by all remaining columns; condense first.
+- Check `nrow()` after every join; count missing matches with `anti_join()`.
+- `values_fill` only for counts, never for measurements.
+
+{{< include /_generated/en/reshaping-beginner/footer.qmd >}}

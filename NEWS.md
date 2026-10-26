@@ -1,6 +1,13 @@
 # rtrainer (Quarto course)
 
-## Milestone 8, part 3a: English beginner lessons working-with-r, import, cleaning (awaiting acceptance)
+## Milestone 8, part 3b: English beginner lessons reshaping, visualisation, descriptives (awaiting acceptance)
+
+- English pages `en/reshaping-beginner.qmd`, `en/visualisation-beginner.qmd`, `en/descriptives-beginner.qmd`, translated from the German lessons with identical code, data and exercise IDs (SVG labels/descriptions, cheat-sheet comments and `labs()` axis titles in the examples translated); `langs: [de]` removed from their `lesson.yml`.
+- Proofread the English texts of the 17 exercises and 3 quizzes; two fixes: the trial-level SE is about 40 % too small (14 vs 23 ms), not "a third" (DE and EN); "Simpson's paradox" instead of "Simpson pattern" (EN).
+- Smoke test: the English course-plan step now expects `descriptives-beginner` linked and the still German-only `scales-beginner` not linked.
+- CI: explicit `Rscript tools/generate.R` step before `quarto render`, because Quarto resolves `{{< include >}}` before the pre-render hook; a render on a fresh checkout (no `_generated/`) failed.
+
+## Milestone 8, part 3a: English beginner lessons working-with-r, import, cleaning (accepted, merged into main)
 
 - English pages `en/working-with-r-beginner.qmd`, `en/import-beginner.qmd`, `en/cleaning-beginner.qmd`, translated from the accepted German lessons with identical code, data, figures (SVG labels and descriptions translated) and exercise IDs; `langs: [de]` removed from their `lesson.yml`, so the English course plan links them.
 - Proofread the English texts of the 18 exercises and 3 quizzes; two wording fixes ("run `library(janitor)`", `as.numeric()` on `34 years` gives `NA` with only a warning).

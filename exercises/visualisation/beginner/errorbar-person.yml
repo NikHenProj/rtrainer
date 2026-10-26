@@ -57,7 +57,7 @@ explanation:
   de: |
     Über alle Durchgänge gerechnet ist `n` = 160 statt 40, und die SD enthält
     das Rauschen innerhalb der Personen statt der Unterschiede zwischen ihnen.
-    Der Standardfehler fällt dadurch um rund ein Drittel zu klein aus (visual
+    Der Standardfehler fällt dadurch um rund 40 % zu klein aus (visual
     14 statt 23 ms); die Balken versprechen eine Genauigkeit, die die Stichprobe
     nicht hat. Auch der Mittelwert ändert sich leicht, weil Personen mit
     fehlenden Durchgängen sonst weniger Gewicht bekommen. Bei Messwiederholung
@@ -67,7 +67,7 @@ explanation:
   en: |
     Computed over all trials, `n` is 160 instead of 40, and the SD contains the
     noise within participants instead of the differences between them. The
-    standard error is thus about a third too small (visual 14 instead of 23 ms);
+    standard error is thus about 40 % too small (visual 14 instead of 23 ms);
     the bars promise a precision the sample does not have. The mean also changes
     slightly, because participants with missing trials otherwise get less weight.
     With repeated measures, such bars are conservative for comparisons between

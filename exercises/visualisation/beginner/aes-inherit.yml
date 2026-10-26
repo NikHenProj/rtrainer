@@ -54,8 +54,8 @@ explanation:
     there, `geom_smooth()` also groups by condition and fits three separate
     lines. If `colour` is only in `geom_point(aes())`, `geom_smooth()` does not
     know the condition and fits a single line through all points. That can fake
-    a relationship that only comes from differences between conditions (Simpson
-    pattern). Without `method = "lm"`, `geom_smooth()` uses LOESS for fewer than
+    a relationship that only comes from differences between conditions (Simpson's
+    paradox). Without `method = "lm"`, `geom_smooth()` uses LOESS for fewer than
     1000 points, so a curve. The message "`geom_smooth()` using formula …" is a
     note, not an error.
 check:

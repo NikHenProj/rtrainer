@@ -3,7 +3,6 @@
 lesson: visualisation-beginner
 minutes: 50
 prerequisites: [reshaping-beginner]
-langs: [de]
 packages: [dplyr, ggplot2]
 data: [driving_sim, usability]
 goals:

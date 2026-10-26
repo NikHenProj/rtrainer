@@ -3,7 +3,6 @@
 lesson: reshaping-beginner
 minutes: 45
 prerequisites: [cleaning-beginner]
-langs: [de]
 packages: [dplyr, tidyr]
 data: [driving_sim, survey, usability]
 goals:
