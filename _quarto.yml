@@ -11,7 +11,6 @@ project:
     - assets/review-cards.json
     - assets/*.js
 
-lang: de-DE
 
 website:
   title: "rtrainer"
@@ -30,7 +29,6 @@ website:
         href: de/index.qmd
       - text: Wiederholen
         href: de/review.qmd
-        id: rt-nav-review
       - text: Pakete
         href: de/packages.qmd
       - text: Glossar
@@ -39,7 +37,6 @@ website:
       - text: EN
         href: en/index.qmd
         aria-label: "English version"
-        id: rt-nav-lang
   page-footer:
     left: "rtrainer · R-Kurs für Human Factors und UX"
     right:
@@ -54,7 +51,6 @@ format:
     respect-user-color-scheme: true
     toc: true
     toc-depth: 3
-    toc-title: "Auf dieser Seite"
     smooth-scroll: false
     anchor-sections: true
     code-copy: true
@@ -66,5 +62,7 @@ format:
           <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
     include-after-body:
       - text: |
+          <script src="../assets/logic.js"></script>
           <script src="../assets/progress.js"></script>
           <script src="../assets/lesson.js"></script>
+          <script src="../assets/review.js"></script>

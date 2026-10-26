@@ -1,0 +1,74 @@
+# Glossary DE <-> EN (template: one entry per term).
+terms:
+  - de: Abhängige Variable
+    en: Dependent variable
+    meaning:
+      de: Die gemessene Größe, deren Unterschiede erklärt werden sollen (hier `rt_ms`).
+      en: The measured quantity whose differences are to be explained (here `rt_ms`).
+    lessons: [group-comparisons-beginner]
+  - de: Unabhängige Stichproben
+    en: Independent samples
+    meaning:
+      de: Gruppen aus verschiedenen Personen; kein Wert der einen Gruppe gehört zu einem Wert der anderen.
+      en: Groups of different people; no value in one group belongs to a value in the other.
+    lessons: [group-comparisons-beginner]
+  - de: Gepaarte Stichproben
+    en: Paired samples
+    meaning:
+      de: Zwei Messungen derselben Personen, z. B. in zwei Bedingungen.
+      en: Two measurements of the same people, e.g. in two conditions.
+    lessons: [group-comparisons-beginner]
+  - de: Welch-t-Test
+    en: Welch's t-test
+    meaning:
+      de: t-Test für unabhängige Gruppen ohne Annahme gleicher Varianzen; Standard in R.
+      en: t-test for independent groups without assuming equal variances; the default in R.
+    lessons: [group-comparisons-beginner]
+  - de: Freiheitsgrade
+    en: Degrees of freedom
+    meaning:
+      de: Bestimmen die Form der t-Verteilung; hängen von der Zahl unabhängiger Beobachtungen ab.
+      en: Determine the shape of the t distribution; depend on the number of independent observations.
+    lessons: [group-comparisons-beginner]
+  - de: p-Wert
+    en: p-value
+    meaning:
+      de: Wahrscheinlichkeit für mindestens so extreme Daten, wenn die Nullhypothese stimmt. Keine Aussage über die Effektgröße.
+      en: Probability of data at least this extreme if the null hypothesis is true. Says nothing about effect size.
+    lessons: [group-comparisons-beginner]
+  - de: Effektgröße
+    en: Effect size
+    meaning:
+      de: Maß für die Größe eines Unterschieds oder Zusammenhangs, unabhängig von der Stichprobengröße.
+      en: Measure of the size of a difference or relationship, independent of sample size.
+    lessons: [group-comparisons-beginner]
+  - de: Cohen's d
+    en: Cohen's d
+    meaning:
+      de: Mittelwertdifferenz in Standardabweichungen.
+      en: Mean difference in standard deviations.
+    lessons: [group-comparisons-beginner]
+  - de: Konfidenzintervall (KI)
+    en: Confidence interval (CI)
+    meaning:
+      de: Bereich plausibler Werte für den wahren Effekt; 95 %-KI ist üblich.
+      en: Range of plausible values for the true effect; the 95% CI is common.
+    lessons: [group-comparisons-beginner]
+  - de: Pseudoreplikation
+    en: Pseudoreplication
+    meaning:
+      de: Abhängige Messungen (z. B. Trials einer Person) werden als unabhängige Fälle gezählt; führt zu zu kleinen p-Werten.
+      en: Dependent measurements (e.g. one person's trials) are counted as independent cases; leads to p-values that are too small.
+    lessons: [group-comparisons-beginner]
+  - de: Messwiederholung
+    en: Repeated measures
+    meaning:
+      de: Dieselbe Person wird mehrfach gemessen, z. B. in mehreren Durchgängen oder Bedingungen.
+      en: The same person is measured several times, e.g. across trials or conditions.
+    lessons: [group-comparisons-beginner]
+  - de: Übernahmeaufforderung
+    en: Take-over request (TOR)
+    meaning:
+      de: Signal eines automatisierten Fahrzeugs, dass die fahrende Person das Steuer übernehmen muss.
+      en: Signal from an automated vehicle that the driver must take back control.
+    lessons: [group-comparisons-beginner]

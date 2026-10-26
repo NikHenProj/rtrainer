@@ -1,0 +1,28 @@
+name: parameters
+url: https://easystats.github.io/parameters/
+purpose:
+  de: Ergebnisse von Tests und Modellen als saubere Tabelle mit Schätzern, Konfidenzintervallen und p-Werten (Teil von easystats).
+  en: Results of tests and models as a clean table with estimates, confidence intervals and p-values (part of easystats).
+functions:
+  - name: parameters()
+    does:
+      de: Tabelle der Kennwerte für fast jedes Test- oder Modellobjekt.
+      en: Table of results for almost any test or model object.
+    example: |
+      parameters(t.test(rt_ms ~ experience, data = rt_by_person))
+  - name: model_parameters()
+    does:
+      de: Langform von `parameters()`, mit Optionen wie `standardize`.
+      en: Long form of `parameters()`, with options such as `standardize`.
+    example: |
+      model_parameters(lm(rt_ms ~ experience, data = rt_by_person))
+  - name: print_md()
+    does:
+      de: Tabelle als Markdown ausgeben, z. B. für Quarto-Berichte.
+      en: Print the table as Markdown, e.g. for Quarto reports.
+    example: |
+      parameters(lm(rt_ms ~ experience, data = rt_by_person)) |> print_md()
+pitfalls:
+  - de: "Bei `t.test()`-Objekten fehlt die Effektgröße; dafür `effectsize` nutzen."
+    en: "For `t.test()` objects the effect size is missing; use `effectsize` for that."
+lessons: [group-comparisons-beginner]

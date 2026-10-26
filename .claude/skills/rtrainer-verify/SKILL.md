@@ -9,9 +9,9 @@ Bevorzugt über den Subagenten `rtrainer-verifier` ausführen (spart Hauptkontex
 
 Reihenfolge, beim ersten Fehler stoppen, beheben, bei 1 neu beginnen:
 1. `Rscript tools/selftest.R` – alle Übungen: Lösung besteht, Starter scheitert.
-2. Tests der Werkzeuge (Generator, Checks): `Rscript -e 'testthat::test_dir("tools/tests")'`.
+2. Tests der Werkzeuge (Generator, Checks): `Rscript -e 'testthat::test_dir("tools/tests")'`; Fortschrittslogik: `node --test tests/js`.
 3. `quarto render` – ohne Fehler/Warnungen, beide Sprachen.
-4. Browser-Rauchtest (sobald vorhanden, `tests/`): eine Lektion laden, Übung lösen, prüfen, Fortschritt gespeichert.
+4. Browser-Rauchtest: `Rscript tests/smoke-test.R` (headless Chrome, braucht Internet für webR): Lektion lösen, Fortschritt, Wiederholungskarte, EN-Seite und Sprachumschalter.
 
 ## Regeln
 - Gekürzte echte Ausgabe zeigen (Fehlerzeilen, nicht das ganze Log).

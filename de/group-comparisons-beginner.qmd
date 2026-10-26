@@ -17,13 +17,13 @@ resources:
 R läuft hier direkt im Browser. Beim ersten Besuch lädt es 10–30 Sekunden (Fortschritt oben rechts), danach geht es schneller.
 :::
 
-## Wozu? {#wozu}
+## Wozu? {#why}
 
 **Forschungsfrage:** Reagieren erfahrene Fahrerinnen und Fahrer schneller auf eine Übernahmeaufforderung als Fahranfänger?
 
 In einer Fahrsimulator-Studie (`driving_sim`) übernahmen 40 Personen nach einer Warnung das Steuer, je 12-mal. 20 Personen sind Fahranfänger (`novice`), 20 erfahren (`experienced`). Gemessen wurde die Reaktionszeit `rt_ms` in Millisekunden. Für das Design eines Übernahmekonzepts ist entscheidend, ob und *wie stark* sich die Gruppen unterscheiden.
 
-## Konzept {#konzept}
+## Konzept {#concept}
 
 Zwei **unabhängige Gruppen** (verschiedene Personen) vergleichst du mit einem t-Test. Er setzt die Mittelwertdifferenz ins Verhältnis zu ihrer Unsicherheit:
 
@@ -61,7 +61,7 @@ $$t = \frac{\bar{x}_1 - \bar{x}_2}{SE_{\text{Differenz}}}$$
 Hat *jede* Person beide Bedingungen erlebt (z. B. visuelle und haptische Warnung), sind die Werte gepaart. Dann rechnest du einen gepaarten t-Test auf den Personenmittelwerten, z. B. mit `t.test(Pair(visual, haptic) ~ 1, data = wide)`. Mehr als zwei Bedingungen oder Gruppen: ANOVA (Stufe Intermediate).
 :::
 
-## Beispiel {#beispiel}
+## Beispiel {#example}
 
 Zuerst eine Zeile pro Person: die mittlere Reaktionszeit über alle 12 Durchgänge. Klicke auf **Ausführen**; du kannst den Code ändern und neu ausführen.
 
@@ -85,7 +85,7 @@ cohens_d(rt_ms ~ experience, data = rt_by_person)
 
 **So berichtest du es (APA):** Fahranfänger reagierten langsamer (*M* = 1084 ms, *SD* = 115) als Erfahrene (*M* = 923 ms, *SD* = 100), *t*(37.3) = 4.73, *p* < .001, *d* = 1.50, 95 % KI [0.78, 2.19].
 
-## Paketvergleich {#paketvergleich}
+## Paketvergleich {#packages}
 
 | Weg | Stärke | Wann |
 |---|---|---|
@@ -117,17 +117,17 @@ report::report(t.test(rt_ms ~ experience, data = rt_by_person))
 ```
 :::
 
-## Übungen {#uebungen}
+## Übungen {#exercises}
 
 Drei Pflichtübungen mit steigender Schwierigkeit. **Ausführen** startet deinen Code und prüft ihn sofort. Hinweise deckst du einzeln auf (**Hinweis zeigen**), die Lösung erst danach.
 
 {{< include /_generated/de/group-comparisons-beginner/exercises.qmd >}}
 
-## Wissenscheck {#wissenscheck}
+## Wissenscheck {#check}
 
 {{< include /_generated/de/group-comparisons-beginner/quiz.qmd >}}
 
-## Spickzettel {#spickzettel}
+## Spickzettel {#cheatsheet}
 
 ```r
 # 1. Eine Zeile pro Person

@@ -1,10 +1,9 @@
 ---
 title: "Pakete"
-toc: false
+subtitle: "Steckbriefe der Pakete im Kurs: wofür, Kernfunktionen, Stolperfallen"
+toc-depth: 2
 ---
 
-::: {.callout-note appearance="simple"}
-**In Vorbereitung.** Steckbriefe zu den Paketen des Kurses (wofür, Kernfunktionen mit Minibeispiel, Stolperfallen, Lektionen, Dokumentation) entstehen zusammen mit den Lektionen.
-:::
+Jeder Steckbrief zeigt die wichtigsten Funktionen mit einem kurzen Beispiel am Kursdatensatz. Die Beispiele setzen voraus, dass `driving_sim` geladen ist (`rt_by_person` stammt aus der Lektion [Gruppenvergleiche](group-comparisons-beginner.qmd)).
 
-[Zurück zum Kursplan](index.qmd)
+{{< include /_generated/de/packages.qmd >}}

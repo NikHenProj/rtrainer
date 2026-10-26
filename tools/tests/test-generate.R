@@ -80,7 +80,14 @@ test_that("generate writes lesson parts, course plan and review cards", {
   runtime <- paste(readLines(file.path(gen, "runtime.qmd")), collapse = "\n")
   expect_match(runtime, "options(webr.exercise.checker = rt_checker)", fixed = TRUE)
   cards <- jsonlite::read_json(file.path(dir, "assets", "review-cards.json"))
-  expect_named(cards, "toy-b-mean")
+  expect_named(cards$cards, "toy-b-mean")
+  expect_match(cards$checks, "rt_checker")
+  expect_equal(cards$datasets$toy$file, "toy.csv")
+  card <- cards$cards[["toy-b-mean"]]
+  expect_equal(card$prompt$de, "<p>Berechne den Mittelwert von <code>x</code>.</p>")
+  expect_equal(card$lesson_title$en, "Toy (Beginner)")
+  expect_type(card$packages, "list") # JSON array even when empty
+  expect_match(card$check$en, 'lang = "en"', fixed = TRUE)
 })
 
 test_that("generate stops on invalid content and lists all problems", {
@@ -90,9 +97,77 @@ test_that("generate stops on invalid content and lists all problems", {
     exercises = list(toy_exercise(), toy_exercise(order = 2, kind = "debug")),
     front_matter = "webr:\n  packages: []"
   )
-  err <- tryCatch(generate(dir), error = conditionMessage)
+  err <- tryCatch(generate(dir, langs = "de"), error = conditionMessage)
   expect_match(err, "duplicate exercise id")
   expect_match(err, "misconception")
   expect_match(err, "engine: markdown")
   expect_match(err, "resources lacks toy.csv")
+})
+
+test_that("md_html splits paragraphs and escapes", {
+  expect_equal(md_html("a `x`\nb\n\nc <d>"), "<p>a <code>x</code> b</p><p>c &lt;d&gt;</p>")
+  expect_null(md_html(NULL))
+})
+
+test_that("English pages get English labels and checks", {
+  out <- render_exercise(toy_exercise(), 2, "en", list(toy = list(load = "toy <- 1")))
+  expect_match(out, "### Exercise 2: Mean", fixed = TRUE)
+  expect_match(out, "Hint 1 of 1", fixed = TRUE)
+  expect_match(out, 'lang = "en"', fixed = TRUE)
+  expect_match(out, "Compute the mean", fixed = TRUE)
+})
+
+toy_package <- function() {
+  list(
+    name = "toypkg", url = "https://example.org",
+    purpose = list(de = "Zweck", en = "Purpose"),
+    functions = list(list(name = "f()", does = list(de = "macht", en = "does"), example = "f(1)")),
+    pitfalls = list(list(de = "Falle", en = "Trap")),
+    lessons = list("toy-beginner", "next-beginner")
+  )
+}
+
+test_that("validate_package finds missing fields", {
+  expect_length(validate_package(toy_package()), 0)
+  p <- toy_package()
+  p$functions <- list()
+  expect_match(validate_package(p), "functions", all = FALSE)
+  p <- toy_package()
+  p$purpose$en <- NULL
+  expect_match(validate_package(p), "lacks text for: en", all = FALSE)
+  p <- toy_package()
+  p$url <- NULL
+  expect_match(validate_package(p), "url", all = FALSE)
+})
+
+test_that("render_packages links existing lessons and marks planned ones", {
+  curriculum <- list(
+    levels = list(list(id = "beginner", title = list(de = "Beginner", en = "Beginner"))),
+    topics = list(
+      list(slug = "toy", levels = list("beginner"), title = list(de = "Spielzeug", en = "Toy")),
+      list(slug = "next", levels = list("beginner"), title = list(de = "Danach", en = "Next"))
+    )
+  )
+  out <- render_packages(list(toy_package()), curriculum, list(`toy-beginner` = list()), "en")
+  expect_match(out, "## toypkg {#pkg-toypkg .rt-package}", fixed = TRUE)
+  expect_match(out, "[Toy (Beginner)](toy-beginner.html)", fixed = TRUE)
+  expect_match(out, "Next (Beginner)", fixed = TRUE)
+  expect_false(grepl("next-beginner.html", out, fixed = TRUE))
+  expect_match(out, "- Trap", fixed = TRUE)
+  expect_equal(render_packages(list(), curriculum, list(), "de"), "")
+})
+
+test_that("glossary: validation, sorting by page language", {
+  terms <- list(
+    list(de = "Zebra", en = "Apple", meaning = list(de = "z", en = "a")),
+    list(de = "Apfel", en = "Zoo", meaning = list(de = "a", en = "z"))
+  )
+  expect_length(validate_glossary(terms), 0)
+  expect_match(validate_glossary(c(terms, terms[1])), "duplicate", all = FALSE)
+  expect_match(validate_glossary(list(list(de = "x", meaning = list(de = "y", en = "y")))), "missing `en`", all = FALSE)
+  curriculum <- list(levels = list(), topics = list())
+  de <- render_glossary(terms, curriculum, list(), "de")
+  expect_lt(regexpr("Apfel", de), regexpr("Zebra", de))
+  en <- render_glossary(terms, curriculum, list(), "en")
+  expect_lt(regexpr("Apple", en), regexpr("Zoo", en))
 })

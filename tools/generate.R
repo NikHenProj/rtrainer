@@ -5,11 +5,12 @@
 # Reads curriculum.yml, data/datasets.yml and exercises/<slug>/<level>/
 # (lesson.yml, quiz.yml, one YAML per exercise) and writes, per language,
 # _generated/<lang>/<lesson>/{runtime,header,exercises,quiz,footer}.qmd,
-# _generated/<lang>/course-plan.qmd and _generated/review-cards.json.
+# _generated/<lang>/{course-plan,packages,glossary}.qmd and
+# assets/review-cards.json (cards for the review page).
 # Lesson pages (<lang>/<lesson>.qmd) include these files.
 # Stops with a list of problems if any exercise, quiz or lesson is invalid.
 
-langs <- c("de")
+langs <- c("de", "en")
 kinds <- c("write", "interpret", "debug", "complete", "predict")
 check_types <- c("value", "object", "output")
 levels_all <- c("beginner", "intermediate", "expert")
@@ -49,7 +50,61 @@ labels <- list(
     select_all = "Mehrere Antworten möglich.",
     quiz_intro = "Bestanden ab %d %% richtigen Antworten. Du kannst beliebig oft neu antworten.",
     quiz_result = "Ergebnis",
-    exercise_caption = "Übung %d"
+    exercise_caption = "Übung %d",
+    pkg_purpose = "Wofür",
+    pkg_functions = "Kernfunktionen",
+    pkg_pitfalls = "Stolperfallen",
+    pkg_docs = "Dokumentation",
+    pkg_lessons = "In Lektionen",
+    glossary_term = "Deutsch",
+    glossary_other = "Englisch",
+    glossary_meaning = "Bedeutung",
+    glossary_lesson = "Lektion"
+  ),
+  en = list(
+    course_plan = "Course plan",
+    exercise = "Exercise",
+    required = "Required",
+    optional = "Optional",
+    hint = "Hint %d of %d",
+    solution = "Solution",
+    explanation = "Explanation",
+    misconception = "Common misconception",
+    kinds = c(
+      write = "Write code", interpret = "Interpret output",
+      debug = "Find the bug", complete = "Fill the gaps",
+      predict = "Predict the result"
+    ),
+    minutes = "%d minutes",
+    duration = "Duration",
+    prerequisites = "Prerequisites",
+    none = "none",
+    packages = "Packages",
+    data = "Data",
+    goals = "Learning goals",
+    planned = "planned",
+    not_offered = "not offered",
+    status_not_started = "not started",
+    status_started = "started",
+    status_done = "completed",
+    topic = "Topic",
+    back = "Back",
+    next_lesson = "Next",
+    question = "Question %d of %d",
+    check_answer = "Check answers",
+    select_all = "Select all that apply.",
+    quiz_intro = "Passed with at least %d %% correct answers. You can answer again as often as you like.",
+    quiz_result = "Result",
+    exercise_caption = "Exercise %d",
+    pkg_purpose = "What for",
+    pkg_functions = "Core functions",
+    pkg_pitfalls = "Pitfalls",
+    pkg_docs = "Documentation",
+    pkg_lessons = "Used in lessons",
+    glossary_term = "English",
+    glossary_other = "German",
+    glossary_meaning = "Meaning",
+    glossary_lesson = "Lesson"
   )
 )
 
@@ -310,6 +365,19 @@ inline_md <- function(x) {
   x <- gsub("`([^`]+)`", "<code>\\1</code>", x)
   x <- gsub("\\*\\*([^*]+)\\*\\*", "<strong>\\1</strong>", x)
   gsub("\\*([^*]+)\\*", "<em>\\1</em>", x)
+}
+
+# Paragraphs (blank-line separated) of inline Markdown as HTML.
+md_html <- function(x) {
+  if (is.null(x)) {
+    return(NULL)
+  }
+  paragraphs <- strsplit(trimws(x), "\n[ \t]*\n")[[1]]
+  paste0("<p>", vapply(gsub("\n", " ", paragraphs), inline_md, character(1)), "</p>", collapse = "")
+}
+
+bilingual_html <- function(x) {
+  if (is.null(x)) NULL else list(de = md_html(x$de), en = md_html(x$en))
 }
 
 deparse_one <- function(x) paste(deparse(x, width.cutoff = 500L), collapse = "\n")
@@ -615,29 +683,158 @@ render_course_plan <- function(curriculum, course_lessons, lang) {
   )
 }
 
-review_cards <- function(course) {
+review_cards <- function(course, checks_file) {
   cards <- list()
   for (lesson in course$lessons) {
+    parts <- lesson_id_parts(lesson$meta$lesson)
+    lesson_titles <- lapply(c(de = "de", en = "en"), function(lang) {
+      sprintf(
+        "%s (%s)", lesson_title(course$curriculum, lesson$meta$lesson, lang),
+        level_title(course$curriculum, parts$level, lang)
+      )
+    })
     for (ex in lesson$exercises) {
       cards[[ex$id]] <- list(
         id = ex$id,
         lesson = ex$lesson,
+        lesson_title = lesson_titles,
         kind = ex$kind,
+        kind_label = list(de = labels$de$kinds[[ex$kind]], en = labels$en$kinds[[ex$kind]]),
         required = isTRUE(ex$required),
         title = ex$title,
-        prompt = ex$prompt,
-        packages = unlist(ex$packages),
-        data = unlist(ex$data),
+        prompt = bilingual_html(ex$prompt),
+        packages = I(as.character(unlist(ex$packages))),
+        data = I(as.character(unlist(ex$data))),
         setup = paste(c(data_loader(ex$data, course$datasets), ex$setup), collapse = "\n"),
         starter = ex$starter,
         solution = ex$solution,
-        hints = ex$hints,
-        explanation = ex$explanation,
+        hints = lapply(ex$hints, bilingual_html),
+        explanation = bilingual_html(ex$explanation),
+        misconception = bilingual_html(ex$misconception),
         check = list(de = check_code(ex, "de"), en = check_code(ex, "en"))
       )
     }
   }
-  cards
+  list(
+    version = 1,
+    checks = paste(readLines(checks_file, warn = FALSE), collapse = "\n"),
+    datasets = lapply(course$datasets, function(d) list(file = d$file, load = d$load)),
+    cards = cards
+  )
+}
+
+# ---- Package profiles and glossary ------------------------------------------
+
+read_packages <- function(root) {
+  files <- sort(list.files(file.path(root, "content", "packages"), pattern = "\\.ya?ml$", full.names = TRUE))
+  lapply(files, read_yaml_file)
+}
+
+read_glossary <- function(root) {
+  path <- file.path(root, "content", "glossary.yml")
+  if (file.exists(path)) read_yaml_file(path)$terms else list()
+}
+
+validate_package <- function(pkg) {
+  problems <- character()
+  add <- function(...) problems <<- c(problems, ...)
+  if (!has_text(pkg$name)) add("missing `name`")
+  if (!has_text(pkg$url)) add("missing `url`")
+  add(check_bilingual(pkg$purpose, "purpose"))
+  if (length(pkg$functions) == 0) add("needs at least one entry in `functions`")
+  for (i in seq_along(pkg$functions)) {
+    f <- pkg$functions[[i]]
+    if (!has_text(f$name)) add(sprintf("functions[%d]: missing `name`", i))
+    add(check_bilingual(f$does, sprintf("functions[%d].does", i)))
+  }
+  for (i in seq_along(pkg$pitfalls)) add(check_bilingual(pkg$pitfalls[[i]], sprintf("pitfalls[%d]", i)))
+  problems
+}
+
+validate_glossary <- function(terms) {
+  problems <- character()
+  for (i in seq_along(terms)) {
+    term <- terms[[i]]
+    where <- sprintf("terms[%d]", i)
+    for (field in c("de", "en")) {
+      if (!has_text(term[[field]])) problems <- c(problems, sprintf("%s: missing `%s`", where, field))
+    }
+    problems <- c(problems, check_bilingual(term$meaning, paste0(where, ".meaning")))
+  }
+  keys <- vapply(terms, function(t) tolower(t$en %||% ""), character(1))
+  dupes <- unique(keys[duplicated(keys)])
+  if (length(dupes) > 0) problems <- c(problems, sprintf("duplicate term(s): %s", paste(dupes, collapse = ", ")))
+  problems
+}
+
+lesson_links <- function(lessons, curriculum, course_lessons, lang) {
+  lessons <- unlist(lessons)
+  if (length(lessons) == 0) {
+    return(labels[[lang]]$none)
+  }
+  paste(vapply(lessons, function(id) {
+    title <- sprintf(
+      "%s (%s)", lesson_title(curriculum, id, lang),
+      level_title(curriculum, lesson_id_parts(id)$level, lang)
+    )
+    if (id %in% names(course_lessons)) sprintf("[%s](%s)", title, lesson_url(id)) else title
+  }, character(1)), collapse = ", ")
+}
+
+render_packages <- function(packages, curriculum, course_lessons, lang) {
+  l <- labels[[lang]]
+  if (length(packages) == 0) {
+    return("")
+  }
+  overview <- c(
+    sprintf("| | %s |", l$pkg_purpose),
+    "|---|---|",
+    vapply(packages, function(p) {
+      sprintf("| [%s](#pkg-%s) | %s |", p$name, p$name, gsub("\n", " ", trimws(p$purpose[[lang]])))
+    }, character(1))
+  )
+  profiles <- vapply(packages, function(p) {
+    functions <- vapply(p$functions, function(f) {
+      example <- if (has_text(f$example)) paste0("\n\n", fence("r", f$example)) else ""
+      sprintf("`%s`\n: %s%s", f$name, trimws(f$does[[lang]]), gsub("\n", "\n    ", example))
+    }, character(1))
+    pitfalls <- vapply(p$pitfalls %||% list(), function(x) paste0("- ", trimws(x[[lang]])), character(1))
+    paste(c(
+      sprintf("## %s {#pkg-%s .rt-package}", p$name, p$name),
+      "",
+      trimws(p$purpose[[lang]]),
+      "",
+      sprintf(
+        "**%s:** <%s> · **%s:** %s",
+        l$pkg_docs, p$url, l$pkg_lessons, lesson_links(p$lessons, curriculum, course_lessons, lang)
+      ),
+      "",
+      sprintf("### %s", l$pkg_functions),
+      "",
+      paste(functions, collapse = "\n\n"),
+      "",
+      if (length(pitfalls) > 0) c(sprintf("### %s", l$pkg_pitfalls), "", pitfalls) else NULL
+    ), collapse = "\n")
+  }, character(1))
+  paste(c(overview, "", profiles), collapse = "\n")
+}
+
+render_glossary <- function(terms, curriculum, course_lessons, lang) {
+  l <- labels[[lang]]
+  other <- if (lang == "de") "en" else "de"
+  terms <- terms[order(tolower(vapply(terms, function(t) t[[lang]], character(1))))]
+  rows <- vapply(terms, function(t) {
+    sprintf(
+      "| **%s** | %s | %s | %s |",
+      t[[lang]], t[[other]], gsub("\n", " ", trimws(t$meaning[[lang]])),
+      lesson_links(t$lessons, curriculum, course_lessons, lang)
+    )
+  }, character(1))
+  paste(c(
+    sprintf("| %s | %s | %s | %s |", l$glossary_term, l$glossary_other, l$glossary_meaning, l$glossary_lesson),
+    "|---|---|---|---|",
+    rows
+  ), collapse = "\n")
 }
 
 write_file <- function(text, path) {
@@ -646,9 +843,20 @@ write_file <- function(text, path) {
   invisible(path)
 }
 
-generate <- function(root = ".", out = file.path(root, "_generated"), langs = c("de")) {
+generate <- function(root = ".", out = file.path(root, "_generated"), langs = c("de", "en")) {
   course <- read_course(root)
-  problems <- validate_course(course, langs)
+  packages <- read_packages(root)
+  glossary <- read_glossary(root)
+  package_problems <- unlist(lapply(packages, function(p) {
+    found <- validate_package(p)
+    if (length(found) > 0) paste0("content/packages/", p$name %||% "?", ".yml: ", found)
+  }))
+  glossary_problems <- validate_glossary(glossary)
+  problems <- c(
+    validate_course(course, langs),
+    package_problems,
+    if (length(glossary_problems) > 0) paste0("content/glossary.yml: ", glossary_problems)
+  )
   if (length(problems) > 0) {
     stop("Invalid course content:\n", paste0("- ", problems, collapse = "\n"), call. = FALSE)
   }
@@ -668,19 +876,25 @@ generate <- function(root = ".", out = file.path(root, "_generated"), langs = c(
         written <- c(written, write_file(render_quiz(lesson$quiz, lesson$meta$lesson, lang), file.path(dir, "quiz.qmd")))
       }
     }
-    written <- c(written, write_file(
-      render_course_plan(course$curriculum, course$lessons, lang),
-      file.path(out, lang, "course-plan.qmd")
-    ))
+    written <- c(
+      written,
+      write_file(render_course_plan(course$curriculum, course$lessons, lang), file.path(out, lang, "course-plan.qmd")),
+      write_file(render_packages(packages, course$curriculum, course$lessons, lang), file.path(out, lang, "packages.qmd")),
+      write_file(render_glossary(glossary, course$curriculum, course$lessons, lang), file.path(out, lang, "glossary.qmd"))
+    )
   }
   cards_path <- file.path(root, "assets", "review-cards.json")
   dir.create(dirname(cards_path), showWarnings = FALSE)
-  jsonlite::write_json(review_cards(course), cards_path, auto_unbox = TRUE, pretty = TRUE)
+  jsonlite::write_json(
+    review_cards(course, file.path(root, "tools", "checks.R")),
+    cards_path,
+    auto_unbox = TRUE, pretty = TRUE, null = "null"
+  )
   invisible(c(written, cards_path))
 }
 
 if (sys.nframe() == 0L) {
   files <- generate(".")
-  n_ex <- length(jsonlite::read_json("assets/review-cards.json"))
+  n_ex <- length(jsonlite::read_json("assets/review-cards.json")$cards)
   cat(sprintf("Generated %d files, %d exercises.\n", length(files), n_ex))
 }

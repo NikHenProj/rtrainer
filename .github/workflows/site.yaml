@@ -1,4 +1,5 @@
-# Self-test of all exercises, tool tests, render (DE + EN), deploy to GitHub Pages.
+# Self-test of all exercises, tool and logic tests, render (DE + EN),
+# browser smoke test, deploy to GitHub Pages.
 name: site
 
 on:
@@ -38,6 +39,8 @@ jobs:
             any::tibble
             any::effectsize
             any::parameters
+            any::chromote
+            any::processx
 
       - name: Exercise self-test (solution passes, starter fails)
         run: Rscript tools/selftest.R
@@ -45,12 +48,22 @@ jobs:
       - name: Tool tests (generator, checks, self-test)
         run: Rscript -e 'testthat::test_dir("tools/tests", stop_on_failure = TRUE)'
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Progress logic tests (Leitner, streak, completion)
+        run: node --test tests/js
+
       - uses: quarto-dev/quarto-actions/setup@v2
         with:
           version: 1.10.19
 
       - name: Render site
         run: quarto render
+
+      - name: Browser smoke test (webR lesson, review, language switch)
+        run: Rscript tests/smoke-test.R
 
       - uses: actions/upload-pages-artifact@v3
         with:

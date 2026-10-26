@@ -1,11 +1,29 @@
 ---
 title: "Course plan"
-lang: en-GB
+subtitle: "R for human factors and UX – from the basics to mixed models"
 toc: false
+body-classes: rt-plan-page
 ---
 
-::: {.callout-note appearance="simple"}
-**The English version is in preparation.** The course is written in German first; English follows after review.
-:::
+```{=html}
+<section class="rt-today" aria-labelledby="rt-today-title" hidden>
+  <h2 id="rt-today-title" class="rt-today-title">Review today</h2>
+  <p class="rt-today-text"></p>
+  <a class="btn btn-primary" href="review.html">Start review</a>
+</section>
+```
 
-[Zum deutschen Kursplan / German course plan](../de/index.qmd)
+Recommended path: all **Beginner** lessons first, then Intermediate, then Expert. All lessons are open; prerequisites are listed at the start of each lesson. A lesson is **completed** when all required exercises are solved and at least 80% of the knowledge check is correct.
+
+```{=html}
+<ul class="rt-legend" aria-label="Legend">
+  <li><span class="rt-status" data-status="not-started"><span class="rt-status-icon" aria-hidden="true"></span><span class="rt-status-text">not started</span></span></li>
+  <li><span class="rt-status" data-status="started"><span class="rt-status-icon" aria-hidden="true"></span><span class="rt-status-text">started</span></span></li>
+  <li><span class="rt-status" data-status="done"><span class="rt-status-icon" aria-hidden="true"></span><span class="rt-status-text">completed</span></span></li>
+  <li><span class="rt-status-text rt-muted">planned</span> = not available yet</li>
+</ul>
+```
+
+{{< include /_generated/en/course-plan.qmd >}}
+
+Your progress is stored only in this browser (localStorage) and shared between the German and English version. Back it up on the [review page](review.qmd#backup) as a file.

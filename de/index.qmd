@@ -26,4 +26,4 @@ Empfohlener Weg: erst alle **Beginner**-Lektionen, dann Intermediate, dann Exper
 
 {{< include /_generated/de/course-plan.qmd >}}
 
-Dein Fortschritt wird nur in diesem Browser gespeichert (localStorage). Export und Import als Datei folgen mit der Wiederholungsseite.
+Dein Fortschritt wird nur in diesem Browser gespeichert (localStorage) und gilt für die deutsche und englische Fassung. Sichern kannst du ihn als Datei auf der [Wiederholungsseite](review.qmd#backup).

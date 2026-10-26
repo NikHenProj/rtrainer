@@ -31,11 +31,12 @@ Bei Konflikt gilt: projektspezifische Regeln vor allgemeinen Skills.
 - Eine Sitzung pro Meilenstein bzw. Lektionspaket. Am Ende STATUS.md aktualisieren, Start-Prompt für die nächste Sitzung ausgeben, `/clear` empfehlen.
 - Lektionen in Paketen (max. ~3 pro Durchgang) schreiben, danach verifizieren.
 
-## Befehle (ab Meilenstein 6; bis dahin noch nicht vorhanden)
+## Befehle
 - `quarto preview` – lokale Vorschau
 - `Rscript tools/selftest.R` – alle Übungen: Lösung besteht, Starter scheitert
-- `Rscript tools/generate.R` – YAML-Übungen → quarto-live-Blöcke/Wiederholungskarten
-- `quarto render` – ganze Seite (DE + EN)
+- `Rscript tools/generate.R` – YAML-Übungen → quarto-live-Blöcke/Wiederholungskarten (läuft auch als pre-render)
+- `Rscript -e 'testthat::test_dir("tools/tests")'` und `node --test tests/js` – Werkzeug- und Logiktests
+- `quarto render` – ganze Seite (DE + EN); danach `Rscript tests/smoke-test.R` – Browser-Rauchtest
 
 ## Stil
 - R: `|>`, tidyverse-Stil, lintr/styler-konform. JS/CSS: klein, ohne Build-Schritt, Farben als CSS-Variablen.

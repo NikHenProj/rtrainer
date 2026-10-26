@@ -1,0 +1,36 @@
+name: effectsize
+url: https://easystats.github.io/effectsize/
+purpose:
+  de: Effektgrößen mit Konfidenzintervall berechnen und einordnen (Teil von easystats).
+  en: Compute and interpret effect sizes with confidence intervals (part of easystats).
+functions:
+  - name: cohens_d()
+    does:
+      de: Standardisierte Mittelwertdifferenz zweier Gruppen; `paired = TRUE` für abhängige Messungen.
+      en: Standardised mean difference of two groups; `paired = TRUE` for dependent measurements.
+    example: |
+      cohens_d(rt_ms ~ experience, data = rt_by_person)
+  - name: hedges_g()
+    does:
+      de: Wie Cohen's d, aber für kleine Stichproben korrigiert.
+      en: Like Cohen's d, but corrected for small samples.
+    example: |
+      hedges_g(rt_ms ~ experience, data = rt_by_person)
+  - name: eta_squared()
+    does:
+      de: Anteil erklärter Varianz für ANOVA-Modelle.
+      en: Share of explained variance for ANOVA models.
+    example: |
+      eta_squared(aov(rt_ms ~ condition, data = driving_sim))
+  - name: interpret_cohens_d()
+    does:
+      de: Faustregel-Einordnung (klein/mittel/groß); nur als grobe Orientierung.
+      en: Rule-of-thumb label (small/medium/large); a rough guide only.
+    example: |
+      interpret_cohens_d(1.5)
+pitfalls:
+  - de: "Das Vorzeichen von d hängt von der Reihenfolge der Faktorstufen ab – Stufen bewusst setzen."
+    en: "The sign of d depends on the order of factor levels – set levels deliberately."
+  - de: "Faustregeln (0.2/0.5/0.8) ersetzen keine inhaltliche Bewertung im Anwendungskontext."
+    en: "Rules of thumb (0.2/0.5/0.8) do not replace a judgement in the applied context."
+lessons: [group-comparisons-beginner]

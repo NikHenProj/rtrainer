@@ -139,6 +139,7 @@
       else item.a.removeAttribute("aria-current");
     });
     position.textContent = t.position(index + 1, items.length);
+    window.rtCurrentSection = index > 0 ? sections[index].id : "";
   }
 
   function onScroll() {
@@ -227,6 +228,27 @@
     });
   }
 
+  // Check messages mark code with backticks; show it as code.
+  function formatGrade(grade) {
+    const walker = document.createTreeWalker(grade, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    let node;
+    while ((node = walker.nextNode())) if (node.nodeValue.includes("`")) nodes.push(node);
+    nodes.forEach((n) => {
+      const span = document.createElement("span");
+      n.nodeValue.split(/(`[^`]+`)/).forEach((part) => {
+        if (/^`[^`]+`$/.test(part)) {
+          const code = document.createElement("code");
+          code.textContent = part.slice(1, -1);
+          span.append(code);
+        } else if (part) {
+          span.append(document.createTextNode(part));
+        }
+      });
+      n.replaceWith(span);
+    });
+  }
+
   exercises.forEach((el) => {
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((m) => {
@@ -236,7 +258,10 @@
         m.addedNodes.forEach((node) => {
           if (!(node instanceof HTMLElement)) return;
           const grade = node.classList.contains("exercise-grade") ? node : node.querySelector(".exercise-grade");
-          if (grade) recordGrade(el, grade.classList.contains("alert-success"));
+          if (grade) {
+            formatGrade(grade);
+            recordGrade(el, grade.classList.contains("alert-success"));
+          }
         });
       });
     });

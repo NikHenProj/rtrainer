@@ -1,0 +1,32 @@
+---
+title: "Review"
+subtitle: "Due exercises from completed lessons, using the Leitner system"
+toc: false
+body-classes: rt-review-page
+---
+
+```{=html}
+<div id="rt-review">
+  <p class="rt-review-status" role="status" aria-live="polite"></p>
+  <div class="rt-review-stage"><p>Loading …</p></div>
+</div>
+```
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## How review works
+
+Each exercise sits in one of five boxes. Box 1 comes back the same day, box 2 after one day, box 3 after 3, box 4 after 7 and box 5 after 21 days.
+
+- **Easy:** one box up (only with fewer than 2 hints)
+- **Okay:** box stays
+- **Hard:** one box down
+- **Not solved** (solution viewed): back to box 1
+
+Before checking you rate how sure you are. If you are sure and still wrong, you get the full explanation right away: such errors are especially memorable. Cards from different lessons are mixed.
+:::
+
+## Back up progress {#backup}
+
+```{=html}
+<div id="rt-backup"></div>
+```

@@ -1,0 +1,52 @@
+# Package profile (template: copy this file, keep the fields).
+name: dplyr
+url: https://dplyr.tidyverse.org
+purpose:
+  de: Tabellen umformen und zusammenfassen – Zeilen filtern, Spalten wählen und berechnen, pro Gruppe Kennwerte bilden.
+  en: Transform and summarise tables – filter rows, select and compute columns, compute statistics per group.
+functions:
+  - name: filter()
+    does:
+      de: Zeilen behalten, die eine Bedingung erfüllen.
+      en: Keep rows that meet a condition.
+    example: |
+      driving_sim |> filter(condition == "haptic", !is.na(rt_ms))
+  - name: select()
+    does:
+      de: Spalten auswählen oder umbenennen.
+      en: Select or rename columns.
+    example: |
+      driving_sim |> select(participant, condition, rt_ms)
+  - name: mutate()
+    does:
+      de: Spalten neu berechnen oder verändern.
+      en: Create or modify columns.
+    example: |
+      driving_sim |> mutate(rt_s = rt_ms / 1000)
+  - name: summarise()
+    does:
+      de: Jede Gruppe auf eine Zeile mit Kennwerten reduzieren; Gruppen mit `.by`.
+      en: Reduce each group to one row of statistics; groups via `.by`.
+    example: |
+      driving_sim |>
+        summarise(mean_rt = mean(rt_ms, na.rm = TRUE), .by = condition)
+  - name: count()
+    does:
+      de: Häufigkeiten zählen.
+      en: Count frequencies.
+    example: |
+      driving_sim |> count(experience, condition)
+  - name: arrange()
+    does:
+      de: Zeilen sortieren, absteigend mit `desc()`.
+      en: Sort rows, descending with `desc()`.
+    example: |
+      driving_sim |> arrange(desc(rt_ms))
+pitfalls:
+  - de: "`mean()` gibt `NA` zurück, sobald ein Wert fehlt – `na.rm = TRUE` setzen und fehlende Werte bewusst behandeln."
+    en: "`mean()` returns `NA` as soon as one value is missing – set `na.rm = TRUE` and handle missing values deliberately."
+  - de: "`group_by()` bleibt nach `summarise()` teilweise bestehen; `.by` gruppiert nur für einen Schritt."
+    en: "`group_by()` partly persists after `summarise()`; `.by` groups for a single step only."
+  - de: "`filter(x == NA)` findet nichts; fehlende Werte mit `is.na(x)` prüfen."
+    en: "`filter(x == NA)` finds nothing; test for missing values with `is.na(x)`."
+lessons: [group-comparisons-beginner]

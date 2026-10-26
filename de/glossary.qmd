@@ -1,10 +1,9 @@
 ---
 title: "Glossar"
+subtitle: "Fachbegriffe Deutsch ↔ Englisch"
 toc: false
 ---
 
-::: {.callout-note appearance="simple"}
-**In Vorbereitung.** Fachbegriffe Deutsch ↔ Englisch.
-:::
+Die englischen Begriffe brauchst du für Paketdokumentation, Fehlermeldungen und Fachliteratur. Durchsuchen kannst du das Glossar mit der Suche oben rechts oder mit Strg+F.
 
-[Zurück zum Kursplan](index.qmd)
+{{< include /_generated/de/glossary.qmd >}}

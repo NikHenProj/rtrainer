@@ -1,0 +1,9 @@
+---
+title: "Packages"
+subtitle: "Profiles of the course packages: what for, core functions, pitfalls"
+toc-depth: 2
+---
+
+Each profile shows the most important functions with a short example using the course data. The examples assume `driving_sim` is loaded (`rt_by_person` comes from the lesson [Group comparisons](group-comparisons-beginner.qmd)).
+
+{{< include /_generated/en/packages.qmd >}}

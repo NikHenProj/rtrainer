@@ -637,3 +637,315 @@ table {
   border-top: 1px solid var(--rt-border);
   font-weight: 500;
 }
+
+// ---- Review page ----------------------------------------------------------
+
+.rt-review-status:empty {
+  display: none;
+}
+
+.rt-review-status {
+  color: var(--rt-muted);
+  font-size: 0.92rem;
+}
+
+.rt-review-summary {
+  margin: 1rem 0 1.5rem;
+
+  .rt-review-lead {
+    font-size: 1.15rem;
+    font-weight: 600;
+  }
+}
+
+.rt-review-done {
+  padding: 1rem 1.25rem;
+  border-left: 3px solid var(--rt-success);
+  background: var(--rt-success-soft);
+}
+
+.rt-review-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 1rem 2.5rem;
+  margin: 0 0 2rem;
+  color: var(--rt-muted);
+  font-size: 0.9rem;
+
+  dd {
+    margin: 0;
+  }
+
+  dt {
+    font-weight: 500;
+  }
+}
+
+.rt-boxes {
+  display: flex;
+  gap: 0.35rem;
+  margin: 0.25rem 0 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 2.6rem;
+    padding: 0.25rem 0.4rem;
+    border: 1px solid var(--rt-border);
+  }
+
+  .rt-box-n {
+    color: var(--rt-text);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .rt-box-label {
+    font-size: 0.75rem;
+  }
+}
+
+.rt-card {
+  margin: 1rem 0 2rem;
+  padding: 1.25rem 1.5rem 1rem;
+  border: 1px solid var(--rt-border);
+
+  .rt-card-position {
+    margin: 0;
+    color: var(--rt-muted);
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+
+  .rt-card-title {
+    margin: 0.25rem 0 0.25rem;
+    padding: 0;
+    border: 0;
+    font-size: 1.35rem;
+  }
+
+  .rt-card-source {
+    color: var(--rt-muted);
+    font-size: 0.9rem;
+  }
+}
+
+.rt-help {
+  margin: 0.25rem 0 0.75rem;
+  color: var(--rt-muted);
+  font-size: 0.85rem;
+}
+
+.rt-confidence {
+  margin: 1rem 0;
+  padding: 0;
+  border: 0;
+
+  legend {
+    float: none;
+    width: auto;
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 500;
+  }
+}
+
+.rt-confidence-options,
+.rt-rating-buttons,
+.rt-card-actions,
+.rt-backup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.rt-confidence-option {
+  label {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0.4rem 0.9rem;
+    border: 1px solid var(--rt-border);
+    border-radius: $border-radius;
+    cursor: pointer;
+  }
+
+  input {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+  }
+
+  input:checked + label {
+    border-color: var(--rt-accent);
+    background: var(--rt-accent-soft);
+    color: var(--rt-accent);
+    font-weight: 600;
+  }
+
+  input:checked + label::before {
+    content: "✓ ";
+    margin-right: 0.25rem;
+  }
+
+  input:focus-visible + label {
+    outline: 3px solid var(--rt-accent);
+    outline-offset: 2px;
+  }
+}
+
+.rt-editor-label {
+  display: block;
+  margin-top: 0.5rem;
+  font-weight: 500;
+}
+
+.rt-editor {
+  display: block;
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--rt-border);
+  border-radius: $border-radius;
+  background: var(--rt-surface);
+  color: var(--rt-text);
+  font-family: $font-family-monospace;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  tab-size: 2;
+  resize: vertical;
+}
+
+.rt-card .btn {
+  min-height: 44px;
+}
+
+.rt-card-hints {
+  margin-top: 0.75rem;
+}
+
+.rt-card-hint {
+  margin-bottom: 0.4rem;
+  padding: 0.5rem 0.75rem;
+  border-left: 3px solid var(--rt-accent);
+  background: var(--rt-accent-soft);
+  font-size: 0.95rem;
+}
+
+.rt-card-feedback:empty {
+  display: none;
+}
+
+.rt-card-feedback {
+  margin-top: 0.75rem;
+  padding: 0.6rem 0.85rem;
+  border: 1px solid var(--rt-border);
+  border-radius: $border-radius;
+
+  &[data-kind="success"] {
+    border-color: var(--rt-success);
+    background: var(--rt-success-soft);
+  }
+
+  &[data-kind="error"] {
+    border-color: var(--rt-error);
+    background: var(--rt-error-soft);
+  }
+
+  &[data-kind="info"] {
+    border-color: var(--rt-warning);
+    background: var(--rt-warning-soft);
+  }
+}
+
+.rt-confident-error {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--rt-border);
+  font-size: 0.95rem;
+}
+
+.rt-code {
+  max-height: 22rem;
+  margin: 0.25rem 0 0.75rem;
+  padding: 0.6rem 0.75rem;
+  overflow: auto;
+  background: var(--rt-surface);
+  font-size: 0.85rem;
+}
+
+.rt-card-after {
+  margin-top: 1rem;
+}
+
+.rt-rating {
+  margin: 0;
+  padding: 0;
+  border: 0;
+
+  legend {
+    float: none;
+    width: auto;
+    font-size: 1rem;
+    font-weight: 500;
+  }
+}
+
+.rt-card-pause {
+  margin: 1rem 0 0;
+  text-align: right;
+}
+
+.rt-file {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.rt-file:focus-visible + label {
+  outline: 3px solid var(--rt-accent);
+  outline-offset: 2px;
+}
+
+.rt-backup-actions .btn {
+  min-height: 44px;
+}
+
+.rt-backup-confirm {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  border-left: 3px solid var(--rt-warning);
+  background: var(--rt-warning-soft);
+}
+
+.rt-review-page main.content {
+  max-width: 48rem;
+}
+
+// Package profiles: one function per definition-list entry.
+.rt-package ~ dl dt,
+main dl dt code {
+  font-weight: 600;
+}
+
+// Code without ligatures: `|>` must look like what learners type.
+code, pre, kbd, .rt-editor, .cm-editor, .cm-content {
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "calt" 0;
+}
+
+// Callouts use the accent: green/red/yellow are reserved for status.
+.callout.callout-style-simple.callout-tip,
+.callout.callout-style-simple.callout-note {
+  border-left-color: var(--rt-accent) !important;
+}
+
+.callout-tip .callout-icon::before,
+.callout-note .callout-icon::before {
+  filter: grayscale(1);
+}

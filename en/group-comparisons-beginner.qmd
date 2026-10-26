@@ -1,0 +1,150 @@
+---
+title: "Group comparisons"
+subtitle: "Beginner · Comparing two independent groups"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, effectsize, parameters]
+resources:
+  - ../data/driving_sim.csv
+---
+
+{{< include /_generated/en/group-comparisons-beginner/runtime.qmd >}}
+
+{{< include /_generated/en/group-comparisons-beginner/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R runs directly in your browser. On the first visit it takes 10–30 seconds to load (progress at the bottom right); after that it is faster.
+:::
+
+## Why? {#why}
+
+**Research question:** Do experienced drivers respond faster to a take-over request than novice drivers?
+
+In a driving simulator study (`driving_sim`), 40 participants took back control after a warning, 12 times each. 20 participants are novice drivers (`novice`), 20 are experienced (`experienced`). The reaction time `rt_ms` was measured in milliseconds. For designing a take-over concept it matters whether the groups differ and *by how much*.
+
+## Concept {#concept}
+
+You compare two **independent groups** (different people) with a t-test. It relates the mean difference to its uncertainty:
+
+$$t = \frac{\bar{x}_1 - \bar{x}_2}{SE_{\text{difference}}}$$
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 200" role="img" aria-labelledby="fig-gc-title fig-gc-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-gc-title">Two overlapping distributions</title>
+  <desc id="fig-gc-desc">The distribution of the experienced group lies on the left, that of the novices on the right. The distance between the means is the difference; Cohen's d expresses it in standard deviations.</desc>
+  <path d="M30 170 C 120 170, 150 40, 210 40 C 270 40, 300 170, 390 170" class="rt-fig-a" />
+  <path d="M150 170 C 240 170, 270 40, 330 40 C 390 40, 420 170, 510 170" class="rt-fig-b" />
+  <line x1="20" y1="170" x2="540" y2="170" class="rt-fig-axis" />
+  <line x1="210" y1="40" x2="210" y2="170" class="rt-fig-mean" />
+  <line x1="330" y1="40" x2="330" y2="170" class="rt-fig-mean" />
+  <line x1="214" y1="24" x2="326" y2="24" class="rt-fig-arrow" marker-start="url(#rt-arrow)" marker-end="url(#rt-arrow)" />
+  <defs><marker id="rt-arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="rt-fig-arrowhead" /></marker></defs>
+  <text x="270" y="16" text-anchor="middle" class="rt-fig-label">difference ≈ 160 ms</text>
+  <text x="120" y="120" text-anchor="middle" class="rt-fig-label">experienced</text>
+  <text x="440" y="120" text-anchor="middle" class="rt-fig-label">novice</text>
+  <text x="280" y="192" text-anchor="middle" class="rt-fig-label rt-fig-muted">reaction time (ms) →</text>
+</svg>
+<figcaption>The further apart the means are relative to the spread, the larger t and Cohen's d.</figcaption>
+</figure>
+```
+
+- **Welch's t-test:** the default in R (`t.test()`), does not assume equal variances. Always use it for independent groups.
+- **p-value:** how surprising would such data be if there were no difference? It says nothing about size.
+- **Effect size:** Cohen's *d* = difference in standard deviations; rule of thumb 0.2 small, 0.5 medium, 0.8 large. Always report it with a 95% confidence interval.
+- **One row per person:** the test assumes independent observations. Aggregate repeated measurements per person first.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## More: the same people in two conditions
+
+If *every* participant experienced both conditions (e.g. visual and haptic warning), the values are paired. Then you run a paired t-test on the participant means, e.g. with `t.test(Pair(visual, haptic) ~ 1, data = wide)`. More than two conditions or groups: ANOVA (Intermediate level).
+:::
+
+## Example {#example}
+
+First, one row per person: the mean reaction time across all 12 trials. Click **Run Code**; you can change the code and run it again.
+
+```{webr}
+rt_by_person <- driving_sim |>
+  summarise(rt_ms = mean(rt_ms, na.rm = TRUE), .by = c(participant, experience))
+rt_by_person
+```
+
+Then Welch's t-test. Read the formula `rt_ms ~ experience` as "reaction time depending on group":
+
+```{webr}
+t.test(rt_ms ~ experience, data = rt_by_person)
+```
+
+And the effect size with confidence interval from **effectsize**:
+
+```{webr}
+cohens_d(rt_ms ~ experience, data = rt_by_person)
+```
+
+**How to report it (APA):** Novice drivers responded more slowly (*M* = 1084 ms, *SD* = 115) than experienced drivers (*M* = 923 ms, *SD* = 100), *t*(37.3) = 4.73, *p* < .001, *d* = 1.50, 95% CI [0.78, 2.19].
+
+## Package comparison {#packages}
+
+| Approach | Strength | When |
+|---|---|---|
+| `t.test()` + `effectsize::cohens_d()` | Base R, understood everywhere, effect size separately | **Recommended for learning** and single tests |
+| `parameters::parameters(t.test(...))` | Clean table with difference, CI, t, df, p | For tables and reports |
+| `rstatix::t_test()` | Pipe-friendly, returns a data frame, many groups at once | When you run many comparisons in a pipeline |
+| `report::report()` | Writes a complete APA sentence | As a draft; always check the values |
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## More: output of rstatix and report
+
+`rstatix` takes a long time to load in the browser (many dependencies); try it locally.
+
+```r
+rt_by_person |> rstatix::t_test(rt_ms ~ experience)
+#>   .y.   group1 group2         n1    n2 statistic    df         p
+#> 1 rt_ms novice experienced    20    20      4.73  37.3 0.0000317
+```
+
+`report()` estimates *d* from t when it cannot find the data; that is why it differs slightly from `cohens_d()` (1.55 instead of 1.50):
+
+```r
+report::report(t.test(rt_ms ~ experience, data = rt_by_person))
+#> The Welch Two Sample t-test testing the difference of rt_ms by experience
+#> (mean in group novice = 1084.12, mean in group experienced = 923.13)
+#> suggests that the effect is positive, statistically significant, and large
+#> (difference = 160.98, 95% CI [92.06, 229.90], t(37.31) = 4.73, p < .001;
+#> Cohen's d = 1.55, 95% CI [0.81, 2.27])
+```
+:::
+
+## Exercises {#exercises}
+
+Three required exercises of increasing difficulty. **Run Code** runs your code and checks it right away. Reveal hints one at a time (**Show Hint**), the solution only after that.
+
+{{< include /_generated/en/group-comparisons-beginner/exercises.qmd >}}
+
+## Knowledge check {#check}
+
+{{< include /_generated/en/group-comparisons-beginner/quiz.qmd >}}
+
+## Cheat sheet {#cheatsheet}
+
+```r
+# 1. One row per person
+rt_by_person <- driving_sim |>
+  summarise(rt_ms = mean(rt_ms, na.rm = TRUE), .by = c(participant, experience))
+
+# 2. Describe
+rt_by_person |>
+  summarise(n = n(), mean_rt = mean(rt_ms), sd_rt = sd(rt_ms), .by = experience)
+
+# 3. Test (Welch is the default) and effect size
+t.test(rt_ms ~ experience, data = rt_by_person)
+effectsize::cohens_d(rt_ms ~ experience, data = rt_by_person)
+```
+
+- Independent groups → Welch's t-test; the same people → paired t-test.
+- Report *M*, *SD*, *t*(df), *p* **and** *d* with 95% CI.
+- Never count trials as independent cases (pseudoreplication).
+
+{{< include /_generated/en/group-comparisons-beginner/footer.qmd >}}

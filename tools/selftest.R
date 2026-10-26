@@ -72,7 +72,7 @@ selftest_exercise <- function(ex, datasets, root = ".", lang = "de") {
 
 selftest <- function(root = ".", ids = NULL) {
   course <- read_course(root)
-  problems <- validate_course(course, langs = c("de"))
+  problems <- validate_course(course, langs = character())
   if (length(problems) > 0) {
     stop("Invalid course content:\n", paste0("- ", problems, collapse = "\n"), call. = FALSE)
   }

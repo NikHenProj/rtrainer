@@ -3,13 +3,10 @@
 (function () {
   "use strict";
 
+  const L = window.rtLogic;
   const KEY = "rtrainer.progress";
-  const VERSION = 1;
-  const DAY_MS = 24 * 60 * 60 * 1000;
-
-  function empty() {
-    return { version: VERSION, exercises: {}, quizzes: {}, lessons: {}, sections: {}, review: {} };
-  }
+  const VERSION = L.VERSION;
+  const empty = L.emptyProgress;
 
   function load() {
     try {
@@ -44,47 +41,12 @@
     return data;
   }
 
-  function isoDate(date) {
-    const d = date || new Date();
-    const pad = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-  }
-
-  function addDays(days) {
-    return isoDate(new Date(Date.now() + days * DAY_MS));
-  }
-
-  function dueIds(data, ids) {
-    const today = isoDate();
-    return Object.keys(data.review).filter(
-      (id) => data.review[id].due <= today && (!ids || ids.includes(id))
-    );
-  }
-
-  // Lesson status: "done", "started" or "not-started".
-  function lessonStatus(data, lesson, exerciseIds) {
-    if (data.lessons[lesson] && data.lessons[lesson].completedAt) return "done";
-    const touched =
-      (data.lessons[lesson] && data.lessons[lesson].startedAt) ||
-      data.quizzes[lesson] ||
-      (exerciseIds || []).some((id) => data.exercises[id]);
-    return touched ? "started" : "not-started";
-  }
-
-  // Completed = all required exercises solved + knowledge check passed.
-  // Then the lesson's exercises enter review box 1, due the next day.
-  function updateCompletion(data, lesson, requiredIds, allIds, hasQuiz) {
-    const entry = data.lessons[lesson] || (data.lessons[lesson] = {});
-    if (entry.completedAt) return false;
-    const solved = requiredIds.every((id) => data.exercises[id] && data.exercises[id].solved);
-    const quizOk = !hasQuiz || (data.quizzes[lesson] && data.quizzes[lesson].passed);
-    if (!(solved && quizOk)) return false;
-    entry.completedAt = new Date().toISOString();
-    (allIds || requiredIds).forEach((id) => {
-      if (!data.review[id]) data.review[id] = { box: 1, due: addDays(1) };
-    });
-    return true;
-  }
+  const isoDate = L.isoDate;
+  const addDays = (days) => L.addDays(L.isoDate(), days);
+  const dueIds = (data, ids) => L.dueIds(data, L.isoDate(), ids);
+  const lessonStatus = L.lessonStatus;
+  const updateCompletion = (data, lesson, requiredIds, allIds, hasQuiz) =>
+    L.updateCompletion(data, lesson, requiredIds, allIds, hasQuiz, new Date());
 
   const TEXT = {
     de: {
@@ -156,7 +118,84 @@
     }
   }
 
+  // ---- Language: one navbar config (German) for both page trees ----------
+  const NAV_EN = {
+    Kursplan: "Course plan",
+    Wiederholen: "Review",
+    Pakete: "Packages",
+    Glossar: "Glossary",
+    Quellcode: "Source code",
+    "rtrainer · R-Kurs für Human Factors und UX": "rtrainer · R course for human factors and UX",
+  };
+
+  function pageInfo() {
+    const m = window.location.pathname.match(/\/(de|en)\/([^/]*)$/);
+    if (!m) return null;
+    return { lang: m[1], page: m[2] || "index.html" };
+  }
+
+  function localiseNavbar(info) {
+    if (info.lang === "en") {
+      document.querySelectorAll(".navbar a, .nav-footer a, .nav-footer-left, .nav-footer-left p").forEach((node) => {
+        const href = node.getAttribute && node.getAttribute("href");
+        if (href && /(^|\/)de\//.test(href)) node.setAttribute("href", href.replace(/(^|\/)de\//, "$1en/"));
+      });
+      const walker = document.createTreeWalker(document.querySelector("header") || document.body, NodeFilter.SHOW_TEXT);
+      const footer = document.querySelector(".nav-footer");
+      const nodes = [];
+      let node;
+      while ((node = walker.nextNode())) nodes.push(node);
+      if (footer) {
+        const fw = document.createTreeWalker(footer, NodeFilter.SHOW_TEXT);
+        while ((node = fw.nextNode())) nodes.push(node);
+      }
+      nodes.forEach((n) => {
+        const key = n.nodeValue.trim();
+        if (NAV_EN[key]) n.nodeValue = n.nodeValue.replace(key, NAV_EN[key]);
+      });
+    }
+    // Mark the current page in the navbar (Quarto only knows the German tree).
+    document.querySelectorAll(".navbar a.nav-link").forEach((a) => {
+      const target = (a.getAttribute("href") || "").split("/").pop();
+      if (a.closest("#rt-nav-lang") || a.id === "rt-nav-lang") return;
+      if (target === info.page || (info.page === "" && target === "index.html")) {
+        a.classList.add("active");
+        a.setAttribute("aria-current", "page");
+      }
+    });
+  }
+
+  // DE/EN switch: same page and section in the other language.
+  function setupLanguageSwitch(info) {
+    const link = document.querySelector("a#rt-nav-lang");
+    if (!link) return;
+    const other = info.lang === "de" ? "en" : "de";
+    const label = link.querySelector(".menu-text") || link;
+    label.textContent = other.toUpperCase();
+    link.setAttribute("lang", other);
+    link.setAttribute("hreflang", other);
+    link.setAttribute("aria-label", other === "en" ? "English version of this page" : "Deutsche Fassung dieser Seite");
+    const update = () => {
+      const section = window.rtCurrentSection ? `#${window.rtCurrentSection}` : window.location.hash;
+      link.setAttribute("href", `../${other}/${info.page}${section || ""}`);
+    };
+    update();
+    link.addEventListener("focus", update);
+    link.addEventListener("mouseenter", update);
+    link.addEventListener("click", update);
+  }
+
   function renderAll() {
+    const info = pageInfo();
+    // Quarto drops navbar ids; find the language link by its label.
+    const langLink = Array.from(document.querySelectorAll(".navbar a.nav-link")).find(
+      (a) => a.textContent.trim() === "EN"
+    );
+    if (langLink) langLink.id = "rt-nav-lang";
+    if (info) {
+      localiseNavbar(info);
+      setupLanguageSwitch(info);
+    }
     const data = load();
     renderNavBadge(data);
     renderCoursePlan(data);
