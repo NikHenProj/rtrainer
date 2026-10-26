@@ -1,0 +1,78 @@
+id: rs-b-pivot-wider
+lesson: reshaping-beginner
+order: 3
+title:
+  de: Bedingungen ins Breitformat
+  en: Conditions into wide format
+kind: write
+required: true
+packages: [dplyr, tidyr]
+data: [driving_sim]
+setup: |
+  library(dplyr)
+  library(tidyr)
+prompt:
+  de: |
+    Erzeuge aus `driving_sim` eine Tabelle mit einer Zeile pro Person: Spalte
+    `participant` und je eine Spalte `visual`, `auditory`, `haptic` mit der
+    mittleren Reaktionszeit `rt_ms` dieser Person in der Bedingung (fehlende
+    Werte ignorieren, auf 1 Nachkommastelle gerundet). Ergebnis: 40 Zeilen,
+    4 Spalten.
+  en: |
+    From `driving_sim`, create a table with one row per participant: column
+    `participant` and one column each for `visual`, `auditory`, `haptic` with the
+    participant's mean reaction time `rt_ms` in that condition (ignore missing
+    values, rounded to 1 decimal). Result: 40 rows, 4 columns.
+starter: |
+  driving_sim |>
+    pivot_wider(names_from = condition, values_from = rt_ms)
+solution: |
+  driving_sim |>
+    summarise(rt_ms = round(mean(rt_ms, na.rm = TRUE), 1), .by = c(participant, condition)) |>
+    pivot_wider(names_from = condition, values_from = rt_ms)
+hints:
+  - de: "Führ den Starter aus: Warum entstehen so viele Zeilen mit `NA`?"
+    en: "Run the starter: why are there so many rows with `NA`?"
+  - de: "Erst auf eine Zeile pro Person und Bedingung verdichten, dann umformen."
+    en: "First condense to one row per participant and condition, then reshape."
+  - de: "`summarise(rt_ms = ______, .by = c(participant, condition))`, danach `pivot_wider()`."
+    en: "`summarise(rt_ms = ______, .by = c(participant, condition))`, then `pivot_wider()`."
+explanation:
+  de: |
+    `pivot_wider()` erkennt Zeilen an allen Spalten, die nicht in `names_from`
+    oder `values_from` stehen (`id_cols`). Auf den Rohdaten sind das auch
+    `trial`, `age` und `lane_dev`, also fast jede Zeile einzeln, mit vielen `NA`.
+    Darum zuerst mit `summarise()` auf eine Zeile pro Person × Bedingung
+    reduzieren. In einem Schritt ginge es mit `id_cols = participant` und
+    `values_fn = \(x) round(mean(x, na.rm = TRUE), 1)`. Das Breitformat ist
+    praktisch für Tabellen und gepaarte Vergleiche; für ggplot2 und Modelle
+    bleibt das Langformat die Regel.
+  en: |
+    `pivot_wider()` identifies rows by all columns that are not in `names_from` or
+    `values_from` (`id_cols`). In the raw data those include `trial`, `age` and
+    `lane_dev`, so almost every row stays separate, with many `NA`s. So first use
+    `summarise()` to reduce to one row per participant × condition. In one step it
+    works with `id_cols = participant` and
+    `values_fn = \(x) round(mean(x, na.rm = TRUE), 1)`. The wide format is handy
+    for tables and paired comparisons; for ggplot2 and models the long format
+    remains the rule.
+misconception:
+  de: "`pivot_wider()` fasst mehrere Werte pro Zelle nicht automatisch zusammen; es erkennt Zeilen an allen übrigen Spalten."
+  en: "`pivot_wider()` does not automatically summarise several values per cell; it identifies rows by all remaining columns."
+check:
+  type: value
+  ignore_row_order: true
+  ignore_col_order: true
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*(summarise|values_fn))[\\s\\S]*pivot_wider"
+    message:
+      de: "Ohne Zusammenfassen bilden `trial`, `age`, `lane_dev` usw. die Zeilen-ID. Verdichte erst auf eine Zeile pro Person und Bedingung (oder nutze `id_cols` und `values_fn`)."
+      en: "Without summarising, `trial`, `age`, `lane_dev` etc. form the row ID. First condense to one row per participant and condition (or use `id_cols` and `values_fn`)."
+  - pattern: "pivot_longer"
+    message:
+      de: "`driving_sim` ist schon lang (eine Zeile pro Durchgang). Für Bedingungen als Spalten brauchst du `pivot_wider()`."
+      en: "`driving_sim` is already long (one row per trial). For conditions as columns you need `pivot_wider()`."
+  - pattern: "^(?![\\s\\S]*na\\.rm)[\\s\\S]*mean\\("
+    message:
+      de: "Ohne `na.rm = TRUE` wird der Mittelwert bei einem fehlenden Durchgang `NA`."
+      en: "Without `na.rm = TRUE` the mean becomes `NA` when one trial is missing."

@@ -1,0 +1,82 @@
+id: vi-b-mapping-setting
+lesson: visualisation-beginner
+order: 1
+title:
+  de: Mapping oder Setting?
+  en: Mapping or setting?
+kind: debug
+required: true
+packages: [ggplot2]
+data: [driving_sim]
+setup: |
+  library(ggplot2)
+prompt:
+  de: |
+    Der Plot soll die Reaktionszeit pro Bedingung als Boxplot zeigen. Alle Boxen
+    sind einheitlich `"steelblue"` gefüllt (ohne Füll-Legende), darüber liegen
+    die einzelnen Durchgänge als gejitterte Punkte, **nach Bedingung
+    eingefärbt**.
+
+    Der Code bricht ab, und auch die Boxen sehen nicht wie gewünscht aus.
+    Repariere ihn; die übrigen Argumente bleiben.
+  en: |
+    The plot should show reaction time per condition as a boxplot. All boxes are
+    filled `"steelblue"` (without a fill legend); on top, the individual trials
+    appear as jittered points, **coloured by condition**.
+
+    The code stops with an error, and the boxes do not look as intended either.
+    Fix it; the other arguments stay.
+starter: |
+  ggplot(driving_sim, aes(condition, rt_ms)) +
+    geom_boxplot(aes(fill = "steelblue"), outlier.shape = NA) +
+    geom_jitter(colour = condition, width = 0.15, alpha = 0.4)
+solution: |
+  ggplot(driving_sim, aes(condition, rt_ms)) +
+    geom_boxplot(fill = "steelblue", outlier.shape = NA) +
+    geom_jitter(aes(colour = condition), width = 0.15, alpha = 0.4)
+hints:
+  - de: "Es gibt zwei Fehler mit derselben Ursache: Was gehört in `aes()`, was nicht?"
+    en: "There are two bugs with the same cause: what belongs in `aes()` and what does not?"
+  - de: "`aes()` verbindet Spalten mit Ästhetiken (Mapping); feste Werte setzt man außerhalb von `aes()` (Setting)."
+    en: "`aes()` connects columns to aesthetics (mapping); fixed values are set outside `aes()` (setting)."
+  - de: "Die Füllfarbe ist fest, also außerhalb von `aes()`; die Punktfarbe kommt aus einer Spalte, also `aes(______)`."
+    en: "The fill colour is fixed, so outside `aes()`; the point colour comes from a column, so `aes(______)`."
+explanation:
+  de: |
+    In `aes()` wird jeder Wert als Datenvariable behandelt: `"steelblue"` ist dort
+    eine Konstante mit einer einzigen Kategorie. Die Füllskala übersetzt sie in
+    die erste Standardfarbe (Lachsrot) und zeigt eine Legende „steelblue“. Ein
+    fester Wert gehört deshalb außerhalb von `aes()`. Umgekehrt sucht
+    `colour = condition` außerhalb von `aes()` nach einem R-Objekt `condition`
+    und bricht ab, weil die Spalte nur im Datensatz existiert. Faustregel: Kommt
+    der Wert aus einer Spalte, steht er in `aes()`; ist er für alle Zeilen
+    gleich, steht er außerhalb. `outlier.shape = NA` blendet die Ausreißerpunkte
+    des Boxplots aus, weil die Durchgänge ohnehin als Punkte darüberliegen.
+  en: |
+    Inside `aes()` every value is treated as a data variable: there,
+    `"steelblue"` is a constant with a single category. The fill scale translates
+    it into the first default colour (salmon) and shows a legend "steelblue". A
+    fixed value therefore belongs outside `aes()`. Conversely, `colour =
+    condition` outside `aes()` looks for an R object `condition` and fails,
+    because the column only exists in the data. Rule of thumb: if the value comes
+    from a column, it goes in `aes()`; if it is the same for all rows, it goes
+    outside. `outlier.shape = NA` hides the boxplot's outlier points because the
+    trials are drawn on top anyway.
+misconception:
+  de: "Nicht alles, was das Aussehen bestimmt, gehört in `aes()`, und Spalten kann man nicht überall direkt verwenden."
+  en: "Not everything that determines the look belongs in `aes()`, and columns cannot be used directly everywhere."
+check:
+  type: plot
+common_mistakes:
+  - pattern: "geom_jitter\\((?![^)]*aes\\()[^)]*colou?r\\s*=\\s*condition"
+    message:
+      de: "Außerhalb von `aes()` wird ein fester Wert gesetzt; `condition` wird dann als R-Objekt gesucht und nicht gefunden. Spalten werden mit `aes(colour = condition)` zugeordnet."
+      en: "Outside `aes()` a fixed value is set; `condition` is then looked up as an R object and not found. Columns are mapped with `aes(colour = condition)`."
+  - pattern: "aes\\([^)]*fill\\s*=\\s*[\"']"
+    message:
+      de: "In `aes()` ist `\"steelblue\"` eine Datenkonstante: Die Füllskala übersetzt sie in die Standardfarbe und zeigt eine Legende. Feste Farben außerhalb von `aes()` setzen: `geom_boxplot(fill = \"steelblue\")`."
+      en: "Inside `aes()`, `\"steelblue\"` is a data constant: the fill scale translates it into the default colour and shows a legend. Set fixed colours outside `aes()`: `geom_boxplot(fill = \"steelblue\")`."
+  - pattern: "colou?r\\s*=\\s*[\"']condition[\"']"
+    message:
+      de: "`\"condition\"` in Anführungszeichen ist eine Konstante, keine Spalte; alle Punkte bekommen dieselbe Farbe."
+      en: "`\"condition\"` in quotes is a constant, not a column; all points get the same colour."

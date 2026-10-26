@@ -1,0 +1,81 @@
+id: rs-b-tlx-longer
+lesson: reshaping-beginner
+order: 2
+title:
+  de: NASA-TLX ins Langformat
+  en: NASA-TLX into long format
+kind: write
+required: true
+packages: [dplyr, tidyr]
+data: [survey]
+setup: |
+  library(dplyr)
+  library(tidyr)
+prompt:
+  de: |
+    In `survey` stehen die sechs NASA-TLX-Dimensionen in eigenen Spalten
+    (`tlx_mental` bis `tlx_frustration`). Für einen Plot oder ein Modell pro
+    Dimension brauchst du sie untereinander. Erzeuge eine Tabelle mit den Spalten
+    `respondent`, `interface`, `dimension` und `rating`, eine Zeile pro Befragtem
+    und Dimension. `dimension` enthält den Namen ohne Präfix (`mental`,
+    `physical`, …). Fehlende Angaben bleiben als Zeile mit `NA` erhalten.
+  en: |
+    In `survey` the six NASA-TLX dimensions are in separate columns (`tlx_mental`
+    to `tlx_frustration`). For a plot or a model per dimension you need them
+    stacked. Create a table with the columns `respondent`, `interface`,
+    `dimension` and `rating`, one row per respondent and dimension. `dimension`
+    holds the name without the prefix (`mental`, `physical`, …). Missing answers
+    stay as rows with `NA`.
+starter: |
+  survey |>
+    select(respondent, interface, starts_with("tlx_"))
+solution: |
+  survey |>
+    select(respondent, interface, starts_with("tlx_")) |>
+    pivot_longer(
+      starts_with("tlx_"),
+      names_to = "dimension",
+      names_prefix = "tlx_",
+      values_to = "rating"
+    )
+hints:
+  - de: "`pivot_longer()` braucht die Spalten, die gestapelt werden, und die Namen der zwei neuen Spalten."
+    en: "`pivot_longer()` needs the columns to stack and the names of the two new columns."
+  - de: "Die Spalten wählst du wie in `select()`: `starts_with(\"tlx_\")`."
+    en: "You pick the columns as in `select()`: `starts_with(\"tlx_\")`."
+  - de: "`names_to = \"dimension\"`, `values_to = \"rating\"`; das Präfix entfernt `names_prefix = ______`."
+    en: "`names_to = \"dimension\"`, `values_to = \"rating\"`; `names_prefix = ______` removes the prefix."
+explanation:
+  de: |
+    Aus 160 Zeilen × 6 Dimensionen werden 960 Zeilen. Die Spalten, die nicht
+    gestapelt werden (`respondent`, `interface`), werden für jede Dimension
+    wiederholt, so bleibt jede Bewertung ihrer Person und Gruppe zugeordnet.
+    `names_prefix` entfernt das gemeinsame Präfix gleich beim Umformen; sonst
+    wäre ein zweiter Schritt mit `str_remove()` nötig. Die rund 40 fehlenden
+    Angaben bleiben als `NA`-Zeilen stehen; so siehst du später pro Dimension,
+    wie viele Antworten fehlen. Mit `values_drop_na = TRUE` wären sie still weg.
+  en: |
+    160 rows × 6 dimensions become 960 rows. The columns that are not stacked
+    (`respondent`, `interface`) are repeated for each dimension, so every rating
+    stays linked to its person and group. `names_prefix` removes the shared
+    prefix during reshaping; otherwise you would need a second step with
+    `str_remove()`. The roughly 40 missing answers stay as `NA` rows, so you can
+    later see per dimension how many answers are missing. With
+    `values_drop_na = TRUE` they would silently disappear.
+check:
+  type: value
+  ignore_row_order: true
+  ignore_col_order: false
+common_mistakes:
+  - pattern: "values_drop_na\\s*=\\s*TRUE"
+    message:
+      de: "`values_drop_na = TRUE` entfernt die fehlenden Angaben; gefragt ist, sie als `NA` zu behalten."
+      en: "`values_drop_na = TRUE` removes the missing answers; the task asks to keep them as `NA`."
+  - pattern: "^(?![\\s\\S]*(names_prefix|str_remove|sub\\())[\\s\\S]*pivot_longer"
+    message:
+      de: "In `dimension` steht noch das Präfix `tlx_`. `names_prefix = \"tlx_\"` entfernt es."
+      en: "`dimension` still contains the prefix `tlx_`. `names_prefix = \"tlx_\"` removes it."
+  - pattern: "pivot_wider"
+    message:
+      de: "`pivot_wider()` macht Daten breiter; hier sollen Spalten untereinander, also `pivot_longer()`."
+      en: "`pivot_wider()` makes data wider; here columns should be stacked, so `pivot_longer()`."

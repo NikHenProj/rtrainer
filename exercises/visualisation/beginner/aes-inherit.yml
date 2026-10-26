@@ -1,0 +1,80 @@
+id: vi-b-aes-inherit
+lesson: visualisation-beginner
+order: 2
+title:
+  de: Gemeinsame Zuordnungen vererben
+  en: Inheriting shared mappings
+kind: write
+required: true
+packages: [ggplot2]
+data: [driving_sim]
+setup: |
+  library(ggplot2)
+prompt:
+  de: |
+    Zeichne ein Streudiagramm mit `rt_ms` auf der x- und `lane_dev` auf der
+    y-Achse, die Punkte halbtransparent (`alpha = 0.4`) und nach `condition`
+    eingefärbt. Ergänze für **jede Bedingung** eine eigene lineare
+    Regressionsgerade ohne Konfidenzband (`geom_smooth()`).
+
+    Der Plot ist der letzte Ausdruck deines Codes.
+  en: |
+    Draw a scatter plot with `rt_ms` on the x and `lane_dev` on the y axis, the
+    points semi-transparent (`alpha = 0.4`) and coloured by `condition`. Add a
+    separate linear regression line without a confidence band for **each
+    condition** (`geom_smooth()`).
+
+    The plot is the last expression of your code.
+starter: |
+  ggplot(driving_sim, aes(x = rt_ms, y = lane_dev)) +
+    geom_point(aes(colour = condition), alpha = 0.4)
+solution: |
+  ggplot(driving_sim, aes(rt_ms, lane_dev, colour = condition)) +
+    geom_point(alpha = 0.4) +
+    geom_smooth(method = "lm", se = FALSE)
+hints:
+  - de: "Welche Ebenen sollen die Farbe kennen: nur die Punkte oder auch die Geraden?"
+    en: "Which layers should know the colour: only the points or the lines too?"
+  - de: "Zuordnungen in `ggplot(aes())` erben alle Ebenen; Zuordnungen in `geom_point(aes())` gelten nur dort."
+    en: "Mappings in `ggplot(aes())` are inherited by all layers; mappings in `geom_point(aes())` only apply there."
+  - de: "`colour = condition` gehört in das `aes()` von `ggplot()`; bei `geom_smooth()` fehlen noch `method` und `se`."
+    en: "`colour = condition` belongs in the `aes()` of `ggplot()`; `geom_smooth()` still needs `method` and `se`."
+explanation:
+  de: |
+    Eine Zuordnung in `ggplot(aes())` erben alle Ebenen. Weil `colour` dort
+    steht, gruppiert auch `geom_smooth()` nach Bedingung und schätzt drei
+    getrennte Geraden. Steht `colour` nur in `geom_point(aes())`, kennt
+    `geom_smooth()` die Bedingung nicht und legt eine einzige Gerade durch alle
+    Punkte. Das kann einen Zusammenhang vortäuschen, der nur aus Unterschieden
+    zwischen den Bedingungen kommt (Simpson-Muster). Ohne `method = "lm"` nimmt
+    `geom_smooth()` bei weniger als 1000 Punkten LOESS, also eine Kurve. Die
+    Meldung „`geom_smooth()` using formula …“ ist ein Hinweis, kein Fehler.
+  en: |
+    A mapping in `ggplot(aes())` is inherited by all layers. Because `colour` is
+    there, `geom_smooth()` also groups by condition and fits three separate
+    lines. If `colour` is only in `geom_point(aes())`, `geom_smooth()` does not
+    know the condition and fits a single line through all points. That can fake
+    a relationship that only comes from differences between conditions (Simpson
+    pattern). Without `method = "lm"`, `geom_smooth()` uses LOESS for fewer than
+    1000 points, so a curve. The message "`geom_smooth()` using formula …" is a
+    note, not an error.
+check:
+  type: plot
+  params: [method, se]
+common_mistakes:
+  - pattern: "colou?r\\s*=\\s*[\"']condition[\"']"
+    message:
+      de: "In Anführungszeichen ist `\"condition\"` eine Konstante, keine Spalte: Alle Punkte bekommen dieselbe Farbe."
+      en: "In quotes, `\"condition\"` is a constant, not a column: all points get the same colour."
+  - pattern: "geom_point\\(\\s*aes\\([^)]*colou?r\\s*="
+    message:
+      de: "Eine Zuordnung in `geom_point(aes())` gilt nur für die Punkte; `geom_smooth()` rechnet dann eine Gerade über alle Bedingungen. Gemeinsame Zuordnungen gehören in `ggplot(aes())`."
+      en: "A mapping in `geom_point(aes())` only applies to the points; `geom_smooth()` then fits one line across all conditions. Shared mappings belong in `ggplot(aes())`."
+  - pattern: "^(?![\\s\\S]*method\\s*=\\s*[\"']lm[\"'])[\\s\\S]*geom_smooth"
+    message:
+      de: "Ohne `method = \"lm\"` nimmt `geom_smooth()` bei weniger als 1000 Punkten LOESS, also eine Kurve statt einer Geraden."
+      en: "Without `method = \"lm\"`, `geom_smooth()` uses LOESS for fewer than 1000 points, so a curve instead of a line."
+  - pattern: "^(?![\\s\\S]*se\\s*=\\s*(FALSE|F)\\b)[\\s\\S]*geom_smooth"
+    message:
+      de: "Das Konfidenzband schaltest du mit `se = FALSE` ab."
+      en: "You switch off the confidence band with `se = FALSE`."

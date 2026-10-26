@@ -1,0 +1,91 @@
+id: rs-b-join
+lesson: reshaping-beginner
+order: 4
+title:
+  de: Vorab-Fragebogen anfügen
+  en: Adding the pre-study questionnaire
+kind: write
+required: true
+packages: [dplyr]
+data: [driving_sim]
+setup: |
+  library(dplyr)
+  ids <- c(1:36, 38, 41)
+  pre_survey <- tibble(
+    pid = sprintf("p%02d", ids),
+    driving_years = (ids * 7) %% 25 + 1
+  )
+prompt:
+  de: |
+    `pre_survey` enthält die Fahrerfahrung in Jahren (`driving_years`); die
+    Personen-ID heißt dort `pid`. Für einige Personen fehlt der Fragebogen, dafür
+    gibt es eine Person, die nicht im Fahrsimulator war.
+
+    Berechne pro Person die mittlere `rt_ms` (fehlende Werte ignorieren, Spalte
+    `rt_mean`) und füge `driving_years` an. Alle 40 Personen aus `driving_sim`
+    bleiben erhalten, keine weiteren. Spalten: `participant`, `rt_mean`,
+    `driving_years`.
+  en: |
+    `pre_survey` contains driving experience in years (`driving_years`); the
+    participant ID is called `pid` there. The questionnaire is missing for some
+    participants, and there is one person who was not in the driving simulator.
+
+    Compute each participant's mean `rt_ms` (ignore missing values, column
+    `rt_mean`) and add `driving_years`. All 40 participants from `driving_sim` are
+    kept, no others. Columns: `participant`, `rt_mean`, `driving_years`.
+starter: |
+  driving_sim |>
+    summarise(rt_mean = mean(rt_ms, na.rm = TRUE), .by = participant)
+solution: |
+  driving_sim |>
+    summarise(rt_mean = mean(rt_ms, na.rm = TRUE), .by = participant) |>
+    left_join(pre_survey, by = join_by(participant == pid))
+hints:
+  - de: "Erst pro Person zusammenfassen, dann verbinden: So vervielfachst du keine Zeilen."
+    en: "Summarise per participant first, then join: that way you do not multiply rows."
+  - de: "Welcher Join behält alle Zeilen der linken Tabelle, auch ohne Partner?"
+    en: "Which join keeps all rows of the left table, even without a match?"
+  - de: "Unterschiedlich benannte Schlüssel verbindest du mit `join_by(participant == ______)`."
+    en: "You connect differently named keys with `join_by(participant == ______)`."
+explanation:
+  de: |
+    `left_join()` behält alle Zeilen links und setzt `NA`, wo rechts kein Partner
+    existiert (hier p37, p39, p40); p41 fällt weg. `inner_join()` würde Personen
+    ohne Fragebogen still entfernen, `full_join()` p41 mit fehlender
+    Reaktionszeit hinzufügen. `join_by(participant == pid)` verbindet
+    unterschiedlich benannte Schlüssel. Nach einem Join lohnt der Blick auf
+    `nrow()`; mit `relationship = "one-to-one"` bricht R ab, wenn ein Schlüssel
+    unerwartet mehrfach vorkommt. Welche Personen keinen Partner haben, zeigt
+    `anti_join()` (nächste Übung).
+  en: |
+    `left_join()` keeps all rows on the left and sets `NA` where there is no match
+    on the right (here p37, p39, p40); p41 is dropped. `inner_join()` would
+    silently remove participants without a questionnaire, `full_join()` would add
+    p41 with a missing reaction time. `join_by(participant == pid)` connects
+    differently named keys. After a join, check `nrow()`; with
+    `relationship = "one-to-one"` R stops if a key unexpectedly occurs several
+    times. `anti_join()` shows which participants have no match (next exercise).
+misconception:
+  de: "Ein Join behält nicht automatisch alle Einheiten beider Tabellen; welche bleiben, legt die Art des Joins fest."
+  en: "A join does not automatically keep all units of both tables; the type of join decides which stay."
+check:
+  type: value
+  ignore_row_order: true
+  ignore_col_order: false
+common_mistakes:
+  - pattern: "inner_join"
+    message:
+      de: "`inner_join()` entfernt Personen ohne Fragebogen. Gefordert sind alle 40 Personen."
+      en: "`inner_join()` removes participants without a questionnaire. All 40 participants are required."
+  - pattern: "full_join"
+    message:
+      de: "`full_join()` fügt auch p41 hinzu, die nicht im Fahrsimulator war."
+      en: "`full_join()` also adds p41, who was not in the driving simulator."
+  - pattern: "right_join"
+    message:
+      de: "`right_join()` behält die Personen aus `pre_survey`, nicht die aus `driving_sim`."
+      en: "`right_join()` keeps the participants from `pre_survey`, not those from `driving_sim`."
+  - pattern: "by\\s*=\\s*[\"']participant[\"']"
+    message:
+      de: "In `pre_survey` heißt der Schlüssel `pid`. Verbinde mit `join_by(participant == pid)`."
+      en: "In `pre_survey` the key is called `pid`. Join with `join_by(participant == pid)`."

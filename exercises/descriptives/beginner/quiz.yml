@@ -1,0 +1,135 @@
+# Knowledge check: passed at >= `pass` share of correctly answered questions.
+lesson: descriptives-beginner
+pass: 0.8
+questions:
+  - id: ds-b-q-unit
+    prompt:
+      de: "`driving_sim` hat 480 Zeilen: 40 Personen × 3 Bedingungen × 4 Durchgänge. Was ist für „Wie alt sind die Teilnehmenden?“ die Einheit?"
+      en: "`driving_sim` has 480 rows: 40 participants × 3 conditions × 4 trials. What is the unit for \"How old are the participants?\""
+    options:
+      - text:
+          de: "Die Person: erst auf eine Zeile pro Person reduzieren, dann `mean(age)`."
+          en: "The participant: first reduce to one row per participant, then `mean(age)`."
+        correct: true
+        explain:
+          de: "Genau. Hier ändert sich der Mittelwert nicht, weil jede Person gleich oft vorkommt; die SD und vor allem `n` stimmen aber nur auf Personenebene."
+          en: "Exactly. Here the mean does not change because every participant occurs equally often; but the SD and above all `n` are only right at the participant level."
+      - text:
+          de: "Die Zeile: `mean(driving_sim$age)` mit n = 480."
+          en: "The row: `mean(driving_sim$age)` with n = 480."
+        correct: false
+        explain:
+          de: "Jede Person zählt dann 12-mal; `n` = 480 täuscht eine viel größere Stichprobe vor."
+          en: "Each participant then counts 12 times; `n` = 480 suggests a much larger sample."
+      - text:
+          de: "Der Durchgang: pro Durchgang mitteln."
+          en: "The trial: average per trial."
+        correct: false
+        explain:
+          de: "Das Alter ändert sich nicht zwischen Durchgängen; die Frage betrifft Personen."
+          en: "Age does not change between trials; the question is about participants."
+  - id: ds-b-q-groups
+    prompt:
+      de: "`d |> group_by(participant, condition) |> summarise(m = mean(rt_ms))`: Wonach ist das Ergebnis gruppiert?"
+      en: "`d |> group_by(participant, condition) |> summarise(m = mean(rt_ms))`: what is the result grouped by?"
+    options:
+      - text:
+          de: "Nach `participant`."
+          en: "By `participant`."
+        correct: true
+        explain:
+          de: "Richtig. `summarise()` entfernt nur die letzte Ebene. Mit `.by` statt `group_by()` bleibt nichts gruppiert."
+          en: "Right. `summarise()` only removes the last level. With `.by` instead of `group_by()` nothing stays grouped."
+      - text:
+          de: "Gar nicht mehr."
+          en: "Not at all any more."
+        correct: false
+        explain:
+          de: "Das gilt nur mit `.groups = \"drop\"` oder mit `.by`."
+          en: "That only holds with `.groups = \"drop\"` or with `.by`."
+      - text:
+          de: "Weiter nach `participant` und `condition`."
+          en: "Still by `participant` and `condition`."
+        correct: false
+        explain:
+          de: "Das wäre `.groups = \"keep\"`."
+          en: "That would be `.groups = \"keep\"`."
+  - id: ds-b-q-share
+    prompt:
+      de: "Was liefert `mean(survey$gender == \"female\")`?"
+      en: "What does `mean(survey$gender == \"female\")` return?"
+    options:
+      - text:
+          de: "Den Anteil der Frauen zwischen 0 und 1."
+          en: "The share of women between 0 and 1."
+        correct: true
+        explain:
+          de: "`TRUE` zählt als 1, `FALSE` als 0; der Mittelwert ist der Anteil. Fehlt `gender` bei jemandem, braucht es `na.rm = TRUE`."
+          en: "`TRUE` counts as 1, `FALSE` as 0; the mean is the share. If `gender` is missing for someone, you need `na.rm = TRUE`."
+      - text:
+          de: "Die Anzahl der Frauen."
+          en: "The number of women."
+        correct: false
+        explain:
+          de: "Die Anzahl liefert `sum(gender == \"female\")`."
+          en: "`sum(gender == \"female\")` returns the count."
+      - text:
+          de: "Einen Fehler, weil `gender` Text ist."
+          en: "An error, because `gender` is text."
+        correct: false
+        explain:
+          de: "Der Vergleich `==` macht aus dem Text einen logischen Vektor; davon lässt sich der Mittelwert bilden."
+          en: "The comparison `==` turns the text into a logical vector, which has a mean."
+  - id: ds-b-q-skewed
+    prompt:
+      de: "Bearbeitungszeiten: M = 58 s, Median = 46 s, mehrere Abbrüche bei 180 s. Welche Beschreibung passt am besten?"
+      en: "Task times: M = 58 s, median = 46 s, several timeouts at 180 s. Which description fits best?"
+    options:
+      - text:
+          de: "Median mit Interquartilsabstand, dazu Erfolgsquote und Zahl der Abbrüche."
+          en: "Median with interquartile range, plus success rate and number of timeouts."
+        correct: true
+        explain:
+          de: "Der Median ist robust gegen die langen Zeiten; die Abbrüche sind zensiert und gehören eigens berichtet."
+          en: "The median is robust against the long times; the timeouts are censored and should be reported separately."
+      - text:
+          de: "Mittelwert und SD, weil sie alle Werte nutzen."
+          en: "Mean and SD, because they use all values."
+        correct: false
+        explain:
+          de: "Gerade deshalb ziehen wenige lange Zeiten und die gekappten Abbrüche sie stark."
+          en: "Precisely for that reason, a few long times and the capped timeouts pull them strongly."
+      - text:
+          de: "Nur die Abbrüche weglassen, dann Mittelwert und SD."
+          en: "Just drop the timeouts, then mean and SD."
+        correct: false
+        explain:
+          de: "Dann fehlen genau die schwersten Fälle; das schönt das Ergebnis."
+          en: "Then exactly the hardest cases are missing; that flatters the result."
+  - id: ds-b-q-se-sd
+    prompt:
+      de: "Welche Aussagen über SD und Standardfehler stimmen? (Mehrere möglich)"
+      en: "Which statements about SD and standard error are true? (Several possible)"
+    multiple: true
+    options:
+      - text:
+          de: "Die SD beschreibt die Streuung der Personen, der SE die Unsicherheit des Mittelwerts."
+          en: "The SD describes the spread of participants, the SE the uncertainty of the mean."
+        correct: true
+        explain:
+          de: "In Tabelle 1 gehört die SD; für Fehlerbalken und Intervalle der SE bzw. das KI."
+          en: "Table 1 shows the SD; error bars and intervals use the SE or the CI."
+      - text:
+          de: "Der SE wird mit wachsendem n kleiner, die SD nicht systematisch."
+          en: "The SE gets smaller with growing n, the SD does not systematically."
+        correct: true
+        explain:
+          de: "SE = SD / √n. Die SD schätzt eine Eigenschaft der Population."
+          en: "SE = SD / √n. The SD estimates a property of the population."
+      - text:
+          de: "Mit dem SE wirkt die Stichprobe homogener, deshalb ist er in Tabelle 1 üblich."
+          en: "With the SE the sample looks more homogeneous, which is why it is common in Table 1."
+        correct: false
+        explain:
+          de: "Genau das wäre irreführend; zur Beschreibung der Stichprobe gehört die SD."
+          en: "That would be misleading; describing the sample calls for the SD."

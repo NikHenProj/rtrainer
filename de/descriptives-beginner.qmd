@@ -1,0 +1,145 @@
+---
+title: "Deskriptive Statistik, Tabelle 1"
+subtitle: "Beginner · Analyseeinheit, Kennwerte in zwei Stufen, Stichprobenbeschreibung"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, datawizard]
+resources:
+  - ../data/driving_sim.csv
+  - ../data/survey.csv
+  - ../data/usability.csv
+---
+
+{{< include /_generated/de/descriptives-beginner/runtime.qmd >}}
+
+{{< include /_generated/de/descriptives-beginner/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R läuft hier direkt im Browser. Beim ersten Besuch lädt es 10–30 Sekunden (Anzeige unten rechts), danach geht es schneller.
+:::
+
+## Wozu? {#why}
+
+**Forschungsfrage:** Wer hat an der Fahrsimulator-Studie und an der Umfrage teilgenommen, und wie schnell reagierten die Personen in den drei Warnbedingungen?
+
+Jeder Ergebnisteil beginnt mit einer Beschreibung: Stichprobe (Tabelle 1), dann Mittelwerte und Streuungen der Messwerte. Die häufigste Fehlerquelle ist dabei nicht die Formel, sondern die Einheit. `driving_sim` hat 480 Zeilen, aber nur 40 Personen; wer Zeilen zählt, berichtet zwölfmal zu viele Teilnehmende und zu kleine Standardfehler.
+
+## Konzept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 170" role="img" aria-labelledby="fig-ds-title fig-ds-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-ds-title">Zwei Stufen der Zusammenfassung</title>
+  <desc id="fig-ds-desc">Drei Kästen nacheinander. 480 Durchgänge werden mit summarise nach participant und condition zu 120 Personenmittelwerten zusammengefasst, diese mit summarise nach condition zu 3 Zeilen mit M, SD, n gleich 40 und SE.</desc>
+  <rect x="10" y="30" width="150" height="60" rx="6" class="rt-fig-box" />
+  <rect x="205" y="30" width="150" height="60" rx="6" class="rt-fig-box-accent" />
+  <rect x="400" y="30" width="150" height="60" rx="6" class="rt-fig-box" />
+  <text x="85" y="56" text-anchor="middle" class="rt-fig-label">480 Durchgänge</text>
+  <text x="85" y="76" text-anchor="middle" class="rt-fig-label rt-fig-muted">Rohdaten</text>
+  <text x="280" y="56" text-anchor="middle" class="rt-fig-label">120 Personenmittel</text>
+  <text x="280" y="76" text-anchor="middle" class="rt-fig-label rt-fig-muted">40 × 3 Bedingungen</text>
+  <text x="475" y="56" text-anchor="middle" class="rt-fig-label">3 Zeilen</text>
+  <text x="475" y="76" text-anchor="middle" class="rt-fig-label rt-fig-muted">M, SD, n = 40, SE</text>
+  <line x1="160" y1="60" x2="203" y2="60" class="rt-fig-arrow" />
+  <line x1="355" y1="60" x2="398" y2="60" class="rt-fig-arrow" />
+  <text x="10" y="125" class="rt-fig-code">summarise(.by = c(participant, condition))</text>
+  <text x="10" y="150" class="rt-fig-code">summarise(.by = condition)</text>
+</svg>
+<figcaption>Bei Messwiederholung erst pro Person mitteln, dann über die Personen. Nur so ist n die Zahl der Personen.</figcaption>
+</figure>
+```
+
+- **Analyseeinheit:** Was ist eine unabhängige Beobachtung? Meist die Person. Zählen mit `distinct(participant, ...)` oder `n_distinct(participant)`.
+- **`summarise(.by = ...)`** bildet Kennwerte pro Gruppe: `mean()`, `sd()`, `median()`, `IQR()`, `n()`. Fehlende Werte mit `na.rm = TRUE` ausschließen und die Zahl der fehlenden berichten.
+- **Zwei Stufen** bei Messwiederholung: erst pro Person × Bedingung, dann pro Bedingung.
+- **`.by` statt `group_by()`:** Das Ergebnis ist danach nicht mehr gruppiert. `group_by()` + `summarise()` lässt die äußeren Ebenen gruppiert.
+- **Anteile** sind Mittelwerte von Bedingungen: `mean(gender == "female")`, `mean(success)`.
+- **Schiefe Daten** (Zeiten, Abbrüche): Median und IQR statt Mittelwert und SD.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## Mehr dazu: SD oder SE?
+
+- **SD** beschreibt, wie unterschiedlich die Personen sind; sie gehört in Tabelle 1 und in Textangaben wie „M = 37,2, SD = 11,0“.
+- **SE** = SD / √n beschreibt, wie genau der Mittelwert geschätzt ist; er gehört zu Fehlerbalken. Besser noch: ein 95-%-Konfidenzintervall (Lektion „Gruppenvergleiche“).
+- In der Beschriftung immer angeben, was die Balken zeigen.
+:::
+
+## Beispiel {#example}
+
+`datawizard::describe_distribution()` beschreibt mehrere Variablen auf einmal, einschließlich fehlender Werte:
+
+```{webr}
+survey |>
+  describe_distribution(select = c(age, tech_affinity, starts_with("tlx_")))
+```
+
+Die Stichprobe der Fahrsimulator-Studie: erst eine Zeile pro Person, dann Kennwerte nach Erfahrung.
+
+```{webr}
+persons <- driving_sim |>
+  distinct(participant, experience, age, gender)
+nrow(persons)
+
+persons |>
+  summarise(
+    n = n(),
+    age_m = round(mean(age), 1),
+    age_sd = round(sd(age), 1),
+    female = sum(gender == "female"),
+    .by = experience
+  )
+```
+
+**So berichtest du es (Methodenteil):** An der Fahrsimulator-Studie nahmen 40 Personen teil (je 20 mit wenig und viel Fahrerfahrung). Die Angaben zu Alter und Geschlecht stehen getrennt nach Gruppe in Tabelle 1.
+
+## Paketvergleich {#packages}
+
+| Aufgabe | Empfehlung | Alternative |
+|---|---|---|
+| Kennwerte pro Gruppe | **dplyr** `summarise(.by = ...)` | `aggregate()`: kürzer für eine Variable, umständlich für mehrere Kennwerte |
+| Viele Variablen auf einmal | **datawizard** `describe_distribution()` | `psych::describe()`, `skimr::skim()` (mit Mini-Histogrammen) |
+| Tabelle 1 für die Veröffentlichung | **gtsummary** `tbl_summary(by = ...)` (Lektion „Ergebnisse berichten“) | `tableone`, `modelsummary::datasummary()` |
+| Häufigkeiten | **dplyr** `count()` | `table()`, `janitor::tabyl()` (mit Prozenten) |
+
+## Übungen {#exercises}
+
+Vier Pflichtübungen und eine Zusatzübung. **Ausführen und prüfen** startet deinen Code und prüft ihn sofort. Hinweise deckst du einzeln auf (**Hinweis zeigen**), die Lösung erst danach.
+
+{{< include /_generated/de/descriptives-beginner/exercises.qmd >}}
+
+## Wissenscheck {#check}
+
+{{< include /_generated/de/descriptives-beginner/quiz.qmd >}}
+
+## Spickzettel {#cheatsheet}
+
+```r
+# Personen zählen, nicht Zeilen
+driving_sim |> distinct(participant, gender) |> count(gender)
+
+# zwei Stufen bei Messwiederholung
+driving_sim |>
+  summarise(rt_ms = mean(rt_ms, na.rm = TRUE), .by = c(participant, condition)) |>
+  summarise(m = mean(rt_ms), sd = sd(rt_ms), n = n(), se = sd / sqrt(n), .by = condition)
+
+# Tabelle 1
+survey |>
+  summarise(
+    n = n(),
+    age_m = mean(age, na.rm = TRUE), age_sd = sd(age, na.rm = TRUE),
+    female_pct = 100 * mean(gender == "female"),
+    .by = interface
+  )
+
+# schiefe Daten
+usability |>
+  summarise(time_md = median(time_s), time_iqr = IQR(time_s), .by = prototype)
+```
+
+- Erst die Einheit klären, dann zählen.
+- `.by` statt `group_by()`, dann bleibt keine Gruppierung übrig.
+- Anteil = `mean(bedingung)`, Anzahl = `sum(bedingung)`.
+- Tabelle 1: SD; Fehlerbalken: SE oder KI.
+
+{{< include /_generated/de/descriptives-beginner/footer.qmd >}}

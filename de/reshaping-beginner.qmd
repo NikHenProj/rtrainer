@@ -1,0 +1,155 @@
+---
+title: "Umformen und zusammenführen"
+subtitle: "Beginner · Lang und breit, pivot_longer(), pivot_wider(), Joins"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, tidyr]
+resources:
+  - ../data/driving_sim.csv
+  - ../data/survey.csv
+  - ../data/usability.csv
+---
+
+{{< include /_generated/de/reshaping-beginner/runtime.qmd >}}
+
+{{< include /_generated/de/reshaping-beginner/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R läuft hier direkt im Browser. Beim ersten Besuch lädt es 10–30 Sekunden (Anzeige unten rechts), danach geht es schneller.
+:::
+
+## Wozu? {#why}
+
+**Forschungsfrage:** Unterscheidet sich die erlebte Beanspruchung (NASA-TLX) zwischen Touch- und Sprachbedienung, und auf welchen Dimensionen?
+
+Im Fragebogen `survey` steht jede TLX-Dimension in einer eigenen Spalte (`tlx_mental`, `tlx_physical`, …), eine Zeile pro befragter Person. Für einen Plot oder ein Modell „Bewertung nach Dimension und Bedienung“ müssen die sechs Spalten untereinander stehen. Umgekehrt willst du für eine Berichtstabelle Bedingungen nebeneinander sehen, und für eine Analyse mit Fahrerfahrung musst du einen zweiten Fragebogen an die Fahrsimulator-Daten anfügen. Umformen und Verbinden kommt in fast jeder Auswertung vor.
+
+## Konzept {#concept}
+
+Dieselben Daten lassen sich lang oder breit speichern:
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 200" role="img" aria-labelledby="fig-rs-title fig-rs-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-rs-title">Breitformat und Langformat</title>
+  <desc id="fig-rs-desc">Links eine breite Tabelle mit den Spalten respondent, mental und physical und zwei Zeilen. Rechts dieselben Werte im Langformat mit den Spalten respondent, dimension und rating und vier Zeilen. Ein Pfeil nach rechts ist mit pivot_longer beschriftet, ein Pfeil nach links mit pivot_wider.</desc>
+  <rect x="10" y="40" width="214" height="28" class="rt-fig-box-accent" />
+  <rect x="10" y="68" width="214" height="56" class="rt-fig-box" />
+  <text x="16" y="59" class="rt-fig-code">respondent mental physical</text>
+  <text x="16" y="87" class="rt-fig-code">r001       30     0</text>
+  <text x="16" y="111" class="rt-fig-code">r002       50     20</text>
+  <text x="10" y="28" class="rt-fig-label">breit: 1 Zeile pro Person</text>
+  <rect x="326" y="40" width="228" height="28" class="rt-fig-box-accent" />
+  <rect x="326" y="68" width="228" height="104" class="rt-fig-box" />
+  <text x="332" y="59" class="rt-fig-code">respondent dimension rating</text>
+  <text x="332" y="87" class="rt-fig-code">r001       mental    30</text>
+  <text x="332" y="111" class="rt-fig-code">r001       physical  0</text>
+  <text x="332" y="135" class="rt-fig-code">r002       mental    50</text>
+  <text x="332" y="159" class="rt-fig-code">r002       physical  20</text>
+  <text x="326" y="28" class="rt-fig-label">lang: 1 Zeile pro Person × Dimension</text>
+  <line x1="230" y1="80" x2="320" y2="80" class="rt-fig-arrow" />
+  <text x="275" y="72" text-anchor="middle" class="rt-fig-code" style="font-size: 12px">pivot_longer()</text>
+  <line x1="320" y1="130" x2="230" y2="130" class="rt-fig-arrow" />
+  <text x="275" y="150" text-anchor="middle" class="rt-fig-code" style="font-size: 12px">pivot_wider()</text>
+</svg>
+<figcaption>Gleiche Werte, andere Anordnung. Lang für ggplot2 und Modelle, breit für Tabellen und Differenzen pro Person.</figcaption>
+</figure>
+```
+
+- **Langformat** (tidy): eine Zeile pro Beobachtung, eine Spalte pro Variable. Die Dimension ist eine Variable, also eine Spalte. Das brauchen ggplot2, `summarise(.by = ...)` und Modellformeln.
+- **`pivot_longer(cols, names_to, values_to)`** stapelt Spalten. `names_prefix` entfernt ein gemeinsames Präfix gleich mit.
+- **`pivot_wider(names_from, values_from)`** verteilt Werte auf neue Spalten. Alle übrigen Spalten bestimmen die Zeilen (`id_cols`), deshalb vorher auf eine Zeile pro Einheit verdichten.
+- **Mutierende Joins** fügen Spalten aus einer zweiten Tabelle an: `left_join()` behält alle Zeilen links, `inner_join()` nur die mit Partner, `full_join()` alle aus beiden.
+- **Filternde Joins** fügen nichts an: `anti_join()` zeigt Zeilen ohne Partner, `semi_join()` die mit Partner.
+- **`join_by(participant == pid)`** verbindet Schlüssel mit unterschiedlichen Namen.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## Mehr dazu: Joins kontrollieren
+
+- Vor dem Join prüfen, ob der Schlüssel rechts eindeutig ist: `count(pre_survey, pid) |> filter(n > 1)`.
+- `relationship = "one-to-one"` (oder `"many-to-one"`) lässt R abbrechen, wenn die Daten nicht zur Erwartung passen.
+- Nach dem Join `nrow()` vergleichen. Mehr Zeilen als vorher heißt fast immer: doppelte Schlüssel.
+- Nicht verknüpfte Fälle mit `anti_join()` in beide Richtungen zählen und im Methodenteil nennen.
+:::
+
+## Beispiel {#example}
+
+Die TLX-Spalten ins Langformat bringen und pro Dimension und Bedienung zusammenfassen:
+
+```{webr}
+tlx_long <- survey |>
+  select(respondent, interface, starts_with("tlx_")) |>
+  pivot_longer(
+    starts_with("tlx_"),
+    names_to = "dimension", names_prefix = "tlx_", values_to = "rating"
+  )
+tlx_long
+```
+
+```{webr}
+tlx_summary <- tlx_long |>
+  summarise(m = round(mean(rating, na.rm = TRUE), 1), .by = c(dimension, interface))
+tlx_summary
+```
+
+Für den Bericht stehen die beiden Bedienungen besser nebeneinander. `pivot_wider()` macht daraus eine Zeile pro Dimension, die Differenz ist dann eine einfache Rechnung:
+
+```{webr}
+tlx_summary |>
+  pivot_wider(names_from = interface, values_from = m) |>
+  mutate(diff = voice - touch) |>
+  arrange(diff)
+```
+
+**So berichtest du es (Ergebnisteil, deskriptiv):** Die Sprachbedienung wurde bei geistiger (−13 Punkte) und körperlicher Beanspruchung (−9) niedriger bewertet als die Touchbedienung, bei Frustration dagegen höher (+9). Ob die Unterschiede über den Zufall hinausgehen, prüft ein Gruppenvergleich (Lektion „Gruppenvergleiche“).
+
+## Paketvergleich {#packages}
+
+| Aufgabe | Empfehlung | Alternative |
+|---|---|---|
+| Lang ↔ breit | **tidyr** `pivot_longer()`, `pivot_wider()` | `data.table::melt()`/`dcast()` (schnell bei Millionen Zeilen); `reshape2` und `gather()`/`spread()` sind abgelöst |
+| Tabellen verbinden | **dplyr** `left_join()` usw. mit `join_by()` | Basis-R `merge()`: Join-Art über `all.x`/`all.y`, sortiert das Ergebnis um |
+| Nicht verknüpfte Fälle | **dplyr** `anti_join()` | `setdiff(a$participant, b$pid)` für reine ID-Vektoren |
+| Fehlende Kombinationen sichtbar machen | **tidyr** `complete()` | `expand_grid()` + `left_join()` |
+
+## Übungen {#exercises}
+
+Vier Pflichtübungen und zwei Zusatzübungen. **Ausführen und prüfen** startet deinen Code und prüft ihn sofort. Hinweise deckst du einzeln auf (**Hinweis zeigen**), die Lösung erst danach.
+
+{{< include /_generated/de/reshaping-beginner/exercises.qmd >}}
+
+## Wissenscheck {#check}
+
+{{< include /_generated/de/reshaping-beginner/quiz.qmd >}}
+
+## Spickzettel {#cheatsheet}
+
+```r
+# breit -> lang
+survey |>
+  pivot_longer(
+    starts_with("tlx_"),                   # welche Spalten
+    names_to = "dimension",                # Spaltennamen -> Werte
+    names_prefix = "tlx_",                 # Präfix entfernen
+    values_to = "rating"                   # Zellwerte
+  )
+
+# lang -> breit: erst eine Zeile pro Einheit
+driving_sim |>
+  summarise(rt_ms = mean(rt_ms, na.rm = TRUE), .by = c(participant, condition)) |>
+  pivot_wider(names_from = condition, values_from = rt_ms)
+
+# verbinden
+rt_by_person |>
+  left_join(pre_survey, by = join_by(participant == pid), relationship = "one-to-one")
+rt_by_person |>
+  anti_join(pre_survey, by = join_by(participant == pid))   # ohne Partner
+```
+
+- ggplot2 und Modelle: Langformat. Tabellen und Differenzen pro Person: Breitformat.
+- `pivot_wider()` erkennt Zeilen an allen übrigen Spalten; vorher verdichten.
+- Nach jedem Join `nrow()` prüfen; fehlende Partner mit `anti_join()` zählen.
+- `values_fill` nur für Zählungen, nie für Messwerte.
+
+{{< include /_generated/de/reshaping-beginner/footer.qmd >}}

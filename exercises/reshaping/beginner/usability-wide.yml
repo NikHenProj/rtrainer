@@ -1,0 +1,68 @@
+id: rs-b-usability-wide
+lesson: reshaping-beginner
+order: 6
+title:
+  de: Bewertungen je Prototyp nebeneinander
+  en: Ratings per prototype side by side
+kind: write
+required: false
+packages: [dplyr, tidyr]
+data: [usability]
+setup: |
+  library(dplyr)
+  library(tidyr)
+prompt:
+  de: |
+    Im Usability-Test hat jede Person nach jeder Aufgabe die Einfachheit bewertet
+    (`seq`, 1–7). Erzeuge eine Tabelle mit einer Zeile pro Person: `participant`
+    und die mittlere `seq` je Prototyp in den Spalten `seq_A`, `seq_B`, `seq_C`
+    (fehlende Bewertungen ignorieren, ungerundet). Ergebnis: 24 Zeilen.
+  en: |
+    In the usability test, each participant rated the ease of each task (`seq`,
+    1–7). Create a table with one row per participant: `participant` and the mean
+    `seq` per prototype in the columns `seq_A`, `seq_B`, `seq_C` (ignore missing
+    ratings, unrounded). Result: 24 rows.
+starter: |
+  usability |>
+    summarise(seq = mean(seq, na.rm = TRUE), .by = c(participant, prototype))
+solution: |
+  usability |>
+    summarise(seq = mean(seq, na.rm = TRUE), .by = c(participant, prototype)) |>
+    pivot_wider(names_from = prototype, values_from = seq, names_prefix = "seq_")
+hints:
+  - de: "Der Starter liefert schon eine Zeile pro Person und Prototyp; jetzt fehlt nur das Umformen."
+    en: "The starter already returns one row per participant and prototype; only the reshaping is missing."
+  - de: "`pivot_wider()` kennt wie `pivot_longer()` ein Argument für ein Präfix der Spaltennamen."
+    en: "Like `pivot_longer()`, `pivot_wider()` has an argument for a column-name prefix."
+  - de: "`pivot_wider(names_from = prototype, values_from = seq, names_prefix = ______)`."
+    en: "`pivot_wider(names_from = prototype, values_from = seq, names_prefix = ______)`."
+explanation:
+  de: |
+    Zwei Arten von fehlend stecken in dieser Tabelle. Drei einzelne
+    `seq`-Bewertungen fehlen ausdrücklich (`NA` in den Daten); `na.rm = TRUE`
+    mittelt dann über die übrigen Aufgaben. p07 hat Prototyp C gar nicht
+    getestet: Diese Zeile gibt es im Langformat nicht (implizit fehlend), und
+    `pivot_wider()` füllt die Lücke mit `NA`. Mit `values_fill = 0` würde daraus
+    eine erfundene Bewertung; das ist nur bei Zählungen sinnvoll. Für einen
+    gepaarten Vergleich von A und C fehlt p07 dann, das gehört in den Bericht.
+  en: |
+    This table contains two kinds of missing. Three single `seq` ratings are
+    explicitly missing (`NA` in the data); `na.rm = TRUE` then averages over the
+    remaining tasks. p07 did not test prototype C at all: that row does not exist
+    in the long format (implicitly missing), and `pivot_wider()` fills the gap
+    with `NA`. `values_fill = 0` would turn it into an invented rating; that only
+    makes sense for counts. For a paired comparison of A and C, p07 is then
+    missing, which belongs in the report.
+check:
+  type: value
+  ignore_row_order: true
+  ignore_col_order: true
+common_mistakes:
+  - pattern: "values_fill"
+    message:
+      de: "p07 hat Prototyp C nicht getestet. Ein Füllwert erfindet eine Bewertung; die Lücke bleibt `NA`."
+      en: "p07 did not test prototype C. A fill value invents a rating; the gap stays `NA`."
+  - pattern: "^(?![\\s\\S]*names_prefix)[\\s\\S]*pivot_wider"
+    message:
+      de: "Die Spalten heißen dann `A`, `B`, `C`. Gefragt sind `seq_A`, `seq_B`, `seq_C`: `names_prefix = \"seq_\"`."
+      en: "The columns are then called `A`, `B`, `C`. The task asks for `seq_A`, `seq_B`, `seq_C`: `names_prefix = \"seq_\"`."

@@ -130,6 +130,35 @@ test_that("rt_compare_plot checks facets, scales and optionally data", {
   expect_match(rt_compare_plot(other, hist, check_data = TRUE), "Daten des Plots")
 })
 
+test_that("rt_compare_plot checks layer positions", {
+  skip_if_not_installed("ggplot2")
+  d <- data.frame(x = c("a", "a", "b", "b"), y = 1:4, g = c("u", "v", "u", "v"))
+  base <- ggplot2::ggplot(d, ggplot2::aes(x, y, fill = g))
+  expected <- base + ggplot2::geom_col(position = "dodge")
+  expect_null(rt_compare_plot(base + ggplot2::geom_col(position = ggplot2::position_dodge()), expected))
+  expect_match(rt_compare_plot(base + ggplot2::geom_col(), expected), "Position.*position_dodge.*position_stack")
+  expect_match(rt_compare_plot(base + ggplot2::geom_col(), expected, lang = "en"), "position")
+  # default positions of different geoms are compared as they are
+  jitter <- ggplot2::ggplot(d, ggplot2::aes(x, y)) + ggplot2::geom_jitter()
+  expect_null(rt_compare_plot(jitter, jitter))
+})
+
+test_that("rt_compare_plot checks a layer's own data, e.g. reference lines", {
+  skip_if_not_installed("ggplot2")
+  d <- data.frame(x = 1:3, y = c(10, 20, 30))
+  base <- ggplot2::ggplot(d, ggplot2::aes(x, y)) + ggplot2::geom_point()
+  expected <- base + ggplot2::geom_hline(yintercept = 25, linetype = "dashed")
+  expect_null(rt_compare_plot(base + ggplot2::geom_hline(yintercept = 25, linetype = "dashed"), expected))
+  expect_match(
+    rt_compare_plot(base + ggplot2::geom_hline(yintercept = 20, linetype = "dashed"), expected),
+    "Ebene 2 \\(geom_hline\\).*Daten"
+  )
+  # layers that inherit the plot data are not compared without check_data
+  other <- ggplot2::ggplot(d[1:2, ], ggplot2::aes(x, y)) + ggplot2::geom_point() +
+    ggplot2::geom_hline(yintercept = 25, linetype = "dashed")
+  expect_null(rt_compare_plot(other, expected))
+})
+
 test_that("rt_check plot type: last value, named object, no plot", {
   skip_if_not_installed("ggplot2")
   d <- data.frame(x = c(1, 2), y = c(3, 4))

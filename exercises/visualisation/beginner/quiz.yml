@@ -1,0 +1,135 @@
+# Knowledge check: passed at >= `pass` share of correctly answered questions.
+lesson: visualisation-beginner
+pass: 0.8
+questions:
+  - id: vi-b-q-quoted
+    prompt:
+      de: "`ggplot(driving_sim, aes(rt_ms, lane_dev, colour = \"condition\")) + geom_point()`: Was zeigt der Plot?"
+      en: "`ggplot(driving_sim, aes(rt_ms, lane_dev, colour = \"condition\")) + geom_point()`: what does the plot show?"
+    options:
+      - text:
+          de: "Alle Punkte in derselben Farbe, mit einer Legende, die nur „condition“ enthält."
+          en: "All points in the same colour, with a legend that only contains \"condition\"."
+        correct: true
+        explain:
+          de: "Genau. In Anführungszeichen ist `\"condition\"` eine Konstante, keine Spalte."
+          en: "Exactly. In quotes, `\"condition\"` is a constant, not a column."
+      - text:
+          de: "Drei Farben, eine pro Bedingung."
+          en: "Three colours, one per condition."
+        correct: false
+        explain:
+          de: "Dafür muss der Spaltenname ohne Anführungszeichen stehen: `colour = condition`."
+          en: "For that, the column name has to be written without quotes: `colour = condition`."
+      - text:
+          de: "Eine Fehlermeldung, weil `\"condition\"` keine Farbe ist."
+          en: "An error, because `\"condition\"` is not a colour."
+        correct: false
+        explain:
+          de: "In `aes()` wird jeder Wert als Daten behandelt; die Skala übersetzt ihn in eine Farbe. Einen Fehler gäbe es erst mit `geom_point(colour = \"condition\")`."
+          en: "Inside `aes()` every value is treated as data; the scale translates it into a colour. You would only get an error with `geom_point(colour = \"condition\")`."
+  - id: vi-b-q-inherit
+    prompt:
+      de: "`ggplot(d, aes(x, y)) + geom_point(aes(colour = group)) + geom_smooth(method = \"lm\")`: Wie viele Geraden zeichnet `geom_smooth()`?"
+      en: "`ggplot(d, aes(x, y)) + geom_point(aes(colour = group)) + geom_smooth(method = \"lm\")`: how many lines does `geom_smooth()` draw?"
+    options:
+      - text:
+          de: "Eine, über alle Gruppen hinweg."
+          en: "One, across all groups."
+        correct: true
+        explain:
+          de: "Richtig. `colour = group` steht nur in `geom_point()`; `geom_smooth()` erbt nur `x` und `y`."
+          en: "Right. `colour = group` is only in `geom_point()`; `geom_smooth()` only inherits `x` and `y`."
+      - text:
+          de: "Eine pro Gruppe."
+          en: "One per group."
+        correct: false
+        explain:
+          de: "Dafür müsste `colour = group` in `ggplot(aes())` stehen oder auch in `geom_smooth(aes())`."
+          en: "For that, `colour = group` would have to be in `ggplot(aes())` or also in `geom_smooth(aes())`."
+      - text:
+          de: "Keine, weil die Farbe fehlt."
+          en: "None, because the colour is missing."
+        correct: false
+        explain:
+          de: "`geom_smooth()` braucht nur `x` und `y`; die Farbe ist optional."
+          en: "`geom_smooth()` only needs `x` and `y`; the colour is optional."
+  - id: vi-b-q-col-bar
+    prompt:
+      de: "Du hast `success_rates` mit einer Zeile pro Prototyp und der Spalte `success_rate`. Welches Geom zeichnet die Quoten als Säulen?"
+      en: "You have `success_rates` with one row per prototype and the column `success_rate`. Which geom draws the rates as bars?"
+    options:
+      - text:
+          de: "`geom_col()` mit `aes(prototype, success_rate)`"
+          en: "`geom_col()` with `aes(prototype, success_rate)`"
+        correct: true
+        explain:
+          de: "`geom_col()` zeichnet die Werte, wie sie in der Tabelle stehen."
+          en: "`geom_col()` draws the values as they are in the table."
+      - text:
+          de: "`geom_bar()` mit `aes(prototype)`"
+          en: "`geom_bar()` with `aes(prototype)`"
+        correct: false
+        explain:
+          de: "`geom_bar()` zählt Zeilen: Jede Säule wäre 1 hoch."
+          en: "`geom_bar()` counts rows: every bar would be 1 high."
+      - text:
+          de: "`geom_histogram()` mit `aes(success_rate)`"
+          en: "`geom_histogram()` with `aes(success_rate)`"
+        correct: false
+        explain:
+          de: "Ein Histogramm zeigt die Verteilung einer Zahl, nicht einen Wert pro Kategorie."
+          en: "A histogram shows the distribution of a number, not one value per category."
+  - id: vi-b-q-log
+    prompt:
+      de: "Was unterscheidet `scale_x_log10()` von `aes(x = log10(rt_ms))` in einem Histogramm?"
+      en: "What distinguishes `scale_x_log10()` from `aes(x = log10(rt_ms))` in a histogram?"
+    options:
+      - text:
+          de: "Die Bins sind gleich, aber `scale_x_log10()` beschriftet die Achse in ms."
+          en: "The bins are the same, but `scale_x_log10()` labels the axis in ms."
+        correct: true
+        explain:
+          de: "Genau. Beide transformieren vor der Statistik; nur die Skala rechnet die Beschriftung zurück."
+          en: "Exactly. Both transform before the statistic; only the scale converts the labels back."
+      - text:
+          de: "`scale_x_log10()` verzerrt nur die Achse, die Bins entstehen auf der ms-Skala."
+          en: "`scale_x_log10()` only distorts the axis; the bins are formed on the ms scale."
+        correct: false
+        explain:
+          de: "Das macht `coord_trans(x = \"log10\")`, das nach der Statistik transformiert."
+          en: "That is what `coord_trans(x = \"log10\")` does, which transforms after the statistic."
+      - text:
+          de: "Kein Unterschied."
+          en: "No difference."
+        correct: false
+        explain:
+          de: "Die Beschriftung unterscheidet sich: 2,7 bis 3,2 gegenüber 500 bis 1500 ms."
+          en: "The labels differ: 2.7 to 3.2 versus 500 to 1500 ms."
+  - id: vi-b-q-errorbars
+    prompt:
+      de: "40 Personen, je 4 Durchgänge pro Bedingung. Welche Aussagen über Fehlerbalken (± 1 SE) stimmen? (Mehrere möglich)"
+      en: "40 participants, 4 trials per condition each. Which statements about error bars (± 1 SE) are true? (Several possible)"
+    multiple: true
+    options:
+      - text:
+          de: "Der SE gehört zu den 40 Personenmittelwerten, nicht zu den 160 Durchgängen."
+          en: "The SE belongs to the 40 participant means, not to the 160 trials."
+        correct: true
+        explain:
+          de: "Die Personen sind die unabhängigen Einheiten."
+          en: "The participants are the independent units."
+      - text:
+          de: "Über alle Durchgänge gerechnet werden die Balken zu schmal."
+          en: "Computed over all trials, the bars become too narrow."
+        correct: true
+        explain:
+          de: "`n` ist dann viermal zu groß; die Balken versprechen zu viel Genauigkeit."
+          en: "`n` is then four times too large; the bars promise too much precision."
+      - text:
+          de: "Überlappende Balken heißen, dass sich die Bedingungen nicht unterscheiden."
+          en: "Overlapping bars mean that the conditions do not differ."
+        correct: false
+        explain:
+          de: "Nein. Bei Messwiederholung sagen Between-Balken wenig über den Unterschied innerhalb der Personen; das klärt ein gepaarter Test."
+          en: "No. With repeated measures, between-subject bars say little about the difference within participants; a paired test settles that."

@@ -1,0 +1,85 @@
+id: ds-b-usability-median
+lesson: descriptives-beginner
+order: 5
+title:
+  de: Robuste Kennwerte für Bearbeitungszeiten
+  en: Robust statistics for task times
+kind: write
+required: false
+packages: [dplyr]
+data: [usability]
+setup: |
+  library(dplyr)
+prompt:
+  de: |
+    Bearbeitungszeiten sind rechtsschief, und Abbrüche sind auf 180 s gekappt.
+    Beschreibe `usability` je Prototyp (`prototype`) mit der Erfolgsquote
+    `success_rate` (Anteil `success == 1`), dem Median `time_md` und dem
+    Interquartilsabstand `time_iqr` von `time_s` sowie der Zahl der Abbrüche
+    `timeouts` (`time_s` mindestens 180). Alles ungerundet.
+  en: |
+    Task times are right-skewed, and timeouts are capped at 180 s. Describe
+    `usability` per prototype (`prototype`) with the success rate `success_rate`
+    (share of `success == 1`), the median `time_md` and the interquartile range
+    `time_iqr` of `time_s`, and the number of timeouts `timeouts` (`time_s` at
+    least 180). All unrounded.
+starter: |
+  usability |>
+    summarise(
+      time_m = mean(time_s),
+      time_sd = sd(time_s),
+      .by = prototype
+    )
+solution: |
+  usability |>
+    summarise(
+      success_rate = mean(success),
+      time_md = median(time_s),
+      time_iqr = IQR(time_s),
+      timeouts = sum(time_s >= 180),
+      .by = prototype
+    )
+hints:
+  - de: "Für schiefe Daten ersetzt der Median den Mittelwert und der Interquartilsabstand die SD."
+    en: "For skewed data, the median replaces the mean and the interquartile range replaces the SD."
+  - de: "Zählen mit einer Bedingung: `sum(time_s >= 180)` zählt die `TRUE`-Werte."
+    en: "Counting with a condition: `sum(time_s >= 180)` counts the `TRUE` values."
+  - de: "`median()`, `IQR()`, `mean(success)` und `sum(______)` in einem `summarise(.by = prototype)`."
+    en: "`median()`, `IQR()`, `mean(success)` and `sum(______)` in one `summarise(.by = prototype)`."
+explanation:
+  de: |
+    Abgebrochene Aufgaben stehen mit 180 s in den Daten, obwohl die wahre Zeit
+    länger wäre (zensiert). Der Median hängt nur an der Mitte der Verteilung und
+    bleibt davon fast unberührt; der Mittelwert von A (58 s gegenüber Median
+    46 s) wird von wenigen langen Zeiten und den Abbrüchen gezogen. Deshalb
+    gehören Erfolgsquote, Median mit IQR und die Zahl der Abbrüche zusammen in
+    die Tabelle.
+    `datawizard::describe_distribution(usability$time_s, centrality = "median")`
+    liefert Median, MAD, IQR und Schiefe auf einmal. Hier zählen Aufgaben, nicht
+    Personen; für Inferenz bildest du später wieder Personenwerte.
+  en: |
+    Timed-out tasks are in the data as 180 s although the true time would be
+    longer (censored). The median only depends on the middle of the distribution
+    and is barely affected; the mean of A (58 s versus a median of 46 s) is pulled
+    by a few long times and the timeouts. That is why success rate, median with
+    IQR and the number of timeouts belong together in the table.
+    `datawizard::describe_distribution(usability$time_s, centrality = "median")`
+    returns median, MAD, IQR and skewness at once. Here tasks count, not
+    participants; for inference you compute participant values again later.
+check:
+  type: value
+  ignore_row_order: true
+  ignore_col_order: false
+common_mistakes:
+  - pattern: "time_s\\s*>\\s*180"
+    message:
+      de: "Abbrüche stehen mit genau 180 s in den Daten; `> 180` findet keinen. Nimm `>= 180`."
+      en: "Timeouts are stored as exactly 180 s; `> 180` finds none. Use `>= 180`."
+  - pattern: "sum\\(\\s*success\\s*\\)"
+    message:
+      de: "`sum(success)` zählt die gelösten Aufgaben; die Quote ist der Anteil, also `mean(success)`."
+      en: "`sum(success)` counts the solved tasks; the rate is the share, so `mean(success)`."
+  - pattern: "quantile\\("
+    message:
+      de: "`quantile()` liefert mehrere Werte; der Interquartilsabstand in einer Zahl ist `IQR()`."
+      en: "`quantile()` returns several values; the interquartile range as one number is `IQR()`."

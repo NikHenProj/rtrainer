@@ -1,0 +1,135 @@
+# Knowledge check: passed at >= `pass` share of correctly answered questions.
+lesson: reshaping-beginner
+pass: 0.8
+questions:
+  - id: rs-b-q-long
+    prompt:
+      de: "Du willst mit ggplot2 die Reaktionszeit je Bedingung zeichnen, Farbe nach Bedingung. Welche Form brauchen die Daten?"
+      en: "You want to plot reaction time per condition with ggplot2, coloured by condition. Which shape do the data need?"
+    options:
+      - text:
+          de: "Langformat: eine Spalte `condition`, eine Spalte `rt_ms`."
+          en: "Long format: one column `condition`, one column `rt_ms`."
+        correct: true
+        explain:
+          de: "Genau. ggplot2 ordnet Spalten Ästhetiken zu; die Bedingung muss eine Spalte sein, um sie auf Farbe oder x zu legen."
+          en: "Exactly. ggplot2 maps columns to aesthetics; the condition has to be a column to put it on colour or x."
+      - text:
+          de: "Breitformat: je eine Spalte `visual`, `auditory`, `haptic`."
+          en: "Wide format: one column each for `visual`, `auditory`, `haptic`."
+        correct: false
+        explain:
+          de: "Dann müsstest du jede Bedingung als eigene Ebene zeichnen; Farbe und Legende entstehen nicht automatisch."
+          en: "Then you would have to draw each condition as a separate layer; colour and legend do not arise automatically."
+      - text:
+          de: "Egal, ggplot2 formt selbst um."
+          en: "It does not matter, ggplot2 reshapes by itself."
+        correct: false
+        explain:
+          de: "ggplot2 formt nicht um; das ist Aufgabe von tidyr."
+          en: "ggplot2 does not reshape; that is tidyr's job."
+  - id: rs-b-q-duplicate-key
+    prompt:
+      de: "In `pre_survey` steht p05 versehentlich zweimal. Was passiert bei `rt_by_person |> left_join(pre_survey, by = join_by(participant == pid))`?"
+      en: "In `pre_survey`, p05 accidentally appears twice. What happens with `rt_by_person |> left_join(pre_survey, by = join_by(participant == pid))`?"
+    options:
+      - text:
+          de: "p05 steht danach zweimal im Ergebnis, ohne Fehler und ohne Warnung."
+          en: "p05 then appears twice in the result, without an error or a warning."
+        correct: true
+        explain:
+          de: "Richtig. Jede passende Zeile rechts erzeugt eine Zeile. Mit `relationship = \"one-to-one\"` bricht R ab; sonst hilft der Blick auf `nrow()`."
+          en: "Right. Every matching row on the right produces a row. With `relationship = \"one-to-one\"` R stops; otherwise check `nrow()`."
+      - text:
+          de: "dplyr nimmt automatisch die erste der beiden Zeilen."
+          en: "dplyr automatically takes the first of the two rows."
+        correct: false
+        explain:
+          de: "Nur mit `multiple = \"first\"`. Standardmäßig werden alle Treffer behalten."
+          en: "Only with `multiple = \"first\"`. By default all matches are kept."
+      - text:
+          de: "p05 bekommt `NA`, weil der Schlüssel nicht eindeutig ist."
+          en: "p05 gets `NA` because the key is not unique."
+        correct: false
+        explain:
+          de: "`NA` entsteht nur, wenn es rechts keinen Partner gibt."
+          en: "`NA` only arises when there is no match on the right."
+  - id: rs-b-q-id-cols
+    prompt:
+      de: "`driving_sim |> select(participant, condition, trial, rt_ms) |> pivot_wider(names_from = condition, values_from = rt_ms)`: Wie viele Zeilen hat das Ergebnis?"
+      en: "`driving_sim |> select(participant, condition, trial, rt_ms) |> pivot_wider(names_from = condition, values_from = rt_ms)`: how many rows does the result have?"
+    options:
+      - text:
+          de: "160: eine Zeile pro Person und Durchgang, weil `participant` und `trial` zusammen die Zeile bestimmen."
+          en: "160: one row per participant and trial, because `participant` and `trial` together identify the row."
+        correct: true
+        explain:
+          de: "Genau. Alle Spalten außer `names_from`/`values_from` bilden die Zeilen-ID (`id_cols`)."
+          en: "Exactly. All columns except `names_from`/`values_from` form the row ID (`id_cols`)."
+      - text:
+          de: "40: eine Zeile pro Person."
+          en: "40: one row per participant."
+        correct: false
+        explain:
+          de: "Dafür müsste `trial` weg sein (vorher zusammenfassen oder `id_cols = participant` mit `values_fn`)."
+          en: "For that, `trial` would have to be gone (summarise first, or `id_cols = participant` with `values_fn`)."
+      - text:
+          de: "480: so viele wie vorher."
+          en: "480: as many as before."
+        correct: false
+        explain:
+          de: "Die drei Bedingungen werden zu Spalten; damit schrumpft die Zeilenzahl auf ein Drittel."
+          en: "The three conditions become columns, so the row count shrinks to a third."
+  - id: rs-b-q-filtering-joins
+    prompt:
+      de: "Welcher Join liefert die Befragten aus `survey`, für die es **keine** Zeile in `follow_up` gibt?"
+      en: "Which join returns the respondents from `survey` that have **no** row in `follow_up`?"
+    options:
+      - text:
+          de: "`survey |> anti_join(follow_up, by = \"respondent\")`"
+          en: "`survey |> anti_join(follow_up, by = \"respondent\")`"
+        correct: true
+        explain:
+          de: "Richtig. Filternde Joins (`anti_join`, `semi_join`) fügen keine Spalten an."
+          en: "Right. Filtering joins (`anti_join`, `semi_join`) add no columns."
+      - text:
+          de: "`survey |> semi_join(follow_up, by = \"respondent\")`"
+          en: "`survey |> semi_join(follow_up, by = \"respondent\")`"
+        correct: false
+        explain:
+          de: "`semi_join()` behält die Befragten **mit** Partner."
+          en: "`semi_join()` keeps the respondents **with** a match."
+      - text:
+          de: "`follow_up |> anti_join(survey, by = \"respondent\")`"
+          en: "`follow_up |> anti_join(survey, by = \"respondent\")`"
+        correct: false
+        explain:
+          de: "Das liefert umgekehrt Zeilen aus `follow_up` ohne Partner in `survey`."
+          en: "That returns the reverse: rows from `follow_up` without a match in `survey`."
+  - id: rs-b-q-wide-uses
+    prompt:
+      de: "Wofür ist das Breitformat (eine Spalte pro Bedingung) praktisch? (Mehrere möglich)"
+      en: "What is the wide format (one column per condition) handy for? (Several possible)"
+    multiple: true
+    options:
+      - text:
+          de: "Eine Tabelle für den Bericht mit Bedingungen nebeneinander"
+          en: "A report table with conditions side by side"
+        correct: true
+        explain:
+          de: "Leser vergleichen Werte in einer Zeile leichter."
+          en: "Readers compare values within one row more easily."
+      - text:
+          de: "Differenzen pro Person, z. B. `mutate(diff = visual - haptic)`"
+          en: "Differences per participant, e.g. `mutate(diff = visual - haptic)`"
+        correct: true
+        explain:
+          de: "Im Breitformat stehen die Werte einer Person nebeneinander; das ist die Grundlage gepaarter Vergleiche."
+          en: "In wide format a participant's values sit side by side; that is the basis of paired comparisons."
+      - text:
+          de: "Ein Mixed Model mit `condition` als Prädiktor"
+          en: "A mixed model with `condition` as predictor"
+        correct: false
+        explain:
+          de: "Modelle mit Formeln brauchen das Langformat: eine Spalte für den Prädiktor, eine für das Ergebnis."
+          en: "Models with formulas need the long format: one column for the predictor, one for the outcome."

@@ -30,6 +30,8 @@ rt_messages <- list(
     plot_mapping = "Ebene %d (%s): Die Zuordnung (`aes()`) stimmt nicht. Erwartet %s, erhalten %s.",
     plot_setting = "Ebene %d (%s): Die festen Einstellungen außerhalb von `aes()` stimmen nicht. Erwartet %s, erhalten %s.",
     plot_param = "Ebene %d (%s): Das Argument `%s` stimmt nicht.",
+    plot_position = "Ebene %d (%s): Die Position stimmt nicht: erwartet `%s`, erhalten `%s`.",
+    plot_layer_data = "Ebene %d (%s): Die Daten dieser Ebene stimmen nicht (z. B. der Wert einer Referenzlinie).",
     plot_facet = "Die Aufteilung in Panels (facet) stimmt nicht: erwartet %s, erhalten %s.",
     plot_scale = "Die Skalen stimmen nicht: erwartet %s, erhalten %s.",
     plot_data = "Die Daten des Plots stimmen nicht: %s",
@@ -56,6 +58,8 @@ rt_messages <- list(
     plot_mapping = "Layer %d (%s): the mapping (`aes()`) does not match. Expected %s, got %s.",
     plot_setting = "Layer %d (%s): the fixed settings outside `aes()` do not match. Expected %s, got %s.",
     plot_param = "Layer %d (%s): the argument `%s` does not match.",
+    plot_position = "Layer %d (%s): the position does not match: expected `%s`, got `%s`.",
+    plot_layer_data = "Layer %d (%s): the data of this layer do not match (e.g. the value of a reference line).",
     plot_facet = "The panels (facets) do not match: expected %s, got %s.",
     plot_scale = "The scales do not match: expected %s, got %s.",
     plot_data = "The plot data do not match: %s",
@@ -252,9 +256,9 @@ rt_scale_text <- function(plot) {
   sort(out)
 }
 
-# Compare a ggplot with the expected one: layers (geoms, in order), mapping
-# and fixed settings per layer, facets, scales; optionally named layer
-# parameters (`params`, e.g. method, se) and the plot data.
+# Compare a ggplot with the expected one: layers (geoms, in order), mapping,
+# fixed settings, position and own data per layer, facets, scales; optionally
+# named layer parameters (`params`, e.g. method, se) and the plot data.
 rt_compare_plot <- function(result, expected, params = NULL, check_data = FALSE,
                             name = NULL, lang = "de") {
   if (!inherits(result, "ggplot")) {
@@ -285,6 +289,16 @@ rt_compare_plot <- function(result, expected, params = NULL, check_data = FALSE,
         "plot_setting", lang, i, expected_geoms[i],
         rt_format_pairs(settings_want, lang), rt_format_pairs(settings_got, lang)
       ))
+    }
+    position_got <- rt_snake(class(got$position)[1])
+    position_want <- rt_snake(class(want$position)[1])
+    if (!identical(position_got, position_want)) {
+      return(rt_msg("plot_position", lang, i, expected_geoms[i], position_want, position_got))
+    }
+    # Layers with their own data (geom_hline(yintercept = 180), annotate()).
+    if (is.data.frame(want$data) &&
+      !(is.data.frame(got$data) && is.null(rt_compare(got$data, want$data, ignore_row_order = TRUE, lang = lang)))) {
+      return(rt_msg("plot_layer_data", lang, i, expected_geoms[i]))
     }
     for (param in unlist(params)) {
       value <- function(l) l$stat_params[[param]] %||% l$geom_params[[param]]

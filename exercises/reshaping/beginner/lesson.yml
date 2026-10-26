@@ -1,0 +1,17 @@
+# Lesson metadata; exercises are the other *.yml files in this folder
+# (sorted by `order`), the knowledge check is quiz.yml.
+lesson: reshaping-beginner
+minutes: 45
+prerequisites: [cleaning-beginner]
+langs: [de]
+packages: [dplyr, tidyr]
+data: [driving_sim, survey, usability]
+goals:
+  de:
+    - Lang- und Breitformat unterscheiden und wissen, wofür man welches braucht
+    - Mit `pivot_longer()` und `pivot_wider()` umformen
+    - Tabellen über einen Schlüssel verbinden und nicht verknüpfte Fälle finden
+  en:
+    - Tell long and wide format apart and know what each is for
+    - Reshape with `pivot_longer()` and `pivot_wider()`
+    - Join tables by a key and find unmatched cases

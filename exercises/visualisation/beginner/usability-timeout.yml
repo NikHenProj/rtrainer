@@ -1,0 +1,73 @@
+id: vi-b-usability-timeout
+lesson: visualisation-beginner
+order: 3
+title:
+  de: Bearbeitungszeiten mit Abbruchgrenze
+  en: Task times with a timeout line
+kind: write
+required: true
+packages: [ggplot2]
+data: [usability]
+setup: |
+  library(ggplot2)
+prompt:
+  de: |
+    Im Usability-Test wurde jede Aufgabe nach 180 Sekunden abgebrochen. Zeichne
+    die Bearbeitungszeit `time_s` je Aufgabe (`task`, x-Achse) als Boxplot, die
+    Boxen nach `prototype` gefüllt. Markiere die Abbruchgrenze mit einer
+    gestrichelten waagrechten Linie (`linetype = "dashed"`) bei 180 s.
+
+    Der Plot ist der letzte Ausdruck deines Codes.
+  en: |
+    In the usability test, each task was stopped after 180 seconds. Draw the task
+    time `time_s` per task (`task`, x axis) as a boxplot, the boxes filled by
+    `prototype`. Mark the timeout with a dashed horizontal line
+    (`linetype = "dashed"`) at 180 s.
+
+    The plot is the last expression of your code.
+starter: |
+  ggplot(usability, aes(task, time_s))
+solution: |
+  ggplot(usability, aes(task, time_s, fill = prototype)) +
+    geom_boxplot() +
+    geom_hline(yintercept = 180, linetype = "dashed")
+hints:
+  - de: "Zwei Ebenen: Boxplot und Referenzlinie. Die Füllfarbe kommt aus einer Spalte."
+    en: "Two layers: boxplot and reference line. The fill colour comes from a column."
+  - de: "Waagrechte Linien zeichnet `geom_hline()`; die Höhe gibst du mit `yintercept` an."
+    en: "`geom_hline()` draws horizontal lines; you set the height with `yintercept`."
+  - de: "`aes(task, time_s, fill = ______)`, danach `geom_boxplot()` und `geom_hline(yintercept = ______, linetype = \"dashed\")`."
+    en: "`aes(task, time_s, fill = ______)`, then `geom_boxplot()` and `geom_hline(yintercept = ______, linetype = \"dashed\")`."
+explanation:
+  de: |
+    Mit `fill = prototype` in `aes()` stellt `geom_boxplot()` die drei Prototypen
+    je Aufgabe nebeneinander (`position_dodge2()`). `geom_hline(yintercept = 180)`
+    ist eine feste Referenz, kein Mapping; sie erbt die Füllfarbe nicht. Die
+    Linie zeigt, dass einige Zeiten von Prototyp A bei Checkout und Vergleichen
+    an der Grenze kleben: Das sind keine echten Bearbeitungszeiten, sondern
+    Abbrüche (zensierte Werte). Ein Mittelwert unterschätzt dort die wahre Zeit;
+    beschreibe solche Daten mit Median und Erfolgsquote und nenne die Zahl der
+    Abbrüche.
+  en: |
+    With `fill = prototype` in `aes()`, `geom_boxplot()` places the three
+    prototypes side by side per task (`position_dodge2()`). `geom_hline(yintercept
+    = 180)` is a fixed reference, not a mapping; it does not inherit the fill.
+    The line shows that some times for prototype A in checkout and compare stick
+    to the limit: those are not real task times but timeouts (censored values). A
+    mean underestimates the true time there; describe such data with the median
+    and the success rate and report the number of timeouts.
+check:
+  type: plot
+common_mistakes:
+  - pattern: "geom_vline"
+    message:
+      de: "`geom_vline()` zeichnet senkrechte Linien. Die Abbruchgrenze liegt auf der y-Achse, also `geom_hline()`."
+      en: "`geom_vline()` draws vertical lines. The timeout lies on the y axis, so `geom_hline()`."
+  - pattern: "geom_hline\\(\\s*aes\\("
+    message:
+      de: "Die Grenze ist ein fester Wert, keine Spalte: `geom_hline(yintercept = 180, ...)` ohne `aes()`."
+      en: "The limit is a fixed value, not a column: `geom_hline(yintercept = 180, ...)` without `aes()`."
+  - pattern: "colou?r\\s*=\\s*prototype"
+    message:
+      de: "`colour` färbt nur den Rand der Boxen. Gefragt ist die Füllung: `fill = prototype`."
+      en: "`colour` only colours the outline of the boxes. The task asks for the fill: `fill = prototype`."

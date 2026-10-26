@@ -1,5 +1,14 @@
 # rtrainer (Quarto course)
 
+## Milestone 8, part 2b: beginner lessons reshaping, visualisation, descriptives (DE) (awaiting acceptance)
+
+- Lessons (German, `langs: [de]`): `reshaping-beginner` (long/wide, `pivot_longer()` with `names_prefix`, `pivot_wider()` and its `id_cols`, `left_join()` with `join_by()`, `anti_join()`, implicit missing combinations; 4 required + 2 optional), `visualisation-beginner` (mapping vs. setting, inherited `aes()`, reference line at the 180 s timeout, error bars from participant means, facets + log scale, dodged bars; 4 + 2), `descriptives-beginner` (count participants not rows, two-stage summaries, leftover grouping after `summarise()`, Table 1 for `survey`, median/IQR/timeouts for `usability`; 4 + 1). Each with 5 knowledge-check questions.
+- Migrated from legacy: join (+ separate `anti_join()` exercise), pivot-longer-predict, pivot-wider, mapping-setting-debug, aes-inherit, errorbar-person-debug, facet-log-scale, count-units, summarise-regroup, describe-person. New: tlx-longer and Table 1 (`survey`), usability-wide, usability-timeout, success-dodge, usability-median (`usability`).
+- Check type `plot` also compares each layer's position (`position_dodge` vs. the default `position_stack`) and a layer's own data (e.g. `geom_hline(yintercept = 180)`); tests for both. Decision: layers that inherit the plot data are still compared only with `check_data`.
+- Decision: `summarise-regroup` solution uses `.groups = "drop"` + `.by = condition` instead of swapping the `group_by()` order (works by accident, hard to read).
+- Decision: descriptives-beginner uses dplyr + datawizard; `gtsummary::tbl_summary()` is only mentioned and follows in reporting-beginner, so this lesson does not load the heavy package.
+- Smoke test: section 5 runs a plot exercise in webR (wrong plot gets the inheritance hint, solution passes, plot drawn).
+
 ## Milestone 8, part 2a: plot checks, beginner lessons 1–3 (DE) (accepted, merged into main)
 
 - Check type `plot` (`tools/checks.R`, base R only): compares the ggplot with the solution's by layers (geoms in order), effective `aes()` per layer (plot mapping inherited, so `aes()` may sit in `ggplot()` or the layer), names of fixed settings outside `aes()` (catches `aes(fill = "steelblue")`), facets and scales incl. transformation; optional `params` (e.g. `method`, `se`), `check_data`, and `name` for a plot stored in an object. Decision: setting values (which colour) are not compared, only whether something is mapped or set.

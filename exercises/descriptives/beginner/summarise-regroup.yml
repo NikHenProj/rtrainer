@@ -1,0 +1,75 @@
+id: ds-b-summarise-regroup
+lesson: descriptives-beginner
+order: 3
+title:
+  de: Die übrig gebliebene Gruppierung
+  en: The leftover grouping
+kind: debug
+required: true
+packages: [dplyr]
+data: [driving_sim]
+setup: |
+  library(dplyr)
+prompt:
+  de: |
+    Gesucht ist pro Bedingung der Mittelwert der Personenmittelwerte von
+    `rt_ms` (erst pro Person und Bedingung mitteln, dann über die Personen). Das
+    Ergebnis soll 3 Zeilen mit den Spalten `condition` und `rt_mean` haben,
+    liefert aber 40 Zeilen. Repariere den Code.
+  en: |
+    The goal is the mean of participant means of `rt_ms` per condition (first
+    average per participant and condition, then across participants). The result
+    should have 3 rows with the columns `condition` and `rt_mean`, but it returns
+    40 rows. Fix the code.
+starter: |
+  driving_sim |>
+    group_by(participant, condition) |>
+    summarise(rt_person = mean(rt_ms, na.rm = TRUE)) |>
+    summarise(rt_mean = mean(rt_person))
+solution: |
+  driving_sim |>
+    group_by(participant, condition) |>
+    summarise(rt_person = mean(rt_ms, na.rm = TRUE), .groups = "drop") |>
+    summarise(rt_mean = mean(rt_person), .by = condition)
+hints:
+  - de: "Schau dir die Gruppierung nach dem ersten `summarise()` an (`group_vars()`), oder lies die Meldung von dplyr."
+    en: "Look at the grouping after the first `summarise()` (`group_vars()`), or read dplyr's message."
+  - de: "`summarise()` entfernt nur die letzte Gruppierungsebene; übrig bleibt `participant`."
+    en: "`summarise()` only removes the last grouping level; `participant` remains."
+  - de: "Löse die Gruppierung mit `.groups = \"drop\"` und gruppiere das zweite `summarise()` mit `.by = ______`."
+    en: "Drop the grouping with `.groups = \"drop\"` and group the second `summarise()` with `.by = ______`."
+explanation:
+  de: |
+    Nach `summarise()` bleibt die Gruppierung ohne die letzte Variable bestehen:
+    Aus `group_by(participant, condition)` wird `participant`, das zweite
+    `summarise()` mittelt also pro Person über die Bedingungen. dplyr weist
+    darauf hin („has grouped output by 'participant'“). `group_by(condition,
+    participant)` würde zufällig auch funktionieren, ist aber schwer zu lesen.
+    Robuster: `.groups = "drop"` und danach `.by = condition`, oder gleich
+    `.by` in beiden Schritten. Inhaltlich gewichtet das Zwei-Stufen-Mittel jede
+    Person gleich, auch wenn ihr einzelne Durchgänge fehlen.
+  en: |
+    After `summarise()`, the grouping persists minus the last variable:
+    `group_by(participant, condition)` becomes `participant`, so the second
+    `summarise()` averages per participant across conditions. dplyr points this
+    out ("has grouped output by 'participant'"). `group_by(condition,
+    participant)` would happen to work too, but is hard to read. More robust:
+    `.groups = "drop"` and then `.by = condition`, or `.by` in both steps right
+    away. In substance, the two-stage mean weights every participant equally,
+    even when some of their trials are missing.
+misconception:
+  de: "Nach `summarise()` ist die Gruppierung weder ganz aufgehoben noch ganz erhalten: Nur die letzte Ebene fällt weg."
+  en: "After `summarise()` the grouping is neither fully removed nor fully kept: only the last level is dropped."
+check:
+  type: value
+  ignore_row_order: true
+  ignore_col_order: false
+common_mistakes:
+  - pattern: "ungroup\\(\\)\\s*\\|>\\s*summarise\\(\\s*rt_mean\\s*=\\s*mean\\(\\s*rt_person\\s*\\)\\s*\\)"
+    message:
+      de: "Nach `ungroup()` mittelt `summarise()` über alles und liefert eine Zeile. Du brauchst eine Gruppierung nach `condition`."
+      en: "After `ungroup()`, `summarise()` averages over everything and returns one row. You need a grouping by `condition`."
+  - pattern: "^(?![\\s\\S]*rt_person)[\\s\\S]*summarise\\(\\s*rt_mean\\s*=\\s*mean\\(\\s*rt_ms"
+    message:
+      de: "Das mittelt direkt über alle Durchgänge. Gesucht ist das Mittel der Personenmittelwerte (zwei Stufen)."
+      en: "That averages directly over all trials. The task asks for the mean of participant means (two stages)."

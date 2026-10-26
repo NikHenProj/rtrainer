@@ -1,0 +1,84 @@
+id: ds-b-sample-table
+lesson: descriptives-beginner
+order: 4
+title:
+  de: Stichprobe beschreiben (Tabelle 1)
+  en: Describing the sample (Table 1)
+kind: write
+required: true
+packages: [dplyr]
+data: [survey]
+setup: |
+  library(dplyr)
+prompt:
+  de: |
+    Für Tabelle 1 beschreibst du die Befragten in `survey` je Bedienung
+    (`interface`): Anzahl `n`, mittleres Alter `age_m` und Standardabweichung
+    `age_sd` (beide auf 1 Nachkommastelle) sowie den Anteil Frauen in Prozent
+    `female_pct` (Bezug: alle Befragten der Gruppe, 1 Nachkommastelle). Bei einer
+    Person fehlt das Alter.
+  en: |
+    For Table 1 you describe the respondents in `survey` per interface
+    (`interface`): count `n`, mean age `age_m` and standard deviation `age_sd`
+    (both to 1 decimal) and the share of women in percent `female_pct` (base: all
+    respondents of the group, 1 decimal). One person's age is missing.
+starter: |
+  survey |>
+    summarise(
+      n = n(),
+      age_m = round(mean(age), 1),
+      .by = interface
+    )
+solution: |
+  survey |>
+    summarise(
+      n = n(),
+      age_m = round(mean(age, na.rm = TRUE), 1),
+      age_sd = round(sd(age, na.rm = TRUE), 1),
+      female_pct = round(100 * mean(gender == "female"), 1),
+      .by = interface
+    )
+hints:
+  - de: "Führ den Starter aus: Warum ist ein Mittelwert `NA`?"
+    en: "Run the starter: why is one mean `NA`?"
+  - de: "Ein Anteil ist der Mittelwert einer Bedingung: `mean(gender == \"female\")` zählt `TRUE` als 1."
+    en: "A share is the mean of a condition: `mean(gender == \"female\")` counts `TRUE` as 1."
+  - de: "`age_sd = round(sd(age, na.rm = TRUE), 1)`, `female_pct = round(100 * ______, 1)`."
+    en: "`age_sd = round(sd(age, na.rm = TRUE), 1)`, `female_pct = round(100 * ______, 1)`."
+explanation:
+  de: |
+    Ein einziges fehlendes Alter macht ohne `na.rm = TRUE` den Mittelwert der
+    ganzen Gruppe `NA`. Den Anteil liefert `mean(gender == "female")`, weil `TRUE`
+    als 1 und `FALSE` als 0 zählt; das ist kürzer und sicherer als `sum()`
+    geteilt durch eine fest eingetragene Zahl. Bezug ist hier die ganze Gruppe,
+    auch „prefer not to say“; das gehört in die Tabellenlegende. Für die
+    Veröffentlichung erzeugt `gtsummary::tbl_summary(by = interface)` dieselbe
+    Tabelle formatiert (Lektion „Ergebnisse berichten“). Satz für den
+    Methodenteil: „160 Personen (80 je Bedienung) nahmen teil; Alter M = 37,2,
+    SD = 11,0“.
+  en: |
+    Without `na.rm = TRUE`, a single missing age turns the whole group's mean
+    into `NA`. `mean(gender == "female")` gives the share because `TRUE` counts
+    as 1 and `FALSE` as 0; that is shorter and safer than `sum()` divided by a
+    hard-coded number. The base here is the whole group, including "prefer not to
+    say"; state that in the table note. For publication,
+    `gtsummary::tbl_summary(by = interface)` produces the same table formatted
+    (lesson "Reporting results"). Sentence for the methods section: "160 people
+    (80 per interface) took part; age M = 37.2, SD = 11.0".
+check:
+  type: value
+  ignore_row_order: true
+  ignore_col_order: false
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*na\\.rm)[\\s\\S]*mean\\(\\s*age"
+    message:
+      de: "Bei einer Person fehlt das Alter; ohne `na.rm = TRUE` wird `age_m` in ihrer Gruppe `NA`."
+      en: "One person's age is missing; without `na.rm = TRUE`, `age_m` becomes `NA` in their group."
+  - pattern: "/\\s*80\\b|/\\s*160\\b"
+    message:
+      de: "Teile nicht durch eine fest eingetragene Zahl; `mean(gender == \"female\")` rechnet den Anteil je Gruppe selbst."
+      en: "Do not divide by a hard-coded number; `mean(gender == \"female\")` computes the share per group itself."
+  - pattern: "mean\\(\\s*gender\\s*==\\s*[\"']female[\"']\\s*\\)\\s*,\\s*1\\s*\\)"
+    message:
+      de: "Das ist der Anteil zwischen 0 und 1. Gefragt sind Prozent: mit 100 multiplizieren."
+      en: "That is the share between 0 and 1. The task asks for percent: multiply by 100."

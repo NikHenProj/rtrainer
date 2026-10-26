@@ -1,0 +1,17 @@
+# Lesson metadata; exercises are the other *.yml files in this folder
+# (sorted by `order`), the knowledge check is quiz.yml.
+lesson: descriptives-beginner
+minutes: 45
+prerequisites: [reshaping-beginner]
+langs: [de]
+packages: [dplyr, datawizard]
+data: [driving_sim, survey, usability]
+goals:
+  de:
+    - Die Analyseeinheit bestimmen und Personen statt Zeilen zählen
+    - Kennwerte mit `summarise()` bilden, bei Messwiederholung in zwei Stufen
+    - Eine Stichprobenbeschreibung (Tabelle 1) und robuste Kennwerte für schiefe Daten erstellen
+  en:
+    - Determine the unit of analysis and count participants instead of rows
+    - Compute statistics with `summarise()`, in two stages for repeated measures
+    - Build a sample description (Table 1) and robust statistics for skewed data

@@ -1,0 +1,142 @@
+---
+title: "Visualisieren"
+subtitle: "Beginner · ggplot2: Zuordnungen, Ebenen, Facets, Skalen, Fehlerbalken"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, ggplot2]
+resources:
+  - ../data/driving_sim.csv
+  - ../data/usability.csv
+---
+
+{{< include /_generated/de/visualisation-beginner/runtime.qmd >}}
+
+{{< include /_generated/de/visualisation-beginner/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R läuft hier direkt im Browser. Beim ersten Besuch lädt es 10–30 Sekunden (Anzeige unten rechts), danach geht es schneller.
+:::
+
+## Wozu? {#why}
+
+**Forschungsfrage:** Welcher Prototyp lässt sich in welcher Aufgabe am schnellsten bedienen, und wo brechen Personen ab?
+
+Eine Tabelle mit Mittelwerten verrät nicht, dass einige Zeiten an der Abbruchgrenze von 180 s kleben oder dass eine Gerade durch alle Punkte einen Zusammenhang vortäuscht, den es innerhalb der Bedingungen nicht gibt. Ein Plot zeigt Verteilung, Ausreißer und Muster, bevor du rechnest, und er ist im Bericht oft das Erste, was Leser ansehen. ggplot2 baut jeden Plot aus denselben wenigen Bausteinen.
+
+## Konzept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 190" role="img" aria-labelledby="fig-vi-title fig-vi-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-vi-title">Bausteine eines ggplot</title>
+  <desc id="fig-vi-desc">Vier Bausteine, mit Pluszeichen verbunden: ggplot mit Daten und aes legt Daten und Zuordnungen fest, die alle Ebenen erben. Darauf folgen Ebenen wie geom_boxplot und geom_hline, dann Facets und Skalen. Darunter der Hinweis: aes ordnet Spalten zu, Werte außerhalb von aes sind feste Einstellungen.</desc>
+  <rect x="10" y="30" width="170" height="60" rx="6" class="rt-fig-box-accent" />
+  <rect x="200" y="30" width="150" height="60" rx="6" class="rt-fig-box" />
+  <rect x="370" y="30" width="180" height="60" rx="6" class="rt-fig-box" />
+  <text x="95" y="55" text-anchor="middle" class="rt-fig-code">ggplot(data, aes())</text>
+  <text x="95" y="76" text-anchor="middle" class="rt-fig-label rt-fig-muted">Daten, Zuordnungen</text>
+  <text x="275" y="55" text-anchor="middle" class="rt-fig-code">+ geom_*()</text>
+  <text x="275" y="76" text-anchor="middle" class="rt-fig-label rt-fig-muted">Ebenen</text>
+  <text x="460" y="50" text-anchor="middle" class="rt-fig-code">+ facet_*()</text>
+  <text x="460" y="66" text-anchor="middle" class="rt-fig-code">+ scale_*()</text>
+  <text x="460" y="83" text-anchor="middle" class="rt-fig-label rt-fig-muted">Panels, Achsen</text>
+  <text x="10" y="130" class="rt-fig-code">aes(fill = prototype)</text>
+  <text x="200" y="130" class="rt-fig-label">Mapping: Wert kommt aus einer Spalte, mit Legende</text>
+  <text x="10" y="160" class="rt-fig-code">fill = "steelblue"</text>
+  <text x="200" y="160" class="rt-fig-label">Setting: fester Wert für alle, außerhalb von aes()</text>
+</svg>
+<figcaption>Was in <code>ggplot(aes())</code> steht, erben alle Ebenen. Was in <code>geom_*(aes())</code> steht, gilt nur dort.</figcaption>
+</figure>
+```
+
+- **Daten im Langformat:** Jede Variable, die auf x, Farbe oder Panels soll, ist eine Spalte (Lektion „Umformen“).
+- **`aes()` (Mapping)** ordnet Spalten Ästhetiken zu: `x`, `y`, `colour`, `fill`, `group`. Dafür entsteht eine Skala mit Legende.
+- **Setting:** Feste Werte (`alpha = 0.4`, `fill = "steelblue"`, `linetype = "dashed"`) stehen außerhalb von `aes()`.
+- **Ebenen** (`geom_point()`, `geom_boxplot()`, `geom_col()`, `geom_smooth()`, `geom_hline()`) liegen übereinander, in der Reihenfolge des Codes.
+- **Facets** teilen in Panels (`facet_wrap(~condition)`), **Skalen** steuern Achsen und Farben (`scale_x_log10()`).
+- **Zusammenfassen vor dem Plot:** Mittelwerte und Fehlerbalken mit `summarise()` berechnen, mit der Person als Einheit.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## Mehr dazu: Plots für den Bericht
+
+- Einzelwerte zeigen, wo es geht (Punkte über Boxplots), statt nur Balken mit Fehlerbalken.
+- Achsen mit Einheit beschriften: `labs(x = NULL, y = "Bearbeitungszeit (s)", fill = "Prototyp")`.
+- Ruhiges Thema: `theme_minimal(base_size = 12)`; Farben für Farbsehschwäche: `scale_fill_viridis_d()`.
+- Speichern lokal mit `ggsave("fig1.png", width = 16, height = 10, units = "cm", dpi = 300)`.
+:::
+
+## Beispiel {#example}
+
+Bearbeitungszeiten je Aufgabe und Prototyp, Einzelwerte über den Boxen. Ändere `fill` in `colour` oder nimm `geom_jitter()` heraus und führe den Code erneut aus:
+
+```{webr}
+ggplot(usability, aes(task, time_s, fill = prototype)) +
+  geom_boxplot(outlier.shape = NA) +
+  geom_point(
+    position = position_jitterdodge(jitter.width = 0.15, dodge.width = 0.75),
+    alpha = 0.3, size = 1
+  ) +
+  labs(x = NULL, y = "Bearbeitungszeit (s)", fill = "Prototyp") +
+  theme_minimal(base_size = 12)
+```
+
+Mittelwerte mit Fehlerbalken: zuerst pro Person mitteln, dann über die Personen.
+
+```{webr}
+seq_summary <- usability |>
+  summarise(seq = mean(seq, na.rm = TRUE), .by = c(participant, prototype)) |>
+  summarise(m = mean(seq), se = sd(seq) / sqrt(n()), n = n(), .by = prototype)
+seq_summary
+
+ggplot(seq_summary, aes(prototype, m)) +
+  geom_point(size = 3) +
+  geom_errorbar(aes(ymin = m - se, ymax = m + se), width = 0.15) +
+  labs(x = "Prototyp", y = "Einfachheit (SEQ, 1–7), M ± SE") +
+  theme_minimal(base_size = 12)
+```
+
+**So berichtest du es (Abbildungsunterschrift):** Abbildung 1. Mittlere Einfachheitsbewertung (SEQ, 1–7) je Prototyp; Fehlerbalken zeigen ± 1 Standardfehler über die Personen (n = 24, für C n = 23).
+
+## Paketvergleich {#packages}
+
+| Aufgabe | Empfehlung | Alternative |
+|---|---|---|
+| Statistische Grafiken | **ggplot2** | Basis-R `plot()`, `boxplot()`: schnell für einen Blick, schwer zu kombinieren und zu gestalten |
+| Mehrere Plots zu einer Abbildung | **patchwork** (`p1 + p2`) | `cowplot::plot_grid()` |
+| Modellergebnisse zeichnen | **see** (`plot(estimate_means(...))`) | `ggeffects` |
+| Interaktive Grafiken | `plotly::ggplotly()` | nur für Web, nicht für den Artikel |
+
+## Übungen {#exercises}
+
+Vier Pflichtübungen und zwei Zusatzübungen. Geprüft wird der Aufbau deines Plots (Ebenen, Zuordnungen, feste Einstellungen, Facets, Skalen) und, wo angegeben, die gezeichneten Daten. Hinweise deckst du einzeln auf (**Hinweis zeigen**), die Lösung erst danach.
+
+{{< include /_generated/de/visualisation-beginner/exercises.qmd >}}
+
+## Wissenscheck {#check}
+
+{{< include /_generated/de/visualisation-beginner/quiz.qmd >}}
+
+## Spickzettel {#cheatsheet}
+
+```r
+ggplot(usability, aes(task, time_s, fill = prototype)) +   # Daten + Zuordnungen (vererbt)
+  geom_boxplot(outlier.shape = NA) +                       # Ebene
+  geom_hline(yintercept = 180, linetype = "dashed") +      # Referenz, fester Wert
+  facet_wrap(~expertise) +                                 # Panels
+  scale_y_log10() +                                        # Skala
+  labs(x = NULL, y = "Zeit (s)", fill = "Prototyp") +
+  theme_minimal()
+
+# Fehlerbalken: Person als Einheit
+rt_summary <- driving_sim |>
+  summarise(rt_ms = mean(rt_ms, na.rm = TRUE), .by = c(participant, condition)) |>
+  summarise(m = mean(rt_ms), se = sd(rt_ms) / sqrt(n()), .by = condition)
+```
+
+- Spalte → in `aes()`; fester Wert → außerhalb.
+- Gemeinsame Zuordnungen in `ggplot(aes())`, sonst kennt `geom_smooth()` die Gruppen nicht.
+- `geom_col()` für fertige Werte, `geom_bar()` zählt Zeilen; nebeneinander mit `position = "dodge"`.
+- Log-Achse mit `scale_x_log10()`, nicht `aes(x = log10(...))`.
+
+{{< include /_generated/de/visualisation-beginner/footer.qmd >}}

@@ -1,0 +1,86 @@
+id: ds-b-describe-person
+lesson: descriptives-beginner
+order: 2
+title:
+  de: Deskriptiv mit der Person als Einheit
+  en: Descriptives with the participant as unit
+kind: write
+required: true
+packages: [dplyr]
+data: [driving_sim]
+setup: |
+  library(dplyr)
+prompt:
+  de: |
+    Beschreibe die Reaktionszeit pro Bedingung so, dass jede Person einmal zählt:
+    Bilde zuerst pro Person und Bedingung den Mittelwert von `rt_ms` (fehlende
+    Werte ignorieren) und fasse diese Personenmittelwerte dann pro `condition`
+    zusammen.
+
+    Ergebnis: eine Zeile pro Bedingung mit den Spalten `condition`, `m`
+    (Mittelwert), `sd` (Standardabweichung), `n` (Anzahl Personen) und `se`
+    (Standardfehler `sd / sqrt(n)`), ungerundet.
+  en: |
+    Describe reaction time per condition so that each participant counts once:
+    first compute the mean of `rt_ms` per participant and condition (ignore
+    missing values), then summarise these participant means per `condition`.
+
+    Result: one row per condition with the columns `condition`, `m` (mean), `sd`
+    (standard deviation), `n` (number of participants) and `se` (standard error
+    `sd / sqrt(n)`), unrounded.
+starter: |
+  driving_sim |>
+    summarise(rt_ms = mean(rt_ms, na.rm = TRUE), .by = c(participant, condition))
+solution: |
+  driving_sim |>
+    summarise(rt_ms = mean(rt_ms, na.rm = TRUE), .by = c(participant, condition)) |>
+    summarise(
+      m = mean(rt_ms),
+      sd = sd(rt_ms),
+      n = n(),
+      se = sd / sqrt(n),
+      .by = condition
+    )
+hints:
+  - de: "Der Starter erledigt die erste Stufe: eine Zeile pro Person und Bedingung (120 Zeilen)."
+    en: "The starter does the first stage: one row per participant and condition (120 rows)."
+  - de: "Ein zweites `summarise()` fasst diese Zeilen pro Bedingung zusammen."
+    en: "A second `summarise()` condenses these rows per condition."
+  - de: "In `summarise()` kannst du gerade gebildete Spalten weiterverwenden: `se = sd / sqrt(n)`."
+    en: "Inside `summarise()` you can reuse columns you just created: `se = sd / sqrt(n)`."
+explanation:
+  de: |
+    Jede Person liefert 4 Durchgänge pro Bedingung. Über alle Durchgänge
+    gerechnet wäre `n` = 160 statt 40, und `sd` enthielte das Rauschen innerhalb
+    der Person; der Standardfehler würde um gut ein Drittel unterschätzt. Die
+    Personenmittelwerte sind die unabhängigen Einheiten. Im Unterschied zur
+    Übung in „Gruppenvergleiche“ sind die Daten hier noch nicht aggregiert, die
+    erste Stufe gehört also zur Aufgabe. Visual liegt mit etwa 1132 ms rund
+    230 ms über haptic; ob das über Personen hinweg stabil ist, klärt ein
+    gepaarter Vergleich, weil dieselben Personen in allen Bedingungen stecken.
+  en: |
+    Each participant contributes 4 trials per condition. Computed over all
+    trials, `n` would be 160 instead of 40, and `sd` would contain the noise
+    within participants; the standard error would be underestimated by more than
+    a third. The participant means are the independent units. Unlike the
+    exercise in "Group comparisons", the data are not aggregated yet, so the
+    first stage is part of the task. Visual is about 1132 ms, roughly 230 ms above
+    haptic; whether that holds across participants is a question for a paired
+    comparison, because the same participants are in all conditions.
+check:
+  type: value
+  ignore_row_order: true
+  ignore_col_order: false
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*participant)[\\s\\S]*condition"
+    message:
+      de: "Du fasst direkt über alle Durchgänge zusammen. Dann zählt jede Messung als eigene Person: `n` wird 160 statt 40 und `se` zu klein. Erst pro `participant` und Bedingung mitteln."
+      en: "You summarise directly over all trials. Then every measurement counts as its own participant: `n` becomes 160 instead of 40 and `se` too small. First average per `participant` and condition."
+  - pattern: "\\bn\\s*=\\s*(160|40)\\b"
+    message:
+      de: "`n` nicht fest eintragen, sondern mit `n()` zählen; so bleibt der Code richtig, wenn Personen fehlen."
+      en: "Do not hard-code `n`; count it with `n()` so the code stays right when participants are missing."
+  - pattern: "group_by\\([^)]*\\)[\\s\\S]*summarise\\([\\s\\S]*summarise\\("
+    message:
+      de: "Mit `group_by()` bleibt nach dem ersten `summarise()` eine Gruppierung übrig. Nimm `.by =` in beiden Schritten, dann ist klar, wonach gruppiert wird."
+      en: "With `group_by()`, a grouping remains after the first `summarise()`. Use `.by =` in both steps so the grouping is explicit."

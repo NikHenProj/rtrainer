@@ -1,0 +1,78 @@
+id: vi-b-facet-log-scale
+lesson: visualisation-beginner
+order: 5
+title:
+  de: Panels und logarithmische Achse
+  en: Panels and a logarithmic axis
+kind: write
+required: false
+packages: [ggplot2]
+data: [driving_sim]
+setup: |
+  library(ggplot2)
+prompt:
+  de: |
+    Reaktionszeiten sind rechtsschief. Zeichne ein Histogramm von `rt_ms` mit
+    `bins = 25`, ein Panel pro `condition` (`facet_wrap()`, untereinander). Die
+    x-Achse ist logarithmisch (Basis 10) skaliert, aber in Millisekunden
+    beschriftet, mit Achsenmarken bei 500, 700, 1000 und 1500.
+
+    Der Plot ist der letzte Ausdruck deines Codes.
+  en: |
+    Reaction times are right-skewed. Draw a histogram of `rt_ms` with `bins = 25`,
+    one panel per `condition` (`facet_wrap()`, stacked). The x axis is on a
+    logarithmic scale (base 10) but labelled in milliseconds, with breaks at 500,
+    700, 1000 and 1500.
+
+    The plot is the last expression of your code.
+starter: |
+  ggplot(driving_sim, aes(x = log10(rt_ms))) +
+    geom_histogram(bins = 25)
+solution: |
+  ggplot(driving_sim, aes(rt_ms)) +
+    geom_histogram(bins = 25) +
+    facet_wrap(~condition, ncol = 1) +
+    scale_x_log10(breaks = c(500, 700, 1000, 1500))
+hints:
+  - de: "Drei Bausteine: Geom, Facet und eine Skala für `x`."
+    en: "Three building blocks: geom, facet and a scale for `x`."
+  - de: "Die Transformation gehört in die Skala, nicht in `aes()`: Dann bleiben die Achsenbeschriftungen in ms."
+    en: "The transformation belongs in the scale, not in `aes()`: then the axis labels stay in ms."
+  - de: "`facet_wrap(~condition, ncol = 1)` und `scale_x_log10(breaks = ______)`."
+    en: "`facet_wrap(~condition, ncol = 1)` and `scale_x_log10(breaks = ______)`."
+explanation:
+  de: |
+    `scale_x_log10()` transformiert die Daten, bevor die Statistik rechnet: Die
+    25 Bins sind auf der Log-Skala gleich breit, die Marken bleiben aber in ms.
+    `aes(x = log10(rt_ms))` liefert dieselben Bins, die Achse zeigt dann jedoch
+    2,7 bis 3,2, was kaum jemand liest. `coord_trans(x = "log10")` transformiert
+    erst nach der Statistik: Die Bins werden auf der ms-Skala gebildet und dann
+    verzerrt. Untereinander angeordnete Panels (`ncol = 1`) teilen sich eine
+    x-Achse; so lassen sich die drei Verteilungen am besten vergleichen.
+  en: |
+    `scale_x_log10()` transforms the data before the statistic is computed: the
+    25 bins are equally wide on the log scale, but the breaks stay in ms.
+    `aes(x = log10(rt_ms))` gives the same bins, but the axis then shows 2.7 to
+    3.2, which hardly anyone reads. `coord_trans(x = "log10")` transforms only
+    after the statistic: the bins are formed on the ms scale and then distorted.
+    Stacked panels (`ncol = 1`) share one x axis; that makes the three
+    distributions easiest to compare.
+misconception:
+  de: "Ob man die Daten oder die Achse transformiert, macht für den Plot einen Unterschied: bei den Bins und bei der Beschriftung."
+  en: "Whether you transform the data or the axis makes a difference to the plot: in the bins and in the labels."
+check:
+  type: plot
+  params: [bins]
+common_mistakes:
+  - pattern: "log10\\(\\s*rt_ms"
+    message:
+      de: "Du transformierst die Daten in `aes()`; die Achse zeigt dann Log-Werte (2,7 bis 3,2) statt ms. `scale_x_log10()` transformiert und beschriftet in Originaleinheiten."
+      en: "You transform the data in `aes()`; the axis then shows log values (2.7 to 3.2) instead of ms. `scale_x_log10()` transforms and labels in original units."
+  - pattern: "coord_trans(form)?\\("
+    message:
+      de: "`coord_trans()` transformiert erst nach der Statistik: Die Bins entstehen auf der ms-Skala und werden dann verzerrt. Für gleich breite Bins auf der Log-Skala `scale_x_log10()` nutzen."
+      en: "`coord_trans()` only transforms after the statistic: the bins are formed on the ms scale and then distorted. For equal-width bins on the log scale use `scale_x_log10()`."
+  - pattern: "facet_grid"
+    message:
+      de: "Gefragt ist `facet_wrap()`; `facet_grid()` ordnet Panels nach Zeilen- und Spaltenvariablen."
+      en: "The task asks for `facet_wrap()`; `facet_grid()` arranges panels by row and column variables."

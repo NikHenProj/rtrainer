@@ -1,0 +1,17 @@
+# Lesson metadata; exercises are the other *.yml files in this folder
+# (sorted by `order`), the knowledge check is quiz.yml.
+lesson: visualisation-beginner
+minutes: 50
+prerequisites: [reshaping-beginner]
+langs: [de]
+packages: [dplyr, ggplot2]
+data: [driving_sim, usability]
+goals:
+  de:
+    - Einen Plot aus Daten, Zuordnungen (`aes()`) und Ebenen (`geom_*()`) aufbauen
+    - Mapping und Setting unterscheiden und wissen, welche Ebene was erbt
+    - Facets, Skalen und Referenzlinien einsetzen; Fehlerbalken mit der Person als Einheit
+  en:
+    - Build a plot from data, mappings (`aes()`) and layers (`geom_*()`)
+    - Tell mapping and setting apart and know which layer inherits what
+    - Use facets, scales and reference lines; error bars with the participant as unit

@@ -1,0 +1,77 @@
+id: vi-b-success-dodge
+lesson: visualisation-beginner
+order: 6
+title:
+  de: Erfolgsquoten nebeneinander
+  en: Success rates side by side
+kind: write
+required: false
+packages: [dplyr, ggplot2]
+data: [usability]
+setup: |
+  library(dplyr)
+  library(ggplot2)
+prompt:
+  de: |
+    Zeige die Erfolgsquote je Aufgabe und Prototyp als Säulendiagramm. Berechne
+    dazu `success_rates` mit den Spalten `task`, `prototype` und `success_rate`
+    (Anteil gelöster Aufgaben, `success` ist 0/1, ungerundet). Im Plot steht
+    `task` auf der x-Achse, `success_rate` auf der y-Achse, die Säulen sind nach
+    `prototype` gefüllt und stehen **nebeneinander**, nicht gestapelt.
+  en: |
+    Show the success rate per task and prototype as a bar chart. First compute
+    `success_rates` with the columns `task`, `prototype` and `success_rate`
+    (share of solved tasks, `success` is 0/1, unrounded). In the plot, `task` is
+    on the x axis, `success_rate` on the y axis, the bars are filled by
+    `prototype` and stand **side by side**, not stacked.
+starter: |
+  success_rates <- usability |>
+    summarise(success_rate = mean(success), .by = c(task, prototype))
+
+  ggplot(success_rates, aes(task, success_rate, fill = prototype)) +
+    geom_col()
+solution: |
+  success_rates <- usability |>
+    summarise(success_rate = mean(success), .by = c(task, prototype))
+
+  ggplot(success_rates, aes(task, success_rate, fill = prototype)) +
+    geom_col(position = "dodge")
+hints:
+  - de: "Führ den Starter aus: Welche y-Werte zeigt die Achse, und kann eine Quote über 1 liegen?"
+    en: "Run the starter: what y values does the axis show, and can a rate exceed 1?"
+  - de: "Säulen mit derselben x-Position werden standardmäßig gestapelt (`position = \"stack\"`)."
+    en: "Bars at the same x position are stacked by default (`position = \"stack\"`)."
+  - de: "`geom_col(position = ______)`."
+    en: "`geom_col(position = ______)`."
+explanation:
+  de: |
+    `geom_col()` stapelt Säulen mit derselben x-Position. Bei Anteilen ergibt
+    das Höhen über 2, die niemand deuten kann; erst
+    `position = "dodge"` stellt die Prototypen nebeneinander. Der Mittelwert
+    einer 0/1-Variable ist der Anteil der Einsen, deshalb reicht
+    `mean(success)`. Prototyp B wird beim Filtern von allen gelöst, C nur von
+    61 %. Für einen Bericht gehören Konfidenzintervalle dazu; bei 24 Personen
+    sind Quoten unsicher (Stufe Intermediate).
+  en: |
+    `geom_col()` stacks bars at the same x position. For rates, that gives heights
+    above 2 that nobody can interpret; only `position = "dodge"` places the
+    prototypes side by side. The mean of a 0/1 variable is the share of ones, so
+    `mean(success)` is enough. Prototype B is solved by everyone in the filter
+    task, C by only 61 %. A report needs confidence intervals; with 24
+    participants, rates are uncertain (intermediate level).
+check:
+  type: plot
+  check_data: true
+common_mistakes:
+  - pattern: "position\\s*=\\s*[\"']fill[\"']"
+    message:
+      de: "`position = \"fill\"` streckt jede Säulengruppe auf 1; die einzelnen Quoten sind dann nicht mehr ablesbar. Gefragt ist `\"dodge\"`."
+      en: "`position = \"fill\"` stretches each group of bars to 1; the single rates can no longer be read. The task asks for `\"dodge\"`."
+  - pattern: "geom_bar\\(\\s*\\)"
+    message:
+      de: "`geom_bar()` zählt Zeilen. Für schon berechnete Werte ist `geom_col()` das richtige Geom."
+      en: "`geom_bar()` counts rows. For values that are already computed, `geom_col()` is the right geom."
+  - pattern: "sum\\(\\s*success"
+    message:
+      de: "`sum(success)` zählt die gelösten Aufgaben; die Quote ist der Anteil, also `mean(success)`."
+      en: "`sum(success)` counts the solved tasks; the rate is the share, so `mean(success)`."

@@ -1,0 +1,83 @@
+id: rs-b-pivot-longer-predict
+lesson: reshaping-beginner
+order: 1
+title:
+  de: Zeilenfolge nach pivot_longer()
+  en: Row order after pivot_longer()
+kind: predict
+required: true
+packages: []
+data: []
+setup: ""
+prompt:
+  de: |
+    Was liefert der folgende Code? Führe ihn nicht aus, sondern gib das Ergebnis als
+    R-Wert ein, z. B. `c(1, 2)`.
+
+    ```r
+    d <- tibble(
+      participant = c("p01", "p02"),
+      visual = c(900, NA),
+      auditory = c(1100, 1050)
+    )
+    d |>
+      pivot_longer(-participant, names_to = "condition", values_to = "rt_ms") |>
+      pull(rt_ms)
+    ```
+  en: |
+    What does the following code return? Do not run it; type the result as an R value,
+    e.g. `c(1, 2)`.
+
+    ```r
+    d <- tibble(
+      participant = c("p01", "p02"),
+      visual = c(900, NA),
+      auditory = c(1100, 1050)
+    )
+    d |>
+      pivot_longer(-participant, names_to = "condition", values_to = "rt_ms") |>
+      pull(rt_ms)
+    ```
+starter: |
+  # Deine Vorhersage als Wert / your prediction as a value, e.g. c(1, 2)
+solution: |
+  c(900, 1100, NA, 1050)
+hints:
+  - de: "Jede Zeile von `d` wird zu so vielen Zeilen, wie Spalten gestapelt werden."
+    en: "Each row of `d` becomes as many rows as columns are stacked."
+  - de: "`pivot_longer()` arbeitet zeilenweise: erst alle Werte von `p01`, dann alle von `p02`."
+    en: "`pivot_longer()` works row by row: first all values of `p01`, then all of `p02`."
+  - de: "`NA` bleibt als eigene Zeile erhalten, solange `values_drop_na = FALSE` (Standard) gilt."
+    en: "`NA` stays as a row of its own as long as `values_drop_na = FALSE` (the default)."
+explanation:
+  de: |
+    `pivot_longer()` macht aus jeder Zeile einen Block mit einer Zeile pro
+    gestapelter Spalte. Die Reihenfolge ist daher Person für Person (`p01`-visual,
+    `p01`-auditory, `p02`-visual, `p02`-auditory), nicht Spalte für Spalte wie bei
+    `unlist(d[-1])`. Fehlende Werte bleiben als eigene Zeile stehen; mit
+    `values_drop_na = TRUE` würden sie entfernt. Wer sich auf eine Reihenfolge
+    verlässt, sortiert nach dem Umformen ausdrücklich mit `arrange()`.
+  en: |
+    `pivot_longer()` turns each row into a block with one row per stacked column.
+    The order is therefore participant by participant (`p01`-visual, `p01`-auditory,
+    `p02`-visual, `p02`-auditory), not column by column as with `unlist(d[-1])`.
+    Missing values stay as rows of their own; `values_drop_na = TRUE` would remove
+    them. If you rely on an order, sort explicitly with `arrange()` after reshaping.
+misconception:
+  de: "`pivot_longer()` stapelt nicht Spalte für Spalte (erst alle `visual`-Werte, dann alle `auditory`-Werte), sondern Zeile für Zeile."
+  en: "`pivot_longer()` does not stack column by column (first all `visual` values, then all `auditory` values) but row by row."
+check:
+  type: value
+common_mistakes:
+  - pattern: "900\\s*,\\s*NA\\s*,\\s*1100"
+    message:
+      de: "Das ist die Reihenfolge Spalte für Spalte. `pivot_longer()` geht zeilenweise vor: erst beide Werte von `p01`, dann die von `p02`."
+      en: "That is the column-by-column order. `pivot_longer()` goes row by row: first both values of `p01`, then those of `p02`."
+  - pattern: "^(?![\\s\\S]*NA)[\\s\\S]*1050"
+    message:
+      de: "Der fehlende Wert bleibt als Zeile erhalten; `NA` fällt nur mit `values_drop_na = TRUE` weg."
+      en: "The missing value stays as a row; `NA` is only dropped with `values_drop_na = TRUE`."
+  - pattern: "\""
+    message:
+      de: "`pull(rt_ms)` liefert die Werte-Spalte, also Zahlen, nicht die Bedingungsnamen."
+      en: "`pull(rt_ms)` returns the value column, so numbers, not the condition names."

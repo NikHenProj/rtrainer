@@ -1,0 +1,68 @@
+id: ds-b-count-units
+lesson: descriptives-beginner
+order: 1
+title:
+  de: Personen statt Zeilen zählen
+  en: Counting participants instead of rows
+kind: write
+required: true
+packages: [dplyr]
+data: [driving_sim]
+setup: |
+  library(dplyr)
+prompt:
+  de: |
+    Wie viele **Versuchspersonen** gibt es in `driving_sim` pro Geschlecht
+    (`gender`)? Das Ergebnis hat die Spalten `gender` und `n`.
+  en: |
+    How many **participants** per gender (`gender`) are there in `driving_sim`?
+    The result has the columns `gender` and `n`.
+starter: |
+  driving_sim |>
+    count(gender)
+solution: |
+  driving_sim |>
+    distinct(participant, gender) |>
+    count(gender)
+hints:
+  - de: "Jede Person hat 12 Zeilen (3 Bedingungen × 4 Durchgänge). Was zählt `count()`?"
+    en: "Each participant has 12 rows (3 conditions × 4 trials). What does `count()` count?"
+  - de: "Reduziere die Daten zuerst auf eine Zeile pro Person."
+    en: "First reduce the data to one row per participant."
+  - de: "`distinct(participant, gender)` und danach `count(______)`."
+    en: "`distinct(participant, gender)` and then `count(______)`."
+explanation:
+  de: |
+    `count()` zählt Zeilen, nicht Einheiten. Im Langformat mit Messwiederholung
+    gehört jede Person zu 12 Zeilen, deshalb wäre jede Zahl 12-mal zu groß (276
+    statt 23 Frauen). `distinct(participant, gender)` reduziert auf die
+    Analyseeinheit; alternativ `summarise(n = n_distinct(participant), .by =
+    gender)`. Vor jeder Zählung lohnt die Frage: Was ist hier eine Beobachtung?
+    Für den Methodenteil: „40 Personen (23 weiblich, 14 männlich, 3 divers)“.
+  en: |
+    `count()` counts rows, not units. In long format with repeated measures, each
+    participant has 12 rows, so every number would be 12 times too large (276
+    instead of 23 women). `distinct(participant, gender)` reduces to the unit of
+    analysis; alternatively `summarise(n = n_distinct(participant), .by =
+    gender)`. Before every count, ask: what is one observation here? For the
+    methods section: "40 participants (23 female, 14 male, 3 diverse)".
+misconception:
+  de: "`count()` zählt Zeilen, nicht Personen, auch wenn jede Person mehrere Zeilen hat."
+  en: "`count()` counts rows, not participants, even when each participant has several rows."
+check:
+  type: value
+  ignore_row_order: true
+  ignore_col_order: false
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*(distinct|n_distinct))[\\s\\S]*count\\(\\s*gender"
+    message:
+      de: "Das zählt Zeilen: Jede Person steckt in 12 Zeilen. Reduziere vorher auf eine Zeile pro Person."
+      en: "That counts rows: each participant is in 12 rows. First reduce to one row per participant."
+  - pattern: "^(?![\\s\\S]*(distinct|n_distinct))[\\s\\S]*n\\(\\)"
+    message:
+      de: "`n()` zählt Zeilen der Gruppe, nicht Personen. Nutze `n_distinct(participant)` oder `distinct()`."
+      en: "`n()` counts rows of the group, not participants. Use `n_distinct(participant)` or `distinct()`."
+  - pattern: "distinct\\(\\s*gender\\s*\\)"
+    message:
+      de: "`distinct(gender)` behält jedes Geschlecht nur einmal; damit ist `n` immer 1. Nimm `participant` mit dazu."
+      en: "`distinct(gender)` keeps each gender only once, so `n` is always 1. Include `participant`."

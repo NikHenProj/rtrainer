@@ -1,0 +1,74 @@
+id: rs-b-anti-join
+lesson: reshaping-beginner
+order: 5
+title:
+  de: Wer hat keinen Fragebogen?
+  en: Who has no questionnaire?
+kind: write
+required: false
+packages: [dplyr]
+data: [driving_sim]
+setup: |
+  library(dplyr)
+  ids <- c(1:36, 38, 41)
+  pre_survey <- tibble(
+    pid = sprintf("p%02d", ids),
+    driving_years = (ids * 7) %% 25 + 1
+  )
+prompt:
+  de: |
+    Vor dem Bericht prüfst du, welche Personen aus `driving_sim` keinen
+    Vorab-Fragebogen in `pre_survey` haben (Schlüssel dort: `pid`). Ergebnis:
+    eine Tabelle mit nur der Spalte `participant`, eine Zeile pro betroffener
+    Person.
+  en: |
+    Before reporting, you check which participants from `driving_sim` have no
+    pre-study questionnaire in `pre_survey` (key there: `pid`). Result: a table
+    with only the column `participant`, one row per affected participant.
+starter: |
+  driving_sim |>
+    distinct(participant)
+solution: |
+  driving_sim |>
+    distinct(participant) |>
+    anti_join(pre_survey, by = join_by(participant == pid))
+hints:
+  - de: "Es gibt einen Join, der nur die Zeilen links behält, die rechts **keinen** Partner haben."
+    en: "There is a join that keeps only the rows on the left that have **no** match on the right."
+  - de: "`anti_join()` fügt keine Spalten an, es filtert nur."
+    en: "`anti_join()` adds no columns; it only filters."
+  - de: "`anti_join(pre_survey, by = join_by(______))`."
+    en: "`anti_join(pre_survey, by = join_by(______))`."
+explanation:
+  de: |
+    `anti_join()` ist ein filternder Join: Er behält die Zeilen links ohne
+    Partner rechts und fügt keine Spalten hinzu. Hier sind es p37, p39 und p40.
+    Umgekehrt zeigt `anti_join(pre_survey, driving_sim, by = join_by(pid ==
+    participant))` die Person p41, die zwar den Fragebogen, aber keinen
+    Fahrversuch hat. Beide Zahlen gehören in den Methodenteil („Für 3 von 40
+    Personen fehlte der Vorab-Fragebogen“). Das Gegenstück `semi_join()` behält
+    nur die Zeilen mit Partner.
+  en: |
+    `anti_join()` is a filtering join: it keeps the rows on the left without a
+    match on the right and adds no columns. Here those are p37, p39 and p40.
+    Conversely, `anti_join(pre_survey, driving_sim, by = join_by(pid ==
+    participant))` shows p41, who has the questionnaire but no drive. Both
+    numbers belong in the methods section ("The pre-study questionnaire was
+    missing for 3 of 40 participants"). The counterpart `semi_join()` keeps only
+    rows with a match.
+check:
+  type: value
+  ignore_row_order: true
+common_mistakes:
+  - pattern: "semi_join"
+    message:
+      de: "`semi_join()` behält die Personen **mit** Fragebogen; gesucht sind die ohne."
+      en: "`semi_join()` keeps the participants **with** a questionnaire; you need those without."
+  - pattern: "left_join"
+    message:
+      de: "`left_join()` fügt Spalten an und behält alle Personen. Zum Finden der fehlenden passt `anti_join()`."
+      en: "`left_join()` adds columns and keeps everyone. `anti_join()` is the tool for finding the missing ones."
+  - pattern: "anti_join\\(\\s*driving_sim"
+    message:
+      de: "Die Reihenfolge zählt: links stehen die Personen, die du prüfst (`driving_sim`), rechts der Fragebogen."
+      en: "Order matters: on the left are the participants you check (`driving_sim`), on the right the questionnaire."

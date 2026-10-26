@@ -125,6 +125,46 @@ invisible(js("(() => {
 checked <- wait_for("!!document.querySelector('#ex-cl-b-remove-tests .exercise-grade.alert-success')", timeout = 90)
 step("cleaning: raw export read and solution graded correct", !is.na(checked), sprintf("%s s", checked))
 
+# 5. A plot exercise: a wrong plot gets the matching hint, the solution passes.
+goto("/de/visualisation-beginner.html")
+loaded <- wait_for(
+  "document.querySelectorAll('#ex-vi-b-aes-inherit .exercise-editor-btn-run-code').length > 0 &&
+   document.querySelectorAll('.exercise-editor-btn-run-code.disabled').length === 0",
+  timeout = 300
+)
+step("visualisation: webR and ggplot2 ready", !is.na(loaded), sprintf("%s s", loaded))
+run_plot <- function(code) {
+  invisible(js(sprintf("(() => {
+    const ex = document.querySelector('#ex-vi-b-aes-inherit');
+    ex.querySelectorAll('.exercise-grade').forEach(el => el.remove());
+    const v = ex.querySelector('.cm-content').cmView.view;
+    v.dispatch({changes: {from: 0, to: v.state.doc.length, insert: %s}});
+    ex.querySelector('.exercise-editor-btn-run-code').click();
+    return true;
+  })()", jsonlite::toJSON(code, auto_unbox = TRUE))))
+}
+run_plot(paste(
+  "ggplot(driving_sim, aes(rt_ms, lane_dev)) +",
+  "  geom_point(aes(colour = condition), alpha = 0.4) +",
+  "  geom_smooth(method = \"lm\", se = FALSE)",
+  sep = "\n"
+))
+hinted <- wait_for(
+  "(document.querySelector('#ex-vi-b-aes-inherit .exercise-grade.alert-danger')?.textContent || '').includes('ggplot(aes())')",
+  timeout = 90
+)
+step("visualisation: wrong plot gets the inheritance hint", !is.na(hinted), sprintf("%s s", hinted))
+run_plot(paste(
+  "ggplot(driving_sim, aes(rt_ms, lane_dev, colour = condition)) +",
+  "  geom_point(alpha = 0.4) +",
+  "  geom_smooth(method = \"lm\", se = FALSE)",
+  sep = "\n"
+))
+checked <- wait_for("!!document.querySelector('#ex-vi-b-aes-inherit .exercise-grade.alert-success')", timeout = 90)
+step("visualisation: plot solution graded correct", !is.na(checked), sprintf("%s s", checked))
+drawn <- js("!!document.querySelector('#ex-vi-b-aes-inherit canvas, #ex-vi-b-aes-inherit img')")
+step("visualisation: plot drawn", drawn)
+
 goto("/en/index.html")
 Sys.sleep(1)
 step("en: German-only lesson not linked in course plan", js("!document.querySelector('a[href*=\"cleaning-beginner\"]')"))
