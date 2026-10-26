@@ -1,0 +1,134 @@
+# Knowledge check: passed at >= `pass` share of correctly answered questions.
+lesson: missing-intermediate
+pass: 0.8
+questions:
+  - id: ms-i-q-implicit
+    prompt:
+      de: "`miss_var_summary(obs)` meldet für `rt_ms` 0 fehlende Werte. Trotzdem fehlen Messungen. Wie kann das sein?"
+      en: "`miss_var_summary(obs)` reports 0 missing values for `rt_ms`. Still, measurements are missing. How can that be?"
+    options:
+      - text:
+          de: "Die fehlenden Durchgänge sind gar nicht als Zeile vorhanden (implizit fehlend); erst `complete()` macht sie zu `NA`."
+          en: "The missing trials are not present as rows at all (implicitly missing); only `complete()` turns them into `NA`."
+        correct: true
+        explain:
+          de: "Genau. naniar zählt nur `NA`, die es in den Daten gibt. Abgleich mit dem Design (Personen × Bedingungen × Durchgänge) zeigt die Lücken."
+          en: "Exactly. naniar only counts `NA` that exist in the data. Comparing with the design (participants × conditions × trials) reveals the gaps."
+      - text:
+          de: "`miss_var_summary()` übersieht `NA` in numerischen Spalten."
+          en: "`miss_var_summary()` overlooks `NA` in numeric columns."
+        correct: false
+        explain:
+          de: "Nein, es zählt `NA` in allen Spaltentypen."
+          en: "No, it counts `NA` in all column types."
+      - text:
+          de: "Die fehlenden Werte sind als 0 gespeichert."
+          en: "The missing values are stored as 0."
+        correct: false
+        explain:
+          de: "Das kommt vor (dann `replace_with_na()`), aber hier fehlen die Zeilen selbst."
+          en: "That happens (then use `replace_with_na()`), but here the rows themselves are missing."
+  - id: ms-i-q-block
+    prompt:
+      de: "Bei 17 Personen fehlt ein Vertrauensitem, bei 2 Personen fehlen alle sechs. Wie gehst du beim Skalenwert vor?"
+      en: "17 respondents miss one trust item, 2 respondents miss all six. How do you handle the scale score?"
+    options:
+      - text:
+          de: "Vorab eine Regel festlegen (z. B. Mittelwert bei mindestens 4 von 6 Items) und die zwei Block-Ausfälle gesondert berichten."
+          en: "Set a rule in advance (e.g. mean if at least 4 of 6 items are present) and report the two block dropouts separately."
+        correct: true
+        explain:
+          de: "Ja. Einzelne Lücken sind mit dem Personenmittel gut aufgefangen, ein ganzer Block nicht."
+          en: "Yes. Single gaps are well covered by the person mean, a whole block is not."
+      - text:
+          de: "Alle 19 Personen ausschließen, sonst ist der Skalenwert verzerrt."
+          en: "Exclude all 19 respondents, otherwise the scale score is biased."
+        correct: false
+        explain:
+          de: "Das verschenkt Daten; bei einem fehlenden von sechs Items ist das Personenmittel eine gängige, vertretbare Lösung."
+          en: "That wastes data; with one of six items missing, the person mean is a common, defensible solution."
+      - text:
+          de: "`rowMeans(..., na.rm = TRUE)` ohne weitere Regel; das liefert für alle einen Wert."
+          en: "`rowMeans(..., na.rm = TRUE)` without any further rule; that gives everyone a value."
+        correct: false
+        explain:
+          de: "Für die zwei Block-Ausfälle liefert es `NaN`, und ein Wert aus nur einem Item wäre kaum noch die Skala."
+          en: "For the two block dropouts it returns `NaN`, and a value from a single item would hardly be the scale any more."
+  - id: ms-i-q-dropna
+    prompt:
+      de: "`driving_sim |> drop_na() |> summarise(n = n(), .by = condition)`: Welche Zeilen fallen weg?"
+      en: "`driving_sim |> drop_na() |> summarise(n = n(), .by = condition)`: which rows are dropped?"
+    options:
+      - text:
+          de: "Jede Zeile mit irgendeinem `NA`, auch in Spalten, die gar nicht ausgewertet werden (z. B. `age`)."
+          en: "Every row with any `NA`, even in columns that are not analysed at all (e.g. `age`)."
+        correct: true
+        explain:
+          de: "Richtig. Gezielt: `drop_na(lane_dev)`."
+          en: "Right. Targeted: `drop_na(lane_dev)`."
+      - text:
+          de: "Nur Zeilen mit `NA` in der Gruppierungsspalte `condition`."
+          en: "Only rows with `NA` in the grouping column `condition`."
+        correct: false
+        explain:
+          de: "`drop_na()` kennt die spätere Gruppierung nicht."
+          en: "`drop_na()` does not know about the later grouping."
+      - text:
+          de: "Keine, `n()` zählt fehlende Werte ohnehin nicht."
+          en: "None, `n()` does not count missing values anyway."
+        correct: false
+        explain:
+          de: "`n()` zählt Zeilen, egal ob `NA` darin steht."
+          en: "`n()` counts rows, whether they contain `NA` or not."
+  - id: ms-i-q-mar
+    prompt:
+      de: "Ältere Befragte lassen TLX-Items häufiger aus; das Alter ist erhoben. Welcher Mechanismus liegt nahe, und was folgt daraus?"
+      en: "Older respondents skip TLX items more often; age was recorded. Which mechanism is likely, and what follows?"
+    options:
+      - text:
+          de: "MAR: Das Fehlen hängt von einer beobachteten Variable ab. Mehrfachimputation mit Alter im Imputationsmodell ist dem Fallausschluss überlegen."
+          en: "MAR: missingness depends on an observed variable. Multiple imputation with age in the imputation model is better than case deletion."
+        correct: true
+        explain:
+          de: "Genau. Unter MAR kann Fallausschluss verzerren, Imputation mit den richtigen Prädiktoren nicht."
+          en: "Exactly. Under MAR, case deletion can bias results; imputation with the right predictors does not."
+      - text:
+          de: "MCAR, denn das Alter hat mit der Beanspruchung nichts zu tun."
+          en: "MCAR, because age has nothing to do with workload."
+        correct: false
+        explain:
+          de: "MCAR hieße: Das Fehlen hängt von nichts ab. Hier hängt es vom Alter ab."
+          en: "MCAR would mean that missingness depends on nothing. Here it depends on age."
+      - text:
+          de: "MNAR; dagegen hilft nur, die Personen auszuschließen."
+          en: "MNAR; the only remedy is to exclude the respondents."
+        correct: false
+        explain:
+          de: "MNAR hieße, das Fehlen hängt vom fehlenden Wert selbst ab; und Ausschluss hilft dann gerade nicht."
+          en: "MNAR would mean that missingness depends on the missing value itself; and exclusion does not help then either."
+  - id: ms-i-q-mice
+    prompt:
+      de: "Nach `imp <- mice(d, m = 20)`: Wie kommst du zu einem Ergebnis für den Bericht?"
+      en: "After `imp <- mice(d, m = 20)`: how do you get a result for the report?"
+    options:
+      - text:
+          de: "Das Modell in jedem Datensatz schätzen (`with(imp, lm(...))`) und mit `pool()` nach Rubins Regeln zusammenfassen."
+          en: "Fit the model in each dataset (`with(imp, lm(...))`) and combine with `pool()` using Rubin's rules."
+        correct: true
+        explain:
+          de: "Richtig. `pool()` mittelt die Schätzwerte und rechnet die Streuung zwischen den Imputationen in den Standardfehler ein."
+          en: "Right. `pool()` averages the estimates and adds the spread between imputations to the standard error."
+      - text:
+          de: "`complete(imp)` nehmen und damit wie gewohnt rechnen."
+          en: "Take `complete(imp)` and analyse it as usual."
+        correct: false
+        explain:
+          de: "Das ist nur der erste imputierte Datensatz; die Unsicherheit der Imputation fehlt, die Standardfehler sind zu klein."
+          en: "That is only the first imputed dataset; the imputation uncertainty is missing and the standard errors are too small."
+      - text:
+          de: "Die 20 Datensätze untereinander stapeln und ein Modell schätzen."
+          en: "Stack the 20 datasets and fit one model."
+        correct: false
+        explain:
+          de: "Dann täte das Modell so, als hätte es 20 × 160 unabhängige Personen; die Standardfehler wären viel zu klein."
+          en: "Then the model would act as if it had 20 × 160 independent respondents; the standard errors would be far too small."

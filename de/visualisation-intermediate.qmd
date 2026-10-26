@@ -1,0 +1,170 @@
+---
+title: "Visualisieren"
+subtitle: "Intermediate · Konfidenzintervalle, Modellplots, patchwork, Export"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, ggplot2, modelbased, patchwork]
+resources:
+  - ../data/driving_sim.csv
+  - ../data/survey.csv
+---
+
+{{< include /_generated/de/visualisation-intermediate/runtime.qmd >}}
+
+{{< include /_generated/de/visualisation-intermediate/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R läuft hier direkt im Browser. Beim ersten Besuch lädt es 10–30 Sekunden (Anzeige unten rechts), danach geht es schneller.
+:::
+
+## Wozu? {#why}
+
+**Forschungsfrage:** Reagieren erfahrene Fahrerinnen und Fahrer bei allen Warnmodalitäten schneller, und wie zeigst du das in einer Abbildung, die eine Zeitschrift annimmt?
+
+Explorative Plots dürfen roh sein. Abbildungen für einen Bericht müssen mehr leisten: Die Fehlerbalken zeigen ein benanntes Intervall über die richtige Einheit, Modellergebnisse erscheinen als Vorhersage mit Unsicherheit statt als Rohdatenmittel, zusammengehörige Plots stehen in einer gekennzeichneten Abbildung, und die Datei hat die verlangte Größe. Diese Lektion zeigt die vier Schritte mit ggplot2, modelbased und patchwork.
+
+## Konzept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 200" role="img" aria-labelledby="fig-vii-title fig-vii-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-vii-title">Von den Daten zur Abbildung im Manuskript</title>
+  <desc id="fig-vii-desc">Vier Kästen nebeneinander mit Pfeilen: Kennwerte aus Personenmitteln oder Modellvorhersagen, dann ggplot mit pointrange oder ribbon, dann patchwork kombiniert die Panels A und B, dann ggsave in Zielgröße 16 mal 10 Zentimeter bei 300 dpi.</desc>
+  <rect x="10" y="40" width="120" height="70" rx="4" class="rt-fig-box-accent" />
+  <text x="20" y="62" class="rt-fig-label">Kennwerte</text>
+  <text x="20" y="82" class="rt-fig-code">summarise()</text>
+  <text x="20" y="100" class="rt-fig-code">estimate_*()</text>
+  <text x="138" y="80" class="rt-fig-label">→</text>
+  <rect x="152" y="40" width="120" height="70" rx="4" class="rt-fig-box" />
+  <text x="162" y="62" class="rt-fig-label">Plot</text>
+  <text x="162" y="82" class="rt-fig-code">pointrange</text>
+  <text x="162" y="100" class="rt-fig-code">ribbon + line</text>
+  <text x="280" y="80" class="rt-fig-label">→</text>
+  <rect x="294" y="40" width="120" height="70" rx="4" class="rt-fig-box" />
+  <text x="304" y="62" class="rt-fig-label">Kombinieren</text>
+  <text x="304" y="82" class="rt-fig-code">p1 + p2</text>
+  <text x="304" y="100" class="rt-fig-code">tags A, B</text>
+  <text x="422" y="80" class="rt-fig-label">→</text>
+  <rect x="436" y="40" width="114" height="70" rx="4" class="rt-fig-box" />
+  <text x="446" y="62" class="rt-fig-label">Speichern</text>
+  <text x="446" y="82" class="rt-fig-code">ggsave()</text>
+  <text x="446" y="100" class="rt-fig-code">16×10 cm</text>
+  <text x="10" y="140" class="rt-fig-label">Einheit = Person: erst pro Person mitteln, dann Intervall</text>
+  <text x="10" y="162" class="rt-fig-label">Intervall benennen: SE, SD oder 95-%-KI in die Bildunterschrift</text>
+  <text x="10" y="184" class="rt-fig-label rt-fig-muted">Schrift in pt bleibt nur richtig, wenn in Zielgröße gespeichert wird</text>
+</svg>
+<figcaption>Eine Abbildung für den Bericht entsteht in vier Schritten; jeder hat einen typischen Fehler.</figcaption>
+</figure>
+```
+
+- **Konfidenzintervall aus Personenmitteln:** `m ± qt(0.975, n - 1) * se`, `n` = Personen. Gruppen nebeneinander mit `position_dodge()`. Bei Messwiederholung sind diese Intervalle für Vergleiche zwischen Bedingungen zu breit; das KI der Differenz kommt aus dem Modell.
+- **Modellplots:** modelbased gibt Vorhersagen als Tabelle zurück: `estimate_means()` für Mittelwerte je Stufe, `estimate_relation()` für Verläufe über einen kontinuierlichen Prädiktor. Spalten `Mean`/`Predicted`, `CI_low`, `CI_high`.
+- **patchwork:** `p1 + p2` (nebeneinander), `p1 / p2` (untereinander), `plot_layout(guides = "collect")` für eine gemeinsame Legende, `plot_annotation(tag_levels = "A")` für Kennbuchstaben.
+- **Themes:** erst ein vollständiges Theme (`theme_bw()`), dann `theme()`-Anpassungen; für ein ganzes Skript `theme_set()`.
+- **Export:** `ggsave(datei, plot, width, height, units = "cm", dpi = 300)`. Ohne `units` gilt Zoll.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## Mehr dazu: Intervalle bei Messwiederholung
+
+- **Cousineau-Morey:** Personenmittel vor dem Intervall um den Personeneffekt bereinigen (jede Person auf den Gesamtmittelwert zentrieren) und mit √(k/(k−1)) korrigieren; dann passen die Intervalle zum Vergleich innerhalb der Personen. Fertig in `Rmisc::summarySEwithin()` (nicht im Browser).
+- **Aus dem Mixed Model:** `estimate_means()` auf ein `lmer()`-Modell (Lektion „Messwiederholung und Mixed Models“) liefert modellbasierte Intervalle; Unterschiede zeigst du mit `estimate_contrasts()`.
+- **Rohdaten mit zeigen:** Personenmittel als Punkte (`geom_jitter(width = 0.1, alpha = 0.3)`) unter den Mittelwerten machen Streuung und Ausreißer sichtbar.
+:::
+
+## Beispiel {#example}
+
+Mittelwert und 95-%-KI aus Personenmitteln, nach Erfahrung versetzt, mit den Personenmitteln im Hintergrund:
+
+```{webr}
+person <- driving_sim |>
+  summarise(rt = mean(rt_ms, na.rm = TRUE), .by = c(participant, experience, condition))
+ci <- person |>
+  summarise(m = mean(rt), se = sd(rt) / sqrt(n()), n = n(), .by = c(condition, experience)) |>
+  mutate(lo = m - qt(0.975, n - 1) * se, hi = m + qt(0.975, n - 1) * se)
+
+dodge <- position_dodge(width = 0.5)
+p_rt <- ggplot(ci, aes(condition, m, colour = experience)) +
+  geom_point(
+    data = person, aes(y = rt),
+    position = position_jitterdodge(jitter.width = 0.1, dodge.width = 0.5), alpha = 0.3
+  ) +
+  geom_pointrange(aes(ymin = lo, ymax = hi), position = dodge) +
+  labs(x = "Warning modality", y = "Reaction time (ms)", colour = "Experience") +
+  theme_bw()
+p_rt
+```
+
+Ein Modellplot: Wie hängt die Frustration im Fragebogen von der Technikaffinität ab, getrennt nach Bedienart? `estimate_relation()` liefert die Vorhersagen mit KI als Tabelle:
+
+```{webr}
+fit <- lm(tlx_frustration ~ interface * tech_affinity, data = survey)
+pred <- estimate_relation(fit, by = c("tech_affinity", "interface"))
+head(pred, 3)
+
+p_fit <- ggplot(pred, aes(tech_affinity, Predicted)) +
+  geom_ribbon(aes(ymin = CI_low, ymax = CI_high, fill = interface), alpha = 0.2) +
+  geom_line(aes(colour = interface)) +
+  labs(x = "Technology affinity (1–5)", y = "Frustration (0–100)", colour = NULL, fill = NULL) +
+  theme_bw()
+p_fit
+```
+
+Beide Plots als eine Abbildung mit Kennbuchstaben, gespeichert in Zielgröße. Im Browser landet die Datei im virtuellen Dateisystem von webR; `file.size()` zeigt, dass sie existiert:
+
+```{webr}
+fig <- p_rt + p_fit + plot_annotation(tag_levels = "A")
+fig
+out_file <- file.path(tempdir(), "figure2.png")
+ggsave(out_file, fig, width = 17, height = 8, units = "cm", dpi = 300)
+file.size(out_file)
+```
+
+**So berichtest du es (Bildunterschrift):** *Abbildung 2.* (A) Mittlere Reaktionszeit nach Warnmodalität und Erfahrung; Punkte: Personenmittel, Fehlerbalken: 95-%-KI über Personen (*n* = 20 je Gruppe). (B) Vorhergesagte Frustration (NASA-TLX) nach Technikaffinität und Bedienart mit 95-%-Konfidenzband aus einem linearen Modell mit Interaktion.
+
+## Paketvergleich {#packages}
+
+| Aufgabe | Empfehlung | Alternative |
+|---|---|---|
+| Mittelwerte mit KI | **dplyr** + `geom_pointrange()` | `stat_summary(fun.data = mean_cl_normal)` (rechnet über Zeilen, nicht über Personen; braucht Hmisc) |
+| Vorhersagen aus Modellen | **modelbased** `estimate_means()`, `estimate_relation()` | `ggeffects::predict_response()` (mit eigenem `plot()`); `marginaleffects::plot_predictions()` |
+| Plots kombinieren | **patchwork** | `cowplot::plot_grid()`; `facet_wrap()` nur, wenn alle Panels dieselbe Variable zeigen |
+| Speichern | **ggplot2** `ggsave()` mit `units = "cm"` | `ragg::agg_png()` / `svglite` direkt; für Word auch `.tiff` mit `compression = "lzw"` |
+
+## Übungen {#exercises}
+
+Drei Pflichtübungen und zwei Zusatzübungen. **Ausführen und prüfen** startet deinen Code und prüft ihn sofort. Hinweise deckst du einzeln auf (**Hinweis zeigen**), die Lösung erst danach.
+
+{{< include /_generated/de/visualisation-intermediate/exercises.qmd >}}
+
+## Wissenscheck {#check}
+
+{{< include /_generated/de/visualisation-intermediate/quiz.qmd >}}
+
+## Spickzettel {#cheatsheet}
+
+```r
+# KI aus Personenmitteln
+ci <- d |>
+  summarise(rt = mean(rt_ms, na.rm = TRUE), .by = c(participant, group, condition)) |>
+  summarise(m = mean(rt), se = sd(rt) / sqrt(n()), n = n(), .by = c(condition, group)) |>
+  mutate(lo = m - qt(0.975, n - 1) * se, hi = m + qt(0.975, n - 1) * se)
+ggplot(ci, aes(condition, m, ymin = lo, ymax = hi, colour = group)) +
+  geom_pointrange(position = position_dodge(width = 0.4))
+
+# Modellplot
+pred <- estimate_relation(fit, by = c("x", "group"))
+ggplot(pred, aes(x, Predicted)) +
+  geom_ribbon(aes(ymin = CI_low, ymax = CI_high, fill = group), alpha = 0.2) +
+  geom_line(aes(colour = group))
+
+# Kombinieren und speichern
+fig <- p1 + p2 + plot_layout(guides = "collect") + plot_annotation(tag_levels = "A")
+ggsave("figures/fig2.png", fig, width = 16, height = 8, units = "cm", dpi = 300)
+```
+
+- Fehlerbalken immer benennen (SE, SD, 95-%-KI) und über Personen rechnen.
+- Erst vollständiges Theme, dann `theme()`; für alle Abbildungen `theme_set()`.
+- In Zielgröße speichern; nie im Manuskript skalieren.
+
+{{< include /_generated/de/visualisation-intermediate/footer.qmd >}}

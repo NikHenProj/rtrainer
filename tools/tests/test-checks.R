@@ -194,6 +194,29 @@ test_that("rt_compare_plot checks facets, scales and optionally data", {
   expect_match(rt_compare_plot(other, hist, check_data = TRUE), "Daten des Plots")
 })
 
+test_that("rt_compare_plot compares patchwork combinations plot by plot and their layout", {
+  skip_if_not_installed("ggplot2")
+  skip_if_not_installed("patchwork")
+  library(patchwork)
+  d <- data.frame(g = c("a", "a", "b", "b"), y = 1:4)
+  p1 <- ggplot2::ggplot(d, ggplot2::aes(g, y)) + ggplot2::geom_point()
+  p2 <- ggplot2::ggplot(d, ggplot2::aes(g, y)) + ggplot2::geom_boxplot()
+  expected <- p1 + p2 + plot_layout(guides = "collect") + plot_annotation(tag_levels = "A")
+  # same combination, written with the operators in another order
+  written <- (p1 | p2) + plot_annotation(tag_levels = "A") + plot_layout(guides = "collect")
+  expect_null(rt_compare_plot(written, expected))
+
+  expect_match(rt_compare_plot(p1, expected), "patchwork")
+  expect_match(rt_compare_plot(p1 + p2 + p1, expected), "3 statt 2")
+  swapped <- p2 + p1 + plot_layout(guides = "collect") + plot_annotation(tag_levels = "A")
+  expect_match(rt_compare_plot(swapped, expected), "^Plot 1 der Kombination: Die Ebenen")
+  expect_match(rt_compare_plot(p1 + p2 + plot_layout(guides = "collect"), expected), "tag_levels")
+  stacked <- p1 / p2 + plot_layout(guides = "collect") + plot_annotation(tag_levels = "A")
+  expect_match(rt_compare_plot(stacked, expected, lang = "en"), "arrangement")
+  # a single plot is still compared as before
+  expect_null(rt_compare_plot(p1, p1))
+})
+
 test_that("rt_compare_plot checks layer positions", {
   skip_if_not_installed("ggplot2")
   d <- data.frame(x = c("a", "a", "b", "b"), y = 1:4, g = c("u", "v", "u", "v"))

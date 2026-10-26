@@ -1,0 +1,85 @@
+id: ms-i-pattern
+lesson: missing-intermediate
+order: 1
+title:
+  de: Fehlende Vertrauensitems pro Person zählen
+  en: Counting missing trust items per respondent
+kind: write
+required: true
+packages: [dplyr, naniar]
+data: [survey]
+setup: |
+  library(dplyr)
+  library(naniar)
+prompt:
+  de: |
+    Die Vertrauensskala in `survey` hat sechs Items (`trust_1` bis `trust_6`).
+    Bevor du einen Skalenwert bildest, willst du wissen, wie die fehlenden Werte
+    verteilt sind: vereinzelt oder ganze Blöcke?
+
+    Zähle mit naniar pro Person, wie viele der sechs Vertrauensitems fehlen, und
+    gib eine Häufigkeitstabelle zurück: Spalten `n_miss_vars` (Anzahl fehlender
+    Items) und `n` (Anzahl Personen), aufsteigend nach `n_miss_vars`.
+  en: |
+    The trust scale in `survey` has six items (`trust_1` to `trust_6`). Before
+    you compute a scale score, you want to know how the missing values are
+    distributed: scattered or whole blocks?
+
+    Use naniar to count per respondent how many of the six trust items are
+    missing, and return a frequency table: columns `n_miss_vars` (number of
+    missing items) and `n` (number of respondents), sorted by `n_miss_vars`.
+starter: |
+  survey |>
+    select(respondent, starts_with("trust_"))
+solution: |
+  survey |>
+    add_n_miss(starts_with("trust_")) |>
+    count(n_miss_vars)
+hints:
+  - de: "naniar hat Funktionen, die pro Zeile eine Spalte mit der Anzahl fehlender Werte anhängen (`add_*`)."
+    en: "naniar has functions that append a column with the number of missing values per row (`add_*`)."
+  - de: "`add_n_miss()` nimmt eine Spaltenauswahl wie `starts_with(\"trust_\")` und legt `n_miss_vars` an."
+    en: "`add_n_miss()` takes a column selection such as `starts_with(\"trust_\")` and creates `n_miss_vars`."
+  - de: "Danach `count(n_miss_vars)`."
+    en: "Then `count(n_miss_vars)`."
+explanation:
+  de: |
+    139 Personen haben alle Items beantwortet, 17 haben ein Item ausgelassen,
+    2 zwei, und 2 Personen fehlt der ganze Block. Das sind zwei verschiedene
+    Muster: Vereinzelte Lücken sind typisch für überlesene Items (oft MCAR), ein
+    fehlender Block deutet auf einen Abbruch oder eine übersprungene Seite hin,
+    und dafür gibt es meist einen Grund (z. B. kein Vertrauen gebildet, weil das
+    System nicht genutzt wurde). Für den Skalenwert folgt daraus eine Regel, die
+    du vorher festlegst, etwa „Mittelwert, wenn mindestens 4 von 6 Items
+    vorliegen“; die beiden Block-Ausfälle berichtest du gesondert.
+    `miss_case_table()` liefert dieselbe Verteilung mit Prozenten,
+    `rowSums(is.na(pick(...)))` ist der Weg ohne naniar.
+  en: |
+    139 respondents answered all items, 17 skipped one item, 2 skipped two, and
+    2 respondents are missing the whole block. These are two different
+    patterns: scattered gaps are typical of overlooked items (often MCAR), a
+    missing block points to a dropout or a skipped page, which usually has a
+    reason (e.g. no trust formed because the system was not used). For the
+    scale score, this leads to a rule you set in advance, such as "mean if at
+    least 4 of 6 items are present"; you report the two block dropouts
+    separately. `miss_case_table()` gives the same distribution with
+    percentages, `rowSums(is.na(pick(...)))` is the way without naniar.
+misconception:
+  de: "Fehlende Werte sind über die Fälle gleichmäßig verteilt; eine Gesamtzahl pro Variable sagt genug."
+  en: "Missing values are spread evenly across cases; a total per variable says enough."
+check:
+  type: value
+  ignore_col_order: false
+common_mistakes:
+  - pattern: "miss_var_summary"
+    message:
+      de: "`miss_var_summary()` zählt pro Variable. Gefragt ist die Anzahl fehlender Items pro Person."
+      en: "`miss_var_summary()` counts per variable. The question asks for the number of missing items per respondent."
+  - pattern: "add_n_miss\\(\\s*\\)"
+    message:
+      de: "Ohne Spaltenauswahl zählt `add_n_miss()` über alle Spalten, also auch SUS und TLX. Wähle mit `starts_with(\"trust_\")` aus."
+      en: "Without a column selection, `add_n_miss()` counts across all columns, including SUS and TLX. Select with `starts_with(\"trust_\")`."
+  - pattern: "miss_case_table"
+    message:
+      de: "`miss_case_table()` liefert die richtige Verteilung, aber mit anderen Spaltennamen. Gefragt sind `n_miss_vars` und `n`."
+      en: "`miss_case_table()` gives the right distribution, but with other column names. The question asks for `n_miss_vars` and `n`."

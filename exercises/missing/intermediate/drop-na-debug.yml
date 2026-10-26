@@ -1,0 +1,84 @@
+id: ms-i-drop-na-debug
+lesson: missing-intermediate
+order: 3
+title:
+  de: drop_na() entfernt zu viel
+  en: drop_na() removes too much
+kind: debug
+required: true
+packages: [dplyr, tidyr]
+data: [driving_sim]
+setup: |
+  library(dplyr)
+  library(tidyr)
+prompt:
+  de: |
+    Gesucht ist pro Bedingung die mittlere Spurabweichung `lane_mean` (auf 3
+    Stellen gerundet) und die Anzahl `n` der Durchgänge mit gültiger `lane_dev`.
+    Ausgeschlossen werden sollen nur fehlende `lane_dev`-Werte.
+
+    Der Code läuft, liefert aber zu kleine `n`. Repariere ihn; Ergebnis:
+    Spalten `condition`, `lane_mean`, `n`.
+  en: |
+    The task is the mean lane deviation `lane_mean` per condition (rounded to 3
+    decimals) and the number `n` of trials with a valid `lane_dev`. Only missing
+    `lane_dev` values should be excluded.
+
+    The code runs, but returns too small `n`. Fix it; result: columns
+    `condition`, `lane_mean`, `n`.
+starter: |
+  driving_sim |>
+    drop_na() |>
+    summarise(lane_mean = round(mean(lane_dev), 3), n = n(), .by = condition)
+solution: |
+  driving_sim |>
+    drop_na(lane_dev) |>
+    summarise(lane_mean = round(mean(lane_dev), 3), n = n(), .by = condition)
+hints:
+  - de: "Zähle mit `colSums(is.na(driving_sim))` oder `miss_var_summary(driving_sim)`, in welchen Spalten `NA` vorkommt."
+    en: "Count with `colSums(is.na(driving_sim))` or `miss_var_summary(driving_sim)` which columns contain `NA`."
+  - de: "`drop_na()` ohne Argumente prüft alle Spalten."
+    en: "`drop_na()` without arguments checks all columns."
+  - de: "Gib `drop_na()` die Spalte an, auf die es ankommt."
+    en: "Give `drop_na()` the column that matters."
+explanation:
+  de: |
+    `drop_na()` ohne Spaltenangabe entfernt jede Zeile mit irgendeinem `NA`: hier
+    auch Durchgänge mit fehlender Reaktionszeit und alle 12 Durchgänge von p17
+    (Alter fehlt). Visual hat dann 153 statt 159 gültige Werte. Die Stichprobe für
+    `lane_dev` hängt so an Ausfällen in ganz anderen Variablen; das ist
+    listenweiser Ausschluss und kann verzerren, wenn diese Ausfälle nicht zufällig
+    sind (z. B. ältere Personen geben das Alter seltener an). `drop_na(lane_dev)`
+    oder `filter(!is.na(lane_dev))` schließt nur die relevanten Zeilen aus.
+    `mean(lane_dev, na.rm = TRUE)` allein reicht nicht, weil `n()` dann weiter
+    alle Zeilen zählt; `sum(!is.na(lane_dev))` wäre die Alternative.
+  en: |
+    `drop_na()` without columns removes every row with any `NA`: here also trials
+    with a missing reaction time and all 12 trials of p17 (age missing). Visual
+    then has 153 instead of 159 valid values. The sample for `lane_dev` depends on
+    dropouts in entirely different variables; that is listwise deletion and can
+    bias results when those dropouts are not random (e.g. older participants
+    report their age less often). `drop_na(lane_dev)` or
+    `filter(!is.na(lane_dev))` excludes only the relevant rows.
+    `mean(lane_dev, na.rm = TRUE)` alone is not enough, because `n()` then still
+    counts all rows; `sum(!is.na(lane_dev))` would be the alternative.
+misconception:
+  de: "`drop_na()` ohne Argumente entfernt nur die `NA` der Spalte, die man danach auswertet."
+  en: "`drop_na()` without arguments only removes the `NA` of the column you analyse afterwards."
+check:
+  type: value
+  ignore_row_order: true
+  ignore_col_order: false
+common_mistakes:
+  - pattern: "na\\.omit\\("
+    message:
+      de: "`na.omit()` entfernt wie `drop_na()` ohne Argumente jede Zeile mit irgendeinem `NA` (auch `rt_ms`, `age`)."
+      en: "Like `drop_na()` without arguments, `na.omit()` removes every row with any `NA` (also `rt_ms`, `age`)."
+  - pattern: "drop_na\\(\\s*\\)"
+    message:
+      de: "`drop_na()` ohne Argumente prüft alle Spalten; Durchgänge mit fehlender `rt_ms` oder fehlendem Alter fallen mit raus."
+      en: "`drop_na()` without arguments checks all columns; trials with a missing `rt_ms` or a missing age drop out too."
+  - pattern: "^(?![\\s\\S]*(drop_na\\(\\s*lane_dev|is\\.na\\(\\s*lane_dev))[\\s\\S]*na\\.rm"
+    message:
+      de: "`na.rm = TRUE` korrigiert den Mittelwert, aber `n()` zählt weiter alle Zeilen. Entferne die Zeilen mit fehlender `lane_dev` vorher."
+      en: "`na.rm = TRUE` fixes the mean, but `n()` still counts all rows. Remove the rows with a missing `lane_dev` first."

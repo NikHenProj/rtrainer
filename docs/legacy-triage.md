@@ -1,6 +1,6 @@
 # Triage der 65 alten Aufgaben (freigegeben)
 
-Stand 2026-10-26. Quelle: `legacy/exercises/` (Tag `v0-shiny`). Migriert: 24 von 54 (markiert).
+Stand 2026-10-26. Quelle: `legacy/exercises/` (Tag `v0-shiny`). Migriert: 29 von 54 (markiert).
 
 **Freigegeben von Nick am 2026-10-26: 54 behalten, 11 streichen.** 18 der behaltenen gehören in den Beginner-Pfad (M8), markiert mit **B**.
 
@@ -19,7 +19,7 @@ Stand 2026-10-26. Quelle: `legacy/exercises/` (Tag `v0-shiny`). Migriert: 24 von
 | 2 | 01-basics/factor-relevel | write | cleaning-beginner **B** | `forcats::fct_relevel()` statt `factor(levels =)`; englische Stufen. | **Migriert (M8.2a).**
 | 3 | 01-basics/na-index | predict | working-with-r-beginner **B** | Unverändert; in der Erklärung auf `filter()` verweisen (lässt `NA` weg). | **Migriert (M8.2a).**
 | 4 | 01-basics/nested-list | write | programming-intermediate | Kontext: Modell- oder JSON-Objekt statt einer erfundenen `studie`-Liste. |
-| 5 | 02-dplyr/across | write | descriptives-intermediate | Mit `survey` (mehrere Skalen auf einmal) statt `driving_sim`. |
+| 5 | 02-dplyr/across | write | descriptives-intermediate | Mit `survey` (mehrere Skalen auf einmal) statt `driving_sim`. | **Migriert (M9 P2, `ds-i-across`, NASA-TLX statt `driving_sim`).**
 | 6 | 02-dplyr/case-when | write | cleaning-beginner **B** | Stufen englisch (`fast/medium/slow`), Ergebnis als geordneter Faktor. | **Migriert (M8.2a).**
 | 7 | 02-dplyr/count-units | write | descriptives-beginner **B** | Unverändert (Person statt Zeile zählen); gut für Tabelle 1. | **Migriert (M8.2b).**
 | 8 | 02-dplyr/filter-select | write | cleaning-beginner **B** | Englische Stufen. | **Migriert (M8.2a).**
@@ -28,8 +28,8 @@ Stand 2026-10-26. Quelle: `legacy/exercises/` (Tag `v0-shiny`). Migriert: 24 von
 | 11 | 02-dplyr/slice-max | write | cleaning-beginner **B** | Kontext: auffällige Durchgänge vor dem Bereinigen sichten. | **Migriert (M8.2a).**
 | 12 | 02-dplyr/summarise-regroup | debug | descriptives-beginner **B** | Unverändert (Gruppierung nach `summarise()`, `.groups`). | **Migriert (M8.2b).**
 | 13 | 02-dplyr/window-cumsum | write | reshaping-intermediate | Unverändert. | **Migriert (M9 P1).**
-| 14 | 03-tidyr/complete-trials | complete | missing-intermediate | Implizit fehlende Zeilen; Bezug zu `naniar` herstellen. |
-| 15 | 03-tidyr/drop-na-debug | debug | missing-intermediate | Unverändert. |
+| 14 | 03-tidyr/complete-trials | complete | missing-intermediate | Implizit fehlende Zeilen; Bezug zu `naniar` herstellen. | **Migriert (M9 P2, `ms-i-complete-trials`).**
+| 15 | 03-tidyr/drop-na-debug | debug | missing-intermediate | Unverändert. | **Migriert (M9 P2, `ms-i-drop-na-debug`).**
 | 16 | 03-tidyr/pivot-longer-predict | predict | reshaping-beginner **B** | Englische Stufen. | **Migriert (M8.2b).**
 | 17 | 03-tidyr/pivot-wider | write | reshaping-beginner **B** | Englische Stufen. | **Migriert (M8.2b).**
 | 18 | 03-tidyr/separate-delim | write | cleaning-intermediate | Kontext Logging-Schlüssel bleibt; Stufen englisch. | **Migriert (M9 P1).**
@@ -62,11 +62,11 @@ Stand 2026-10-26. Quelle: `legacy/exercises/` (Tag `v0-shiny`). Migriert: 24 von
 | 45 | 07-mixed/residuals-debug | debug | mixed-models-intermediate | `performance::check_model()` als Ausblick. |
 | 46 | 07-mixed/structure-predict | predict | mixed-models-intermediate | Zahlen an die neuen Daten anpassen (480 Zeilen, 9 fehlende `lane_dev`). |
 | 47 | 08-ggplot2/aes-inherit | write | visualisation-beginner **B** | Braucht Check-Typ `plot`. | **Migriert (M8.2b).**
-| 48 | 08-ggplot2/ci-ggsave | write | visualisation-intermediate | KI z. B. über `modelbased`; `ggsave()` ins Dateisystem von webR; Check `plot`. |
+| 48 | 08-ggplot2/ci-ggsave | write | visualisation-intermediate | KI z. B. über `modelbased`; `ggsave()` ins Dateisystem von webR; Check `plot`. | **Migriert (M9 P2), geteilt: `vi-i-ci-person` (KI aus Personenmitteln, nach Erfahrung versetzt) und `vi-i-ggsave-debug` (Einheiten in `ggsave()`); KI aus dem Modell in `vi-i-model-plot`.**
 | 49 | 08-ggplot2/errorbar-person-debug | debug | visualisation-beginner **B** | Check `plot`. | **Migriert (M8.2b).**
 | 50 | 08-ggplot2/facet-log-scale | write | visualisation-beginner **B** | Check `plot`. | **Migriert (M8.2b).**
 | 51 | 08-ggplot2/mapping-setting-debug | debug | visualisation-beginner **B** | Check `plot`. | **Migriert (M8.2b).**
-| 52 | 08-ggplot2/theme-predict | predict | visualisation-intermediate | Unverändert. |
+| 52 | 08-ggplot2/theme-predict | predict | visualisation-intermediate | Unverändert. | **Migriert (M9 P2, `vi-i-theme-predict`).**
 | 53 | 09-reproducibility/here-project | write | reproducibility-intermediate | Prüfen, ob `here` in webR läuft; sonst „Lokal ausführen“. |
 | 54 | 09-reproducibility/renv-dependencies-predict | predict | reproducibility-intermediate | Unverändert (nur vorhersagen, läuft ohne renv). |
 

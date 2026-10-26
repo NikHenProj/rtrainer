@@ -36,6 +36,10 @@ rt_messages <- list(
     plot_facet = "Die Aufteilung in Panels (facet) stimmt nicht: erwartet %s, erhalten %s.",
     plot_scale = "Die Skalen stimmen nicht: erwartet %s, erhalten %s.",
     plot_data = "Die Daten des Plots stimmen nicht: %s",
+    plot_patchwork = "Erwartet ist eine Kombination mehrerer Plots (patchwork), z. B. `p1 + p2`.",
+    plot_patch_count = "Die Kombination enthält %d statt %d Plots.",
+    plot_patch = "Plot %d der Kombination: %s",
+    plot_patch_layout = "Die Anordnung der Kombination stimmt nicht (`plot_layout()`: Spalten, Zeilen, Legenden) oder die Teilbilder sind anders gekennzeichnet (`plot_annotation(tag_levels = )`).",
     none = "keine",
     table_variables = "Die Tabelle enthält andere Variablen: erwartet %s, erhalten %s.",
     table_header = "Der Tabellenkopf stimmt nicht (Gruppenspalten oder N je Gruppe). Prüfe `by` und die Daten.",
@@ -68,6 +72,10 @@ rt_messages <- list(
     plot_facet = "The panels (facets) do not match: expected %s, got %s.",
     plot_scale = "The scales do not match: expected %s, got %s.",
     plot_data = "The plot data do not match: %s",
+    plot_patchwork = "A combination of several plots (patchwork) is expected, e.g. `p1 + p2`.",
+    plot_patch_count = "The combination contains %d instead of %d plots.",
+    plot_patch = "Plot %d of the combination: %s",
+    plot_patch_layout = "The arrangement of the combination does not match (`plot_layout()`: columns, rows, legends) or the panels are tagged differently (`plot_annotation(tag_levels = )`).",
     none = "none",
     table_variables = "The table contains other variables: expected %s, got %s.",
     table_header = "The table header does not match (group columns or N per group). Check `by` and the data.",
@@ -310,10 +318,41 @@ rt_scale_text <- function(plot) {
 # Compare a ggplot with the expected one: layers (geoms, in order), mapping,
 # fixed settings, position and own data per layer, facets, scales; optionally
 # named layer parameters (`params`, e.g. method, se) and the plot data.
+# Layout and tags of a patchwork; `$` works for S3 and S7 ggplot objects.
+# Rows and columns are resolved as patchwork does, so `p1 | p2` (nrow = 1)
+# equals `p1 + p2` (automatic grid).
+rt_patch_layout <- function(p) {
+  patches <- p$patches
+  dims <- ggplot2::wrap_dims(length(p), patches$layout$nrow, patches$layout$ncol)
+  list(
+    dims = as.integer(dims), byrow = patches$layout$byrow %||% TRUE,
+    guides = patches$layout$guides, tags = patches$annotation$tag_levels
+  )
+}
+
 rt_compare_plot <- function(result, expected, params = NULL, check_data = FALSE,
                             name = NULL, lang = "de") {
   if (!inherits(result, "ggplot")) {
     return(rt_msg("plot_class", lang, name %||% "p"))
+  }
+  # patchwork: compare each plot of the combination, then the layout.
+  if (inherits(expected, "patchwork")) {
+    if (!inherits(result, "patchwork")) {
+      return(rt_msg("plot_patchwork", lang))
+    }
+    if (length(result) != length(expected)) {
+      return(rt_msg("plot_patch_count", lang, length(result), length(expected)))
+    }
+    for (i in seq_along(expected)) {
+      problem <- rt_compare_plot(result[[i]], expected[[i]], params, check_data, name, lang)
+      if (!is.null(problem)) {
+        return(rt_msg("plot_patch", lang, i, problem))
+      }
+    }
+    if (!identical(rt_patch_layout(result), rt_patch_layout(expected))) {
+      return(rt_msg("plot_patch_layout", lang))
+    }
+    return(NULL)
   }
   geoms <- function(p) vapply(p$layers, function(l) rt_snake(class(l$geom)[1]), character(1))
   result_geoms <- geoms(result)

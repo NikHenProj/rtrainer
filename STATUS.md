@@ -1,12 +1,13 @@
 # STATUS
 
-Stand (2026-10-26): **M6 bis M8 Teil 5 und M9 Paket P1 (DE: import-, cleaning-, reshaping-intermediate) abgenommen und in `main`** (alle 10 Beginner-Lektionen und Mini-Projekt Beginner, DE + EN). **Online seit 2026-10-26:** https://nikhenproj.github.io/rtrainer/ (Pages-Quelle GitHub Actions, CI-Lauf 40326391796 grün). M9-Plan abgenommen (inkl. Datensatz `acceptance`): `docs/M9-plan.md`. Entscheidungen: NEWS.md.
+Stand (2026-10-26): **M6 bis M8 Teil 5 und M9 Paket P1 (DE: import-, cleaning-, reshaping-intermediate) abgenommen und in `main`; M9 Paket P2 (DE: missing-, visualisation-, descriptives-intermediate) fertig, wartet auf Abnahme (lokal committet, nicht gepusht)** (alle 10 Beginner-Lektionen und Mini-Projekt Beginner, DE + EN). **Online seit 2026-10-26:** https://nikhenproj.github.io/rtrainer/ (Pages-Quelle GitHub Actions, CI-Lauf 40326391796 grün). M9-Plan abgenommen (inkl. Datensatz `acceptance`): `docs/M9-plan.md`. Entscheidungen: NEWS.md.
 
 ## Was steht
 - **Gerüst (M6):** Quarto-Website mit quarto-live/webR, Theme hell/dunkel (IBM Plex Sans, JetBrains Mono, Indigo), Kopfzeile Kursplan · Wiederholen (n fällig) · Pakete · Glossar · DE/EN · Hell/Dunkel · Suche.
 - **Kursplan** (`de/index.qmd`, `en/index.qmd`): Matrix 23 Themen × 3 Stufen, Status je Zelle, „Weitermachen mit / Als Nächstes“, „Heute wiederholen (n)“.
 - **Lektionen:** `working-with-r-beginner`, `import-beginner`, `cleaning-beginner`, `reshaping-beginner`, `visualisation-beginner`, `descriptives-beginner`, `scales-beginner`, `regression-beginner`, `reporting-beginner` (33 Pflicht- + 13 Zusatzübungen, je 5 Fragen Wissenscheck). Alle in DE und EN (keine `langs`-Einschränkung mehr). Aufbau: Breadcrumb, Lektionskasten mit Fortschritt, links „Abschnitt x von 7“ (ab 1200 px), rechts Inhaltsverzeichnis, 3 Pflichtübungen (YAML), Wissenscheck (5 Fragen, ≥ 80 %), Spickzettel, Zurück/Weiter.
 - **Intermediate (M9, nur DE, `langs: [de]`):** `import-intermediate` (viele Dateien mit `read_csv(files, id)`, `possibly()`/`safely()`, SPSS-Labels mit haven, Excel-Datum/Text gemischt), `cleaning-intermediate` (`separate_wider_delim/regex`, verankerte Regex mit `str_match()`, `difftime`-Einheiten, forcats + `tabyl()`), `reshaping-intermediate` (Fensterfunktionen, abgesicherte Joins mit `relationship`/`unmatched`, `reduce()`). Je 3 Pflicht + 1 Zusatz, je 5 Fragen. Übungen mit Dateien schreiben sie im `setup` nach `tempdir()`.
+- **Intermediate P2 (nur DE, wartet auf Abnahme):** `missing-intermediate` (naniar pro Variable/Fall, `complete()` für implizit fehlende Zeilen, gezieltes `drop_na()`, mice als Ausblick mit `pool()`), `visualisation-intermediate` (KI aus Personenmitteln mit `position_dodge()`, `estimate_relation()` mit Band, patchwork, Themes, `ggsave()` in Zielgröße), `descriptives-intermediate` (`across()` mit Funktionsliste, Skalenwert mit Mindestzahl Items, Tabelle M (SD) lang → breit, Tabelle mit d deuten). 3 Pflicht + 1–2 Zusatz, je 5 Fragen. Plot-Check vergleicht patchwork-Kombinationen (Teilplots + Layout).
 - **Mini-Projekt Beginner (DE + EN):** `project-beginner`, eigene Zeile „Mini-Projekt“ unter den 23 Themen (`kind: project` in curriculum.yml), Pfad nach reporting-beginner. Auftrag mit Analyseplan → 5 Schritte mit je einer Pflichtübung (Import, Ausschluss, Skalen, Welch-t-Test, Tabelle 1, Ergebnisse deuten; 6 Pflicht + 1 Zusatz `pj-b-tlx-subscales`) → Gesamtskript (live) + „Lokal ausführen“ (Quarto → docx) → Wissenscheck (5) → Checkliste. Generator schreibt zusätzlich `exercise-<id>.qmd` je Übung; Check-Option `check_types`; Wiederholungskarten rendern Tabellen/Listen/Zitate.
 - **Wiederholung** (`review.qmd`): Leitner Boxen 1–5 (0/1/3/7/21 Tage), Sicherheits-Rating vor dem Prüfen, Leicht/Okay/Schwer, Serie, Mischen nach Lektionen; R lädt erst beim Start. Export/Import des Fortschritts (`#backup`).
 - **Pakete und Glossar** aus YAML (`content/packages/*.yml`, `content/glossary.yml`), Vorlagen für weitere Einträge.
@@ -14,8 +15,16 @@ Stand (2026-10-26): **M6 bis M8 Teil 5 und M9 Paket P1 (DE: import-, cleaning-, 
 - **Werkzeuge:** `tools/generate.R` (pre-render; `langs` in lesson.yml), `tools/checks.R` (value/object/output/plot; plot: Ebenen, aes, Settings, Position, Ebenendaten, Facets, Skalen; gtsummary-Tabellen nach Inhalt; Neuauswertung bei falschem `last_value`), `tools/selftest.R`, Tests `tools/tests/` (R) und `tests/js/` (Node), Browser-Rauchtest `tests/smoke-test.R`.
 - **CI** `.github/workflows/site.yaml`: Selbsttest, R- und Node-Tests, Render, Rauchtest, Pages-Deploy auf `main`.
 - **Daten (M8.1):** `driving_sim`, `survey` (Fragebogen: SUS, NASA-TLX, Vertrauen mit umgepolten Items, fehlende Werte, Aufmerksamkeitsfrage), `usability` (24 × 3 Prototypen × 4 Aufgaben, Lateinisches Quadrat, Timeout 180 s, p07 ohne C), `raw_export` (.csv mit `;`/Dezimalkomma) + `raw_export_xlsx` (gleiche Antworten, Titel-/Summenzeilen, gemischte Datumsformate, Codebook). Skripte in `data-raw/`, Einträge in `data/datasets.yml`, Tests `tools/tests/test-datasets.R`.
-- **Triage** `docs/legacy-triage.md`: 54 behalten (18 im Beginner-Pfad), 11 streichen, freigegeben. Migriert: 24 (markiert): alle Beginner-Aufgaben der Triage und P1 (10, 13, 18, 23, 24, 26).
+- **Triage** `docs/legacy-triage.md`: 54 behalten (18 im Beginner-Pfad), 11 streichen, freigegeben. Migriert: 29 (markiert): alle Beginner-Aufgaben der Triage, P1 (10, 13, 18, 23, 24, 26) und P2 (5, 14, 15, 48, 52).
 - Alt: `legacy/exercises/` (65 Aufgaben), `legacy/driving_sim_v0.*`.
+
+## Geprüft (2026-10-26, M9 P2)
+Über Verifier-Subagent (echte Ausgabe, gekürzt):
+- `Rscript tools/generate.R`: Generated 284 files, 81 exercises. `Rscript tools/selftest.R`: 81/81 exercises ok (Warnungen erwartet wie bisher)
+- `testthat::test_dir("tools/tests")`: FAIL 0 | WARN 8 | SKIP 0 | PASS 220; `node --test tests/js`: 12 pass, 0 fail
+- `quarto render`: Exit 0, 0 Warnungen; `_site/de/{missing,visualisation,descriptives}-intermediate.html` vorhanden
+- `Rscript tests/smoke-test.R`: 0 failure(s); neu Abschnitt 9: missing (webR + mice, naniar) bereit nach 23,3 s, visualisation-intermediate (modelbased, patchwork) nach 12,7 s (lokal, eine Messung); naniar-Lösung, `ggsave()`-PNG-Größe, modelbased-Plot, patchwork (Hinweis bei `/`, Lösung) in webR ok
+- Nicht geprüft: descriptives-intermediate nicht im Rauchtest (nur Render + Selbsttest); Lektionen nicht manuell durchgeklickt (SVG-Abbildungen, Wissenscheck, Beispielblöcke nur lokal in R ausgeführt, nicht in webR; mice-Beispiel mit m = 10 im Browser nicht gemessen).
 
 ## Geprüft (2026-10-26, M9 P1)
 Über Verifier-Subagent (echte Ausgabe, gekürzt):
@@ -48,7 +57,8 @@ Stand (2026-10-26): **M6 bis M8 Teil 5 und M9 Paket P1 (DE: import-, cleaning-, 
 - Kursplan: „nicht vorgesehen“-Zellen werden vom Screenreader einzeln vorgelesen (19×); ggf. kürzen.
 
 ## Als Nächstes
-1. M9 Paket P2 (DE): missing-, visualisation-, descriptives-intermediate (Altaufgaben 14, 15; 48, 52; 5).
+1. Abnahme M9 P2 durch Nick (Browser: Optik, mice-Beispiel-Laufzeit), dann Push nach Rückfrage.
+2. Vor P3: Datensatz `acceptance` (TAM) laut M9-Plan, dann M9 Paket P3 (DE): scales-, sem-, group-comparisons-intermediate (Altaufgaben 30, 31, 36, 37, 38).
 
 ## Umgebung
 - Quarto 1.10.19, R 4.6.1, Node 18, quarto-live 0.1.3-dev (`_extensions/r-wasm/live`, webR 0.6.0).

@@ -266,6 +266,49 @@ run_exercise("imp-i-haven-labels", paste(
 checked <- wait_for("!!document.querySelector('#ex-imp-i-haven-labels .exercise-grade.alert-success')", timeout = 90)
 step("intermediate: SPSS file read with haven graded correct", !is.na(checked), sprintf("%s s", checked))
 
+# 9. Intermediate P2: load time with mice (missing) and patchwork/modelbased
+# (visualisation); ggsave() writes a PNG in webR, a patchwork is graded.
+goto("/de/missing-intermediate.html")
+loaded <- wait_for(
+  "document.querySelectorAll('#ex-ms-i-pattern .exercise-editor-btn-run-code').length > 0 &&
+   document.querySelectorAll('.exercise-editor-btn-run-code.disabled').length === 0",
+  timeout = 300
+)
+step("missing: webR, mice and naniar ready", !is.na(loaded), sprintf("%s s", loaded))
+run_exercise("ms-i-pattern", "survey |>\n  add_n_miss(starts_with(\"trust_\")) |>\n  count(n_miss_vars)")
+checked <- wait_for("!!document.querySelector('#ex-ms-i-pattern .exercise-grade.alert-success')", timeout = 90)
+step("missing: naniar solution graded correct", !is.na(checked), sprintf("%s s", checked))
+
+goto("/de/visualisation-intermediate.html")
+loaded <- wait_for(
+  "document.querySelectorAll('#ex-vi-i-patchwork .exercise-editor-btn-run-code').length > 0 &&
+   document.querySelectorAll('.exercise-editor-btn-run-code.disabled').length === 0",
+  timeout = 300
+)
+step("visualisation-intermediate: webR, modelbased and patchwork ready", !is.na(loaded), sprintf("%s s", loaded))
+run_exercise("vi-i-ggsave-debug", paste(
+  "ggsave(out_file, fig, width = 16, height = 10, units = \"cm\", dpi = 300)",
+  "png_size(out_file)",
+  sep = "\n"
+))
+checked <- wait_for("!!document.querySelector('#ex-vi-i-ggsave-debug .exercise-grade.alert-success')", timeout = 90)
+step("visualisation-intermediate: ggsave() writes a PNG of the right size", !is.na(checked), sprintf("%s s", checked))
+run_exercise("vi-i-model-plot", paste(
+  "pred <- estimate_relation(fit, by = c(\"tech_affinity\", \"interface\"))",
+  "ggplot(pred, aes(tech_affinity, Predicted)) +",
+  "  geom_ribbon(aes(ymin = CI_low, ymax = CI_high, fill = interface), alpha = 0.2) +",
+  "  geom_line(aes(colour = interface))",
+  sep = "\n"
+))
+checked <- wait_for("!!document.querySelector('#ex-vi-i-model-plot .exercise-grade.alert-success')", timeout = 90)
+step("visualisation-intermediate: modelbased plot graded correct", !is.na(checked), sprintf("%s s", checked))
+run_exercise("vi-i-patchwork", "p_rt / p_lane")
+hinted <- wait_for("(document.querySelector('#ex-vi-i-patchwork .exercise-grade.alert-danger')?.textContent || '').includes('untereinander')", timeout = 90)
+step("visualisation-intermediate: stacked patchwork gets the hint", !is.na(hinted))
+run_exercise("vi-i-patchwork", "p_rt + p_lane +\n  plot_layout(guides = \"collect\") +\n  plot_annotation(tag_levels = \"A\")")
+checked <- wait_for("!!document.querySelector('#ex-vi-i-patchwork .exercise-grade.alert-success')", timeout = 90)
+step("visualisation-intermediate: patchwork graded correct", !is.na(checked), sprintf("%s s", checked))
+
 goto("/en/index.html")
 Sys.sleep(1)
 beginner <- c(

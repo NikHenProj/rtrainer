@@ -1,0 +1,155 @@
+---
+title: "Fehlende Werte"
+subtitle: "Intermediate · Muster erkennen, gezielt ausschließen, Mehrfachimputation"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [mice, dplyr, tidyr, naniar]
+resources:
+  - ../data/driving_sim.csv
+  - ../data/survey.csv
+---
+
+{{< include /_generated/de/missing-intermediate/runtime.qmd >}}
+
+{{< include /_generated/de/missing-intermediate/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R läuft hier direkt im Browser. Beim ersten Besuch lädt es 10–30 Sekunden (Anzeige unten rechts), danach geht es schneller.
+:::
+
+## Wozu? {#why}
+
+**Forschungsfrage:** Verändert sich der Befund „Sprachbedienung frustriert mehr als Touch“, wenn du die Befragten mit Lücken im Fragebogen anders behandelst?
+
+Fast jeder Datensatz hat Lücken: überlesene Items, Sensorausfälle, abgebrochene Sitzungen. R-Funktionen gehen damit sehr unterschiedlich um. `mean()` gibt `NA` zurück, `lm()` wirft stillschweigend ganze Fälle hinaus, `drop_na()` entfernt Zeilen wegen Spalten, die du gar nicht auswertest. Bevor du rechnest, brauchst du deshalb drei Antworten: *Wie viel* fehlt, *wo* (vereinzelt oder in Blöcken, explizit oder als fehlende Zeile) und *warum* vermutlich. Erst daraus folgt, ob Fallausschluss reicht oder Imputation nötig ist.
+
+## Konzept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 210" role="img" aria-labelledby="fig-msi-title fig-msi-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-msi-title">Explizit und implizit fehlende Werte</title>
+  <desc id="fig-msi-desc">Links eine Tabelle mit vier Durchgängen einer Person; im dritten steht NA bei der Reaktionszeit, das ist explizit fehlend. Rechts dieselbe Person, aber Durchgang drei fehlt als Zeile ganz, das ist implizit fehlend. Ein Pfeil mit complete zeigt, dass die fehlende Zeile mit NA ergänzt wird. Darunter die drei Mechanismen MCAR, MAR und MNAR.</desc>
+  <text x="20" y="18" class="rt-fig-label">explizit: NA in der Zelle</text>
+  <rect x="20" y="26" width="220" height="24" class="rt-fig-box-accent" />
+  <text x="28" y="43" class="rt-fig-code">participant trial rt_ms</text>
+  <rect x="20" y="50" width="220" height="96" class="rt-fig-box" />
+  <text x="28" y="68" class="rt-fig-code">p01         1     1377</text>
+  <text x="28" y="92" class="rt-fig-code">p01         2     1210</text>
+  <text x="28" y="116" class="rt-fig-code">p01         3     NA</text>
+  <text x="28" y="140" class="rt-fig-code">p01         4     1302</text>
+  <text x="300" y="18" class="rt-fig-label">implizit: Zeile fehlt</text>
+  <rect x="300" y="26" width="220" height="24" class="rt-fig-box-accent" />
+  <text x="308" y="43" class="rt-fig-code">participant trial rt_ms</text>
+  <rect x="300" y="50" width="220" height="72" class="rt-fig-box" />
+  <text x="308" y="68" class="rt-fig-code">p01         1     1377</text>
+  <text x="308" y="92" class="rt-fig-code">p01         2     1210</text>
+  <text x="308" y="116" class="rt-fig-code">p01         4     1302</text>
+  <text x="300" y="142" class="rt-fig-label">complete() ergänzt Durchgang 3 als NA</text>
+  <text x="20" y="176" class="rt-fig-label">MCAR: Fehlen hängt von nichts ab · MAR: von beobachteten Variablen</text>
+  <text x="20" y="198" class="rt-fig-label rt-fig-muted">MNAR: vom fehlenden Wert selbst (aus den Daten nicht prüfbar)</text>
+</svg>
+<figcaption>naniar zählt nur explizit fehlende Werte. Fehlende Zeilen werden erst durch den Abgleich mit dem Design sichtbar.</figcaption>
+</figure>
+```
+
+- **Zählen pro Variable und pro Fall:** `miss_var_summary()` (welche Spalte), `add_n_miss()` und `miss_case_table()` (wie viele Lücken pro Person). Erst beides zusammen zeigt Muster: verstreute Einzellücken oder ganze Blöcke.
+- **Implizit fehlend:** Was nicht als Zeile existiert, sieht kein `is.na()`. `complete()` (tidyr) gleicht mit dem Design ab und macht die Lücken explizit.
+- **Gezielt ausschließen:** `drop_na(lane_dev)` statt `drop_na()`. Ohne Spalten wirft es jede Zeile mit irgendeinem `NA` hinaus (listenweiser Ausschluss).
+- **Mechanismus:** MCAR (zufällig), MAR (hängt von Beobachtetem ab, z. B. Alter), MNAR (hängt vom fehlenden Wert selbst ab). Fallausschluss ist nur unter MCAR unverzerrt; Mehrfachimputation hilft unter MAR.
+- **Mehrfachimputation (mice):** erzeugt *m* plausible vollständige Datensätze, schätzt das Modell in jedem und fasst mit `pool()` zusammen. Die Streuung zwischen den Datensätzen geht als Unsicherheit in den Standardfehler ein.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## Mehr dazu: was in ein Imputationsmodell gehört
+
+- **Alle Variablen des Analysemodells**, auch die abhängige Variable; sonst werden Zusammenhänge zur Null hin verzerrt.
+- **Hilfsvariablen**, die das Fehlen oder den fehlenden Wert vorhersagen (andere Items derselben Skala, Alter).
+- **Keine IDs und keine abgeleiteten Summen**; Skalenwerte erst nach der Imputation bilden oder passiv imputieren.
+- **Anzahl Imputationen:** Faustregel *m* ≈ Prozent unvollständiger Fälle (hier 24 % → 20–25). Der Wert `fmi` in `pool()` zeigt, wie viel Information die Lücken kosten.
+- **Prüfen:** `densityplot(imp)` vergleicht beobachtete und imputierte Werte; `plot(imp)` zeigt, ob die Ketten konvergieren.
+:::
+
+## Beispiel {#example}
+
+Wie viel fehlt pro Variable? `miss_var_summary()` sortiert absteigend:
+
+```{webr}
+miss_var_summary(survey) |>
+  filter(n_miss > 0)
+```
+
+Kein Item fehlt bei mehr als gut 6 % der Befragten. Pro Person sieht es anders aus: Wie viele haben überhaupt eine Lücke in den TLX-Skalen?
+
+```{webr}
+survey |>
+  select(starts_with("tlx_")) |>
+  miss_case_table()
+```
+
+24 % der Befragten fehlt mindestens ein TLX-Wert. `lm()` würde alle Fälle mit einer Lücke in den *verwendeten* Variablen ausschließen. Die Fallanalyse und die Mehrfachimputation im Vergleich (10 Imputationen; im Browser dauert das einige Sekunden):
+
+```{webr}
+d <- survey |>
+  select(interface, tech_affinity, starts_with("tlx_"))
+
+cc <- lm(tlx_frustration ~ interface + tech_affinity, data = d)
+nobs(cc)
+round(confint(cc)["interfacevoice", ], 2)
+
+imp <- mice(d, m = 10, seed = 2026, printFlag = FALSE)
+fit <- with(imp, lm(tlx_frustration ~ interface + tech_affinity))
+summary(pool(fit), conf.int = TRUE) |>
+  select(term, estimate, std.error, `2.5 %`, `97.5 %`) |>
+  mutate(across(where(is.numeric), \(x) round(x, 2)))
+```
+
+`mice()` nimmt für numerische Spalten standardmäßig *predictive mean matching* (`pmm`): Es setzt beobachtete Werte ähnlicher Personen ein, deshalb bleiben imputierte TLX-Werte im Raster von 0 bis 100 in Fünferschritten. Die anderen TLX-Skalen dienen als Hilfsvariablen.
+
+**So berichtest du es (Methodenteil):** Fehlende Werte (höchstens 6 % je Variable, 24 % der Befragten mit mindestens einer Lücke in der NASA-TLX) wurden mit Mehrfachimputation ersetzt (mice, *m* = 20, predictive mean matching, alle TLX-Skalen als Prädiktoren). Die Ergebnisse unterschieden sich nicht vom Fallausschluss (*n* = 154).
+
+## Paketvergleich {#packages}
+
+| Aufgabe | Empfehlung | Alternative |
+|---|---|---|
+| Lücken zählen und Muster sehen | **naniar** `miss_var_summary()`, `miss_case_table()`, `gg_miss_var()` | Basis-R `colSums(is.na(d))`, `rowSums(is.na(d))`; `mice::md.pattern()` als Musterübersicht |
+| Implizit fehlende Zeilen | **tidyr** `complete()`, `nesting()` | `expand_grid()` + `left_join()`; `anti_join()` zeigt, was fehlt |
+| Gezielter Ausschluss | **tidyr** `drop_na(spalte)` | `filter(!is.na(spalte))`; `na.omit()` wirkt wie `drop_na()` ohne Spalten |
+| Mehrfachimputation | **mice** `mice()`, `with()`, `pool()` | `Amelia` (multivariat normal), `missRanger` (Random Forest, nur einfache Imputation); FIML in lavaan (`missing = "fiml"`) |
+| Mittelwert einsetzen | nicht empfohlen | verkleinert Streuung und Zusammenhänge; nur als Notlösung für einzelne Skalenitems (Personenmittel) |
+
+## Übungen {#exercises}
+
+Drei Pflichtübungen und eine Zusatzübung. **Ausführen und prüfen** startet deinen Code und prüft ihn sofort. Hinweise deckst du einzeln auf (**Hinweis zeigen**), die Lösung erst danach.
+
+{{< include /_generated/de/missing-intermediate/exercises.qmd >}}
+
+## Wissenscheck {#check}
+
+{{< include /_generated/de/missing-intermediate/quiz.qmd >}}
+
+## Spickzettel {#cheatsheet}
+
+```r
+# Wie viel, wo?
+miss_var_summary(d)                           # pro Variable
+d |> add_n_miss(starts_with("trust_")) |>     # pro Fall
+  count(n_miss_vars)
+
+# Implizit fehlende Zeilen explizit machen
+d |> complete(nesting(participant, age), condition, trial = 1:4)
+
+# Gezielt ausschließen
+d |> drop_na(lane_dev)
+
+# Mehrfachimputation
+imp <- mice(d, m = 20, seed = 1, printFlag = FALSE)
+fit <- with(imp, lm(y ~ x1 + x2))
+summary(pool(fit), conf.int = TRUE)
+```
+
+- Erst pro Variable *und* pro Fall zählen; Blöcke anders behandeln als Einzellücken.
+- `drop_na()` immer mit Spalten; `n` vor und nach dem Ausschluss berichten.
+- `mice` vor `dplyr` laden (oder `dplyr::filter()` schreiben): mice bringt eigene Versionen von `filter()` und `complete()` mit.
+
+{{< include /_generated/de/missing-intermediate/footer.qmd >}}

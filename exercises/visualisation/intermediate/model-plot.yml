@@ -1,0 +1,96 @@
+id: vi-i-model-plot
+lesson: visualisation-intermediate
+order: 2
+title:
+  de: Modellvorhersage mit Konfidenzband
+  en: Model prediction with a confidence band
+kind: complete
+required: true
+packages: [dplyr, ggplot2, modelbased]
+data: [survey]
+setup: |
+  library(dplyr)
+  library(ggplot2)
+  library(modelbased)
+  fit <- lm(tlx_frustration ~ interface * tech_affinity, data = survey)
+prompt:
+  de: |
+    `fit` ist das Modell `lm(tlx_frustration ~ interface * tech_affinity, data = survey)`:
+    Hängt der Zusammenhang zwischen Technikaffinität (1–5) und Frustration von der
+    Bedienart ab?
+
+    Ergänze die Lücken `______`: Hol mit modelbased die vorhergesagte Frustration
+    mit 95-%-KI über `tech_affinity` getrennt nach `interface` und zeichne pro
+    Bedienart ein Band (`geom_ribbon()`, Füllfarbe nach `interface`, `alpha = 0.2`)
+    und eine Linie (`geom_line()`, Farbe nach `interface`).
+  en: |
+    `fit` is the model `lm(tlx_frustration ~ interface * tech_affinity, data = survey)`:
+    does the relation between technology affinity (1–5) and frustration depend
+    on the interface?
+
+    Fill in the gaps `______`: use modelbased to get the predicted frustration
+    with 95% CI across `tech_affinity` by `interface`, and draw per interface a
+    band (`geom_ribbon()`, fill by `interface`, `alpha = 0.2`) and a line
+    (`geom_line()`, colour by `interface`).
+starter: |
+  pred <- ______(fit, by = c("tech_affinity", "interface"))
+
+  ggplot(pred, aes(tech_affinity, Predicted)) +
+    geom_ribbon(aes(ymin = ______, ymax = ______, fill = interface), alpha = 0.2) +
+    geom_line(aes(colour = interface))
+solution: |
+  pred <- estimate_relation(fit, by = c("tech_affinity", "interface"))
+
+  ggplot(pred, aes(tech_affinity, Predicted)) +
+    geom_ribbon(aes(ymin = CI_low, ymax = CI_high, fill = interface), alpha = 0.2) +
+    geom_line(aes(colour = interface))
+hints:
+  - de: "modelbased hat `estimate_means()` (Mittelwerte je Stufe), `estimate_slopes()` (Steigungen) und eine Funktion für vorhergesagte Werte über ein Raster."
+    en: "modelbased has `estimate_means()` (means per level), `estimate_slopes()` (slopes) and a function for predicted values across a grid."
+  - de: "Sieh dir `pred` an: Wie heißen die Spalten mit den Intervallgrenzen?"
+    en: "Look at `pred`: what are the columns with the interval limits called?"
+  - de: "`estimate_relation()`; die Grenzen heißen `CI_low` und `CI_high`."
+    en: "`estimate_relation()`; the limits are called `CI_low` and `CI_high`."
+explanation:
+  de: |
+    `estimate_relation()` legt ein Raster über die Prädiktoren in `by` und gibt
+    für jeden Punkt die Vorhersage mit KI zurück (`Predicted`, `CI_low`,
+    `CI_high`), fertig für ggplot. Mit Sprachbedienung fällt die Frustration mit
+    steigender Affinität etwas stärker (Steigung −3,9 [−7,9; 0,2] gegenüber
+    −1,0 [−4,9; 3,0] bei Touch), aber die Interaktion ist unsicher
+    (b = −2,9 [−8,5; 2,7], p = .31): Die Bänder überlappen über den ganzen
+    Bereich. An den Rändern (Affinität 1 und 5, je etwa 12 Personen) sind sie am
+    breitesten, weil dort wenige Daten liegen. Achte darauf, das Band nicht über
+    den beobachteten Bereich hinaus zu verlängern. `estimate_slopes(fit, trend =
+    "tech_affinity", by = "interface")` liefert die Steigungen als Zahlen für den
+    Text.
+  en: |
+    `estimate_relation()` puts a grid over the predictors in `by` and returns
+    the prediction with CI for each point (`Predicted`, `CI_low`, `CI_high`),
+    ready for ggplot. With voice control, frustration falls a little more with
+    increasing affinity (slope −3.9 [−7.9, 0.2] versus −1.0 [−4.9, 3.0] for
+    touch), but the interaction is uncertain (b = −2.9 [−8.5, 2.7], p = .31):
+    the bands overlap across the whole range. They are widest at the edges
+    (affinity 1 and 5, about 12 respondents each), because there are few data
+    there. Take care not to extend the band beyond the observed range.
+    `estimate_slopes(fit, trend = "tech_affinity", by = "interface")` gives the
+    slopes as numbers for the text.
+misconception:
+  de: "Zwei Linien mit unterschiedlicher Steigung zeigen eine Interaktion; das Konfidenzband ist Dekoration."
+  en: "Two lines with different slopes show an interaction; the confidence band is decoration."
+check:
+  type: plot
+  check_data: true
+common_mistakes:
+  - pattern: "______"
+    message:
+      de: "Es sind noch Lücken `______` offen."
+      en: "There are still gaps `______` to fill."
+  - pattern: "estimate_means\\("
+    message:
+      de: "`estimate_means()` mittelt über die Stufen; für einen Verlauf über `tech_affinity` brauchst du Vorhersagen über ein Raster: `estimate_relation()`."
+      en: "`estimate_means()` averages over levels; for a course across `tech_affinity` you need predictions across a grid: `estimate_relation()`."
+  - pattern: "ymin\\s*=\\s*(SE|Predicted)"
+    message:
+      de: "Die Grenzen des Bandes sind die KI-Spalten `CI_low` und `CI_high`, nicht der Standardfehler."
+      en: "The limits of the band are the CI columns `CI_low` and `CI_high`, not the standard error."

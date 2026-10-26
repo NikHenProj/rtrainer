@@ -1,0 +1,91 @@
+id: vi-i-theme-predict
+lesson: visualisation-intermediate
+order: 5
+title:
+  de: Vollständige Themes und theme()
+  en: Complete themes and theme()
+kind: predict
+required: false
+packages: []
+data: []
+setup: ""
+prompt:
+  de: |
+    Wo steht jeweils die Legende? Führe den Code nicht aus, sondern gib die drei
+    Positionen als Zeichenvektor ein, z. B. `c("top", "left", "none")`.
+
+    ```r
+    base <- ggplot(driving_sim, aes(condition, rt_ms, colour = experience)) +
+      geom_boxplot()
+
+    p1 <- base + theme_bw() + theme(legend.position = "bottom")
+    p2 <- base + theme(legend.position = "bottom") + theme_bw()
+    p3 <- base + theme(legend.position = "bottom") +
+      theme(panel.grid = element_blank())
+    ```
+
+    Gesucht: `c(<Position p1>, <Position p2>, <Position p3>)`.
+  en: |
+    Where is the legend in each case? Do not run the code; type the three
+    positions as a character vector, e.g. `c("top", "left", "none")`.
+
+    ```r
+    base <- ggplot(driving_sim, aes(condition, rt_ms, colour = experience)) +
+      geom_boxplot()
+
+    p1 <- base + theme_bw() + theme(legend.position = "bottom")
+    p2 <- base + theme(legend.position = "bottom") + theme_bw()
+    p3 <- base + theme(legend.position = "bottom") +
+      theme(panel.grid = element_blank())
+    ```
+
+    Wanted: `c(<position p1>, <position p2>, <position p3>)`.
+starter: |
+  # Deine Vorhersage als Wert, z. B. c("top", "left", "none")
+solution: |
+  c("bottom", "right", "bottom")
+hints:
+  - de: "Die Standardposition der Legende ist `\"right\"`. Welche Aufrufe können eine frühere Einstellung zurücksetzen?"
+    en: "The default legend position is `\"right\"`. Which calls can reset an earlier setting?"
+  - de: "`theme_bw()` ist ein vollständiges Theme, `theme()` ändert nur die genannten Elemente."
+    en: "`theme_bw()` is a complete theme, `theme()` only changes the named elements."
+  - de: "Ein vollständiges Theme ersetzt alles, was vorher gesetzt wurde; die Reihenfolge der `+` entscheidet."
+    en: "A complete theme replaces everything set before; the order of the `+` decides."
+explanation:
+  de: |
+    `theme_bw()`, `theme_minimal()` usw. sind vollständige Themes: Sie ersetzen
+    beim Addieren das gesamte bisherige Theme. In `p2` wird
+    `legend.position = "bottom"` deshalb von `theme_bw()` überschrieben, und die
+    Legende steht wieder rechts. `theme()` ergänzt dagegen nur die genannten
+    Elemente; in `p3` bleibt die Position erhalten, obwohl danach `panel.grid`
+    geändert wird. Praxisregel: erst das vollständige Theme, dann die eigenen
+    `theme()`-Anpassungen. Für ein ganzes Skript oder Manuskript einmal
+    `theme_set(theme_bw(base_size = 11))` und danach `theme_update(...)`; so
+    sehen alle Abbildungen gleich aus.
+  en: |
+    `theme_bw()`, `theme_minimal()` etc. are complete themes: when added, they
+    replace the entire previous theme. In `p2`, `legend.position = "bottom"` is
+    therefore overwritten by `theme_bw()`, and the legend is back on the right.
+    `theme()`, in contrast, only adds the named elements; in `p3` the position
+    is kept although `panel.grid` is changed afterwards. Rule of thumb: first
+    the complete theme, then your own `theme()` tweaks. For a whole script or
+    manuscript, call `theme_set(theme_bw(base_size = 11))` once and then
+    `theme_update(...)`; that way all figures look the same.
+misconception:
+  de: "Theme-Aufrufe addieren sich immer, egal in welcher Reihenfolge sie stehen."
+  en: "Theme calls always add up, regardless of their order."
+check:
+  type: value
+common_mistakes:
+  - pattern: "^[\\s\\S]*?c\\(\\s*[\"']bottom[\"']\\s*,\\s*[\"']bottom[\"']\\s*,"
+    message:
+      de: "`theme_bw()` ist ein vollständiges Theme und ersetzt in `p2` alle vorherigen Einstellungen, auch die Legendenposition."
+      en: "`theme_bw()` is a complete theme and replaces all previous settings in `p2`, including the legend position."
+  - pattern: "[\"']right[\"']\\s*\\)\\s*$"
+    message:
+      de: "`theme()` ändert nur die genannten Elemente; `panel.grid` setzt die Legendenposition in `p3` nicht zurück."
+      en: "`theme()` only changes the named elements; `panel.grid` does not reset the legend position in `p3`."
+  - pattern: "^[\\s\\S]*?c\\(\\s*[\"']right[\"']"
+    message:
+      de: "In `p1` steht `theme()` nach `theme_bw()`: Die eigene Anpassung wird auf das vollständige Theme gelegt und bleibt erhalten."
+      en: "In `p1`, `theme()` comes after `theme_bw()`: your own tweak is laid on top of the complete theme and is kept."

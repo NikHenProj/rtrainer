@@ -1,0 +1,19 @@
+# Lesson metadata; exercises are the other *.yml files in this folder
+# (sorted by `order`), the knowledge check is quiz.yml.
+lesson: missing-intermediate
+minutes: 50
+prerequisites: [cleaning-beginner, reshaping-beginner]
+langs: [de]
+packages: [mice, dplyr, tidyr, naniar]
+data: [driving_sim, survey]
+goals:
+  de:
+    - Fehlende Werte pro Variable und pro Fall zählen und Muster erkennen
+    - Implizit fehlende Zeilen sichtbar machen, bevor du auswertest
+    - Fälle gezielt statt pauschal ausschließen
+    - Einordnen, wann Mehrfachimputation mit mice den Fallausschluss verbessert
+  en:
+    - Count missing values per variable and per case and recognise patterns
+    - Make implicitly missing rows visible before you analyse
+    - Exclude cases deliberately instead of wholesale
+    - Judge when multiple imputation with mice improves on case deletion

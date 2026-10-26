@@ -1,0 +1,117 @@
+id: ms-i-mice-pool
+lesson: missing-intermediate
+order: 4
+title:
+  de: Fallausschluss und Mehrfachimputation vergleichen
+  en: Comparing case deletion and multiple imputation
+kind: interpret
+required: false
+packages: []
+data: []
+setup: ""
+prompt:
+  de: |
+    Frage: Erleben Befragte mit Sprachbedienung mehr Frustration (`tlx_frustration`,
+    0–100) als mit Touch, bei gleicher Technikaffinität? 38 von 160 Personen fehlt
+    mindestens ein TLX-Wert, 6 davon `tlx_frustration`. Zwei Auswertungen:
+
+    ```
+    # A: lm() mit Fallausschluss, n = 154
+                   estimate  2.5 % 97.5 %
+    interfacevoice     9.29   3.41  15.16
+    tech_affinity     -2.39  -5.21   0.42
+
+    # B: mice(m = 20) mit allen TLX-Skalen als Prädiktoren, gepoolt
+                   estimate std.error  df  2.5 % 97.5 %   fmi
+    interfacevoice     9.43      2.93 151   3.65  15.22 0.034
+    tech_affinity     -2.39      1.41 154  -5.17   0.40 0.019
+    ```
+
+    Welche Aussagen stimmen?
+
+    1. Beide Auswertungen kommen zum selben Schluss: mit Sprachbedienung etwa 9 Punkte mehr Frustration.
+    2. B ist genauer, weil es 20-mal so viele Daten hat.
+    3. `fmi` = 0.034 heißt: Nur etwa 3 % der Information über den Effekt gehen durch die fehlenden Werte verloren.
+    4. Weil A und B fast gleich sind, waren die fehlenden Werte sicher völlig zufällig (MCAR).
+
+    Gib die Nummern der richtigen Aussagen aufsteigend als Vektor ein, z. B. `c(1, 2)`.
+  en: |
+    Question: do respondents using voice control experience more frustration
+    (`tlx_frustration`, 0–100) than with touch, at the same technology affinity?
+    38 of 160 respondents are missing at least one TLX value, 6 of them
+    `tlx_frustration`. Two analyses:
+
+    ```
+    # A: lm() with case deletion, n = 154
+                   estimate  2.5 % 97.5 %
+    interfacevoice     9.29   3.41  15.16
+    tech_affinity     -2.39  -5.21   0.42
+
+    # B: mice(m = 20) with all TLX subscales as predictors, pooled
+                   estimate std.error  df  2.5 % 97.5 %   fmi
+    interfacevoice     9.43      2.93 151   3.65  15.22 0.034
+    tech_affinity     -2.39      1.41 154  -5.17   0.40 0.019
+    ```
+
+    Which statements are true?
+
+    1. Both analyses reach the same conclusion: about 9 points more frustration with voice control.
+    2. B is more precise because it has 20 times as much data.
+    3. `fmi` = 0.034 means: only about 3% of the information about the effect is lost to the missing values.
+    4. Because A and B are almost the same, the missing values were certainly completely at random (MCAR).
+
+    Type the numbers of the true statements in ascending order as a vector,
+    e.g. `c(1, 2)`.
+starter: |
+  # Nummern der richtigen Aussagen als Vektor / numbers of the true statements as a vector
+solution: |
+  c(1, 3)
+hints:
+  - de: "Vergleiche Schätzwerte und Intervallbreiten von A und B. Wie groß ist der Unterschied?"
+    en: "Compare the estimates and interval widths of A and B. How large is the difference?"
+  - de: "Die 20 imputierten Datensätze enthalten dieselben 160 Personen; `pool()` rechnet die Unsicherheit über die Imputationen ausdrücklich ein."
+    en: "The 20 imputed datasets contain the same 160 respondents; `pool()` explicitly adds the uncertainty across imputations."
+  - de: "Ähnliche Ergebnisse sind mit MCAR vereinbar, beweisen es aber nicht. Was ist mit Ausfällen, die vom fehlenden Wert selbst abhängen?"
+    en: "Similar results are compatible with MCAR, but do not prove it. What about dropouts that depend on the missing value itself?"
+explanation:
+  de: |
+    Richtig sind 1 und 3. Mit wenigen, verstreuten Lücken (höchstens 5 % je
+    Variable) unterscheiden sich Fallausschluss und Imputation kaum; B gewinnt etwas
+    Präzision, weil es die 6 Personen behält und die anderen TLX-Skalen als
+    Information nutzt. `m = 20` erzeugt keine neuen Daten: Die Streuung zwischen
+    den 20 Schätzungen geht als zusätzliche Unsicherheit in den Standardfehler
+    ein (Rubins Regeln). `fmi` (fraction of missing information) zeigt, wie viel
+    Information die Lücken kosten; bei großen Werten (> 0,3) lohnt sich
+    Imputation deutlich. Ob die Daten MCAR, MAR oder MNAR sind, lässt sich aus
+    den Daten allein nicht beweisen; imputieren hilft bei MAR, also wenn das
+    Fehlen von beobachteten Variablen abhängt. Bericht: „Fehlende Werte (höchstens
+    5 % je Variable) wurden mit Mehrfachimputation ersetzt (mice, 20 Imputationen,
+    predictive mean matching); die Ergebnisse unterschieden sich nicht vom
+    Fallausschluss.“
+  en: |
+    Statements 1 and 3 are true. With few scattered gaps (at most 5% per
+    variable), case deletion and imputation hardly differ; B gains a little precision
+    because it keeps the 6 respondents and uses the other TLX subscales as
+    information. `m = 20` does not create new data: the spread between the 20
+    estimates enters the standard error as additional uncertainty (Rubin's
+    rules). `fmi` (fraction of missing information) shows how much information
+    the gaps cost; with large values (> 0.3) imputation clearly pays off.
+    Whether the data are MCAR, MAR or MNAR cannot be proven from the data alone;
+    imputation helps under MAR, i.e. when missingness depends on observed
+    variables. Report: "Missing values (at most 5% per variable) were handled with multiple
+    imputation (mice, 20 imputations, predictive mean matching); results did
+    not differ from case deletion."
+misconception:
+  de: "Mehrfachimputation vervielfacht die Stichprobe und beweist, ob Daten zufällig fehlen."
+  en: "Multiple imputation multiplies the sample and proves whether data are missing at random."
+check:
+  type: value
+common_mistakes:
+  - pattern: "\\b2\\b"
+    message:
+      de: "Aussage 2 stimmt nicht: Die 20 Datensätze enthalten dieselben 160 Personen; ihre Streuung erhöht sogar die Unsicherheit."
+      en: "Statement 2 is false: the 20 datasets contain the same 160 respondents; their spread even increases the uncertainty."
+  - pattern: "\\b4\\b"
+    message:
+      de: "Aussage 4 stimmt nicht: Ähnliche Ergebnisse sind mit MCAR vereinbar, beweisen es aber nicht; MNAR lässt sich aus den Daten nicht ausschließen."
+      en: "Statement 4 is false: similar results are compatible with MCAR but do not prove it; MNAR cannot be ruled out from the data."

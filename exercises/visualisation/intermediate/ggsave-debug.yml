@@ -1,0 +1,90 @@
+id: vi-i-ggsave-debug
+lesson: visualisation-intermediate
+order: 3
+title:
+  de: Abbildung in Manuskriptgröße speichern
+  en: Saving a figure at manuscript size
+kind: debug
+required: true
+packages: [dplyr, ggplot2]
+data: [driving_sim]
+setup: |
+  library(dplyr)
+  library(ggplot2)
+  fig <- driving_sim |>
+    summarise(rt = mean(rt_ms, na.rm = TRUE), .by = c(participant, condition)) |>
+    ggplot(aes(condition, rt)) +
+    geom_boxplot() +
+    labs(x = "Warning modality", y = "Reaction time (ms)")
+  out_file <- file.path(tempdir(), "fig_rt.png")
+  # Width and height of a PNG file in pixels (from the file header)
+  png_size <- function(path) {
+    header <- readBin(path, "raw", 24)
+    px <- function(bytes) sum(as.integer(bytes) * 256^(3:0))
+    c(width = px(header[17:20]), height = px(header[21:24]))
+  }
+prompt:
+  de: |
+    Die Zeitschrift verlangt Abbildungen mit 16 cm Breite, 10 cm Höhe und 300 dpi.
+    Der Code speichert `fig` nach `out_file`, aber im Manuskript wirkt die Schrift
+    winzig. `png_size()` zeigt die Größe der Datei in Pixeln.
+
+    Repariere den Aufruf von `ggsave()`; die letzte Zeile bleibt `png_size(out_file)`.
+  en: |
+    The journal requires figures 16 cm wide, 10 cm high, at 300 dpi. The code
+    saves `fig` to `out_file`, but in the manuscript the text looks tiny.
+    `png_size()` shows the size of the file in pixels.
+
+    Fix the call to `ggsave()`; the last line stays `png_size(out_file)`.
+starter: |
+  ggsave(out_file, fig, width = 16, height = 10, dpi = 300)
+  png_size(out_file)
+solution: |
+  ggsave(out_file, fig, width = 16, height = 10, units = "cm", dpi = 300)
+  png_size(out_file)
+hints:
+  - de: "Rechne nach: 16 cm bei 300 dpi sind wie viele Pixel? Was zeigt `png_size()`?"
+    en: "Do the maths: how many pixels are 16 cm at 300 dpi? What does `png_size()` show?"
+  - de: "In welcher Einheit versteht `ggsave()` `width` und `height`, wenn du nichts angibst?"
+    en: "In which unit does `ggsave()` read `width` and `height` if you do not say?"
+  - de: "Ergänze `units = \"cm\"`."
+    en: "Add `units = \"cm\"`."
+explanation:
+  de: |
+    `ggsave()` rechnet ohne `units` in Zoll: 16 × 10 Zoll sind 40,6 × 25,4 cm
+    bzw. 4800 × 3000 Pixel. Die Schrift hat aber ihre feste Größe in Punkt
+    (Grundgröße 11 pt); auf 16 cm verkleinert schrumpft sie auf gut 4 pt. Mit
+    `units = "cm"` entstehen 1889 × 1181 Pixel, und 11 pt bleiben 11 pt. Daher
+    die Regel: in Zielgröße speichern statt im Manuskript skalieren. Für
+    Vektorgrafik `ggsave("fig.pdf", ...)` oder `.svg`; für Word ist PNG mit
+    300 dpi (oder `.tiff`, wenn die Zeitschrift es verlangt) üblich. Ohne `plot`
+    nimmt `ggsave()` den zuletzt angezeigten Plot; den Plot ausdrücklich zu
+    übergeben ist sicherer.
+  en: |
+    Without `units`, `ggsave()` works in inches: 16 × 10 inches are 40.6 ×
+    25.4 cm or 4800 × 3000 pixels. The text, however, has a fixed size in points
+    (base size 11 pt); scaled down to 16 cm it shrinks to just over 4 pt. With
+    `units = "cm"` you get 1889 × 1181 pixels, and 11 pt stay 11 pt. Hence the
+    rule: save at the target size instead of scaling in the manuscript. For
+    vector graphics use `ggsave("fig.pdf", ...)` or `.svg`; for Word, PNG at
+    300 dpi (or `.tiff` if the journal asks for it) is common. Without `plot`,
+    `ggsave()` takes the last plot displayed; passing the plot explicitly is
+    safer.
+misconception:
+  de: "Die Größe beim Export ist egal, weil man die Abbildung im Manuskript beliebig skalieren kann."
+  en: "The export size does not matter, because the figure can be scaled freely in the manuscript."
+check:
+  type: value
+common_mistakes:
+  - pattern: "dpi\\s*=\\s*(72|96|100)\\b"
+    message:
+      de: "Die Zeitschrift verlangt 300 dpi; die Auflösung ändert die Pixelzahl, nicht die Größe der Schrift im Verhältnis zur Abbildung."
+      en: "The journal requires 300 dpi; the resolution changes the number of pixels, not the size of the text relative to the figure."
+  - pattern: "width\\s*=\\s*16\\s*/\\s*2\\.54|width\\s*=\\s*6\\.3"
+    message:
+      de: "Umrechnen in Zoll geht, aber `units = \"cm\"` ist lesbarer und rundet nicht."
+      en: "Converting to inches works, but `units = \"cm\"` is more readable and does not round."
+  - pattern: "^(?![\\s\\S]*units)[\\s\\S]*"
+    message:
+      de: "Ohne `units` rechnet `ggsave()` in Zoll: 16 × 10 Zoll sind 4800 × 3000 Pixel bei 300 dpi."
+      en: "Without `units`, `ggsave()` works in inches: 16 × 10 inches are 4800 × 3000 pixels at 300 dpi."

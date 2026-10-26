@@ -1,0 +1,101 @@
+id: vi-i-ci-person
+lesson: visualisation-intermediate
+order: 1
+title:
+  de: 95-%-KI aus Personenmitteln, nach Gruppe versetzt
+  en: 95% CI from participant means, dodged by group
+kind: write
+required: true
+packages: [dplyr, ggplot2]
+data: [driving_sim]
+setup: |
+  library(dplyr)
+  library(ggplot2)
+prompt:
+  de: |
+    Erstelle die Abbildung `fig`: pro Bedingung (`condition`, x-Achse) und
+    Erfahrung (`experience`, Farbe) die mittlere Reaktionszeit mit
+    95-%-Konfidenzintervall.
+
+    1. Tabelle `ci`: erst pro Person und Bedingung mitteln (`rt_ms`, fehlende Werte
+       ignorieren), dann pro `condition` und `experience` die Spalten `m`, `se`,
+       `n` und das t-basierte Intervall `lo`, `hi` (`m ± qt(0.975, n - 1) * se`).
+    2. `fig`: `geom_pointrange()` mit `ymin = lo`, `ymax = hi`, die beiden
+       Gruppen mit `position_dodge(width = 0.4)` nebeneinander.
+  en: |
+    Create the figure `fig`: the mean reaction time with 95% confidence interval
+    per condition (`condition`, x axis) and experience (`experience`, colour).
+
+    1. Table `ci`: first average per participant and condition (`rt_ms`, ignore
+       missing values), then per `condition` and `experience` the columns `m`,
+       `se`, `n` and the t-based interval `lo`, `hi` (`m ± qt(0.975, n - 1) * se`).
+    2. `fig`: `geom_pointrange()` with `ymin = lo`, `ymax = hi`, the two groups
+       side by side with `position_dodge(width = 0.4)`.
+starter: |
+  # 1. ci <- driving_sim |> ... Personenmittel, dann m, se, n, lo, hi
+  # 2. fig <- ggplot(ci, ...) + geom_pointrange(...)
+solution: |
+  ci <- driving_sim |>
+    summarise(rt = mean(rt_ms, na.rm = TRUE), .by = c(participant, experience, condition)) |>
+    summarise(m = mean(rt), se = sd(rt) / sqrt(n()), n = n(), .by = c(condition, experience)) |>
+    mutate(
+      lo = m - qt(0.975, n - 1) * se,
+      hi = m + qt(0.975, n - 1) * se
+    )
+
+  fig <- ggplot(ci, aes(condition, m, ymin = lo, ymax = hi, colour = experience)) +
+    geom_pointrange(position = position_dodge(width = 0.4))
+hints:
+  - de: "Zwei `summarise()` hintereinander: zuerst mit `.by = c(participant, experience, condition)`, dann mit `.by = c(condition, experience)`."
+    en: "Two `summarise()` in a row: first with `.by = c(participant, experience, condition)`, then with `.by = c(condition, experience)`."
+  - de: "`experience` muss im ersten Schritt mitgruppiert werden, sonst ist die Spalte danach weg. Die Intervallgrenzen kommen mit `mutate()` dazu."
+    en: "`experience` has to be in the first grouping, otherwise the column is gone afterwards. The interval limits are added with `mutate()`."
+  - de: "`aes(condition, m, ymin = lo, ymax = hi, colour = experience)` und `geom_pointrange(position = position_dodge(width = 0.4))`."
+    en: "`aes(condition, m, ymin = lo, ymax = hi, colour = experience)` and `geom_pointrange(position = position_dodge(width = 0.4))`."
+explanation:
+  de: |
+    Einheit ist die Person: Mit 20 Personen pro Zelle ist `qt(0.975, 19)` = 2,09
+    statt 1,96, das Intervall wird etwas breiter. Erfahrene reagieren in allen
+    Bedingungen schneller, z. B. haptisch 809 ms [754; 864] gegenüber 996 ms
+    [946; 1046] bei Neulingen. Ohne `position_dodge()` lägen beide Punkte
+    übereinander. Vorsicht beim Deuten: Erfahrung ist ein Zwischen-Faktor, die
+    Intervalle passen also zum Vergleich der Gruppen. Für Vergleiche zwischen
+    Bedingungen (innerhalb der Personen) sind sie zu breit; dafür taugt ein Mixed
+    Model mit Kontrasten oder Cousineau-Morey-Intervalle. Schreibe in die
+    Bildunterschrift, was die Balken zeigen („Fehlerbalken: 95-%-KI aus
+    Personenmitteln“).
+  en: |
+    The unit is the participant: with 20 participants per cell, `qt(0.975, 19)`
+    = 2.09 instead of 1.96, so the interval gets a bit wider. Experienced
+    drivers react faster in all conditions, e.g. haptic 809 ms [754, 864] versus
+    996 ms [946, 1046] for novices. Without `position_dodge()` both points would
+    lie on top of each other. Careful when interpreting: experience is a
+    between factor, so the intervals suit the comparison of groups. For
+    comparisons between conditions (within participants) they are too wide; use
+    a mixed model with contrasts or Cousineau-Morey intervals for that. Say in
+    the caption what the bars show ("Error bars: 95% CI from participant
+    means").
+misconception:
+  de: "Fehlerbalken sind Fehlerbalken; ob SE, SD oder KI und über welche Einheit gerechnet, ändert die Aussage nicht."
+  en: "Error bars are error bars; whether SE, SD or CI and over which unit makes no difference to the message."
+check:
+  type: plot
+  name: fig
+  check_data: true
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*participant)[\\s\\S]*"
+    message:
+      de: "Die Kennwerte laufen direkt über alle Durchgänge: `n` ist dann 80 statt 20 und das KI zu schmal. Erst pro `participant` und Bedingung mitteln."
+      en: "The statistics run directly over all trials: `n` is then 80 instead of 20 and the CI too narrow. Average per `participant` and condition first."
+  - pattern: "1\\.96"
+    message:
+      de: "1,96 gilt für große Stichproben; bei 20 Personen pro Zelle ist `qt(0.975, 19)` = 2,09."
+      en: "1.96 holds for large samples; with 20 participants per cell, `qt(0.975, 19)` = 2.09."
+  - pattern: "^(?![\\s\\S]*position_dodge)[\\s\\S]*"
+    message:
+      de: "Ohne `position_dodge()` liegen die Punkte beider Gruppen übereinander."
+      en: "Without `position_dodge()` the points of both groups lie on top of each other."
+  - pattern: "geom_errorbar"
+    message:
+      de: "Gefragt ist `geom_pointrange()`: Punkt und Intervall in einer Ebene."
+      en: "The task asks for `geom_pointrange()`: point and interval in one layer."

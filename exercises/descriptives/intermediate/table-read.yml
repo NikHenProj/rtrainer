@@ -1,0 +1,97 @@
+id: ds-i-table-read
+lesson: descriptives-intermediate
+order: 3
+title:
+  de: Eine deskriptive Ergebnistabelle lesen
+  en: Reading a descriptive results table
+kind: interpret
+required: true
+packages: []
+data: []
+setup: ""
+prompt:
+  de: |
+    Ergebnistabelle aus dem Fragebogen (M (SD); d = Cohens d für voice − touch
+    mit 95-%-KI):
+
+    ```
+    scale  touch (n = 79)  voice (n = 78)  d [95% KI]
+    sus    51.1 (24.1)     61.5 (24.5)      0.43 [ 0.11, 0.74]
+    tlx    39.6 (14.6)     36.6 (12.9)     -0.21 [-0.53, 0.10]
+    trust   3.9 (1.3)       4.0 (1.3)       0.15 [-0.16, 0.47]   voice: n = 76
+    ```
+
+    Welche Aussagen stimmen?
+
+    1. Voice wird im SUS im Mittel gut 10 Punkte besser bewertet; nach Cohens Faustregel ein kleiner bis mittlerer Effekt.
+    2. Bei der Beanspruchung ist der Unterschied größer als beim Vertrauen, weil 3 Punkte mehr sind als 0,1 Punkte.
+    3. Bei Vertrauen fehlen in der voice-Gruppe für zwei Personen Skalenwerte; deshalb gehört n pro Zelle in die Tabelle, nicht nur pro Gruppe.
+    4. Weil die SD im SUS mit rund 24 Punkten groß ist, lässt sich der Mittelwertunterschied nicht deuten.
+
+    Gib die Nummern der richtigen Aussagen aufsteigend als Vektor ein, z. B. `c(1, 2)`.
+  en: |
+    Results table from the questionnaire (M (SD); d = Cohen's d for voice −
+    touch with 95% CI):
+
+    ```
+    scale  touch (n = 79)  voice (n = 78)  d [95% CI]
+    sus    51.1 (24.1)     61.5 (24.5)      0.43 [ 0.11, 0.74]
+    tlx    39.6 (14.6)     36.6 (12.9)     -0.21 [-0.53, 0.10]
+    trust   3.9 (1.3)       4.0 (1.3)       0.15 [-0.16, 0.47]   voice: n = 76
+    ```
+
+    Which statements are true?
+
+    1. Voice is rated about 10 SUS points better on average; by Cohen's rule of thumb a small to medium effect.
+    2. The difference in workload is larger than in trust, because 3 points are more than 0.1 points.
+    3. For trust, two respondents in the voice group have no scale score; that is why n per cell belongs in the table, not just per group.
+    4. Because the SD of the SUS is large at about 24 points, the mean difference cannot be interpreted.
+
+    Type the numbers of the true statements in ascending order as a vector,
+    e.g. `c(1, 2)`.
+starter: |
+  # Nummern der richtigen Aussagen als Vektor / numbers of the true statements as a vector
+solution: |
+  c(1, 3)
+hints:
+  - de: "Die Skalen haben verschiedene Wertebereiche (0–100 und 1–7). Welche Spalte macht sie vergleichbar?"
+    en: "The scales have different ranges (0–100 and 1–7). Which column makes them comparable?"
+  - de: "Vergleiche das n der Gruppe im Kopf mit dem n in der Zeile `trust`."
+    en: "Compare the group n in the header with the n in the `trust` row."
+  - de: "Eine große SD macht das Intervall breiter; das KI von d sagt dir, wie genau der Unterschied bestimmt ist."
+    en: "A large SD makes the interval wider; the CI of d tells you how precisely the difference is estimated."
+explanation:
+  de: |
+    Richtig sind 1 und 3. Rohdifferenzen lassen sich nur innerhalb einer Skala
+    vergleichen; über Skalen hinweg hilft die standardisierte Differenz d: TLX
+    (|d| = 0,21) und Vertrauen (0,15) unterscheiden sich beide kaum, und beide
+    Intervalle schließen 0 ein. Die SD gehört zur Beschreibung der Streuung und
+    geht in d ein; deuten lässt sich der Unterschied trotzdem, nur mit
+    Unsicherheit (d = 0,43 [0,11; 0,74]). Das n pro Zelle zeigt, worauf jeder
+    Wert beruht; zwei Personen haben den Vertrauensblock ausgelassen. Im Text:
+    „Die Sprachbedienung wurde im SUS besser bewertet (M = 61,5, SD = 24,5) als
+    die Touchbedienung (M = 51,1, SD = 24,1), d = 0,43, 95-%-KI [0,11; 0,74].“
+  en: |
+    Statements 1 and 3 are true. Raw differences can only be compared within a
+    scale; across scales the standardised difference d helps: TLX (|d| = 0.21)
+    and trust (0.15) both hardly differ, and both intervals include 0. The SD
+    describes the spread and goes into d; the difference can still be
+    interpreted, just with uncertainty (d = 0.43 [0.11, 0.74]). The n per cell
+    shows what each value rests on; two respondents skipped the trust block.
+    In the text: "Voice control was rated better on the SUS (M = 61.5,
+    SD = 24.5) than touch control (M = 51.1, SD = 24.1), d = 0.43, 95% CI
+    [0.11, 0.74]."
+misconception:
+  de: "Rohdifferenzen verschiedener Skalen lassen sich direkt vergleichen, und eine große SD macht Mittelwerte bedeutungslos."
+  en: "Raw differences of different scales can be compared directly, and a large SD makes means meaningless."
+check:
+  type: value
+common_mistakes:
+  - pattern: "\\b2\\b"
+    message:
+      de: "Aussage 2 stimmt nicht: TLX (0–100) und Vertrauen (1–7) haben verschiedene Einheiten. Vergleichbar macht sie erst d."
+      en: "Statement 2 is false: TLX (0–100) and trust (1–7) have different units. Only d makes them comparable."
+  - pattern: "\\b4\\b"
+    message:
+      de: "Aussage 4 stimmt nicht: Die SD beschreibt die Streuung; wie genau der Unterschied bestimmt ist, zeigt das KI von d."
+      en: "Statement 4 is false: the SD describes the spread; how precisely the difference is estimated is shown by the CI of d."

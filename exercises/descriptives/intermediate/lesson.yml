@@ -1,0 +1,19 @@
+# Lesson metadata; exercises are the other *.yml files in this folder
+# (sorted by `order`), the knowledge check is quiz.yml.
+lesson: descriptives-intermediate
+minutes: 45
+prerequisites: [descriptives-beginner, scales-beginner]
+langs: [de]
+packages: [dplyr, tidyr, datawizard]
+data: [survey]
+goals:
+  de:
+    - Mit `across()` dieselben Kennwerte für viele Spalten auf einmal berechnen
+    - Eine gruppierte Tabelle M (SD) für mehrere Skalen bauen (lang rechnen, breit zeigen)
+    - Eine deskriptive Tabelle mit n pro Zelle und Effektgröße lesen
+    - Skalenwerte mit einer Regel für fehlende Items bilden
+  en:
+    - Compute the same statistics for many columns at once with `across()`
+    - Build a grouped M (SD) table for several scales (compute long, show wide)
+    - Read a descriptive table with n per cell and an effect size
+    - Compute scale scores with a rule for missing items

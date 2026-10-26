@@ -1,0 +1,91 @@
+id: ds-i-across
+lesson: descriptives-intermediate
+order: 1
+title:
+  de: Viele Spalten mit across() zusammenfassen
+  en: Summarising many columns with across()
+kind: write
+required: true
+packages: [dplyr]
+data: [survey]
+setup: |
+  library(dplyr)
+prompt:
+  de: |
+    Berechne für alle sechs NASA-TLX-Skalen in `survey` (`tlx_mental` bis
+    `tlx_frustration`) pro `interface` Mittelwert und Standardabweichung, fehlende
+    Werte ignoriert, auf 1 Stelle gerundet.
+
+    Ergebnis: eine Zeile pro `interface`, Spalten nach dem Muster
+    `tlx_mental_m`, `tlx_mental_sd`, `tlx_physical_m`, … Verwende `across()`.
+  en: |
+    For all six NASA-TLX subscales in `survey` (`tlx_mental` to
+    `tlx_frustration`), compute the mean and standard deviation per `interface`,
+    ignoring missing values, rounded to 1 decimal.
+
+    Result: one row per `interface`, columns following the pattern
+    `tlx_mental_m`, `tlx_mental_sd`, `tlx_physical_m`, … Use `across()`.
+starter: |
+  survey |>
+    summarise(
+      tlx_mental_m = round(mean(tlx_mental, na.rm = TRUE), 1),
+      .by = interface
+    )
+solution: |
+  survey |>
+    summarise(
+      across(
+        starts_with("tlx_"),
+        list(
+          m = \(x) round(mean(x, na.rm = TRUE), 1),
+          sd = \(x) round(sd(x, na.rm = TRUE), 1)
+        ),
+        .names = "{.col}_{.fn}"
+      ),
+      .by = interface
+    )
+hints:
+  - de: "`across(spalten, funktionen)` wendet Funktionen auf mehrere Spalten an; mehrere Funktionen gibst du als benannte Liste."
+    en: "`across(columns, functions)` applies functions to several columns; several functions go in a named list."
+  - de: "Spalten wählst du mit `starts_with(\"tlx_\")`. Zusätzliche Argumente wie `na.rm = TRUE` übergibst du in einer anonymen Funktion `\\(x) ...`."
+    en: "Select the columns with `starts_with(\"tlx_\")`. Pass extra arguments such as `na.rm = TRUE` inside an anonymous function `\\(x) ...`."
+  - de: "`list(m = \\(x) round(mean(x, na.rm = TRUE), 1), sd = ...)` und `.names = \"{.col}_{.fn}\"`."
+    en: "`list(m = \\(x) round(mean(x, na.rm = TRUE), 1), sd = ...)` and `.names = \"{.col}_{.fn}\"`."
+explanation:
+  de: |
+    `across()` erzeugt für jede Kombination aus Spalte und Funktion eine
+    Ergebnisspalte; `.names` setzt sie aus `{.col}` und `{.fn}` (dem Namen in der
+    Liste) zusammen. Mit Touch fällt jede TLX-Skala höher aus, am deutlichsten
+    die geistige Beanspruchung (52,7 vs. 39,4); Frustration ist die Ausnahme
+    (34,3 vs. 43,6). Zusätzliche Argumente über `...` (`across(x, mean, na.rm =
+    TRUE)`) sind seit dplyr 1.1 veraltet; die anonyme Funktion ist eindeutig.
+    Für eine lesbare Tabelle ist diese breite Form unpraktisch (12 Spalten);
+    dafür rechnest du lang und drehst erst am Ende (nächste Übung).
+  en: |
+    `across()` creates one result column for each combination of column and
+    function; `.names` builds the name from `{.col}` and `{.fn}` (the name in
+    the list). With touch every TLX subscale is higher, most clearly mental
+    demand (52.7 vs. 39.4); frustration is the exception (34.3 vs. 43.6).
+    Extra arguments via `...` (`across(x, mean, na.rm = TRUE)`) are deprecated
+    since dplyr 1.1; the anonymous function is unambiguous. For a readable
+    table this wide form is impractical (12 columns); compute long and pivot
+    only at the end (next exercise).
+misconception:
+  de: "Für jede Spalte und jeden Kennwert braucht es eine eigene Zeile in `summarise()`."
+  en: "Every column and every statistic needs its own line in `summarise()`."
+check:
+  type: value
+  ignore_row_order: true
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*na\\.rm)[\\s\\S]*across"
+    message:
+      de: "Ohne `na.rm = TRUE` liefern `mean()` und `sd()` bei jeder Gruppe mit einem `NA` ebenfalls `NA`."
+      en: "Without `na.rm = TRUE`, `mean()` and `sd()` return `NA` for every group with an `NA`."
+  - pattern: "^(?![\\s\\S]*\\.names)[\\s\\S]*across"
+    message:
+      de: "Ohne `.names` heißen die Spalten `tlx_mental_1`, `tlx_mental_2` bzw. nach dem Listennamen anders als verlangt. Setze `.names = \"{.col}_{.fn}\"`."
+      en: "Without `.names` the columns are named differently from what is required. Set `.names = \"{.col}_{.fn}\"`."
+  - pattern: "group_by\\((?![\\s\\S]*ungroup)"
+    message:
+      de: "`group_by()` geht auch; `.by = interface` spart das spätere `ungroup()`."
+      en: "`group_by()` works too; `.by = interface` saves the later `ungroup()`."

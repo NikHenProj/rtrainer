@@ -1,0 +1,107 @@
+id: ds-i-scale-table
+lesson: descriptives-intermediate
+order: 2
+title:
+  de: Tabelle M (SD) für mehrere Skalen
+  en: M (SD) table for several scales
+kind: write
+required: true
+packages: [dplyr, tidyr]
+data: [survey]
+setup: |
+  library(dplyr)
+  library(tidyr)
+  scored <- survey |>
+    filter(attention_check == 4) |>
+    mutate(
+      across(c(sus_01, sus_03, sus_05, sus_07, sus_09), \(x) x - 1),
+      across(c(sus_02, sus_04, sus_06, sus_08, sus_10), \(x) 5 - x),
+      across(c(trust_3, trust_5), \(x) 8 - x),
+      sus = 25 * rowMeans(pick(sus_01:sus_10), na.rm = TRUE),
+      tlx = rowMeans(pick(starts_with("tlx_")), na.rm = TRUE),
+      trust = if_else(
+        rowSums(!is.na(pick(starts_with("trust_")))) >= 4,
+        rowMeans(pick(starts_with("trust_")), na.rm = TRUE),
+        NA
+      )
+    ) |>
+    select(respondent, interface, sus, tlx, trust)
+prompt:
+  de: |
+    `scored` enthält pro Person die Skalenwerte `sus` (0–100), `tlx` (0–100) und
+    `trust` (1–7). Baue die Ergebnistabelle für den Bericht: eine Zeile pro
+    Skala, eine Spalte pro Bedienart, in den Zellen `"M (SD)"` mit 1 Nachkommastelle,
+    z. B. `"51.1 (24.1)"`.
+
+    Ergebnis: Spalten `scale` (Werte `"sus"`, `"tlx"`, `"trust"`), `touch`, `voice`.
+    Tipp: erst lang rechnen, dann breit drehen.
+  en: |
+    `scored` holds the scale scores `sus` (0–100), `tlx` (0–100) and `trust`
+    (1–7) per respondent. Build the results table for the report: one row per
+    scale, one column per interface, cells `"M (SD)"` with 1 decimal, e.g.
+    `"51.1 (24.1)"`.
+
+    Result: columns `scale` (values `"sus"`, `"tlx"`, `"trust"`), `touch`,
+    `voice`. Tip: compute long, then pivot wide.
+starter: |
+  scored |>
+    summarise(across(c(sus, tlx, trust), \(x) mean(x, na.rm = TRUE)), .by = interface)
+solution: |
+  scored |>
+    pivot_longer(c(sus, tlx, trust), names_to = "scale", values_to = "score") |>
+    summarise(
+      m = mean(score, na.rm = TRUE),
+      sd = sd(score, na.rm = TRUE),
+      .by = c(scale, interface)
+    ) |>
+    mutate(m_sd = sprintf("%.1f (%.1f)", m, sd)) |>
+    select(scale, interface, m_sd) |>
+    pivot_wider(names_from = interface, values_from = m_sd)
+hints:
+  - de: "Bring die drei Skalenspalten mit `pivot_longer()` in eine Spalte `score` mit dem Namen in `scale`."
+    en: "Use `pivot_longer()` to move the three scale columns into one column `score` with the name in `scale`."
+  - de: "Dann `summarise()` mit `.by = c(scale, interface)`, die Zelle mit `sprintf(\"%.1f (%.1f)\", m, sd)` formatieren."
+    en: "Then `summarise()` with `.by = c(scale, interface)`, format the cell with `sprintf(\"%.1f (%.1f)\", m, sd)`."
+  - de: "Zum Schluss nur `scale`, `interface` und die Zelle behalten und mit `pivot_wider(names_from = interface, values_from = ...)` drehen."
+    en: "Finally keep only `scale`, `interface` and the cell, and pivot with `pivot_wider(names_from = interface, values_from = ...)`."
+explanation:
+  de: |
+    Lang gerechnet braucht jede Kennzahl nur eine Formel, egal wie viele Skalen es
+    sind; die Tabellenform entsteht erst beim Drehen. `sprintf("%.1f")` rundet für
+    die Anzeige und behält Nullen am Ende (`"4.0"`), was `round()` nicht tut.
+    Vorher alle Spalten außer der Zelle entfernen, sonst entsteht bei
+    `pivot_wider()` eine Zeile pro Kombination der übrigen Werte. Ergebnis:
+    Voice wird im SUS besser bewertet (61,5 vs. 51,1), Beanspruchung und
+    Vertrauen unterscheiden sich kaum. Für die Veröffentlichung gehört pro Zelle
+    noch das n dazu (hier fehlen bei `trust` zwei Personen) und eine
+    Effektgröße mit KI; die Zahlen bleiben dabei Text und lassen sich nicht mehr
+    rechnen, also immer als letzter Schritt.
+  en: |
+    Computed long, every statistic needs only one formula, however many scales
+    there are; the table shape only appears when pivoting. `sprintf("%.1f")`
+    rounds for display and keeps trailing zeros (`"4.0"`), which `round()` does
+    not. Remove all columns except the cell first, otherwise `pivot_wider()`
+    creates one row per combination of the remaining values. Result: voice is
+    rated better on the SUS (61.5 vs. 51.1), workload and trust hardly differ.
+    For publication, each cell also needs its n (two respondents are missing
+    for `trust` here) and an effect size with CI; the numbers are then text
+    and can no longer be computed with, so always do this last.
+misconception:
+  de: "Eine Tabelle mit mehreren Skalen baut man Spalte für Spalte mit einem `summarise()`-Ausdruck pro Zelle."
+  en: "A table with several scales is built column by column with one `summarise()` expression per cell."
+check:
+  type: value
+  ignore_row_order: true
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*pivot_longer)[\\s\\S]*"
+    message:
+      de: "Ohne `pivot_longer()` stehen die Skalen als Spalten, nicht als Zeilen. Erst lang machen, dann pro `scale` und `interface` zusammenfassen."
+      en: "Without `pivot_longer()` the scales are columns, not rows. Make it long first, then summarise per `scale` and `interface`."
+  - pattern: "round\\("
+    message:
+      de: "`round()` schneidet Nullen am Ende ab (`4` statt `4.0`). Für die Anzeige formatiert `sprintf(\"%.1f\", x)`."
+      en: "`round()` drops trailing zeros (`4` instead of `4.0`). For display, use `sprintf(\"%.1f\", x)`."
+  - pattern: "^(?![\\s\\S]*select\\()[\\s\\S]*pivot_wider"
+    message:
+      de: "Behalte vor `pivot_wider()` nur `scale`, `interface` und die Zelle; sonst bekommt jede Zeile mit eigenem `m`/`sd` eine eigene Tabellenzeile."
+      en: "Keep only `scale`, `interface` and the cell before `pivot_wider()`; otherwise each row with its own `m`/`sd` gets its own table row."

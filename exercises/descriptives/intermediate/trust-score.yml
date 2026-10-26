@@ -1,0 +1,100 @@
+id: ds-i-trust-score
+lesson: descriptives-intermediate
+order: 4
+title:
+  de: Skalenwert mit Mindestzahl an Items
+  en: Scale score with a minimum number of items
+kind: complete
+required: false
+packages: [dplyr]
+data: [survey]
+setup: |
+  library(dplyr)
+  items <- survey |>
+    select(respondent, interface, starts_with("trust_"))
+prompt:
+  de: |
+    `items` enthält die sechs Vertrauensitems (1–7); `trust_3` und `trust_5` sind
+    umgepolt. Bilde den Skalenwert `trust` als Mittelwert der Items, aber nur,
+    wenn mindestens 4 der 6 Items beantwortet sind; sonst `NA`.
+
+    Ergänze die Lücken `______`. Ergebnis: Spalten `respondent`, `interface`,
+    `trust`.
+  en: |
+    `items` holds the six trust items (1–7); `trust_3` and `trust_5` are
+    reverse-keyed. Compute the scale score `trust` as the mean of the items,
+    but only if at least 4 of the 6 items were answered; otherwise `NA`.
+
+    Fill in the gaps `______`. Result: columns `respondent`, `interface`,
+    `trust`.
+starter: |
+  items |>
+    mutate(
+      across(c(trust_3, trust_5), \(x) ______),
+      n_valid = rowSums(!is.na(______(starts_with("trust_")))),
+      trust = if_else(
+        n_valid >= ______,
+        rowMeans(pick(starts_with("trust_")), na.rm = TRUE),
+        NA
+      )
+    ) |>
+    select(respondent, interface, trust)
+solution: |
+  items |>
+    mutate(
+      across(c(trust_3, trust_5), \(x) 8 - x),
+      n_valid = rowSums(!is.na(pick(starts_with("trust_")))),
+      trust = if_else(
+        n_valid >= 4,
+        rowMeans(pick(starts_with("trust_")), na.rm = TRUE),
+        NA
+      )
+    ) |>
+    select(respondent, interface, trust)
+hints:
+  - de: "Umpolen auf einer Skala von 1 bis 7: Aus 1 wird 7, aus 7 wird 1. Welche Zahl minus x leistet das?"
+    en: "Reversing on a 1-to-7 scale: 1 becomes 7, 7 becomes 1. Which number minus x does that?"
+  - de: "Innerhalb von `mutate()` wählt `pick()` Spalten als Data Frame aus, z. B. für `rowSums()`."
+    en: "Inside `mutate()`, `pick()` selects columns as a data frame, e.g. for `rowSums()`."
+  - de: "`8 - x`, `pick(...)` und `n_valid >= 4`."
+    en: "`8 - x`, `pick(...)` and `n_valid >= 4`."
+explanation:
+  de: |
+    Umgepolt wird mit (Minimum + Maximum) − x, hier 8 − x; `7 - x` würde die
+    Skala auf 0 bis 6 verschieben. `rowSums(!is.na(...))` zählt die gültigen
+    Items pro Person. Der Mittelwert über die vorhandenen Items (Personenmittel)
+    ist bei einzelnen Lücken eine gängige Lösung; die Mindestzahl verhindert,
+    dass ein einzelnes Item als „Skala“ zählt. Bei den beiden Personen ohne
+    Vertrauensitems liefert `rowMeans(..., na.rm = TRUE)` sonst `NaN`. Die Regel
+    gehört in den Methodenteil („Skalenwerte wurden gebildet, wenn mindestens
+    vier der sechs Items beantwortet waren“), am besten vorab festgelegt.
+    `datawizard::row_means(min_valid = 4)` macht dasselbe in einem Aufruf.
+  en: |
+    Reverse with (minimum + maximum) − x, here 8 − x; `7 - x` would shift the
+    scale to 0 to 6. `rowSums(!is.na(...))` counts the valid items per
+    respondent. The mean of the available items (person mean) is a common
+    solution for single gaps; the minimum prevents a single item from counting
+    as a "scale". For the two respondents without trust items,
+    `rowMeans(..., na.rm = TRUE)` would otherwise return `NaN`. The rule belongs
+    in the methods section ("Scale scores were computed when at least four of
+    the six items were answered"), ideally set in advance.
+    `datawizard::row_means(min_valid = 4)` does the same in one call.
+misconception:
+  de: "`rowMeans(..., na.rm = TRUE)` ist immer unbedenklich, weil es fehlende Items einfach überspringt."
+  en: "`rowMeans(..., na.rm = TRUE)` is always harmless because it simply skips missing items."
+check:
+  type: value
+  ignore_row_order: true
+common_mistakes:
+  - pattern: "______"
+    message:
+      de: "Es sind noch Lücken `______` offen."
+      en: "There are still gaps `______` to fill."
+  - pattern: "\\\\\\(x\\)\\s*7\\s*-\\s*x"
+    message:
+      de: "`7 - x` macht aus 1–7 die Werte 0–6. Umpolen mit Minimum + Maximum − x, hier `8 - x`."
+      en: "`7 - x` turns 1–7 into 0–6. Reverse with minimum + maximum − x, here `8 - x`."
+  - pattern: "n_valid\\s*>\\s*4"
+    message:
+      de: "`> 4` verlangt 5 Items. Mindestens 4 heißt `>= 4`."
+      en: "`> 4` requires 5 items. At least 4 means `>= 4`."

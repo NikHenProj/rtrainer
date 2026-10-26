@@ -1,0 +1,94 @@
+id: ms-i-complete-trials
+lesson: missing-intermediate
+order: 2
+title:
+  de: Fehlende Durchgänge sichtbar machen
+  en: Making missing trials visible
+kind: complete
+required: true
+packages: [dplyr, tidyr]
+data: [driving_sim]
+setup: |
+  library(dplyr)
+  library(tidyr)
+  obs <- driving_sim |>
+    filter(!is.na(rt_ms))
+prompt:
+  de: |
+    `obs` ist ein Export, in dem Durchgänge ohne Reaktionszeit gar nicht als Zeile
+    vorkommen. Sie fehlen also *implizit*: `is.na()` und naniar finden sie nicht.
+
+    Stelle das vollständige Design wieder her: jede Person in jeder Bedingung mit
+    den Durchgängen 1 bis 4 (480 Zeilen). In ergänzten Zeilen sollen `experience`,
+    `age` und `gender` der Person stehen; `rt_ms` und `lane_dev` sind `NA`.
+    Ergänze die Lücken `______`.
+  en: |
+    `obs` is an export in which trials without a reaction time do not appear as
+    rows at all. They are missing *implicitly*: `is.na()` and naniar do not find
+    them.
+
+    Restore the full design: every participant in every condition with trials 1
+    to 4 (480 rows). Added rows should carry the participant's `experience`,
+    `age` and `gender`; `rt_ms` and `lane_dev` are `NA`. Fill in the gaps
+    `______`.
+starter: |
+  obs |>
+    ______(
+      ______(participant, experience, age, gender),
+      condition,
+      trial = ______
+    )
+solution: |
+  obs |>
+    complete(
+      nesting(participant, experience, age, gender),
+      condition,
+      trial = 1:4
+    )
+hints:
+  - de: "Die äußere Funktion aus tidyr ergänzt alle fehlenden Kombinationen der genannten Spalten."
+    en: "The outer tidyr function adds all missing combinations of the named columns."
+  - de: "Die innere Funktion nimmt nur die vorkommenden Kombinationen von Person und Personenmerkmalen, statt jede Person mit jedem Alter zu kreuzen."
+    en: "The inner function only takes the observed combinations of participant and participant characteristics, instead of crossing every participant with every age."
+  - de: "`complete(nesting(...), condition, trial = 1:4)`: Für `trial` gibst du die gewünschten Werte direkt an."
+    en: "`complete(nesting(...), condition, trial = 1:4)`: for `trial` you give the wanted values directly."
+explanation:
+  de: |
+    `complete()` bildet alle Kombinationen der genannten Spalten und fügt die
+    fehlenden als Zeilen mit `NA` ein. `nesting()` beschränkt sich auf die
+    beobachteten Kombinationen, sodass Alter und Geschlecht an der Person hängen
+    bleiben, statt gekreuzt zu werden (sonst 40 × 39 Alterswerte …). `trial = 1:4`
+    legt die Werte fest; so würden auch Durchgänge ergänzt, die bei niemandem
+    vorkommen. Erst danach zählen `miss_var_summary()` oder `n_miss()` die 12
+    Ausfälle mit, und ein Modell oder eine Ausfallgrafik sieht, wo sie liegen.
+    Mit `fill = list(...)` lassen sich ergänzte Zeilen statt mit `NA` füllen,
+    z. B. eine Zählvariable mit 0.
+  en: |
+    `complete()` builds all combinations of the named columns and inserts the
+    missing ones as rows with `NA`. `nesting()` restricts itself to the observed
+    combinations, so age and gender stay attached to the participant instead of
+    being crossed (otherwise 40 × 39 age values …). `trial = 1:4` sets the
+    values; trials that nobody has would be added as well. Only then do
+    `miss_var_summary()` or `n_miss()` count the 12 dropouts, and a model or a
+    missingness plot sees where they are. With `fill = list(...)` added rows can
+    be filled with something other than `NA`, e.g. 0 for a count.
+misconception:
+  de: "Fehlende Werte stehen immer als `NA` in den Daten; was nicht als Zeile da ist, gibt es nicht."
+  en: "Missing values always appear as `NA` in the data; what is not there as a row does not exist."
+check:
+  type: value
+  ignore_row_order: true
+  ignore_col_order: false
+common_mistakes:
+  - pattern: "______"
+    message:
+      de: "Es sind noch Lücken `______` offen."
+      en: "There are still gaps `______` to fill."
+  - pattern: "complete\\(\\s*participant\\s*,\\s*experience"
+    message:
+      de: "So wird jede Person mit jeder Erfahrung, jedem Alter und Geschlecht gekreuzt. `nesting(...)` nimmt nur die beobachteten Kombinationen."
+      en: "This crosses every participant with every experience, age and gender. `nesting(...)` only takes the observed combinations."
+  - pattern: "expand_grid|crossing\\("
+    message:
+      de: "`crossing()`/`expand_grid()` erzeugt nur das Gitter; `complete()` verbindet es gleich mit den Daten."
+      en: "`crossing()`/`expand_grid()` only builds the grid; `complete()` joins it with the data straight away."

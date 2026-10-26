@@ -1,0 +1,92 @@
+id: vi-i-patchwork
+lesson: visualisation-intermediate
+order: 4
+title:
+  de: Zwei Plots zu einer Abbildung kombinieren
+  en: Combining two plots into one figure
+kind: write
+required: false
+packages: [dplyr, ggplot2, patchwork]
+data: [driving_sim]
+setup: |
+  library(dplyr)
+  library(ggplot2)
+  library(patchwork)
+  person <- driving_sim |>
+    summarise(
+      rt = mean(rt_ms, na.rm = TRUE),
+      lane = mean(lane_dev, na.rm = TRUE),
+      .by = c(participant, experience, condition)
+    )
+  p_rt <- ggplot(person, aes(condition, rt, colour = experience)) +
+    geom_boxplot() +
+    labs(x = NULL, y = "Reaction time (ms)")
+  p_lane <- ggplot(person, aes(condition, lane, colour = experience)) +
+    geom_boxplot() +
+    labs(x = NULL, y = "Lane deviation (m)")
+prompt:
+  de: |
+    `p_rt` und `p_lane` zeigen Reaktionszeit und Spurabweichung pro Bedingung und
+    Erfahrung (Personenmittel). Kombiniere sie mit patchwork zu einer Abbildung:
+    `p_rt` links, `p_lane` rechts, nur **eine** gemeinsame Legende und die
+    Teilbilder mit A und B gekennzeichnet. Der kombinierte Plot steht in der
+    letzten Zeile.
+  en: |
+    `p_rt` and `p_lane` show reaction time and lane deviation per condition and
+    experience (participant means). Combine them with patchwork into one
+    figure: `p_rt` on the left, `p_lane` on the right, only **one** shared
+    legend, and the panels tagged A and B. The combined plot is on the last
+    line.
+starter: |
+  p_rt
+solution: |
+  p_rt + p_lane +
+    plot_layout(guides = "collect") +
+    plot_annotation(tag_levels = "A")
+hints:
+  - de: "In patchwork verbindet `+` (oder `|`) Plots nebeneinander, `/` untereinander."
+    en: "In patchwork, `+` (or `|`) puts plots side by side, `/` stacks them."
+  - de: "Die Anordnung und die Legenden steuert `plot_layout()`, Titel und Kennbuchstaben `plot_annotation()`."
+    en: "`plot_layout()` controls the arrangement and the legends, `plot_annotation()` the title and the tags."
+  - de: "`plot_layout(guides = \"collect\")` und `plot_annotation(tag_levels = \"A\")`."
+    en: "`plot_layout(guides = \"collect\")` and `plot_annotation(tag_levels = \"A\")`."
+explanation:
+  de: |
+    patchwork setzt fertige ggplots zusammen und richtet die Plotflächen
+    aneinander aus, auch wenn die y-Achsen unterschiedlich breit beschriftet
+    sind. `guides = "collect"` sammelt gleiche Legenden zu einer; das klappt nur,
+    wenn Titel, Stufen und Farben übereinstimmen. `tag_levels = "A"` setzt die
+    Kennbuchstaben, auf die du im Text verweist („Abbildung 2A“). Inhaltlich:
+    Erfahrene reagieren schneller, bei der Spurabweichung ist der Unterschied
+    kleiner. Gemeinsame Achsen bekommst du mit `plot_layout(axes = "collect")`,
+    gleiche Wertebereiche über gleiche `limits` in beiden Plots. Für den Export
+    gilt das Gleiche wie für Einzelplots: `ggsave(..., width = 16, height = 8,
+    units = "cm")`.
+  en: |
+    patchwork assembles finished ggplots and aligns the plot panels, even when
+    the y axes are labelled with different widths. `guides = "collect"` merges
+    identical legends into one; this only works when titles, levels and colours
+    match. `tag_levels = "A"` adds the tags you refer to in the text ("Figure
+    2A"). In substance: experienced drivers react faster; for lane deviation
+    the difference is smaller. Shared axes come from
+    `plot_layout(axes = "collect")`, equal ranges from equal `limits` in both
+    plots. Export works as for single plots: `ggsave(..., width = 16, height =
+    8, units = "cm")`.
+misconception:
+  de: "Für mehrere Teilbilder braucht man `facet_wrap()`, auch wenn die Panels verschiedene Variablen zeigen."
+  en: "Several panels require `facet_wrap()`, even when the panels show different variables."
+check:
+  type: plot
+common_mistakes:
+  - pattern: "facet_(wrap|grid)"
+    message:
+      de: "Facets teilen *eine* Variable auf Panels auf. Hier sind es zwei verschiedene Plots; die verbindet patchwork."
+      en: "Facets split *one* variable across panels. Here there are two different plots; patchwork combines them."
+  - pattern: "\\/"
+    message:
+      de: "`/` stapelt die Plots untereinander; gefragt ist nebeneinander (`+` oder `|`)."
+      en: "`/` stacks the plots vertically; the task asks for side by side (`+` or `|`)."
+  - pattern: "^(?![\\s\\S]*collect)[\\s\\S]*"
+    message:
+      de: "Ohne `plot_layout(guides = \"collect\")` hat jeder Plot seine eigene Legende."
+      en: "Without `plot_layout(guides = \"collect\")` each plot keeps its own legend."

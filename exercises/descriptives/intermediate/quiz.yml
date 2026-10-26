@@ -1,0 +1,134 @@
+# Knowledge check: passed at >= `pass` share of correctly answered questions.
+lesson: descriptives-intermediate
+pass: 0.8
+questions:
+  - id: ds-i-q-across-names
+    prompt:
+      de: "`summarise(across(c(rt_ms, lane_dev), list(m = mean, sd = sd)), .by = condition)`: Wie heißen die Ergebnisspalten?"
+      en: "`summarise(across(c(rt_ms, lane_dev), list(m = mean, sd = sd)), .by = condition)`: what are the result columns called?"
+    options:
+      - text:
+          de: "`condition`, `rt_ms_m`, `rt_ms_sd`, `lane_dev_m`, `lane_dev_sd`"
+          en: "`condition`, `rt_ms_m`, `rt_ms_sd`, `lane_dev_m`, `lane_dev_sd`"
+        correct: true
+        explain:
+          de: "Genau. Mit einer benannten Liste ist die Voreinstellung `\"{.col}_{.fn}\"`."
+          en: "Exactly. With a named list, the default is `\"{.col}_{.fn}\"`."
+      - text:
+          de: "`condition`, `m`, `sd`"
+          en: "`condition`, `m`, `sd`"
+        correct: false
+        explain:
+          de: "Dann gäbe es Namenskonflikte zwischen den beiden Spalten; `across()` hängt den Spaltennamen voran."
+          en: "That would cause name clashes between the two columns; `across()` prefixes the column name."
+      - text:
+          de: "`condition`, `rt_ms`, `lane_dev`, jeweils mit einer Liste aus zwei Werten"
+          en: "`condition`, `rt_ms`, `lane_dev`, each holding a list of two values"
+        correct: false
+        explain:
+          de: "Jede Funktion ergibt eine eigene Spalte."
+          en: "Each function gives its own column."
+  - id: ds-i-q-long
+    prompt:
+      de: "Warum rechnet man eine Tabelle mit drei Skalen × zwei Gruppen besser lang (`pivot_longer()`) und dreht erst am Ende?"
+      en: "Why is it better to compute a table of three scales × two groups in long form (`pivot_longer()`) and pivot only at the end?"
+    options:
+      - text:
+          de: "Jede Kennzahl braucht dann nur eine Formel, unabhängig von der Zahl der Skalen; die Tabellenform ist reine Darstellung."
+          en: "Each statistic then needs only one formula, regardless of the number of scales; the table shape is pure presentation."
+        correct: true
+        explain:
+          de: "Ja. Eine vierte Skala kostet dann keine weitere Zeile Code."
+          en: "Yes. A fourth scale then costs no extra line of code."
+      - text:
+          de: "Weil `summarise()` breite Daten nicht verarbeiten kann."
+          en: "Because `summarise()` cannot handle wide data."
+        correct: false
+        explain:
+          de: "Kann es (siehe `across()`), aber die Ergebnisform passt dann nicht zur Tabelle."
+          en: "It can (see `across()`), but the result shape does not match the table."
+      - text:
+          de: "Weil lange Daten schneller gerechnet werden."
+          en: "Because long data are computed faster."
+        correct: false
+        explain:
+          de: "Bei diesen Größen spielt Geschwindigkeit keine Rolle; es geht um weniger und klareren Code."
+          en: "Speed does not matter at this size; it is about less and clearer code."
+  - id: ds-i-q-sprintf
+    prompt:
+      de: "Die Zelle soll `\"4.0 (1.3)\"` zeigen. Warum `sprintf(\"%.1f (%.1f)\", m, sd)` statt `paste0(round(m, 1), \" (\", round(sd, 1), \")\")`?"
+      en: "The cell should show `\"4.0 (1.3)\"`. Why `sprintf(\"%.1f (%.1f)\", m, sd)` instead of `paste0(round(m, 1), \" (\", round(sd, 1), \")\")`?"
+    options:
+      - text:
+          de: "`round()` lässt Nullen am Ende weg; `paste0()` ergäbe `\"4 (1.3)\"`."
+          en: "`round()` drops trailing zeros; `paste0()` would give `\"4 (1.3)\"`."
+        correct: true
+        explain:
+          de: "Richtig. `sprintf()` (oder `format(nsmall = 1)`) hält die Stellenzahl fest."
+          en: "Right. `sprintf()` (or `format(nsmall = 1)`) fixes the number of digits."
+      - text:
+          de: "`round()` rundet falsch."
+          en: "`round()` rounds incorrectly."
+        correct: false
+        explain:
+          de: "`round()` rundet korrekt (nach IEC 60559 bei .5 auf gerade); das Problem ist die Anzeige."
+          en: "`round()` rounds correctly (IEC 60559, round half to even); the problem is the display."
+      - text:
+          de: "Es gibt keinen Unterschied."
+          en: "There is no difference."
+        correct: false
+        explain:
+          de: "Bei Werten wie 4,0 schon."
+          en: "There is for values such as 4.0."
+  - id: ds-i-q-ncell
+    prompt:
+      de: "In der Gruppe voice sind 78 Personen, für `trust` aber nur 76 Skalenwerte. Was gehört in die Tabelle?"
+      en: "The voice group has 78 respondents, but only 76 trust scores. What belongs in the table?"
+    options:
+      - text:
+          de: "Das n pro Zelle (oder eine Fußnote zu den fehlenden Werten), damit klar ist, worauf jeder Wert beruht."
+          en: "The n per cell (or a footnote on the missing values), so it is clear what each value rests on."
+        correct: true
+        explain:
+          de: "Genau. Leser können sonst nicht nachvollziehen, warum Freiheitsgrade oder Intervalle abweichen."
+          en: "Exactly. Otherwise readers cannot see why degrees of freedom or intervals differ."
+      - text:
+          de: "Nichts, das Gruppen-n im Kopf reicht."
+          en: "Nothing, the group n in the header is enough."
+        correct: false
+        explain:
+          de: "Dann wirkt der trust-Wert so, als beruhe er auf 78 Personen."
+          en: "Then the trust value looks as if it rested on 78 respondents."
+      - text:
+          de: "Die zwei Personen aus allen Skalen entfernen, damit alle n gleich sind."
+          en: "Remove the two respondents from all scales, so that all n are equal."
+        correct: false
+        explain:
+          de: "Das verschenkt Daten bei SUS und TLX, ohne etwas zu gewinnen."
+          en: "That wastes SUS and TLX data without gaining anything."
+  - id: ds-i-q-dacross
+    prompt:
+      de: "TLX (0–100): Differenz 3,0 Punkte, d = −0,21. Vertrauen (1–7): Differenz 0,2 Punkte, d = 0,15. Was lässt sich vergleichen?"
+      en: "TLX (0–100): difference 3.0 points, d = −0.21. Trust (1–7): difference 0.2 points, d = 0.15. What can be compared?"
+    options:
+      - text:
+          de: "Die Größe der Effekte über d: Beide sind klein und ähnlich groß; die Rohdifferenzen haben verschiedene Einheiten."
+          en: "The size of the effects via d: both are small and similar; the raw differences have different units."
+        correct: true
+        explain:
+          de: "Richtig. d drückt die Differenz in Standardabweichungen aus."
+          en: "Right. d expresses the difference in standard deviations."
+      - text:
+          de: "Die Rohdifferenzen: TLX hat den 15-mal größeren Effekt."
+          en: "The raw differences: TLX has the 15 times larger effect."
+        correct: false
+        explain:
+          de: "Punkte auf 0–100 und auf 1–7 sind nicht dieselbe Einheit."
+          en: "Points on 0–100 and on 1–7 are not the same unit."
+      - text:
+          de: "Gar nichts, Effekte verschiedener Skalen sind nie vergleichbar."
+          en: "Nothing at all, effects of different scales are never comparable."
+        correct: false
+        explain:
+          de: "Standardisierte Effektgrößen sind genau dafür da (mit Vorsicht bei unterschiedlicher Reliabilität)."
+          en: "Standardised effect sizes exist for exactly that (with care when reliabilities differ)."

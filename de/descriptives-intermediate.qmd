@@ -1,0 +1,180 @@
+---
+title: "Deskriptive Statistik, Tabelle 1"
+subtitle: "Intermediate · across() über Skalen, gruppierte Ergebnistabellen"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, tidyr, datawizard]
+resources:
+  - ../data/survey.csv
+---
+
+{{< include /_generated/de/descriptives-intermediate/runtime.qmd >}}
+
+{{< include /_generated/de/descriptives-intermediate/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R läuft hier direkt im Browser. Beim ersten Besuch lädt es 10–30 Sekunden (Anzeige unten rechts), danach geht es schneller.
+:::
+
+## Wozu? {#why}
+
+**Forschungsfrage:** Unterscheiden sich Touch- und Sprachbedienung in Usability (SUS), Beanspruchung (NASA-TLX) und Vertrauen, und wie stellst du das in einer einzigen Tabelle dar?
+
+Ein Fragebogen liefert schnell Dutzende Spalten: zehn SUS-Items, sechs TLX-Skalen, sechs Vertrauensitems. Kennwerte Spalte für Spalte abzutippen ist fehleranfällig und bricht, sobald eine Skala dazukommt. Diese Lektion zeigt zwei Muster, die mit beliebig vielen Spalten funktionieren: `across()` wendet dieselben Funktionen auf viele Spalten an, und das Prinzip „lang rechnen, breit zeigen“ macht aus vielen Skalen eine Ergebnistabelle M (SD) pro Gruppe.
+
+## Konzept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 210" role="img" aria-labelledby="fig-dsi-title fig-dsi-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-dsi-title">Lang rechnen, breit zeigen</title>
+  <desc id="fig-dsi-desc">Links eine breite Tabelle mit einer Zeile pro Person und den Spalten interface, sus, tlx, trust. Ein Pfeil pivot_longer führt zu einer langen Tabelle mit den Spalten interface, scale, score. Ein Pfeil summarise führt zu einer Tabelle mit scale, interface, m und sd. Ein Pfeil pivot_wider führt zur Ergebnistabelle mit einer Zeile pro Skala und den Spalten touch und voice, in den Zellen M (SD).</desc>
+  <rect x="10" y="20" width="150" height="24" class="rt-fig-box-accent" />
+  <text x="16" y="37" class="rt-fig-code">if  sus tlx trust</text>
+  <rect x="10" y="44" width="150" height="48" class="rt-fig-box" />
+  <text x="16" y="62" class="rt-fig-code">to  48  41  3.5</text>
+  <text x="16" y="84" class="rt-fig-code">vo  65  30  4.2</text>
+  <text x="10" y="112" class="rt-fig-label rt-fig-muted">1 Zeile pro Person</text>
+  <text x="168" y="62" class="rt-fig-label">→</text>
+  <rect x="190" y="20" width="150" height="24" class="rt-fig-box-accent" />
+  <text x="196" y="37" class="rt-fig-code">if  scale score</text>
+  <rect x="190" y="44" width="150" height="72" class="rt-fig-box" />
+  <text x="196" y="62" class="rt-fig-code">to  sus   48</text>
+  <text x="196" y="84" class="rt-fig-code">to  tlx   41</text>
+  <text x="196" y="106" class="rt-fig-code">…</text>
+  <text x="190" y="136" class="rt-fig-label rt-fig-muted">pivot_longer()</text>
+  <text x="348" y="62" class="rt-fig-label">→</text>
+  <rect x="370" y="20" width="180" height="24" class="rt-fig-box-accent" />
+  <text x="376" y="37" class="rt-fig-code">scale touch     voice</text>
+  <rect x="370" y="44" width="180" height="72" class="rt-fig-box" />
+  <text x="376" y="62" class="rt-fig-code">sus   51 (24)   62 (25)</text>
+  <text x="376" y="84" class="rt-fig-code">tlx   40 (15)   37 (13)</text>
+  <text x="376" y="106" class="rt-fig-code">trust 3.9 (1.3) 4.0 (1.3)</text>
+  <text x="370" y="136" class="rt-fig-label rt-fig-muted">summarise() + pivot_wider()</text>
+  <text x="10" y="176" class="rt-fig-label">Eine Formel pro Kennwert, egal wie viele Skalen</text>
+  <text x="10" y="198" class="rt-fig-label rt-fig-muted">Formatieren (sprintf) erst ganz am Ende: danach ist es Text</text>
+</svg>
+<figcaption>Erst in die lange Form bringen, pro Skala und Gruppe zusammenfassen, dann zur Tabelle drehen.</figcaption>
+</figure>
+```
+
+- **`across()`** in `summarise()` oder `mutate()`: Spalten auswählen (`starts_with("tlx_")`, `where(is.numeric)`), Funktionen als benannte Liste, Namen mit `.names = "{.col}_{.fn}"`. Argumente wie `na.rm = TRUE` in einer anonymen Funktion `\(x) mean(x, na.rm = TRUE)`.
+- **Zeilenweise über Items:** `rowMeans(pick(...), na.rm = TRUE)` für Skalenwerte; `rowSums(!is.na(pick(...)))` zählt gültige Items für eine Mindestregel.
+- **Lang rechnen, breit zeigen:** `pivot_longer()` → `summarise(.by = c(scale, group))` → formatieren → `pivot_wider()`.
+- **Was in die Tabelle gehört:** M (SD) mit fester Stellenzahl, n pro Zelle (wenn es abweicht), eine Effektgröße mit KI für den Gruppenvergleich. Skalen mit verschiedenen Wertebereichen über d vergleichen, nicht über Rohdifferenzen.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## Mehr dazu: Tabelle 1 und Ergebnistabelle
+
+- **Tabelle 1** beschreibt die Stichprobe (Alter, Geschlecht, Vorerfahrung) pro Gruppe; fertig mit `gtsummary::tbl_summary(by = interface)` (Lektion „Berichten“, Beginner).
+- **Ergebnistabelle** zeigt die abhängigen Variablen. Für Word: `flextable::flextable()` oder `gt::gt()` auf die gedrehte Tabelle, oder `modelsummary::datasummary()` mit Formeln wie `sus + tlx + trust ~ interface * (Mean + SD)`.
+- **Mehrere Kennwerte pro Skala** (Median, IQR, Schiefe) liefert `datawizard::describe_distribution()` gruppiert in einem Aufruf.
+:::
+
+## Beispiel {#example}
+
+Skalenwerte bilden (SUS 0–100, TLX roh, Vertrauen mit zwei umgepolten Items) und die Personen ohne korrekte Aufmerksamkeitsfrage ausschließen:
+
+```{webr}
+scored <- survey |>
+  filter(attention_check == 4) |>
+  mutate(
+    across(c(sus_01, sus_03, sus_05, sus_07, sus_09), \(x) x - 1),
+    across(c(sus_02, sus_04, sus_06, sus_08, sus_10), \(x) 5 - x),
+    across(c(trust_3, trust_5), \(x) 8 - x),
+    sus = 25 * rowMeans(pick(sus_01:sus_10), na.rm = TRUE),
+    tlx = rowMeans(pick(starts_with("tlx_")), na.rm = TRUE),
+    trust = rowMeans(pick(starts_with("trust_")), na.rm = TRUE)
+  ) |>
+  select(respondent, interface, sus, tlx, trust)
+scored
+```
+
+Dieselben Kennwerte für alle drei Skalen in einem Ausdruck, pro Bedienart:
+
+```{webr}
+scored |>
+  summarise(
+    across(c(sus, tlx, trust), list(m = \(x) mean(x, na.rm = TRUE), sd = \(x) sd(x, na.rm = TRUE))),
+    n = n(),
+    .by = interface
+  )
+```
+
+Breit ist das schwer lesbar. Lang gerechnet und am Ende gedreht, mit n pro Zelle:
+
+```{webr}
+scored |>
+  pivot_longer(c(sus, tlx, trust), names_to = "scale", values_to = "score") |>
+  summarise(
+    n = sum(!is.na(score)),
+    m = mean(score, na.rm = TRUE),
+    sd = sd(score, na.rm = TRUE),
+    .by = c(scale, interface)
+  ) |>
+  mutate(cell = sprintf("%.1f (%.1f), n = %d", m, sd, n)) |>
+  select(scale, interface, cell) |>
+  pivot_wider(names_from = interface, values_from = cell)
+```
+
+Mehr Kennwerte auf einmal (Median, IQR, Schiefe, fehlende Werte) liefert datawizard:
+
+```{webr}
+scored |>
+  group_by(interface) |>
+  describe_distribution(select = c(sus, tlx, trust))
+```
+
+**So berichtest du es (Ergebnisteil):** Die Sprachbedienung wurde im SUS besser bewertet (*M* = 61,5, *SD* = 24,5) als die Touchbedienung (*M* = 51,1, *SD* = 24,1), *d* = 0,43, 95-%-KI [0,11; 0,74]. Beanspruchung (NASA-TLX) und Vertrauen unterschieden sich kaum (|*d*| ≤ 0,21; Tabelle 2).
+
+## Paketvergleich {#packages}
+
+| Aufgabe | Empfehlung | Alternative |
+|---|---|---|
+| Kennwerte über viele Spalten | **dplyr** `across()` | `datawizard::describe_distribution()` (viele Kennwerte, gruppiert); Basis-R `sapply()` |
+| Skalenwerte | `rowMeans(pick(...))` | `datawizard::row_means(min_valid = )`; `psych::scoreItems()` (mit Reliabilität) |
+| Ergebnistabelle M (SD) | **tidyr** lang → `summarise()` → `pivot_wider()` | `modelsummary::datasummary()`; `gtsummary::tbl_summary(by = , statistic = ~ "{mean} ({sd})")` |
+| Effektgröße zum Vergleich | **effectsize** `cohens_d()` | `rstatix::cohens_d()`; `report::report()` für den ganzen Satz |
+
+## Übungen {#exercises}
+
+Drei Pflichtübungen und eine Zusatzübung. **Ausführen und prüfen** startet deinen Code und prüft ihn sofort. Hinweise deckst du einzeln auf (**Hinweis zeigen**), die Lösung erst danach.
+
+{{< include /_generated/de/descriptives-intermediate/exercises.qmd >}}
+
+## Wissenscheck {#check}
+
+{{< include /_generated/de/descriptives-intermediate/quiz.qmd >}}
+
+## Spickzettel {#cheatsheet}
+
+```r
+# Viele Spalten, mehrere Kennwerte
+d |> summarise(
+  across(starts_with("tlx_"), list(m = \(x) mean(x, na.rm = TRUE), sd = \(x) sd(x, na.rm = TRUE)),
+         .names = "{.col}_{.fn}"),
+  .by = group
+)
+
+# Skalenwert mit Mindestzahl gültiger Items
+d |> mutate(
+  across(c(item_3, item_5), \(x) 8 - x),
+  score = if_else(rowSums(!is.na(pick(starts_with("item_")))) >= 4,
+                  rowMeans(pick(starts_with("item_")), na.rm = TRUE), NA)
+)
+
+# Ergebnistabelle: lang rechnen, breit zeigen
+d |>
+  pivot_longer(c(sus, tlx, trust), names_to = "scale", values_to = "score") |>
+  summarise(m = mean(score, na.rm = TRUE), sd = sd(score, na.rm = TRUE), .by = c(scale, group)) |>
+  mutate(cell = sprintf("%.1f (%.1f)", m, sd)) |>
+  select(scale, group, cell) |>
+  pivot_wider(names_from = group, values_from = cell)
+```
+
+- Argumente in `across()` immer über `\(x) f(x, ...)` übergeben.
+- Vor `pivot_wider()` nur Schlüssel und Zelle behalten.
+- `sprintf()` für die Anzeige, ganz am Ende; n pro Zelle, wenn es abweicht.
+
+{{< include /_generated/de/descriptives-intermediate/footer.qmd >}}

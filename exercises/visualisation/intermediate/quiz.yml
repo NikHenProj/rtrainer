@@ -1,0 +1,134 @@
+# Knowledge check: passed at >= `pass` share of correctly answered questions.
+lesson: visualisation-intermediate
+pass: 0.8
+questions:
+  - id: vi-i-q-unit
+    prompt:
+      de: "40 Personen mit je 12 Durchgängen. Du berechnest das 95-%-KI pro Bedingung direkt über alle 160 Durchgänge. Was passiert?"
+      en: "40 participants with 12 trials each. You compute the 95% CI per condition directly over all 160 trials. What happens?"
+    options:
+      - text:
+          de: "Das KI wird zu schmal, weil Durchgänge derselben Person nicht unabhängig sind; Einheit ist die Person."
+          en: "The CI gets too narrow, because trials of the same participant are not independent; the unit is the participant."
+        correct: true
+        explain:
+          de: "Genau. Erst pro Person mitteln, dann über die 40 Personenmittel."
+          en: "Exactly. Average per participant first, then over the 40 participant means."
+      - text:
+          de: "Nichts, mehr Beobachtungen machen das KI nur genauer."
+          en: "Nothing, more observations only make the CI more precise."
+        correct: false
+        explain:
+          de: "Nur unabhängige Beobachtungen machen es genauer; 160 Durchgänge von 40 Personen sind keine 160 unabhängigen Werte."
+          en: "Only independent observations make it more precise; 160 trials from 40 participants are not 160 independent values."
+      - text:
+          de: "Das KI wird zu breit, weil die Streuung innerhalb der Personen dazukommt."
+          en: "The CI gets too wide, because the variation within participants is added."
+        correct: false
+        explain:
+          de: "Die SD wird zwar größer, aber `sqrt(160)` statt `sqrt(40)` im Nenner überwiegt: Am Ende ist das KI zu schmal."
+          en: "The SD does get larger, but `sqrt(160)` instead of `sqrt(40)` in the denominator dominates: in the end the CI is too narrow."
+  - id: vi-i-q-overlap
+    prompt:
+      de: "Die 95-%-KI von visual und haptic (Messwiederholung, dieselben Personen) überlappen leicht. Was folgt daraus?"
+      en: "The 95% CIs of visual and haptic (repeated measures, same participants) overlap slightly. What follows?"
+    options:
+      - text:
+          de: "Noch nichts: Für Vergleiche innerhalb der Personen sind diese Intervalle zu breit; entscheidend ist das KI der Differenz (gepaart bzw. Kontrast im Mixed Model)."
+          en: "Nothing yet: for within-participant comparisons these intervals are too wide; what matters is the CI of the difference (paired, or a contrast in a mixed model)."
+        correct: true
+        explain:
+          de: "Richtig. Die Unterschiede zwischen Personen stecken in beiden Intervallen, im gepaarten Vergleich fallen sie heraus."
+          en: "Right. The differences between participants are in both intervals; in the paired comparison they drop out."
+      - text:
+          de: "Der Unterschied ist nicht signifikant."
+          en: "The difference is not significant."
+        correct: false
+        explain:
+          de: "Selbst bei unabhängigen Gruppen können sich 95-%-KI um bis zu ein Viertel überlappen und der Unterschied ist trotzdem signifikant; bei Messwiederholung erst recht."
+          en: "Even with independent groups, 95% CIs can overlap by up to a quarter and the difference is still significant; with repeated measures all the more so."
+      - text:
+          de: "Die Messung ist unzuverlässig."
+          en: "The measurement is unreliable."
+        correct: false
+        explain:
+          de: "Die Überlappung sagt nichts über die Reliabilität."
+          en: "The overlap says nothing about reliability."
+  - id: vi-i-q-relation
+    prompt:
+      de: "Wozu dient `estimate_relation(fit, by = c(\"tech_affinity\", \"interface\"))` aus modelbased?"
+      en: "What is `estimate_relation(fit, by = c(\"tech_affinity\", \"interface\"))` from modelbased for?"
+    options:
+      - text:
+          de: "Es liefert Modellvorhersagen mit KI über ein Raster der genannten Prädiktoren, als Tabelle für ggplot."
+          en: "It returns model predictions with CIs across a grid of the named predictors, as a table for ggplot."
+        correct: true
+        explain:
+          de: "Ja. Spalten `Predicted`, `CI_low`, `CI_high` passen direkt in `geom_line()` und `geom_ribbon()`."
+          en: "Yes. Columns `Predicted`, `CI_low`, `CI_high` go straight into `geom_line()` and `geom_ribbon()`."
+      - text:
+          de: "Es testet, ob die Interaktion signifikant ist."
+          en: "It tests whether the interaction is significant."
+        correct: false
+        explain:
+          de: "Das zeigt `parameters(fit)` (Koeffizient der Interaktion) oder `estimate_contrasts()`/`estimate_slopes()`."
+          en: "That is shown by `parameters(fit)` (the interaction coefficient) or `estimate_contrasts()`/`estimate_slopes()`."
+      - text:
+          de: "Es berechnet die Korrelation zwischen den Prädiktoren."
+          en: "It computes the correlation between the predictors."
+        correct: false
+        explain:
+          de: "Dafür gibt es `correlation::correlation()`."
+          en: "That is what `correlation::correlation()` is for."
+  - id: vi-i-q-ggsave
+    prompt:
+      de: "`ggsave(\"fig.png\", fig, width = 16, height = 10, dpi = 300)`: Wie groß wird die Datei?"
+      en: "`ggsave(\"fig.png\", fig, width = 16, height = 10, dpi = 300)`: how large is the file?"
+    options:
+      - text:
+          de: "16 × 10 Zoll, also 4800 × 3000 Pixel; die Schrift wirkt auf 16 cm verkleinert winzig."
+          en: "16 × 10 inches, i.e. 4800 × 3000 pixels; scaled down to 16 cm the text looks tiny."
+        correct: true
+        explain:
+          de: "Genau. Ohne `units` gilt Zoll; `units = \"cm\"` speichert in Zielgröße."
+          en: "Exactly. Without `units`, inches apply; `units = \"cm\"` saves at the target size."
+      - text:
+          de: "16 × 10 cm, weil R die Systemeinstellung verwendet."
+          en: "16 × 10 cm, because R uses the system setting."
+        correct: false
+        explain:
+          de: "`ggsave()` kennt keine Systemeinstellung; die Voreinstellung ist `units = \"in\"`."
+          en: "`ggsave()` knows no system setting; the default is `units = \"in\"`."
+      - text:
+          de: "16 × 10 Pixel."
+          en: "16 × 10 pixels."
+        correct: false
+        explain:
+          de: "Pixel nur mit `units = \"px\"`."
+          en: "Pixels only with `units = \"px\"`."
+  - id: vi-i-q-patchwork
+    prompt:
+      de: "Du willst Reaktionszeit und Spurabweichung als Abbildung 2A und 2B nebeneinander zeigen. Was passt?"
+      en: "You want to show reaction time and lane deviation side by side as Figure 2A and 2B. What fits?"
+    options:
+      - text:
+          de: "Zwei ggplots mit patchwork: `p1 + p2 + plot_annotation(tag_levels = \"A\")`."
+          en: "Two ggplots with patchwork: `p1 + p2 + plot_annotation(tag_levels = \"A\")`."
+        correct: true
+        explain:
+          de: "Richtig. patchwork richtet die Panels aus und setzt die Kennbuchstaben."
+          en: "Right. patchwork aligns the panels and adds the tags."
+      - text:
+          de: "`facet_wrap(~ variable)` auf die Rohdaten."
+          en: "`facet_wrap(~ variable)` on the raw data."
+        correct: false
+        explain:
+          de: "Das ginge nur nach `pivot_longer()` und mit `scales = \"free_y\"`; Achsentitel und Kennbuchstaben pro Panel sind damit umständlich."
+          en: "That would only work after `pivot_longer()` and with `scales = \"free_y\"`; axis titles and tags per panel are awkward that way."
+      - text:
+          de: "Beide Plots einzeln speichern und in Word nebeneinander setzen."
+          en: "Save both plots separately and place them side by side in Word."
+        correct: false
+        explain:
+          de: "Geht, aber Größen und Achsen passen dann selten zusammen, und jede Änderung heißt neu zusammensetzen."
+          en: "Possible, but sizes and axes rarely match, and every change means reassembling."
