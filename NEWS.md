@@ -1,6 +1,6 @@
 # rtrainer (Quarto course)
 
-## Milestone 9, package P7: mini project intermediate (DE)
+## Milestone 9, package P7: mini project intermediate (DE) (accepted, merged into main)
 
 - Load check before writing (headless Chrome, webR 0.6.0, one measurement): webR 1.3 s, readxl + janitor + dplyr 3.8 s, lme4 + lmerTest + emmeans + parameters + ggplot2 3.7 s, reading the Excel export 3.2 s, `lmer()` + emmeans contrasts 5.9 s, `glmer()` 1.7 s; about 20 s in total. Model and contrast values in webR match local R to 6 digits; `glmer()` odds ratios differ in the second decimal (3.82 vs. 3.83), so `pj-i-success` checks with `tolerance: 0.02`.
 - Page `de/project-intermediate.qmd` (`langs: [de]`), structure as `project-beginner`: brief with analysis plan → 7 steps with one required exercise each (import, clean, time model, contrasts, figure, table, text; 7 required + 1 optional `pj-i-success`) → full script (live) → "Lokal ausführen" (Quarto → docx with inline numbers and `nice_table()`) → knowledge check (5) → checklist. `curriculum.yml`: project row now has levels beginner and intermediate; prerequisites reporting-intermediate and mixed-models-intermediate.
