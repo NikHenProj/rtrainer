@@ -1,6 +1,6 @@
 # STATUS
 
-Stand (2026-10-27): **M9 Paket P7 (DE: project-intermediate) abgenommen und in `main`.** Davor: **M9 Paket P6 (DE: reporting-, reproducibility-, programming-intermediate) abgenommen und in `main`.** Davor: **M9 Paket P5 (DE: mixed-models-, moderation-mediation-, power-intermediate) abgenommen und in `main`.** **M6 bis M8 Teil 5 und M9 Paket P1 (DE: import-, cleaning-, reshaping-intermediate) abgenommen und in `main` und M9 Paket P2 (DE: missing-, visualisation-, descriptives-intermediate) abgenommen und in `main`; M9 Paket P3 (DE: scales-, sem-, group-comparisons-intermediate) und Datensatz `acceptance` abgenommen und in `main`; M9 Paket P4 (DE: robust-, regression-, glm-intermediate) abgenommen und in `main`** (alle 10 Beginner-Lektionen und Mini-Projekt Beginner, DE + EN). **Online seit 2026-10-26:** https://nikhenproj.github.io/rtrainer/ (Pages-Quelle GitHub Actions, letzter CI-Lauf 40526007218 grün). M9-Plan abgenommen (inkl. Datensatz `acceptance`): `docs/M9-plan.md`. Entscheidungen: NEWS.md.
+Stand (2026-10-27): **M9 Paket P7 (DE: project-intermediate) abgenommen und in `main`.** Davor: **M9 Paket P6 (DE: reporting-, reproducibility-, programming-intermediate) abgenommen und in `main`.** Davor: **M9 Paket P5 (DE: mixed-models-, moderation-mediation-, power-intermediate) abgenommen und in `main`.** **M6 bis M8 Teil 5 und M9 Paket P1 (DE: import-, cleaning-, reshaping-intermediate) abgenommen und in `main` und M9 Paket P2 (DE: missing-, visualisation-, descriptives-intermediate) abgenommen und in `main`; M9 Paket P3 (DE: scales-, sem-, group-comparisons-intermediate) und Datensatz `acceptance` abgenommen und in `main`; M9 Paket P4 (DE: robust-, regression-, glm-intermediate) abgenommen und in `main`** (alle 10 Beginner-Lektionen und Mini-Projekt Beginner, DE + EN). **Online seit 2026-10-26:** https://nikhenproj.github.io/rtrainer/ (Pages-Quelle GitHub Actions, letzter CI-Lauf 40533051262 grün). M9-Plan abgenommen (inkl. Datensatz `acceptance`): `docs/M9-plan.md`. Entscheidungen: NEWS.md.
 
 ## Was steht
 - **Gerüst (M6):** Quarto-Website mit quarto-live/webR, Theme hell/dunkel (IBM Plex Sans, JetBrains Mono, Indigo), Kopfzeile Kursplan · Wiederholen (n fällig) · Pakete · Glossar · DE/EN · Hell/Dunkel · Suche.
@@ -23,6 +23,10 @@ Stand (2026-10-27): **M9 Paket P7 (DE: project-intermediate) abgenommen und in `
 - **Triage** `docs/legacy-triage.md`: 54 behalten (18 im Beginner-Pfad), 11 streichen, freigegeben. Migriert: 41 (markiert): alle Beginner-Aufgaben der Triage, P1 (10, 13, 18, 23, 24, 26), P2 (5, 14, 15, 48, 52), P3 (30, 31, 36, 37, 38), P4 (35), P5 (40–43, 45, 46; 44 bleibt für mixed-models-expert) und P6 (53, 54, 19, 21, 25, 28, 29; 4 als `rr-i-lockfile`, 20 als Wissenscheck-Frage). Stand: 50 von 54 (offen: 22, 27, 39, 44 für Expert).
 - Alt: `legacy/exercises/` (65 Aufgaben), `legacy/driving_sim_v0.*`.
 
+## Online (2026-10-27, M9 P7)
+- Gepusht (852d386, 8753f65). CI-Lauf 40533051262 grün (build 11,4 min, deploy ok): 144/144, `[ FAIL 0 | WARN 16 | SKIP 0 | PASS 243 ]`, Node 12/0, Rauchtest 0 failure(s).
+- Ladezeit im CI-Rauchtest (headless, Runner): project-intermediate 21,7 s; Excel-Export, Kontraste (Hinweis + Lösung) und Abbildung je ≤ 1 s bis zur Bewertung.
+
 ## Geprüft (2026-10-27, M9 P7)
 Vorab Ladezeit in webR (headless, eine Messung): webR 1,3 s, readxl/janitor/dplyr 3,8 s, lme4/lmerTest/emmeans/parameters/ggplot2 3,7 s, Excel lesen 3,2 s, `lmer()` + Kontraste 5,9 s, `glmer()` 1,7 s (gesamt ~20 s). glmer-Werte weichen in webR in der 2. Nachkommastelle ab → `pj-i-success` mit `tolerance: 0.02`.
 Über Verifier-Subagent (echte Ausgabe, gekürzt):
@@ -30,7 +34,7 @@ Vorab Ladezeit in webR (headless, eine Messung): webR 1,3 s, readxl/janitor/dply
 - `testthat::test_dir("tools/tests")`: FAIL 0 | WARN 16 | SKIP 0 | PASS 243 (unverändert); `node --test tests/js`: 12 pass, 0 fail
 - `quarto render`: Exit 0, [50/50], keine Warnungen; `_site/de/project-intermediate.html` vorhanden, keine EN-Seite
 - `Rscript tests/smoke-test.R`: 0 failure(s); neu Abschnitt 14: Projektzeile verlinkt project-intermediate, Seite bereit nach 25,8 s (lokal, eine Messung); Excel-Export, Kontraste (Hinweis ohne Holm, Lösung) und Abbildung in webR bewertet
-- Nicht geprüft: Seite nicht manuell durchgeklickt (SVG-Abbildung, Wissenscheck, Gesamtskript nur lokal in R, nicht in webR ausgeführt; `pj-i-clean`, `pj-i-model`, `pj-i-table`, `pj-i-success` nur im Selbsttest, nicht in webR bewertet); nicht gepusht, CI nicht gelaufen.
+- Nicht geprüft: Seite nicht manuell durchgeklickt (SVG-Abbildung, Wissenscheck, Gesamtskript nur lokal in R, nicht in webR ausgeführt; `pj-i-clean`, `pj-i-model`, `pj-i-table`, `pj-i-success` nur im Selbsttest, nicht in webR bewertet); CI siehe oben.
 
 ## Online (2026-10-27, M9 P6)
 - Gepusht (4e56892, 56e1ad1). CI-Lauf 40526007218 grün (build 9,5 min, deploy ok): 136/136, `[ FAIL 0 | WARN 16 | SKIP 0 | PASS 243 ]`, Node 12/0, Rauchtest 0 failure(s).
