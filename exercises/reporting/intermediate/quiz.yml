@@ -1,0 +1,134 @@
+# Knowledge check: passed at >= `pass` share of correctly answered questions.
+lesson: reporting-intermediate
+pass: 0.8
+questions:
+  - id: rp-i-q-same-n
+    prompt:
+      de: "Modell 1 hat N = 157, Modell 2 mit einer zusätzlichen Skala N = 136. Was folgt daraus?"
+      en: "Model 1 has N = 157, model 2 with an additional scale N = 136. What follows?"
+    options:
+      - text:
+          de: "Der R²-Zuwachs ist so nicht deutbar; beide Modelle müssen auf denselben 136 Personen geschätzt werden."
+          en: "The increase in R² cannot be interpreted like this; both models must be estimated on the same 136 participants."
+        correct: true
+        explain:
+          de: "Richtig. Sonst mischt der Vergleich den Effekt der Skala mit dem Wechsel der Stichprobe, und `anova()` bricht ab."
+          en: "Right. Otherwise the comparison mixes the effect of the scale with the change of sample, and `anova()` stops."
+      - text:
+          de: "Nichts, `lm()` gleicht unterschiedliche N automatisch aus."
+          en: "Nothing, `lm()` compensates for different N automatically."
+        correct: false
+        explain:
+          de: "`lm()` lässt Zeilen mit fehlenden Werten still weg; ausgeglichen wird nichts."
+          en: "`lm()` silently drops rows with missing values; nothing is compensated."
+      - text:
+          de: "Man sollte die fehlenden Werte durch den Mittelwert ersetzen, damit beide Modelle N = 157 haben."
+          en: "You should replace the missing values with the mean so that both models have N = 157."
+        correct: false
+        explain:
+          de: "Mittelwertersetzung verkleinert die Varianz und verzerrt Zusammenhänge. Wenn überhaupt, dann Mehrfachimputation (Lektion Fehlende Werte)."
+          en: "Mean substitution shrinks the variance and biases associations. If anything, use multiple imputation (lesson Missing data)."
+  - id: rp-i-q-ci
+    prompt:
+      de: "Was sollte in einer APA-7-Regressionstabelle unter bzw. neben dem Koeffizienten stehen?"
+      en: "What should appear below or next to the coefficient in an APA 7 regression table?"
+    options:
+      - text:
+          de: "Das 95-%-Konfidenzintervall (oder SE), dazu der exakte p-Wert; Sterne sind nicht nötig."
+          en: "The 95 % confidence interval (or SE), plus the exact p-value; stars are not needed."
+        correct: true
+        explain:
+          de: "Richtig. Das KI zeigt Größe und Unsicherheit zugleich; Sterne geben nur eine Schwelle wieder."
+          en: "Right. The CI shows size and uncertainty at once; stars only reflect a threshold."
+      - text:
+          de: "Nur Sterne für p < .05, p < .01 und p < .001."
+          en: "Only stars for p < .05, p < .01 and p < .001."
+        correct: false
+        explain:
+          de: "Sterne allein verstecken die Größe der Unsicherheit und laden zum Schwellendenken ein."
+          en: "Stars alone hide the size of the uncertainty and invite threshold thinking."
+      - text:
+          de: "Der t-Wert mit vier Nachkommastellen."
+          en: "The t-value with four decimals."
+        correct: false
+        explain:
+          de: "t kann in die Tabelle, aber nicht statt des KI; mehr als zwei bis drei Stellen täuschen Genauigkeit vor."
+          en: "t can be in the table, but not instead of the CI; more than two to three decimals suggest false precision."
+  - id: rp-i-q-names
+    prompt:
+      de: "`nice_table(tab)` zeigt die Spalte `CI_low` unformatiert und `p` als `0.00`. Was ist die wahrscheinlichste Ursache?"
+      en: "`nice_table(tab)` shows the column `CI_low` unformatted and `p` as `0.00`. What is the most likely cause?"
+    options:
+      - text:
+          de: "Die Spalten heißen nicht wie von rempsyc erwartet (`CI_lower`, `CI_upper`), und die p-Werte wurden vorher gerundet."
+          en: "The columns are not named as rempsyc expects (`CI_lower`, `CI_upper`), and the p-values were rounded beforehand."
+        correct: true
+        explain:
+          de: "Richtig. rempsyc formatiert nach Spaltennamen; gerundete p-Werte kann es nicht mehr als `< .001` darstellen."
+          en: "Right. rempsyc formats by column names; rounded p-values can no longer be shown as `< .001`."
+      - text:
+          de: "flextable ist nicht installiert."
+          en: "flextable is not installed."
+        correct: false
+        explain:
+          de: "Dann gäbe es gar keine Tabelle, sondern einen Fehler beim Laden."
+          en: "Then there would be no table at all, but an error when loading."
+      - text:
+          de: "`nice_table()` funktioniert nur mit Ausgaben von `nice_lm()`."
+          en: "`nice_table()` only works with output from `nice_lm()`."
+        correct: false
+        explain:
+          de: "`nice_table()` nimmt jeden Data Frame; die Spaltennamen steuern die Formatierung."
+          en: "`nice_table()` takes any data frame; the column names control the formatting."
+  - id: rp-i-q-inline
+    prompt:
+      de: "Wie kommen Zahlen in den Ergebnistext eines Quarto-Berichts am verlässlichsten?"
+      en: "What is the most reliable way to get numbers into the results text of a Quarto report?"
+    options:
+      - text:
+          de: "Mit Inline-Code, z. B. `` `r format_p(p)` ``, aus dem Modellobjekt; so ändern sie sich mit den Daten mit."
+          en: "With inline code, e.g. `` `r format_p(p)` ``, from the model object; that way they change along with the data."
+        correct: true
+        explain:
+          de: "Richtig. Abtippen ist die häufigste Fehlerquelle in Ergebnisteilen, besonders nach einer späten Datenkorrektur."
+          en: "Right. Retyping is the most common source of errors in results sections, especially after a late data correction."
+      - text:
+          de: "Aus der Konsolenausgabe kopieren, sobald die Analyse fertig ist."
+          en: "Copy them from the console output once the analysis is finished."
+        correct: false
+        explain:
+          de: "Jede spätere Änderung (Ausschluss, Korrektur) macht kopierte Zahlen still falsch."
+          en: "Every later change (exclusion, correction) silently makes copied numbers wrong."
+      - text:
+          de: "Aus der fertigen Word-Tabelle abschreiben, weil die schon gerundet ist."
+          en: "Copy them from the finished Word table because it is already rounded."
+        correct: false
+        explain:
+          de: "Auch die Tabelle ist nur eine Kopie; Text und Tabelle sollten aus demselben Objekt kommen."
+          en: "The table is only a copy as well; text and table should come from the same object."
+  - id: rp-i-q-word
+    prompt:
+      de: "Die Betreuerin möchte die Tabelle in Word bearbeiten. Was ist der beste Weg?"
+      en: "The supervisor wants to edit the table in Word. What is the best way?"
+    options:
+      - text:
+          de: "`flextable::save_as_docx()` bzw. `modelsummary(..., output = \"tabelle.docx\")` oder das Quarto-Dokument als docx rendern."
+          en: "`flextable::save_as_docx()` or `modelsummary(..., output = \"table.docx\")`, or render the Quarto document as docx."
+        correct: true
+        explain:
+          de: "Richtig. So entsteht eine echte Word-Tabelle, die sich bei einer neuen Analyse per Skript neu erzeugen lässt."
+          en: "Right. That creates a real Word table that a script can recreate after a new analysis."
+      - text:
+          de: "Einen Screenshot der Konsolenausgabe einfügen."
+          en: "Insert a screenshot of the console output."
+        correct: false
+        explain:
+          de: "Ein Bild lässt sich nicht bearbeiten, nicht durchsuchen und ist für Screenreader unlesbar."
+          en: "An image cannot be edited or searched and is unreadable for screen readers."
+      - text:
+          de: "Die Werte per Hand in eine Word-Tabelle tippen."
+          en: "Type the values into a Word table by hand."
+        correct: false
+        explain:
+          de: "Fehleranfällig und bei jeder Änderung der Analyse neu zu machen."
+          en: "Error-prone and has to be redone after every change to the analysis."

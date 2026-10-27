@@ -1,0 +1,114 @@
+id: rp-i-modelsummary
+lesson: reporting-intermediate
+order: 1
+title:
+  de: Zwei Modelle nebeneinander mit modelsummary
+  en: Two models side by side with modelsummary
+kind: write
+required: true
+packages: [dplyr, modelsummary]
+data: [acceptance]
+setup: |
+  library(dplyr)
+  library(modelsummary)
+  tam <- acceptance |>
+    mutate(
+      across(c(peou_3, trust_4), \(x) 8 - x),
+      pu = rowMeans(pick(pu_1:pu_4)),
+      peou = rowMeans(pick(peou_1:peou_4)),
+      trust = rowMeans(pick(trust_1:trust_5)),
+      bi = rowMeans(pick(bi_1:bi_4))
+    )
+prompt:
+  de: |
+    Die Nutzungsabsicht `bi` wird hierarchisch vorhergesagt: Modell 1 mit
+    Nützlichkeit `pu` und Bedienbarkeit `peou`, Modell 2 zusätzlich mit
+    Vertrauen `trust` (Daten `tam`, Skalenwerte 1–7).
+
+    Berichte beide Modelle in **einer** Tabelle mit `modelsummary()`:
+
+    - Spalten heißen `"Model 1"` und `"Model 2"`,
+    - unter jedem Koeffizienten steht das 95-%-KI statt des Standardfehlers,
+    - als Gütemaße nur Fallzahl und R² (`gof_map = c("nobs", "r.squared")`),
+    - Ausgabe als Data Frame (`output = "data.frame"`), damit die Prüfung
+      die Tabelle lesen kann.
+  en: |
+    Intention `bi` is predicted hierarchically: model 1 with usefulness
+    `pu` and ease of use `peou`, model 2 additionally with trust `trust`
+    (data `tam`, scale scores 1–7).
+
+    Report both models in **one** table with `modelsummary()`:
+
+    - columns are called `"Model 1"` and `"Model 2"`,
+    - below each coefficient the 95 % CI instead of the standard error,
+    - as goodness-of-fit only the number of observations and R²
+      (`gof_map = c("nobs", "r.squared")`),
+    - output as a data frame (`output = "data.frame"`) so that the check
+      can read the table.
+starter: |
+  m1 <- lm(bi ~ pu + peou, data = tam)
+  m2 <- lm(bi ~ pu + peou + trust, data = tam)
+  modelsummary(m2, output = "data.frame")
+solution: |
+  m1 <- lm(bi ~ pu + peou, data = tam)
+  m2 <- lm(bi ~ pu + peou + trust, data = tam)
+  modelsummary(
+    list("Model 1" = m1, "Model 2" = m2),
+    statistic = "conf.int",
+    gof_map = c("nobs", "r.squared"),
+    output = "data.frame"
+  )
+hints:
+  - de: "Mehrere Modelle übergibst du als benannte Liste; die Namen werden zu Spaltenköpfen."
+    en: "You pass several models as a named list; the names become column headers."
+  - de: "`statistic = \"conf.int\"` setzt das KI unter den Koeffizienten, `gof_map` wählt die Gütemaße aus."
+    en: "`statistic = \"conf.int\"` puts the CI below the coefficient, `gof_map` selects the goodness-of-fit rows."
+  - de: "`modelsummary(list(\"Model 1\" = m1, \"Model 2\" = m2), statistic = \"conf.int\", gof_map = ..., output = \"data.frame\")`."
+    en: "`modelsummary(list(\"Model 1\" = m1, \"Model 2\" = m2), statistic = \"conf.int\", gof_map = ..., output = \"data.frame\")`."
+explanation:
+  de: |
+    Die Tabelle zeigt, was Leserinnen und Leser zum Vergleich brauchen:
+    gleiche N (300 und 300), R² steigt von .21 auf .25, und Vertrauen
+    sagt die Absicht über Nützlichkeit und Bedienbarkeit hinaus vorher
+    (b = 0.21, 95 % KI [0.11, 0.32]). Ob der Zuwachs von ΔR² = .04
+    signifikant ist, prüft `anova(m1, m2)`: F(1, 296) = 17.61, p < .001.
+    KIs statt Standardfehler sind direkt deutbar und werden in APA 7
+    empfohlen; Sterne braucht die Tabelle dann nicht. Für den Bericht
+    ersetzt du `output = "data.frame"` durch `"tabelle2.docx"` oder lässt
+    die Tabelle im Quarto-Dokument rendern. Fallstrick: Ohne Namen in
+    der Liste heißen die Spalten `(1)` und `(2)`, ohne `gof_map` füllen
+    AIC, BIC, RMSE und Log-Likelihood die halbe Tabelle.
+  en: |
+    The table shows what readers need for the comparison: equal N (300
+    and 300), R² rises from .21 to .25, and trust predicts intention
+    beyond usefulness and ease of use (b = 0.21, 95 % CI [0.11, 0.32]).
+    Whether the increase of ΔR² = .04 is significant is tested by
+    `anova(m1, m2)`: F(1, 296) = 17.61, p < .001. CIs instead of standard
+    errors can be interpreted directly and are recommended in APA 7; the
+    table then needs no stars. For the report, replace `output =
+    "data.frame"` with `"table2.docx"` or let the table render in the
+    Quarto document. Pitfall: without names in the list the columns are
+    called `(1)` and `(2)`; without `gof_map`, AIC, BIC, RMSE and
+    log-likelihood fill half the table.
+misconception:
+  de: "Für jedes Modell braucht man eine eigene Tabelle, und unter den Koeffizienten gehört immer der Standardfehler."
+  en: "Each model needs its own table, and the standard error always belongs below the coefficients."
+check:
+  type: value
+common_mistakes:
+  - pattern: "modelsummary\\(\\s*(m1|m2)\\s*,"
+    message:
+      de: "Ein einzelnes Modell ergibt eine Spalte. Übergib beide als benannte Liste: `list(\"Model 1\" = m1, \"Model 2\" = m2)`."
+      en: "A single model gives one column. Pass both as a named list: `list(\"Model 1\" = m1, \"Model 2\" = m2)`."
+  - pattern: "modelsummary\\(\\s*list\\(\\s*m1\\s*,"
+    message:
+      de: "Ohne Namen heißen die Spalten `(1)` und `(2)`. Benenne die Listenelemente: `\"Model 1\" = m1`."
+      en: "Without names the columns are called `(1)` and `(2)`. Name the list elements: `\"Model 1\" = m1`."
+  - pattern: "conf_level|statistic\\s*=\\s*\"(std\\.error|ci)\""
+    message:
+      de: "Das KI heißt in modelsummary `statistic = \"conf.int\"`."
+      en: "In modelsummary the CI is `statistic = \"conf.int\"`."
+  - pattern: "^(?![\\s\\S]*gof_map)"
+    message:
+      de: "Ohne `gof_map` stehen alle Gütemaße in der Tabelle. Wähle mit `gof_map = c(\"nobs\", \"r.squared\")` nur N und R²."
+      en: "Without `gof_map` all goodness-of-fit rows appear. Use `gof_map = c(\"nobs\", \"r.squared\")` to keep only N and R²."

@@ -1,0 +1,134 @@
+id: rr-i-here-project
+lesson: reproducibility-intermediate
+order: 1
+title:
+  de: Pfade im Projekt mit here
+  en: Paths in the project with here
+kind: write
+required: true
+packages: [dplyr, readr, here]
+data: [driving_sim]
+setup: |
+  library(dplyr)
+  library(readr)
+  .proj <- file.path(tempdir(), "driving-study")
+  unlink(.proj, recursive = TRUE)
+  dir.create(file.path(.proj, "data", "raw"), recursive = TRUE)
+  dir.create(file.path(.proj, "analysis"))
+  writeLines("Version: 1.0", file.path(.proj, "driving-study.Rproj"))
+  file.create(file.path(.proj, "analysis", "01-clean.R"))
+  write_csv(driving_sim, file.path(.proj, "data", "raw", "driving_sim.csv"))
+  setwd(file.path(.proj, "analysis"))
+prompt:
+  de: |
+    Ein R-Projekt hat diese Struktur:
+
+    ```
+    driving-study/
+    ├── driving-study.Rproj
+    ├── analysis/
+    │   └── 01-clean.R      <- dein Skript, aktuelles Arbeitsverzeichnis
+    └── data/raw/driving_sim.csv
+    ```
+
+    Das Arbeitsverzeichnis ist `analysis/`. Schreibe den Code so, dass er
+    unabhängig vom Arbeitsverzeichnis läuft, solange er im Projekt
+    ausgeführt wird; baue alle Pfade mit **here**.
+
+    1. Melde das Skript mit `here::i_am()` an.
+    2. Lies `data/raw/driving_sim.csv` mit `read_csv()` ein.
+    3. Schreibe die Zeilen der Bedingung `"haptic"` mit `write_csv()`
+       nach `output/haptic.csv` im Projekt. Den Ordner `output/` gibt es
+       noch nicht.
+    4. Lies zur Kontrolle `output/haptic.csv` wieder ein und gib es in der
+       letzten Zeile zurück.
+  en: |
+    An R project has this structure:
+
+    ```
+    driving-study/
+    ├── driving-study.Rproj
+    ├── analysis/
+    │   └── 01-clean.R      <- your script, current working directory
+    └── data/raw/driving_sim.csv
+    ```
+
+    The working directory is `analysis/`. Write the code so that it runs
+    regardless of the working directory as long as it is run inside the
+    project; build all paths with **here**.
+
+    1. Register the script with `here::i_am()`.
+    2. Read `data/raw/driving_sim.csv` with `read_csv()`.
+    3. Write the rows of condition `"haptic"` with `write_csv()` to
+       `output/haptic.csv` in the project. The folder `output/` does not
+       exist yet.
+    4. As a check, read `output/haptic.csv` back in and return it on the
+       last line.
+starter: |
+  raw <- read_csv("data/raw/driving_sim.csv")
+  raw |>
+    filter(condition == "haptic") |>
+    write_csv("output/haptic.csv")
+  read_csv("output/haptic.csv")
+solution: |
+  here::i_am("analysis/01-clean.R")
+  raw <- read_csv(here::here("data", "raw", "driving_sim.csv"), show_col_types = FALSE)
+  dir.create(here::here("output"), showWarnings = FALSE)
+  raw |>
+    filter(condition == "haptic") |>
+    write_csv(here::here("output", "haptic.csv"))
+  read_csv(here::here("output", "haptic.csv"), show_col_types = FALSE)
+hints:
+  - de: "`here::here()` setzt Pfade vom Projektordner aus zusammen, egal in welchem Unterordner das Skript läuft. Den Projektordner erkennt here an der `.Rproj`-Datei."
+    en: "`here::here()` builds paths from the project folder, whatever subfolder the script runs in. here recognises the project folder by the `.Rproj` file."
+  - de: "`here::i_am(\"analysis/01-clean.R\")` legt die Wurzel ausdrücklich fest. `write_csv()` legt keine Ordner an: vorher `dir.create()`."
+    en: "`here::i_am(\"analysis/01-clean.R\")` sets the root explicitly. `write_csv()` does not create folders: call `dir.create()` first."
+  - de: "`read_csv(here::here(\"data\", \"raw\", \"driving_sim.csv\"))`, `dir.create(here::here(\"output\"), showWarnings = FALSE)`, `write_csv(..., here::here(\"output\", \"haptic.csv\"))`."
+    en: "`read_csv(here::here(\"data\", \"raw\", \"driving_sim.csv\"))`, `dir.create(here::here(\"output\"), showWarnings = FALSE)`, `write_csv(..., here::here(\"output\", \"haptic.csv\"))`."
+explanation:
+  de: |
+    `here()` sucht vom Arbeitsverzeichnis aufwärts nach einer
+    Projektmarkierung (`.Rproj`, `.here`, `DESCRIPTION`, `.git`) und baut
+    alle Pfade von dort. Das Skript läuft so aus `analysis/`, aus der
+    Projektwurzel, mit `Rscript` und beim Rendern eines Quarto-Berichts
+    in einem Unterordner gleich. `here::i_am()` prüft zusätzlich, dass
+    das Skript wirklich in diesem Projekt liegt, und setzt die Wurzel neu,
+    falls here schon anderswo geladen wurde. Relative Pfade wie
+    `"data/raw/..."` oder `"../data"` hängen vom Arbeitsverzeichnis ab,
+    `setwd("C:/Users/...")` vom eigenen Rechner. Fallstrick: Rohdaten nie
+    überschreiben; Abgeleitetes gehört in einen eigenen Ordner
+    (`output/`, `data/processed/`), der sich jederzeit neu erzeugen lässt.
+  en: |
+    `here()` searches upwards from the working directory for a project
+    marker (`.Rproj`, `.here`, `DESCRIPTION`, `.git`) and builds all paths
+    from there. The script then runs the same from `analysis/`, from the
+    project root, with `Rscript` and when rendering a Quarto report in a
+    subfolder. `here::i_am()` additionally checks that the script really is
+    in this project and resets the root if here was already loaded
+    elsewhere. Relative paths like `"data/raw/..."` or `"../data"` depend
+    on the working directory, `setwd("C:/Users/...")` on your own computer.
+    Pitfall: never overwrite raw data; derived files belong in their own
+    folder (`output/`, `data/processed/`) that can be recreated at any
+    time.
+misconception:
+  de: "Relative Pfade beziehen sich auf den Ordner, in dem das Skript liegt."
+  en: "Relative paths refer to the folder in which the script is located."
+check:
+  type: value
+common_mistakes:
+  - pattern: "setwd\\("
+    message:
+      de: "`setwd()` macht das Skript vom eigenen Rechner abhängig. Baue die Pfade mit `here::here()`."
+      en: "`setwd()` makes the script depend on your own computer. Build the paths with `here::here()`."
+  - pattern: "\\.\\./"
+    message:
+      de: "`../` funktioniert nur, solange das Arbeitsverzeichnis `analysis/` ist. `here::here()` gilt im ganzen Projekt."
+      en: "`../` only works while the working directory is `analysis/`. `here::here()` works throughout the project."
+  - pattern: "^(?![\\s\\S]*dir\\.create)[\\s\\S]*here\\([^)]*output"
+    message:
+      de: "`write_csv()` legt keine Ordner an. Erzeuge `output/` vorher mit `dir.create(here::here(\"output\"), showWarnings = FALSE)`."
+      en: "`write_csv()` does not create folders. Create `output/` first with `dir.create(here::here(\"output\"), showWarnings = FALSE)`."
+  - pattern: "here\\(\\s*\"data/raw/"
+    message:
+      de: "Das geht, aber `here(\"data\", \"raw\", \"driving_sim.csv\")` mit einzelnen Teilen ist auf allen Betriebssystemen gleich lesbar."
+      en: "That works, but `here(\"data\", \"raw\", \"driving_sim.csv\")` with separate parts reads the same on every operating system."

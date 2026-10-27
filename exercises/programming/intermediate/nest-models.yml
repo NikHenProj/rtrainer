@@ -1,0 +1,111 @@
+id: pg-i-nest-models
+lesson: programming-intermediate
+order: 3
+title:
+  de: Ein Modell pro Person mit nest() und map()
+  en: One model per participant with nest() and map()
+kind: write
+required: true
+packages: [dplyr, tidyr, purrr, parameters]
+data: [driving_sim]
+setup: |
+  library(dplyr)
+  library(tidyr)
+  library(purrr)
+  library(parameters)
+prompt:
+  de: |
+    Wie stark werden die Personen über die Durchgänge schneller? Schätze
+    den Übungseffekt pro Person: Passe für jede Person
+    `lm(rt_ms ~ condition + trial)` über alle ihre Durchgänge an.
+
+    Ergebnis: eine Zeile pro Person mit den Spalten `participant`, `slope`
+    (Koeffizient von `trial`), `CI_low`, `CI_high` (95-%-KI) und `n`
+    (Zahl der im Modell verwendeten Durchgänge, Integer), ungerundet.
+
+    Arbeite mit `nest()`, speichere die Modelle in einer Listenspalte und
+    hole die Kennwerte mit `model_parameters()`.
+  en: |
+    How much faster do participants get across trials? Estimate the
+    practice effect per participant: fit `lm(rt_ms ~ condition + trial)`
+    across all trials of each participant.
+
+    Result: one row per participant with the columns `participant`,
+    `slope` (coefficient of `trial`), `CI_low`, `CI_high` (95 % CI) and `n`
+    (number of trials used in the model, integer), unrounded.
+
+    Work with `nest()`, store the models in a list column and get the
+    estimates with `model_parameters()`.
+starter: |
+  driving_sim |>
+    nest(.by = participant) |>
+    mutate(model = map(data, \(d) lm(rt_ms ~ condition + trial, data = d)))
+solution: |
+  driving_sim |>
+    nest(.by = participant) |>
+    mutate(
+      model = map(data, \(d) lm(rt_ms ~ condition + trial, data = d)),
+      params = map(model, model_parameters),
+      n = map_int(model, nobs)
+    ) |>
+    unnest(params) |>
+    filter(Parameter == "trial") |>
+    select(participant, slope = Coefficient, CI_low, CI_high, n)
+hints:
+  - de: "Aus jedem Modell eine Tabelle: `map(model, model_parameters)` ergibt eine Listenspalte mit Data Frames; `unnest()` klappt sie zu Zeilen aus."
+    en: "One table from each model: `map(model, model_parameters)` gives a list column of data frames; `unnest()` unfolds it into rows."
+  - de: "Nach `unnest()` hat jede Person eine Zeile pro Parameter; behalte nur `Parameter == \"trial\"`. Die Fallzahl liefert `map_int(model, nobs)`."
+    en: "After `unnest()`, each participant has one row per parameter; keep only `Parameter == \"trial\"`. The number of cases comes from `map_int(model, nobs)`."
+  - de: "`mutate(params = map(model, model_parameters), n = map_int(model, nobs))`, dann `unnest(params)`, `filter()` und `select(participant, slope = Coefficient, CI_low, CI_high, n)`."
+    en: "`mutate(params = map(model, model_parameters), n = map_int(model, nobs))`, then `unnest(params)`, `filter()` and `select(participant, slope = Coefficient, CI_low, CI_high, n)`."
+explanation:
+  de: |
+    `nest(.by = participant)` macht 40 Zeilen mit einer Listenspalte
+    `data`; `map()` schätzt daraus je ein Modell, das als Objekt in `model`
+    bleibt. So lassen sich später weitere Kennwerte (Residuen,
+    `check_model()`) holen, ohne neu zu schätzen. `model_parameters()`
+    liefert pro Modell eine Tabelle mit KI, `unnest()` hängt sie als Zeilen
+    an. Im Mittel werden die Personen etwa 31 ms pro Durchgang schneller
+    (Median der Steigungen), aber nur bei 9 von 40 schließt das KI die 0
+    aus: 12 Durchgänge pro Person sind wenig. `nobs()` zählt nur
+    Durchgänge, die `lm()` verwendet hat (fehlende `rt_ms` fallen weg);
+    `nrow(d)` wäre immer 12. Fallstrick: Die Einzelsteigungen sind
+    verrauscht und extreme Werte zufällig; ein Mixed Model mit Random
+    Slope schätzt das gemeinsam und mit Shrinkage (Lektion Mixed Models).
+  en: |
+    `nest(.by = participant)` creates 40 rows with a list column `data`;
+    `map()` fits one model to each, which stays as an object in `model`.
+    That way you can get further estimates later (residuals,
+    `check_model()`) without refitting. `model_parameters()` returns a
+    table with CIs per model, and `unnest()` attaches it as rows. On
+    average participants get about 31 ms faster per trial (median of the
+    slopes), but only for 9 of 40 does the CI exclude 0: 12 trials per
+    participant are few. `nobs()` only counts trials that `lm()` used
+    (missing `rt_ms` are dropped); `nrow(d)` would always be 12. Pitfall:
+    the individual slopes are noisy and extreme values are chance; a mixed
+    model with a random slope estimates them jointly with shrinkage
+    (lesson Mixed models).
+misconception:
+  de: "Die Anzahl der Zeilen pro Gruppe entspricht der Anzahl der Beobachtungen im Modell."
+  en: "The number of rows per group equals the number of observations in the model."
+check:
+  type: value
+  ignore_row_order: true
+  tolerance: 1.0e-6
+common_mistakes:
+  - pattern: "group_by\\(|lapply\\(|sapply\\("
+    message:
+      de: "Die Übung soll mit `nest()` und `map()` arbeiten: Modelle als Listenspalte, Kennwerte daraus."
+      en: "The exercise should use `nest()` and `map()`: models as a list column, estimates from it."
+  - pattern: "nrow\\("
+    message:
+      de: "`nrow(d)` zählt alle Zeilen, auch solche mit fehlender Reaktionszeit. `nobs(model)` zählt, was im Modell steckt."
+      en: "`nrow(d)` counts all rows, including those with a missing reaction time. `nobs(model)` counts what is in the model."
+  - pattern: "map\\(\\s*model\\s*,\\s*nobs\\s*\\)"
+    message:
+      de: "`map()` liefert eine Liste; für eine Integer-Spalte nimm `map_int()`."
+      en: "`map()` returns a list; for an integer column use `map_int()`."
+  - pattern: "rt_ms\\s*~\\s*trial\\s*,"
+    message:
+      de: "Die Bedingung gehört ins Modell (`rt_ms ~ condition + trial`), sonst mischt die Steigung Übung und Bedingungsunterschiede."
+      en: "The condition belongs in the model (`rt_ms ~ condition + trial`); otherwise the slope mixes practice and condition differences."

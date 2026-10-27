@@ -1,0 +1,171 @@
+---
+title: "Ergebnisse berichten"
+subtitle: "Intermediate · modelsummary, APA-Tabellen mit rempsyc, Zahlen aus dem Modell"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, tidyr, parameters, modelsummary, rempsyc, flextable]
+resources:
+  - ../data/acceptance.csv
+  - ../data/survey.csv
+---
+
+{{< include /_generated/de/reporting-intermediate/runtime.qmd >}}
+
+{{< include /_generated/de/reporting-intermediate/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R läuft hier direkt im Browser. Beim ersten Besuch lädt es 20–40 Sekunden (Anzeige unten rechts), danach geht es schneller.
+:::
+
+## Wozu? {#why}
+
+**Forschungsfrage:** Sagt Vertrauen in das Fahrerassistenzsystem die Nutzungsabsicht über Nützlichkeit und Bedienbarkeit hinaus vorher, und wie zeigst du das in einer Tabelle, die Gutachterinnen und Betreuer sofort lesen können?
+
+In der Beginner-Lektion hast du ein Modell mit gtsummary und `report()` berichtet. Ein echter Ergebnisteil vergleicht meist mehrere Modelle, braucht eine Tabelle im APA-Stil für Word und Zahlen im Text, die zur Tabelle passen. Jede abgetippte Zahl ist eine Fehlerquelle; jede Tabelle, die aus dem Modellobjekt entsteht, lässt sich nach einer Datenkorrektur in Sekunden neu erzeugen.
+
+## Konzept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 170" role="img" aria-labelledby="fig-rpi-title fig-rpi-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-rpi-title">Vom Modell zum Bericht</title>
+  <desc id="fig-rpi-desc">Ein Modellobjekt links. Pfeile führen zu drei Wegen: modelsummary für mehrere Modelle nebeneinander, model_parameters und rempsyc nice_table für eine APA-Tabelle, Inline-Code für Zahlen im Text. Alle drei enden im Bericht als Word- oder Quarto-Dokument.</desc>
+  <rect x="20" y="66" width="110" height="38" rx="4" class="rt-fig-box-accent" />
+  <text x="75" y="90" text-anchor="middle" class="rt-fig-code">lm(…)</text>
+  <rect x="200" y="14" width="170" height="34" rx="4" class="rt-fig-box" />
+  <text x="285" y="36" text-anchor="middle" class="rt-fig-code">modelsummary()</text>
+  <rect x="200" y="68" width="170" height="34" rx="4" class="rt-fig-box" />
+  <text x="285" y="90" text-anchor="middle" class="rt-fig-code">nice_table()</text>
+  <rect x="200" y="122" width="170" height="34" rx="4" class="rt-fig-box" />
+  <text x="285" y="144" text-anchor="middle" class="rt-fig-code">`r format_p(p)`</text>
+  <rect x="440" y="66" width="100" height="38" rx="4" class="rt-fig-box-accent" />
+  <text x="490" y="90" text-anchor="middle" class="rt-fig-label">Bericht</text>
+  <line x1="130" y1="78" x2="198" y2="31" class="rt-fig-line" />
+  <line x1="130" y1="85" x2="198" y2="85" class="rt-fig-line" />
+  <line x1="130" y1="92" x2="198" y2="139" class="rt-fig-line" />
+  <line x1="370" y1="31" x2="438" y2="78" class="rt-fig-line" />
+  <line x1="370" y1="85" x2="438" y2="85" class="rt-fig-line" />
+  <line x1="370" y1="139" x2="438" y2="92" class="rt-fig-line" />
+</svg>
+<figcaption>Tabellen und Zahlen im Text entstehen aus demselben Modellobjekt: modelsummary für Modellvergleiche, rempsyc für eine APA-Tabelle aus <code>model_parameters()</code>, Inline-Code für den Text. So passt alles zusammen, auch nach einer Korrektur.</figcaption>
+</figure>
+```
+
+- **Mehrere Modelle:** `modelsummary(list("Model 1" = m1, "Model 2" = m2), statistic = "conf.int", gof_map = c("nobs", "r.squared"))`. KIs statt Sterne, nur die Gütemaße, die du im Text nutzt.
+- **Gleiche Stichprobe:** Geschachtelte Modelle vergleichst du nur auf denselben Personen. `lm()` lässt Zeilen mit fehlenden Werten still weg; bilde vorher mit `drop_na()` über die Variablen des größten Modells einen gemeinsamen Datensatz. Die Zeile N in der Tabelle macht das prüfbar.
+- **APA-Tabelle:** `model_parameters()` liefert die Kennwerte, `rempsyc::nice_table()` setzt sie nach APA (kursive Köpfe, *p* ohne führende Null, „95% CI [ , ]“). Die Formatierung hängt an den Spaltennamen: `b`, `B` (standardisiert), `t`, `p`, `CI_lower`, `CI_upper`. Nicht vorher runden.
+- **Zahlen im Text:** Im Quarto-Bericht mit Inline-Code aus dem Modell, z. B. `` `r format_p(p)` `` oder `report()`; nie abtippen.
+- **Ausgabe:** Ein `nice_table()`-Ergebnis ist ein flextable, `flextable::save_as_docx()` schreibt es als bearbeitbare Word-Tabelle; `modelsummary(..., output = "tabelle2.docx")` ebenso. Im Browser geht das nicht (siehe Kasten unten).
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## Mehr dazu: Tabellen mit Effektgrößen, Mixed Models, eigene Zeilen
+
+- **Standardisierte Koeffizienten** als zweite Spalte: `model_parameters(fit, standardize = "refit")` und die Spalte `B` nennen; in modelsummary `standardize = "refit"`.
+- **Zusätzliche Zeilen** (z. B. ΔR² und F-Test aus `anova(m1, m2)`) gibst du modelsummary mit `add_rows = data.frame(...)`.
+- **Mixed Models und afex:** modelsummary nimmt `lmer()`-Modelle direkt (Varianzkomponenten unter den Gütemaßen); ANOVA-Tabellen aus afex mit `nice_table(as.data.frame(fit$anova_table))` oder `parameters::model_parameters(fit)`.
+- **Beschreibende Statistik:** `datasummary_skim()` und `datasummary()` aus modelsummary erzeugen Tabelle 1, wenn gtsummary nicht passt.
+:::
+
+## Beispiel {#example}
+
+Skalenwerte bilden und zwei geschachtelte Modelle schätzen. `acceptance` hat keine fehlenden Werte, deshalb beruhen beide Modelle auf allen 300 Personen:
+
+```{webr}
+tam <- acceptance |>
+  mutate(
+    across(c(peou_3, trust_4), \(x) 8 - x),
+    pu = rowMeans(pick(pu_1:pu_4)),
+    peou = rowMeans(pick(peou_1:peou_4)),
+    trust = rowMeans(pick(trust_1:trust_5)),
+    bi = rowMeans(pick(bi_1:bi_4))
+  )
+m1 <- lm(bi ~ pu + peou, data = tam)
+m2 <- lm(bi ~ pu + peou + trust, data = tam)
+modelsummary(
+  list("Model 1" = m1, "Model 2" = m2),
+  statistic = "conf.int",
+  gof_map = c("nobs", "r.squared"),
+  output = "markdown"
+)
+anova(m1, m2)
+```
+
+R² steigt von .21 auf .25; der Zuwachs ist signifikant, F(1, 296) = 17.61, p < .001. Für die APA-Tabelle von Modell 2 die Spalten so benennen, wie rempsyc sie erkennt:
+
+```{webr}
+model_parameters(m2) |>
+  as.data.frame() |>
+  select(Term = Parameter, b = Coefficient, CI_lower = CI_low, CI_upper = CI_high, t, p) |>
+  nice_table(title = c("Table 2", "Prediction of Behavioural Intention"))
+```
+
+**So berichtest du es:** Vertrauen sagte die Nutzungsabsicht über Nützlichkeit und Bedienbarkeit hinaus vorher, *b* = 0.21, 95 % KI [0.11, 0.32], *t*(296) = 4.20, *p* < .001; die aufgeklärte Varianz stieg von *R*² = .21 auf .25, Δ*R*² = .04, *F*(1, 296) = 17.61, *p* < .001 (Tabelle 2).
+
+## Paketvergleich {#packages}
+
+| Aufgabe | Empfehlung | Alternative |
+|---|---|---|
+| Mehrere Modelle nebeneinander | **modelsummary** `modelsummary()` | gtsummary `tbl_regression()` + `tbl_merge()`; stargazer (nicht mehr gepflegt) |
+| APA-Tabelle aus einem Data Frame | **rempsyc** `nice_table()` | papaja `apa_table()` (nur in papaja-Dokumenten); flextable direkt |
+| Zahlen im Text | Inline-Code mit `rempsyc::format_p()`, `report()` | papaja `apa_print()` |
+| Word-Ausgabe | `flextable::save_as_docx()`, Quarto `format: docx` | `modelsummary(output = "x.docx")`; officer für ganze Dokumente |
+
+::: {.callout-note appearance="simple"}
+## Lokal ausführen: Tabelle nach Word, Zahlen im Quarto-Text
+
+Das Speichern als `.docx` (officer) stürzt in webR ab; lokal läuft es so:
+
+```r
+tab2 <- model_parameters(m2) |>
+  as.data.frame() |>
+  select(Term = Parameter, b = Coefficient, CI_lower = CI_low, CI_upper = CI_high, t, p) |>
+  nice_table(title = c("Table 2", "Prediction of Behavioural Intention"))
+flextable::save_as_docx(tab2, path = here::here("output", "table2.docx"))
+modelsummary(list("Model 1" = m1, "Model 2" = m2), statistic = "conf.int",
+             gof_map = c("nobs", "r.squared"), output = here::here("output", "table3.docx"))
+```
+
+Im Quarto-Bericht (`format: docx`) holst du die Zahlen für den Text aus dem Modell:
+
+````markdown
+```{r}
+trust_row <- model_parameters(m2) |> filter(Parameter == "trust")
+```
+Vertrauen sagte die Nutzungsabsicht vorher, *b* = `r round(trust_row$Coefficient, 2)`,
+*p* `r rempsyc::format_p(trust_row$p)`.
+````
+:::
+
+## Übungen {#exercises}
+
+Drei Pflichtübungen und eine Zusatzübung. **Ausführen und prüfen** startet deinen Code und prüft ihn sofort. Hinweise deckst du einzeln auf (**Hinweis zeigen**), die Lösung erst danach.
+
+{{< include /_generated/de/reporting-intermediate/exercises.qmd >}}
+
+## Wissenscheck {#check}
+
+{{< include /_generated/de/reporting-intermediate/quiz.qmd >}}
+
+## Spickzettel {#cheatsheet}
+
+```r
+# Gemeinsame Stichprobe für geschachtelte Modelle
+complete <- data |> drop_na(y, x1, x2, x3)
+m1 <- lm(y ~ x1 + x2, data = complete)
+m2 <- lm(y ~ x1 + x2 + x3, data = complete)
+anova(m1, m2)                                   # ΔR² testen
+
+# Modelle nebeneinander
+modelsummary(list("Model 1" = m1, "Model 2" = m2),
+             statistic = "conf.int", gof_map = c("nobs", "r.squared"))
+
+# APA-Tabelle: Spaltennamen steuern die Formatierung, nicht vorher runden
+model_parameters(m2) |>
+  as.data.frame() |>
+  select(Term = Parameter, b = Coefficient, CI_lower = CI_low, CI_upper = CI_high, t, p) |>
+  nice_table()
+
+# Zahlen im Text (Quarto): `r rempsyc::format_p(p)` statt abtippen
+# Word (lokal): flextable::save_as_docx(tab, path = "table2.docx")
+```

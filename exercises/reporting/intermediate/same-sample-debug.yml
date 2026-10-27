@@ -1,0 +1,100 @@
+id: rp-i-same-sample-debug
+lesson: reporting-intermediate
+order: 2
+title:
+  de: Geschachtelte Modelle auf derselben Stichprobe
+  en: Nested models on the same sample
+kind: debug
+required: true
+packages: [dplyr, tidyr]
+data: [survey]
+setup: |
+  library(dplyr)
+  library(tidyr)
+  scored <- survey |>
+    filter(attention_check == 4) |>
+    mutate(
+      across(c(sus_01, sus_03, sus_05, sus_07, sus_09), \(x) x - 1),
+      across(c(sus_02, sus_04, sus_06, sus_08, sus_10), \(x) 5 - x),
+      across(c(trust_3, trust_5), \(x) 8 - x),
+      sus = 25 * rowMeans(pick(sus_01:sus_10), na.rm = TRUE),
+      trust = rowMeans(pick(trust_1:trust_6))
+    ) |>
+    select(respondent, interface, age, tech_affinity, trust, sus)
+prompt:
+  de: |
+    Für die Ergebnistabelle soll geprüft werden, ob Vertrauen `trust` den
+    SUS-Wert über Oberfläche `interface` und Technikaffinität
+    `tech_affinity` hinaus vorhersagt (Daten `scored`, 157 Personen;
+    `trust` fehlt bei einigen, weil sie ein Item nicht beantwortet haben).
+
+    Der Code bricht bei `anova()` mit einem Fehler ab. Repariere ihn so,
+    dass beide Modelle auf denselben Personen beruhen und die letzte Zeile
+    den Modellvergleich mit `anova(m1, m2)` zurückgibt.
+  en: |
+    For the results table, the team wants to test whether trust `trust`
+    predicts the SUS score beyond interface `interface` and technology
+    affinity `tech_affinity` (data `scored`, 157 participants; `trust` is
+    missing for some because they skipped an item).
+
+    The code stops at `anova()` with an error. Repair it so that both
+    models are based on the same participants and the last line returns
+    the model comparison with `anova(m1, m2)`.
+starter: |
+  m1 <- lm(sus ~ interface + tech_affinity, data = scored)
+  m2 <- lm(sus ~ interface + tech_affinity + trust, data = scored)
+  anova(m1, m2)
+solution: |
+  complete <- scored |>
+    drop_na(sus, interface, tech_affinity, trust)
+  m1 <- lm(sus ~ interface + tech_affinity, data = complete)
+  m2 <- lm(sus ~ interface + tech_affinity + trust, data = complete)
+  anova(m1, m2)
+hints:
+  - de: "Lies die Fehlermeldung: Die Modelle beruhen auf unterschiedlich vielen Zeilen. Vergleiche `nobs(m1)` und `nobs(m2)`."
+    en: "Read the error message: the models are based on different numbers of rows. Compare `nobs(m1)` and `nobs(m2)`."
+  - de: "`lm()` lässt Zeilen mit fehlenden Werten in den verwendeten Variablen still weg. Bilde vorher einen Datensatz, in dem alle Variablen von Modell 2 vorhanden sind."
+    en: "`lm()` silently drops rows with missing values in the variables it uses. First build a data set in which all variables of model 2 are present."
+  - de: "`complete <- scored |> drop_na(sus, interface, tech_affinity, trust)` und beide Modelle mit `data = complete`."
+    en: "`complete <- scored |> drop_na(sus, interface, tech_affinity, trust)` and both models with `data = complete`."
+explanation:
+  de: |
+    Modell 1 nutzte alle 157 Personen, Modell 2 nur die 136 mit
+    vollständigem Vertrauenswert. R² beider Modelle stammt dann aus
+    verschiedenen Stichproben, und ein Teil des „Zuwachses“ wäre nur der
+    Wechsel der Personen. Auf derselben Stichprobe (n = 136) steigt R²
+    von .15 auf .41, F(1, 132) = 56.65, p < .001. In der Tabelle zeigt
+    die Zeile N, ob die Modelle vergleichbar sind; berichte im Text, wie
+    viele Personen wegen fehlender Werte fehlen. Fallstrick: `drop_na()`
+    ohne Spalten löscht Zeilen mit irgendeinem fehlenden Wert, auch in
+    Variablen, die gar nicht im Modell sind (hier `age`), und verkleinert
+    die Stichprobe unnötig.
+  en: |
+    Model 1 used all 157 participants, model 2 only the 136 with a
+    complete trust score. The R² of the two models then come from
+    different samples, and part of the "increase" would only be the change
+    of participants. On the same sample (n = 136), R² rises from .15 to
+    .41, F(1, 132) = 56.65, p < .001. In the table, the N row shows whether
+    the models are comparable; report in the text how many participants
+    are missing due to missing values. Pitfall: `drop_na()` without
+    columns drops rows with any missing value, also in variables that are
+    not in the model (here `age`), and shrinks the sample unnecessarily.
+misconception:
+  de: "`lm()` rechnet immer mit allen Zeilen des Datensatzes, deshalb sind zwei Modelle auf denselben Daten automatisch vergleichbar."
+  en: "`lm()` always uses all rows of the data set, so two models on the same data are automatically comparable."
+check:
+  type: value
+  tolerance: 1.0e-6
+common_mistakes:
+  - pattern: "drop_na\\(\\s*\\)"
+    message:
+      de: "`drop_na()` ohne Spalten löscht auch Zeilen mit fehlendem `age`, das in keinem Modell vorkommt. Nenne nur die Modellvariablen."
+      en: "`drop_na()` without columns also drops rows with missing `age`, which is in neither model. Name only the model variables."
+  - pattern: "na\\.rm\\s*=\\s*TRUE[^\\n]*trust|trust[^\\n]*na\\.rm"
+    message:
+      de: "Den Skalenwert neu zu berechnen ist nicht die Aufgabe; die Modelle sollen auf denselben Personen beruhen."
+      en: "Recomputing the scale score is not the task; the models should be based on the same participants."
+  - pattern: "^(?![\\s\\S]*drop_na\\(\\s*\\))(?![\\s\\S]*(complete|filter|drop_na))[\\s\\S]*anova"
+    message:
+      de: "Beide Modelle brauchen denselben Datensatz ohne fehlende Werte in `sus`, `interface`, `tech_affinity` und `trust`."
+      en: "Both models need the same data set without missing values in `sus`, `interface`, `tech_affinity` and `trust`."

@@ -1,0 +1,19 @@
+# Lesson metadata; exercises are the other *.yml files in this folder
+# (sorted by `order`), the knowledge check is quiz.yml.
+lesson: reproducibility-intermediate
+minutes: 40
+prerequisites: [working-with-r-beginner, import-beginner]
+langs: [de]
+packages: [dplyr, readr, here, jsonlite, purrr]
+data: [driving_sim]
+goals:
+  de:
+    - Ein Analyseprojekt so aufbauen, dass Pfade mit here auf jedem Rechner funktionieren
+    - Vorhersagen, welche Pakete renv im Projekt findet, und das Lockfile lesen
+    - Zufallsschritte (Zuteilung, Stichproben) mit `set.seed()` reproduzierbar machen
+    - Wissen, wann git, renv und Quarto-Rendern ins Spiel kommen (lokal)
+  en:
+    - Set up an analysis project so that paths built with here work on every computer
+    - Predict which packages renv finds in the project, and read the lockfile
+    - Make random steps (assignment, samples) reproducible with `set.seed()`
+    - Know when git, renv and rendering with Quarto come into play (locally)

@@ -496,6 +496,78 @@ run_exercise("pw-i-simr", paste(
 checked <- wait_for("!!document.querySelector('#ex-pw-i-simr .exercise-grade.alert-success')", timeout = 240)
 step("power-intermediate: simr powerSim() graded correct", !is.na(checked), sprintf("%s s", checked))
 
+# 13. Intermediate P6: load time with modelsummary/rempsyc/flextable
+# (reporting), here/jsonlite (reproducibility) and purrr/parameters
+# (programming); a modelsummary table, an APA table object, here paths in
+# the webR file system and one model per participant are graded in webR.
+loaded <- wait_lesson("/de/reporting-intermediate.html", "rp-i-nice-table")
+step("reporting-intermediate: webR, modelsummary, rempsyc and flextable ready", !is.na(loaded), sprintf("%s s", loaded))
+modelsummary_code <- function(named) paste(
+  "m1 <- lm(bi ~ pu + peou, data = tam)",
+  "m2 <- lm(bi ~ pu + peou + trust, data = tam)",
+  sprintf("modelsummary(list(%s), statistic = \"conf.int\",", if (named) "\"Model 1\" = m1, \"Model 2\" = m2" else "m1, m2"),
+  "  gof_map = c(\"nobs\", \"r.squared\"), output = \"data.frame\")",
+  sep = "\n"
+)
+run_exercise("rp-i-modelsummary", modelsummary_code(FALSE))
+hinted <- wait_for("(document.querySelector('#ex-rp-i-modelsummary .exercise-grade.alert-danger')?.textContent || '').includes('Model 1')", timeout = 90)
+step("reporting-intermediate: unnamed models get the hint", !is.na(hinted))
+run_exercise("rp-i-modelsummary", modelsummary_code(TRUE))
+checked <- wait_for("!!document.querySelector('#ex-rp-i-modelsummary .exercise-grade.alert-success')", timeout = 90)
+step("reporting-intermediate: modelsummary table graded correct", !is.na(checked), sprintf("%s s", checked))
+run_exercise("rp-i-nice-table", paste(
+  "tab <- model_parameters(m2) |>",
+  "  as.data.frame() |>",
+  "  select(Term = Parameter, b = Coefficient, CI_lower = CI_low, CI_upper = CI_high, t, p)",
+  "nice_table(tab)",
+  sep = "\n"
+))
+checked <- wait_for("!!document.querySelector('#ex-rp-i-nice-table .exercise-grade.alert-success')", timeout = 90)
+step("reporting-intermediate: rempsyc table object graded correct", !is.na(checked), sprintf("%s s", checked))
+
+loaded <- wait_lesson("/de/reproducibility-intermediate.html", "rr-i-here-project")
+step("reproducibility-intermediate: webR, here and jsonlite ready", !is.na(loaded), sprintf("%s s", loaded))
+run_exercise("rr-i-here-project", paste(
+  "here::i_am(\"analysis/01-clean.R\")",
+  "raw <- read_csv(here::here(\"data\", \"raw\", \"driving_sim.csv\"), show_col_types = FALSE)",
+  "dir.create(here::here(\"output\"), showWarnings = FALSE)",
+  "raw |> filter(condition == \"haptic\") |> write_csv(here::here(\"output\", \"haptic.csv\"))",
+  "read_csv(here::here(\"output\", \"haptic.csv\"), show_col_types = FALSE)",
+  sep = "\n"
+))
+checked <- wait_for("!!document.querySelector('#ex-rr-i-here-project .exercise-grade.alert-success')", timeout = 90)
+step("reproducibility-intermediate: here paths graded correct", !is.na(checked), sprintf("%s s", checked))
+run_exercise("rr-i-lockfile", paste(
+  "lock <- read_json(.lock_path)",
+  "c(R = lock[[\"R\"]][[\"Version\"]], map_chr(lock[[\"Packages\"]], \"Version\"))",
+  sep = "\n"
+))
+checked <- wait_for("!!document.querySelector('#ex-rr-i-lockfile .exercise-grade.alert-success')", timeout = 90)
+step("reproducibility-intermediate: lockfile versions graded correct", !is.na(checked), sprintf("%s s", checked))
+
+loaded <- wait_lesson("/de/programming-intermediate.html", "pg-i-nest-models")
+step("programming-intermediate: webR, purrr and parameters ready", !is.na(loaded), sprintf("%s s", loaded))
+run_exercise("pg-i-map2-debug", "map_dbl(rts, \\(x, cut) round(mean(x > cut, na.rm = TRUE), 3), cut = cutoffs)")
+hinted <- wait_for("(document.querySelector('#ex-pg-i-map2-debug .exercise-grade.alert-danger')?.textContent || '').includes('map2_dbl')", timeout = 90)
+step("programming-intermediate: map() with extra vector gets the hint", !is.na(hinted))
+started <- Sys.time()
+run_exercise("pg-i-nest-models", paste(
+  "driving_sim |>",
+  "  nest(.by = participant) |>",
+  "  mutate(",
+  "    model = map(data, \\(d) lm(rt_ms ~ condition + trial, data = d)),",
+  "    params = map(model, model_parameters),",
+  "    n = map_int(model, nobs)",
+  "  ) |>",
+  "  unnest(params) |>",
+  "  filter(Parameter == \"trial\") |>",
+  "  select(participant, slope = Coefficient, CI_low, CI_high, n)",
+  sep = "\n"
+))
+checked <- wait_for("!!document.querySelector('#ex-pg-i-nest-models .exercise-grade.alert-success')", timeout = 180)
+step("programming-intermediate: one model per participant graded correct", !is.na(checked),
+     sprintf("%.1f s", as.numeric(difftime(Sys.time(), started, units = "secs"))))
+
 goto("/en/index.html")
 Sys.sleep(1)
 beginner <- c(

@@ -1,0 +1,110 @@
+id: rp-i-nice-table
+lesson: reporting-intermediate
+order: 3
+title:
+  de: APA-Tabelle mit rempsyc
+  en: APA table with rempsyc
+kind: write
+required: true
+packages: [dplyr, parameters, rempsyc, flextable]
+data: [acceptance]
+setup: |
+  library(dplyr)
+  library(parameters)
+  library(rempsyc)
+  tam <- acceptance |>
+    mutate(
+      across(c(peou_3, trust_4), \(x) 8 - x),
+      pu = rowMeans(pick(pu_1:pu_4)),
+      peou = rowMeans(pick(peou_1:peou_4)),
+      trust = rowMeans(pick(trust_1:trust_5)),
+      bi = rowMeans(pick(bi_1:bi_4))
+    )
+  m2 <- lm(bi ~ pu + peou + trust, data = tam)
+prompt:
+  de: |
+    Aus Modell `m2` (Nutzungsabsicht `bi` aus `pu`, `peou` und `trust`)
+    soll Tabelle 2 im APA-Stil werden. `nice_table()` aus rempsyc erkennt
+    bestimmte Spaltennamen und formatiert sie: `b`, `t`, `p` sowie
+    `CI_lower` und `CI_upper`, die zu einer Spalte „95% CI“ werden.
+
+    1. Hole die Kennwerte mit `model_parameters(m2)`.
+    2. Speichere in `tab` einen Data Frame mit genau den Spalten `Term`,
+       `b`, `CI_lower`, `CI_upper`, `t` und `p` (in dieser Reihenfolge),
+       ungerundet.
+    3. Gib `nice_table(tab)` aus.
+
+    Geprüft wird das Objekt `tab`.
+  en: |
+    Model `m2` (intention `bi` from `pu`, `peou` and `trust`) should become
+    Table 2 in APA style. rempsyc's `nice_table()` recognises certain
+    column names and formats them: `b`, `t`, `p` and `CI_lower` and
+    `CI_upper`, which become one "95% CI" column.
+
+    1. Get the estimates with `model_parameters(m2)`.
+    2. Store in `tab` a data frame with exactly the columns `Term`, `b`,
+       `CI_lower`, `CI_upper`, `t` and `p` (in this order), unrounded.
+    3. Print `nice_table(tab)`.
+
+    The object `tab` is checked.
+starter: |
+  tab <- model_parameters(m2) |>
+    as.data.frame() |>
+    select(Parameter, Coefficient, CI_low, CI_high, t, p) |>
+    mutate(across(where(is.numeric), \(x) round(x, 2)))
+  nice_table(tab)
+solution: |
+  tab <- model_parameters(m2) |>
+    as.data.frame() |>
+    select(Term = Parameter, b = Coefficient, CI_lower = CI_low, CI_upper = CI_high, t, p)
+  nice_table(tab)
+hints:
+  - de: "`nice_table()` erkennt Spalten nur an ihrem Namen. Benenne die Spalten aus `model_parameters()` um."
+    en: "`nice_table()` recognises columns only by their names. Rename the columns from `model_parameters()`."
+  - de: "In `select()` kannst du gleichzeitig auswählen und umbenennen: `select(neu = alt, ...)`. Runden übernimmt `nice_table()`; vorher gerundete p-Werte werden zu `.00`."
+    en: "In `select()` you can select and rename at once: `select(new = old, ...)`. `nice_table()` does the rounding; p-values rounded beforehand become `.00`."
+  - de: "`select(Term = Parameter, b = Coefficient, CI_lower = CI_low, CI_upper = CI_high, t, p)`, ohne `round()`."
+    en: "`select(Term = Parameter, b = Coefficient, CI_lower = CI_low, CI_upper = CI_high, t, p)`, without `round()`."
+explanation:
+  de: |
+    `nice_table()` setzt die Spalten nach APA: kursive Köpfe, *b* und *t*
+    mit zwei Stellen, *p* ohne führende Null und `< .001` statt `0.00`,
+    die Grenzen als „95% CI [0.17, 0.39]“, Linien nur oben und unten.
+    Das Ergebnis ist ein flextable, das `flextable::save_as_docx(…, path
+    = "tabelle2.docx")` als bearbeitbare Word-Tabelle speichert. Rundest
+    du vorher, verliert die Tabelle Information (p = 1.7e-06 wird 0) und
+    die Formatierung von rempsyc greift nicht mehr richtig. Standardisierte
+    Koeffizienten liefert `model_parameters(m2, standardize = "refit")`;
+    in rempsyc heißt diese Spalte `B`.
+  en: |
+    `nice_table()` formats the columns in APA style: italic headers, *b*
+    and *t* with two decimals, *p* without a leading zero and `< .001`
+    instead of `0.00`, the limits as "95% CI [0.17, 0.39]", rules only at
+    the top and bottom. The result is a flextable that
+    `flextable::save_as_docx(…, path = "table2.docx")` saves as an
+    editable Word table. If you round beforehand, the table loses
+    information (p = 1.7e-06 becomes 0) and rempsyc's formatting no longer
+    works properly. Standardised coefficients come from
+    `model_parameters(m2, standardize = "refit")`; in rempsyc this column
+    is called `B`.
+misconception:
+  de: "Für eine APA-Tabelle rundet man die Werte zuerst selbst; die Spaltennamen sind egal."
+  en: "For an APA table you round the values yourself first; the column names do not matter."
+check:
+  type: object
+  name: tab
+  ignore_col_order: false
+  tolerance: 1.0e-6
+common_mistakes:
+  - pattern: "round\\("
+    message:
+      de: "Nicht vorher runden: `nice_table()` formatiert selbst, und gerundete p-Werte werden zu 0."
+      en: "Do not round beforehand: `nice_table()` formats itself, and rounded p-values become 0."
+  - pattern: "select\\([^)]*\\bCI_low\\s*,\\s*CI_high\\b"
+    message:
+      de: "`nice_table()` erkennt das KI nur unter den Namen `CI_lower` und `CI_upper`."
+      en: "`nice_table()` recognises the CI only under the names `CI_lower` and `CI_upper`."
+  - pattern: "\\bB\\s*=\\s*Coefficient|beta\\s*=\\s*Coefficient"
+    message:
+      de: "`B` steht in rempsyc für standardisierte Koeffizienten. Die Rohwerte aus `m2` heißen `b`."
+      en: "In rempsyc, `B` stands for standardised coefficients. The raw values from `m2` are called `b`."

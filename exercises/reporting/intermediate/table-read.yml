@@ -1,0 +1,116 @@
+id: rp-i-table-read
+lesson: reporting-intermediate
+order: 4
+title:
+  de: Eine Modelltabelle lesen
+  en: Reading a model table
+kind: interpret
+required: false
+packages: []
+data: []
+setup: ""
+prompt:
+  de: |
+    Tabelle 2 eines Berichts (modelsummary, Nutzungsabsicht `bi` 1–7,
+    Prädiktoren Skalenwerte 1–7; 95-%-KI in Klammern):
+
+    ```
+                  Model 1          Model 2
+    (Intercept)   1.790            1.108
+                  [1.283, 2.297]   [0.520, 1.696]
+    pu            0.259            0.280
+                  [0.144, 0.375]   [0.167, 0.393]
+    peou          0.290            0.231
+                  [0.182, 0.397]   [0.122, 0.339]
+    trust                          0.215
+                                   [0.114, 0.315]
+    Num.Obs.      300              300
+    R2            0.210            0.254
+    ```
+
+    Welche Aussagen stimmen?
+
+    1. Vertrauen sagt die Nutzungsabsicht über Nützlichkeit und Bedienbarkeit hinaus vorher; R² steigt um etwa .04.
+    2. Weil der Koeffizient von `peou` in Modell 2 kleiner wird, ist die Bedienbarkeit dort kein bedeutsamer Prädiktor mehr.
+    3. Da alle Skalen von 1 bis 7 reichen, zeigt die Tabelle direkt, dass `pu` der stärkste Prädiktor ist.
+    4. Beide Modelle beruhen auf denselben 300 Personen; der Vergleich der R² ist deshalb zulässig.
+
+    Gib die Nummern der richtigen Aussagen aufsteigend als Vektor ein, z. B. `c(1, 3)`.
+  en: |
+    Table 2 of a report (modelsummary, intention `bi` 1–7, predictors
+    scale scores 1–7; 95 % CI in brackets):
+
+    ```
+                  Model 1          Model 2
+    (Intercept)   1.790            1.108
+                  [1.283, 2.297]   [0.520, 1.696]
+    pu            0.259            0.280
+                  [0.144, 0.375]   [0.167, 0.393]
+    peou          0.290            0.231
+                  [0.182, 0.397]   [0.122, 0.339]
+    trust                          0.215
+                                   [0.114, 0.315]
+    Num.Obs.      300              300
+    R2            0.210            0.254
+    ```
+
+    Which statements are true?
+
+    1. Trust predicts intention beyond usefulness and ease of use; R² rises by about .04.
+    2. Because the coefficient of `peou` gets smaller in model 2, ease of use is no longer a meaningful predictor there.
+    3. Since all scales range from 1 to 7, the table shows directly that `pu` is the strongest predictor.
+    4. Both models are based on the same 300 participants; comparing the R² values is therefore valid.
+
+    Enter the numbers of the true statements in ascending order as a vector, e.g. `c(1, 3)`.
+starter: |
+  # Nummern der richtigen Aussagen / numbers of the true statements, z. B. c(1, 3)
+solution: |
+  c(1, 4)
+hints:
+  - de: "Für jeden Koeffizienten: Schließt das KI die 0 aus? Und was ändert sich zwischen den Modellen bei N?"
+    en: "For each coefficient: does the CI exclude 0? And what changes between the models in N?"
+  - de: "Gleicher Wertebereich heißt nicht gleiche Streuung. Rohkoeffizienten hängen von der SD des Prädiktors ab."
+    en: "The same range does not mean the same spread. Raw coefficients depend on the SD of the predictor."
+  - de: "Aussage 2 scheitert am KI von `peou` in Modell 2, Aussage 3 an den fehlenden standardisierten Koeffizienten."
+    en: "Statement 2 fails because of the CI of `peou` in model 2, statement 3 because standardised coefficients are missing."
+explanation:
+  de: |
+    Richtig sind 1 und 4. ΔR² = .254 − .210 = .044; ob das signifikant
+    ist, zeigt erst `anova(m1, m2)` (F(1, 296) = 17.61, p < .001), nicht
+    die Tabelle. Bedienbarkeit bleibt bedeutsam: b = 0.23, KI [0.12,
+    0.34] schließt 0 aus; sie wird kleiner, weil sie mit Vertrauen
+    zusammenhängt und einen Teil der gemeinsamen Varianz abgibt. Ob `pu`
+    am stärksten ist, lässt sich aus b nicht ablesen: Die Prädiktoren
+    streuen unterschiedlich. Standardisiert (β) liegen pu .27, peou .24
+    und trust .22 nah beieinander, und die KIs überlappen stark. Die
+    Zeile N gehört in jede Vergleichstabelle; ohne sie sieht niemand,
+    ob ein Modell Personen durch fehlende Werte verloren hat.
+  en: |
+    Statements 1 and 4 are true. ΔR² = .254 − .210 = .044; whether that is
+    significant is only shown by `anova(m1, m2)` (F(1, 296) = 17.61, p <
+    .001), not by the table. Ease of use remains meaningful: b = 0.23, CI
+    [0.12, 0.34] excludes 0; it gets smaller because it is related to
+    trust and gives up part of the shared variance. Whether `pu` is the
+    strongest cannot be read from b: the predictors vary differently.
+    Standardised (β), pu .27, peou .24 and trust .22 are close together,
+    and the CIs overlap strongly. The N row belongs in every comparison
+    table; without it nobody can see whether a model lost participants
+    through missing values.
+misconception:
+  de: "Ein kleiner werdender Koeffizient bedeutet, dass der Prädiktor nicht mehr wirkt, und Rohkoeffizienten auf gleicher Skala sind direkt vergleichbar."
+  en: "A coefficient that gets smaller means the predictor no longer has an effect, and raw coefficients on the same scale are directly comparable."
+check:
+  type: value
+common_mistakes:
+  - pattern: "^[\\s\\S]*?c\\([^)]*2[^)]*\\)\\s*$"
+    message:
+      de: "Aussage 2: Das KI von `peou` in Modell 2 ist [0.12, 0.34] und schließt 0 aus. Kleiner heißt nicht unbedeutsam."
+      en: "Statement 2: the CI of `peou` in model 2 is [0.12, 0.34] and excludes 0. Smaller does not mean meaningless."
+  - pattern: "^[\\s\\S]*?c\\([^)]*3[^)]*\\)\\s*$"
+    message:
+      de: "Aussage 3: Gleicher Wertebereich, aber unterschiedliche SDs. Vergleiche Prädiktoren über standardisierte Koeffizienten."
+      en: "Statement 3: same range, but different SDs. Compare predictors via standardised coefficients."
+  - pattern: "^[\\s\\S]*?c\\(\\s*1\\s*\\)\\s*$"
+    message:
+      de: "Schau auf die Zeile `Num.Obs.`: Was sagt sie über die Vergleichbarkeit?"
+      en: "Look at the `Num.Obs.` row: what does it say about comparability?"

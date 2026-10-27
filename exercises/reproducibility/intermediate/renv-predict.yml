@@ -1,0 +1,144 @@
+id: rr-i-renv-predict
+lesson: reproducibility-intermediate
+order: 2
+title:
+  de: Was renv im Projekt findet
+  en: What renv finds in the project
+kind: predict
+required: true
+packages: []
+data: []
+setup: ""
+prompt:
+  de: |
+    `renv::snapshot()` nimmt die Pakete ins Lockfile auf, die
+    `renv::dependencies()` im Projekt findet (plus deren Abhängigkeiten).
+    renv liest dazu den Code, ohne ihn auszuführen. Das Projekt enthält
+    genau diese drei Dateien:
+
+    `R/helpers.R`
+    ```r
+    # Later: library(lme4) for the mixed models
+    se <- function(x) sd(x) / sqrt(length(x))
+    ```
+
+    `analysis/01-clean.R`
+    ```r
+    library(dplyr)
+    d <- readr::read_csv(here::here("data", "driving_sim.csv"))
+    if (FALSE) library(targets)
+    pkg <- "ggplot2"
+    library(pkg, character.only = TRUE)
+    requireNamespace("lmerTest", quietly = TRUE)
+    msg <- "library(purrr) is still missing"
+    ```
+
+    `report.qmd`
+    ````
+    ---
+    title: "Report"
+    format: docx
+    ---
+
+    ```{r}
+    tidyr::pivot_longer
+    ```
+    ````
+
+    Was liefert `sort(unique(renv::dependencies(proj)$Package))`? Gib die
+    Paketnamen als alphabetisch sortierten Zeichenvektor ein.
+  en: |
+    `renv::snapshot()` records the packages in the lockfile that
+    `renv::dependencies()` finds in the project (plus their dependencies).
+    renv reads the code for this without running it. The project contains
+    exactly these three files:
+
+    `R/helpers.R`
+    ```r
+    # Later: library(lme4) for the mixed models
+    se <- function(x) sd(x) / sqrt(length(x))
+    ```
+
+    `analysis/01-clean.R`
+    ```r
+    library(dplyr)
+    d <- readr::read_csv(here::here("data", "driving_sim.csv"))
+    if (FALSE) library(targets)
+    pkg <- "ggplot2"
+    library(pkg, character.only = TRUE)
+    requireNamespace("lmerTest", quietly = TRUE)
+    msg <- "library(purrr) is still missing"
+    ```
+
+    `report.qmd`
+    ````
+    ---
+    title: "Report"
+    format: docx
+    ---
+
+    ```{r}
+    tidyr::pivot_longer
+    ```
+    ````
+
+    What does `sort(unique(renv::dependencies(proj)$Package))` return?
+    Enter the package names as an alphabetically sorted character vector.
+starter: |
+  # Deine Vorhersage / your prediction, z. B. c("dplyr", "readr")
+solution: |
+  c("dplyr", "here", "lmerTest", "readr", "rmarkdown", "targets", "tidyr")
+hints:
+  - de: "renv sucht im Code nach Aufrufen wie `library()`, `require()`, `requireNamespace()` und `paket::funktion`. Kommentare und Text in Anführungszeichen sind kein Code."
+    en: "renv searches the code for calls like `library()`, `require()`, `requireNamespace()` and `package::function`. Comments and text in quotes are not code."
+  - de: "renv führt nichts aus: Es weiß nicht, dass `if (FALSE)` nie läuft, und es kennt den Wert von `pkg` nicht."
+    en: "renv runs nothing: it does not know that `if (FALSE)` never runs, and it does not know the value of `pkg`."
+  - de: "Ein Quarto- oder R-Markdown-Dokument mit R-Chunks braucht zum Rendern zusätzlich ein Paket, das renv deshalb immer mit aufnimmt."
+    en: "A Quarto or R Markdown document with R chunks additionally needs a package for rendering, which renv therefore always adds."
+explanation:
+  de: |
+    renv analysiert den Code statisch. Gefunden werden `dplyr`
+    (`library()`), `readr` und `here` (`::`), `targets` (der Aufruf steht
+    im Code, auch wenn `if (FALSE)` ihn nie ausführt), `lmerTest`
+    (`requireNamespace()` mit festem Namen), `tidyr` aus dem Chunk und
+    `rmarkdown`, weil `.qmd`/`.Rmd` mit R-Chunks über knitr und rmarkdown
+    gerendert werden. Nicht gefunden werden `lme4` (Kommentar), `purrr`
+    (nur Text) und `ggplot2`: `library(pkg, character.only = TRUE)` nennt
+    den Namen erst zur Laufzeit. Fallstrick: Solche dynamisch geladenen
+    Pakete fehlen im Lockfile, und das Projekt bricht auf einem anderen
+    Rechner ab. Schreibe Paketnamen deshalb ausdrücklich in den Code,
+    z. B. in eine Datei `R/packages.R` mit allen `library()`-Aufrufen.
+  en: |
+    renv analyses the code statically. It finds `dplyr` (`library()`),
+    `readr` and `here` (`::`), `targets` (the call is in the code, even if
+    `if (FALSE)` never runs it), `lmerTest` (`requireNamespace()` with a
+    fixed name), `tidyr` from the chunk and `rmarkdown`, because
+    `.qmd`/`.Rmd` files with R chunks are rendered via knitr and rmarkdown.
+    It does not find `lme4` (comment), `purrr` (just text) and `ggplot2`:
+    `library(pkg, character.only = TRUE)` only names the package at run
+    time. Pitfall: such dynamically loaded packages are missing from the
+    lockfile, and the project fails on another computer. So write package
+    names explicitly in the code, e.g. in a file `R/packages.R` with all
+    `library()` calls.
+misconception:
+  de: "renv führt das Projekt aus und nimmt genau die Pakete auf, die beim Ausführen geladen werden."
+  en: "renv runs the project and records exactly the packages that are loaded when it runs."
+check:
+  type: value
+common_mistakes:
+  - pattern: "\"ggplot2\""
+    message:
+      de: "`library(pkg, character.only = TRUE)`: renv sieht nur `pkg`, nicht den Wert \"ggplot2\". Es führt den Code nicht aus."
+      en: "`library(pkg, character.only = TRUE)`: renv only sees `pkg`, not the value \"ggplot2\". It does not run the code."
+  - pattern: "\"(lme4|purrr)\""
+    message:
+      de: "Kommentare und Zeichenketten sind kein Code; `lme4` und `purrr` werden nicht gefunden."
+      en: "Comments and strings are not code; `lme4` and `purrr` are not found."
+  - pattern: "^(?![\\s\\S]*\"targets\")[\\s\\S]*\"dplyr\""
+    message:
+      de: "renv wertet `if (FALSE)` nicht aus; der Aufruf `library(targets)` steht im Code und wird gefunden."
+      en: "renv does not evaluate `if (FALSE)`; the call `library(targets)` is in the code and is found."
+  - pattern: "^(?![\\s\\S]*\"rmarkdown\")[\\s\\S]*\"dplyr\""
+    message:
+      de: "Das Quarto-Dokument mit R-Chunk braucht zum Rendern rmarkdown (und knitr); renv nimmt `rmarkdown` deshalb auf."
+      en: "The Quarto document with an R chunk needs rmarkdown (and knitr) to render; renv therefore records `rmarkdown`."

@@ -1,0 +1,134 @@
+# Knowledge check: passed at >= `pass` share of correctly answered questions.
+lesson: programming-intermediate
+pass: 0.8
+questions:
+  - id: pg-i-q-map-empty
+    prompt:
+      de: "Was liefert `list(list(rt = c(800, 640)), list(rt = c(900, 780, 660)), list(rt = numeric(0))) |> map(\"rt\") |> map_dbl(mean)`?"
+      en: "What does `list(list(rt = c(800, 640)), list(rt = c(900, 780, 660)), list(rt = numeric(0))) |> map(\"rt\") |> map_dbl(mean)` return?"
+    options:
+      - text:
+          de: "`c(720, 780, NaN)`"
+          en: "`c(720, 780, NaN)`"
+        correct: true
+        explain:
+          de: "Richtig. `map(\"rt\")` holt das Element `rt` aus jedem Eintrag; `map_dbl()` liefert genau einen Wert pro Eingabe, und der Mittelwert eines leeren Vektors ist `NaN` (0/0)."
+          en: "Right. `map(\"rt\")` gets the element `rt` from each entry; `map_dbl()` returns exactly one value per input, and the mean of an empty vector is `NaN` (0/0)."
+      - text:
+          de: "`c(720, 780)`"
+          en: "`c(720, 780)`"
+        correct: false
+        explain:
+          de: "`map_dbl()` lässt nichts weg: Die Länge bleibt gleich der Eingabe, damit das Ergebnis zeilenweise passt."
+          en: "`map_dbl()` drops nothing: the length stays equal to the input so that the result lines up row by row."
+      - text:
+          de: "`c(720, 780, 0)`"
+          en: "`c(720, 780, 0)`"
+        correct: false
+        explain:
+          de: "Der Mittelwert eines leeren Vektors ist Summe 0 geteilt durch Länge 0, also `NaN`, nicht 0."
+          en: "The mean of an empty vector is sum 0 divided by length 0, i.e. `NaN`, not 0."
+  - id: pg-i-q-embrace
+    prompt:
+      de: "Eine eigene Funktion soll Spalten als Text bekommen, z. B. für `for (v in c(\"rt_ms\", \"lane_dev\"))`. Was nutzt du im dplyr-Verb?"
+      en: "Your own function should receive columns as text, e.g. for `for (v in c(\"rt_ms\", \"lane_dev\"))`. What do you use in the dplyr verb?"
+    options:
+      - text:
+          de: "`.data[[v]]`"
+          en: "`.data[[v]]`"
+        correct: true
+        explain:
+          de: "Richtig. `{{ }}` ist für Spalten ohne Anführungszeichen, `.data[[ ]]` für Spaltennamen als Zeichenkette."
+          en: "Right. `{{ }}` is for unquoted columns, `.data[[ ]]` for column names as strings."
+      - text:
+          de: "`{{ v }}`"
+          en: "`{{ v }}`"
+        correct: false
+        explain:
+          de: "Umarmt wird der Ausdruck, also der String `\"rt_ms\"` selbst; `mean(\"rt_ms\")` ist dann `NA` mit Warnung."
+          en: "Embracing passes the expression on, i.e. the string `\"rt_ms\"` itself; `mean(\"rt_ms\")` is then `NA` with a warning."
+      - text:
+          de: "`v` direkt"
+          en: "`v` directly"
+        correct: false
+        explain:
+          de: "Data Masking sucht dann eine Spalte namens `v`."
+          en: "Data masking then looks for a column called `v`."
+  - id: pg-i-q-typestable
+    prompt:
+      de: "Warum `map_dbl()` statt `sapply()` in einem Analyseskript?"
+      en: "Why `map_dbl()` instead of `sapply()` in an analysis script?"
+    options:
+      - text:
+          de: "`map_dbl()` gibt immer einen Double-Vektor zurück oder bricht mit einer klaren Meldung ab; `sapply()` gibt je nach Eingabe Vektor, Matrix oder Liste zurück."
+          en: "`map_dbl()` always returns a double vector or stops with a clear message; `sapply()` returns a vector, matrix or list depending on the input."
+        correct: true
+        explain:
+          de: "Richtig. Typstabilität verhindert, dass ein Sonderfall (eine leere Gruppe) still eine andere Struktur erzeugt."
+          en: "Right. Type stability prevents an edge case (an empty group) from silently producing a different structure."
+      - text:
+          de: "`map_dbl()` ist immer deutlich schneller."
+          en: "`map_dbl()` is always much faster."
+        correct: false
+        explain:
+          de: "Die Geschwindigkeit ist ähnlich; der Vorteil ist die vorhersagbare Ausgabe."
+          en: "The speed is similar; the advantage is the predictable output."
+      - text:
+          de: "`sapply()` kann keine eigenen Funktionen anwenden."
+          en: "`sapply()` cannot apply your own functions."
+        correct: false
+        explain:
+          de: "Kann es; nur der Rückgabetyp ist nicht festgelegt."
+          en: "It can; only the return type is not fixed."
+  - id: pg-i-q-nest
+    prompt:
+      de: "Nach `nest(.by = participant) |> mutate(model = map(data, \\(d) lm(rt_ms ~ trial, data = d)))`: Was steht in `model`?"
+      en: "After `nest(.by = participant) |> mutate(model = map(data, \\(d) lm(rt_ms ~ trial, data = d)))`: what is in `model`?"
+    options:
+      - text:
+          de: "Eine Listenspalte mit einem `lm`-Objekt pro Person, aus der man mit `map()` beliebige Kennwerte holen kann."
+          en: "A list column with one `lm` object per participant, from which `map()` can extract any estimates."
+        correct: true
+        explain:
+          de: "Richtig. Die Modelle bleiben erhalten; `map(model, model_parameters)` + `unnest()` macht daraus eine Tabelle."
+          en: "Right. The models are kept; `map(model, model_parameters)` + `unnest()` turns them into a table."
+      - text:
+          de: "Die Steigung jeder Person als Zahl."
+          en: "Each participant's slope as a number."
+        correct: false
+        explain:
+          de: "`map()` liefert immer eine Liste; Zahlen gäbe es erst mit `map_dbl()` und einer Funktion, die die Steigung herausholt."
+          en: "`map()` always returns a list; numbers would only come from `map_dbl()` with a function that extracts the slope."
+      - text:
+          de: "Ein gemeinsames Modell über alle Personen."
+          en: "One joint model across all participants."
+        correct: false
+        explain:
+          de: "Jede Zeile hat ihre eigenen Daten in `data` und damit ihr eigenes Modell."
+          en: "Each row has its own data in `data` and therefore its own model."
+  - id: pg-i-q-possibly
+    prompt:
+      de: "Bei 3 von 40 Personen bricht ein Modell ab. Was ist der sinnvollste Umgang?"
+      en: "For 3 of 40 participants a model fails. What is the most sensible way to handle it?"
+    options:
+      - text:
+          de: "Mit `possibly()` oder `tryCatch()` ein `NA` zurückgeben, danach zählen und prüfen, welche Personen betroffen sind und warum."
+          en: "Return an `NA` with `possibly()` or `tryCatch()`, then count and check which participants are affected and why."
+        correct: true
+        explain:
+          de: "Richtig. Die Schleife läuft durch, und die Ausfälle bleiben sichtbar statt still zu verschwinden."
+          en: "Right. The loop runs through, and the failures stay visible instead of silently disappearing."
+      - text:
+          de: "Fehler mit `try(..., silent = TRUE)` unterdrücken und das Ergebnis nicht weiter ansehen."
+          en: "Suppress errors with `try(..., silent = TRUE)` and not look at the result any further."
+        correct: false
+        explain:
+          de: "Dann gehen auch echte Programmierfehler unter, und im Bericht fehlen Personen ohne Erklärung."
+          en: "Then real programming errors are lost too, and participants are missing from the report without explanation."
+      - text:
+          de: "Die drei Personen vorab per Hand aus den Rohdaten löschen."
+          en: "Delete the three participants from the raw data by hand beforehand."
+        correct: false
+        explain:
+          de: "Rohdaten bleiben unverändert; Ausschlüsse gehören begründet ins Skript."
+          en: "Raw data stay unchanged; exclusions belong in the script with a reason."

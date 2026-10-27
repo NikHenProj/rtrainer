@@ -1,0 +1,108 @@
+id: pg-i-trycatch-slope
+lesson: programming-intermediate
+order: 5
+title:
+  de: Robuste Steigung pro Person mit tryCatch()
+  en: Robust slope per participant with tryCatch()
+kind: write
+required: false
+packages: [dplyr, purrr]
+data: [driving_sim]
+setup: |
+  library(dplyr)
+  library(purrr)
+  sim <- driving_sim |>
+    mutate(rt_ms = if_else(participant == "p07", NA, rt_ms))
+prompt:
+  de: |
+    Für jede Person soll der Übungseffekt geschätzt werden: die Steigung
+    aus `lm(rt_ms ~ trial, data = d)`. Bei Person `p07` fehlen in `sim`
+    alle Reaktionszeiten (Aufzeichnung ausgefallen), dann bricht `lm()`
+    mit einem Fehler ab, und mit ihm die ganze Schleife.
+
+    Schreibe `rt_slope(d)` so, dass sie die Steigung (Koeffizient `trial`)
+    als einzelne Zahl zurückgibt und bei einem Fehler in `lm()`
+    stattdessen `NA_real_` liefert. Die letzte Zeile wendet sie auf alle
+    Personen an.
+  en: |
+    The practice effect should be estimated for each participant: the
+    slope from `lm(rt_ms ~ trial, data = d)`. For participant `p07`, all
+    reaction times in `sim` are missing (recording failed); `lm()` then
+    stops with an error, and the whole loop with it.
+
+    Write `rt_slope(d)` so that it returns the slope (coefficient `trial`)
+    as a single number and returns `NA_real_` instead when `lm()` fails.
+    The last line applies it to all participants.
+starter: |
+  rt_slope <- function(d) {
+    fit <- lm(rt_ms ~ trial, data = d)
+    unname(coef(fit)["trial"])
+  }
+  map_dbl(split(sim, sim$participant), rt_slope)
+solution: |
+  rt_slope <- function(d) {
+    tryCatch(
+      {
+        fit <- lm(rt_ms ~ trial, data = d)
+        unname(coef(fit)["trial"])
+      },
+      error = function(e) NA_real_
+    )
+  }
+  map_dbl(split(sim, sim$participant), rt_slope)
+hints:
+  - de: "Umschließe den Teil, der fehlschlagen kann, mit `tryCatch()`."
+    en: "Wrap the part that can fail in `tryCatch()`."
+  - de: "Ein Handler ist eine Funktion, die die Bedingung als Argument bekommt; ihr Rückgabewert wird zum Ergebnis von `tryCatch()`."
+    en: "A handler is a function that receives the condition as an argument; its return value becomes the result of `tryCatch()`."
+  - de: "`tryCatch({ ... }, error = function(e) NA_real_)`, mit `lm()` und `coef()` im Block."
+    en: "`tryCatch({ ... }, error = function(e) NA_real_)`, with `lm()` and `coef()` inside the block."
+explanation:
+  de: |
+    `tryCatch()` wertet den Block aus; tritt ein `error` auf, ruft es den
+    Handler mit dem Bedingungsobjekt auf, und dessen Rückgabewert ersetzt
+    das Ergebnis. Der Handler muss eine Funktion sein: `error = NA_real_`
+    führt beim ersten Fehler selbst zu einem Fehler. Wichtig ist der Typ:
+    `NA_real_` hält die Funktion typstabil, damit `map_dbl()` über alle
+    Personen nicht abbricht. Ein `warning =`-Handler fängt nur Warnungen
+    ab, keine Fehler. Mit purrr geht dasselbe kürzer:
+    `map_dbl(..., possibly(rt_slope_raw, otherwise = NA_real_))`
+    (Lektion Daten importieren). Fallstrick: Wer jeden Fehler still in
+    `NA` verwandelt, übersieht auch echte Programmierfehler (Tippfehler im
+    Spaltennamen); `conditionMessage(e)` mitzuprotokollieren oder vorher
+    zu zählen, wie viele `NA` entstehen, hilft.
+  en: |
+    `tryCatch()` evaluates the block; if an `error` occurs, it calls the
+    handler with the condition object, and its return value replaces the
+    result. The handler must be a function: `error = NA_real_` itself
+    causes an error at the first failure. The type matters: `NA_real_`
+    keeps the function type-stable so that `map_dbl()` over all
+    participants does not stop. A `warning =` handler only catches
+    warnings, not errors. With purrr the same is shorter:
+    `map_dbl(..., possibly(rt_slope_raw, otherwise = NA_real_))` (lesson
+    Importing data). Pitfall: turning every error silently into `NA` also
+    hides real programming errors (a typo in a column name); logging
+    `conditionMessage(e)` or counting how many `NA` arise helps.
+misconception:
+  de: "Ein Handler in `tryCatch()` ist der Ersatzwert selbst; außerdem fängt `warning =` auch Fehler ab."
+  en: "A handler in `tryCatch()` is the replacement value itself; also, `warning =` catches errors too."
+check:
+  type: value
+  tolerance: 1.0e-8
+common_mistakes:
+  - pattern: "error\\s*=\\s*NA"
+    message:
+      de: "Der Handler muss eine Funktion sein: `error = function(e) NA_real_`."
+      en: "The handler must be a function: `error = function(e) NA_real_`."
+  - pattern: "^(?![\\s\\S]*error\\s*=)[\\s\\S]*warning\\s*="
+    message:
+      de: "Ein `warning =`-Handler fängt nur Warnungen. `lm()` wirft hier einen Fehler: `error =`."
+      en: "A `warning =` handler only catches warnings. `lm()` throws an error here: `error =`."
+  - pattern: "function\\(e\\)\\s*(NA|0)\\s*\\)"
+    message:
+      de: "Nimm `NA_real_`: Ein logisches `NA` oder 0 passt nicht zum Typ bzw. täuscht eine Steigung vor."
+      en: "Use `NA_real_`: a logical `NA` or 0 does not fit the type or pretends to be a slope."
+  - pattern: "filter\\(|participant\\s*!=\\s*\"p07\""
+    message:
+      de: "Die Person auszuschließen löst den Einzelfall, nicht das Problem: Die Funktion soll mit jedem Fehlschlag umgehen und `p07` als `NA` zeigen."
+      en: "Excluding the participant solves this case, not the problem: the function should handle any failure and show `p07` as `NA`."

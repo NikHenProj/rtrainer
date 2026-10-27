@@ -1,6 +1,6 @@
 # Triage der 65 alten Aufgaben (freigegeben)
 
-Stand 2026-10-26. Quelle: `legacy/exercises/` (Tag `v0-shiny`). Migriert: 41 von 54 (markiert).
+Stand 2026-10-26. Quelle: `legacy/exercises/` (Tag `v0-shiny`). Migriert: 50 von 54 (markiert).
 
 **Freigegeben von Nick am 2026-10-26: 54 behalten, 11 streichen.** 18 der behaltenen gehören in den Beginner-Pfad (M8), markiert mit **B**.
 
@@ -18,7 +18,7 @@ Stand 2026-10-26. Quelle: `legacy/exercises/` (Tag `v0-shiny`). Migriert: 41 von
 | 1 | 01-basics/factor-numeric | debug | import-beginner **B** | Kontext: Zahl wurde beim Einlesen zum Faktor; `readr::parse_number()` als Alternative nennen. | **Migriert (M8.2a).**
 | 2 | 01-basics/factor-relevel | write | cleaning-beginner **B** | `forcats::fct_relevel()` statt `factor(levels =)`; englische Stufen. | **Migriert (M8.2a).**
 | 3 | 01-basics/na-index | predict | working-with-r-beginner **B** | Unverändert; in der Erklärung auf `filter()` verweisen (lässt `NA` weg). | **Migriert (M8.2a).**
-| 4 | 01-basics/nested-list | write | programming-intermediate | Kontext: Modell- oder JSON-Objekt statt einer erfundenen `studie`-Liste. |
+| 4 | 01-basics/nested-list | write | programming-intermediate | Kontext: Modell- oder JSON-Objekt statt einer erfundenen `studie`-Liste. | **Migriert (M9 P6, als `rr-i-lockfile` in reproducibility-intermediate: verschachtelte Liste aus `renv.lock`).**
 | 5 | 02-dplyr/across | write | descriptives-intermediate | Mit `survey` (mehrere Skalen auf einmal) statt `driving_sim`. | **Migriert (M9 P2, `ds-i-across`, NASA-TLX statt `driving_sim`).**
 | 6 | 02-dplyr/case-when | write | cleaning-beginner **B** | Stufen englisch (`fast/medium/slow`), Ergebnis als geordneter Faktor. | **Migriert (M8.2a).**
 | 7 | 02-dplyr/count-units | write | descriptives-beginner **B** | Unverändert (Person statt Zeile zählen); gut für Tabelle 1. | **Migriert (M8.2b).**
@@ -33,17 +33,17 @@ Stand 2026-10-26. Quelle: `legacy/exercises/` (Tag `v0-shiny`). Migriert: 41 von
 | 16 | 03-tidyr/pivot-longer-predict | predict | reshaping-beginner **B** | Englische Stufen. | **Migriert (M8.2b).**
 | 17 | 03-tidyr/pivot-wider | write | reshaping-beginner **B** | Englische Stufen. | **Migriert (M8.2b).**
 | 18 | 03-tidyr/separate-delim | write | cleaning-intermediate | Kontext Logging-Schlüssel bleibt; Stufen englisch. | **Migriert (M9 P1).**
-| 19 | 04-purrr/map2-cutoff-debug | debug | programming-intermediate | Unverändert. |
-| 20 | 04-purrr/map-extract-predict | predict | programming-intermediate | Unverändert. |
-| 21 | 04-purrr/nest-map-models | write | programming-intermediate | Steigung mit `parameters::model_parameters()` holen statt `coef()[[...]]`. Ersetzt auch `03-tidyr/nest-models` (Streichliste Nr. 4). |
+| 19 | 04-purrr/map2-cutoff-debug | debug | programming-intermediate | Unverändert. | **Migriert (M9 P6, `pg-i-map2-debug`).**
+| 20 | 04-purrr/map-extract-predict | predict | programming-intermediate | Unverändert. | **Migriert (M9 P6, als Wissenscheck-Frage `pg-i-q-map-empty`).**
+| 21 | 04-purrr/nest-map-models | write | programming-intermediate | Steigung mit `parameters::model_parameters()` holen statt `coef()[[...]]`. Ersetzt auch `03-tidyr/nest-models` (Streichliste Nr. 4). | **Migriert (M9 P6, `pg-i-nest-models`, `rt_ms ~ condition + trial`, Steigung und KI mit `model_parameters()`).**
 | 22 | 04-purrr/pmap-specs | complete | programming-expert | Rahmen: Sensitivitäts- oder Multiversum-Analyse. |
 | 23 | 04-purrr/possibly-read | complete | import-intermediate | Erst `readr::read_csv(files, id = "file")` zeigen; `possibly()` nur für die fehlerhafte Datei. | **Migriert (M9 P1).**
 | 24 | 04-purrr/reduce-join | write | reshaping-intermediate | Unverändert. | **Migriert (M9 P1).**
-| 25 | 05-programming/dots-center | write | programming-intermediate | Unverändert (`...` weiterreichen). |
+| 25 | 05-programming/dots-center | write | programming-intermediate | Unverändert (`...` weiterreichen). | **Migriert (M9 P6, `pg-i-dots-center`).**
 | 26 | 05-programming/regex-filenames | write | cleaning-intermediate | Unverändert (stringr). | **Migriert (M9 P1).**
 | 27 | 05-programming/tidyeval-data-pronoun | complete | programming-expert | Unverändert. |
-| 28 | 05-programming/tidyeval-embrace | complete | programming-intermediate | Unverändert. |
-| 29 | 05-programming/trycatch-slope | write | programming-intermediate | Unverändert; Bezug zu `possibly()` (Nr. 23). |
+| 28 | 05-programming/tidyeval-embrace | complete | programming-intermediate | Unverändert. | **Migriert (M9 P6, `pg-i-tidyeval-embrace`).**
+| 29 | 05-programming/trycatch-slope | write | programming-intermediate | Unverändert; Bezug zu `possibly()` (Nr. 23). | **Migriert (M9 P6, `pg-i-trycatch-slope`).**
 | 30 | 06-stats/anova-eta | write | group-comparisons-intermediate | `afex::aov_ez()` + `effectsize::eta_squared()` statt `aov()` und Handrechnung. | **Migriert (M9 P3, `gc-i-rm-anova`: gemischte ANOVA Modalität × Erfahrung mit `aov_ez()`, η²G statt Handrechnung).**
 | 31 | 06-stats/assumptions | write | group-comparisons-intermediate | `performance::check_normality()`/`check_homogeneity()` auf Residuen. | **Migriert (M9 P3, `gc-i-assumptions`, Zusatzübung: `check_homogeneity()`/`check_normality()` am afex-Modell statt Shapiro auf Rohdaten).**
 | 32 | 06-stats/correlation | write | regression-beginner **B** | `correlation::correlation()` statt `cor.test()`; Interpretation mit KI. | **Migriert (M8.2c).**
@@ -67,8 +67,8 @@ Stand 2026-10-26. Quelle: `legacy/exercises/` (Tag `v0-shiny`). Migriert: 41 von
 | 50 | 08-ggplot2/facet-log-scale | write | visualisation-beginner **B** | Check `plot`. | **Migriert (M8.2b).**
 | 51 | 08-ggplot2/mapping-setting-debug | debug | visualisation-beginner **B** | Check `plot`. | **Migriert (M8.2b).**
 | 52 | 08-ggplot2/theme-predict | predict | visualisation-intermediate | Unverändert. | **Migriert (M9 P2, `vi-i-theme-predict`).**
-| 53 | 09-reproducibility/here-project | write | reproducibility-intermediate | Prüfen, ob `here` in webR läuft; sonst „Lokal ausführen“. |
-| 54 | 09-reproducibility/renv-dependencies-predict | predict | reproducibility-intermediate | Unverändert (nur vorhersagen, läuft ohne renv). |
+| 53 | 09-reproducibility/here-project | write | reproducibility-intermediate | Prüfen, ob `here` in webR läuft; sonst „Lokal ausführen“. | **Migriert (M9 P6, `rr-i-here-project`; here läuft in webR).**
+| 54 | 09-reproducibility/renv-dependencies-predict | predict | reproducibility-intermediate | Unverändert (nur vorhersagen, läuft ohne renv). | **Migriert (M9 P6, `rr-i-renv-predict`, `report.qmd` statt `.Rmd`).**
 
 ## Streichen
 
@@ -83,7 +83,7 @@ Stand 2026-10-26. Quelle: `legacy/exercises/` (Tag `v0-shiny`). Migriert: 41 von
 | 7 | 05-programming/closure-predict | Closures und Environments sind für die Analysepraxis zu weit weg. |
 | 8 | 05-programming/vectorize-change | Baut `dplyr::lag()` bzw. die prozentuale Änderung nach; `lag-predict` deckt es ab. |
 | 9 | 06-stats/welch-age | Doppelt zum Prototyp `gc-b-ttest`/`gc-b-pseudoreplication` (Welch-t-Test auf Personenmitteln). |
-| 10 | 09-reproducibility/rmarkdown-params-debug | Rendern läuft nicht im Browser, außerdem R Markdown statt Quarto. Inhalt als Kasten „Lokal ausführen“ mit Quarto-Parametern in reproducibility-intermediate. |
+| 10 | 09-reproducibility/rmarkdown-params-debug | Rendern läuft nicht im Browser, außerdem R Markdown statt Quarto. Inhalt als Kasten „Lokal ausführen“ mit Quarto-Parametern in reproducibility-intermediate. | **Umgesetzt (M9 P6, Kasten in reproducibility-intermediate).**
 | 11 | 09-reproducibility/targets-pipeline | `targets` braucht Hintergrundprozesse und läuft nicht in webR. Inhalt als Kasten „Lokal ausführen“ in reproducibility-expert. |
 
 ## Folgen für den Beginner-Pfad (M8)

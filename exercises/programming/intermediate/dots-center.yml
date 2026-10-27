@@ -1,0 +1,101 @@
+id: pg-i-dots-center
+lesson: programming-intermediate
+order: 4
+title:
+  de: Kennwert-Funktion mit Standardwert und ...
+  en: Summary function with a default and ...
+kind: write
+required: false
+packages: []
+data: []
+setup: ""
+prompt:
+  de: |
+    Schreibe eine Funktion `center(x, fun = median, digits = 1, ...)`, die
+    einen Lagewert von `x` berechnet und auf `digits` Stellen rundet.
+
+    - `fun` ist die Kennwert-Funktion (Standard: `median`).
+    - Alle weiteren Argumente werden unverändert an `fun` weitergereicht,
+      z. B. `center(x, na.rm = TRUE)` oder `center(x, mean, trim = 0.2)`.
+    - Ohne `na.rm` bleibt ein `NA` in `x` wie bei `median()` erhalten.
+
+    Die Testaufrufe unten sollen danach die erwarteten Werte liefern.
+  en: |
+    Write a function `center(x, fun = median, digits = 1, ...)` that
+    computes a measure of location of `x` and rounds it to `digits`
+    decimals.
+
+    - `fun` is the summary function (default: `median`).
+    - All further arguments are passed on unchanged to `fun`, e.g.
+      `center(x, na.rm = TRUE)` or `center(x, mean, trim = 0.2)`.
+    - Without `na.rm`, an `NA` in `x` is kept, as with `median()`.
+
+    The test calls below should then return the expected values.
+starter: |
+  center <- function(x, fun = median, digits = 1, ...) {
+    # dein Code / your code
+  }
+  x <- c(500, NA, 1200, 640)
+  c(
+    median_na = center(x),
+    median = center(x, na.rm = TRUE),
+    trimmed = center(c(1, 2, 3, 10, 100), mean, trim = 0.2),
+    two_digits = center(c(1.234, 2.345, 9.1), mean, digits = 2)
+  )
+solution: |
+  center <- function(x, fun = median, digits = 1, ...) {
+    round(fun(x, ...), digits)
+  }
+  x <- c(500, NA, 1200, 640)
+  c(
+    median_na = center(x),
+    median = center(x, na.rm = TRUE),
+    trimmed = center(c(1, 2, 3, 10, 100), mean, trim = 0.2),
+    two_digits = center(c(1.234, 2.345, 9.1), mean, digits = 2)
+  )
+hints:
+  - de: "Die Funktion muss `na.rm` und `trim` nicht kennen; sie muss sie nur weitergeben."
+    en: "The function does not need to know `na.rm` and `trim`; it only has to pass them on."
+  - de: "`...` kann man im Funktionskörper selbst wieder als Argument eines Aufrufs verwenden."
+    en: "`...` can itself be used again as an argument of a call in the function body."
+  - de: "`fun(x, ...)` und das Ergebnis mit `round(..., digits)` runden."
+    en: "`fun(x, ...)` and round the result with `round(..., digits)`."
+explanation:
+  de: |
+    `...` sammelt alle Argumente, die keinem benannten Parameter zugeordnet
+    werden, und `fun(x, ...)` reicht sie unverändert weiter. So bleibt
+    `center()` schlank und funktioniert mit jeder Funktion, die eigene
+    Optionen hat (`trim` gibt es nur bei `mean()`). Ein fest eingebautes
+    `na.rm = TRUE` versteckt fehlende Werte, die man oft sehen will.
+    Fallstrick: Tippfehler wie `na.mr = TRUE` landen still in `...`;
+    `median()` reicht sie an Methoden weiter und ignoriert sie, ohne zu
+    warnen. Prüfe neue Funktionen deshalb mit ein paar Testaufrufen wie
+    hier, bei ernsthaftem Einsatz mit testthat.
+  en: |
+    `...` collects all arguments that are not matched to a named parameter,
+    and `fun(x, ...)` passes them on unchanged. This keeps `center()` lean
+    and makes it work with any function that has its own options (`trim`
+    only exists for `mean()`). A hard-coded `na.rm = TRUE` hides missing
+    values that you often want to see. Pitfall: typos like `na.mr = TRUE`
+    silently end up in `...`; `median()` passes them on to methods and
+    ignores them without warning. So check new functions with a few test
+    calls as here, and with testthat for serious use.
+misconception:
+  de: "Eine Funktion muss jedes Argument, das sie weitergeben soll, selbst als Parameter deklarieren."
+  en: "A function must declare every argument it is supposed to pass on as its own parameter."
+check:
+  type: value
+  tolerance: 1.0e-8
+common_mistakes:
+  - pattern: "fun\\(\\s*x\\s*,\\s*na\\.rm\\s*=\\s*TRUE"
+    message:
+      de: "Ein festes `na.rm = TRUE` versteckt fehlende Werte und lässt sich nicht abschalten; `na.rm` soll über `...` kommen."
+      en: "A hard-coded `na.rm = TRUE` hides missing values and cannot be switched off; `na.rm` should come via `...`."
+  - pattern: "fun\\(\\s*x\\s*\\)"
+    message:
+      de: "`fun(x)` ohne `...` verschluckt `na.rm` und `trim`. Reiche sie mit `fun(x, ...)` weiter."
+      en: "`fun(x)` without `...` swallows `na.rm` and `trim`. Pass them on with `fun(x, ...)`."
+  - pattern: "\\bmedian\\(\\s*x"
+    message:
+      de: "Mit `median(x)` im Körper wird `fun` ignoriert; `center(x, mean)` liefert dann trotzdem den Median."
+      en: "With `median(x)` in the body, `fun` is ignored; `center(x, mean)` would still return the median."

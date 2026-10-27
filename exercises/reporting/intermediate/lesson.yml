@@ -1,0 +1,19 @@
+# Lesson metadata; exercises are the other *.yml files in this folder
+# (sorted by `order`), the knowledge check is quiz.yml.
+lesson: reporting-intermediate
+minutes: 45
+prerequisites: [reporting-beginner, regression-intermediate]
+langs: [de]
+packages: [dplyr, tidyr, parameters, modelsummary, rempsyc, flextable]
+data: [acceptance, survey]
+goals:
+  de:
+    - Mehrere Modelle mit modelsummary nebeneinander berichten (KI, N, R²)
+    - Geschachtelte Modelle auf derselben Stichprobe vergleichen und das in der Tabelle sichtbar machen
+    - Eine APA-Tabelle mit rempsyc `nice_table()` aus `model_parameters()` bauen
+    - Eine Modelltabelle lesen und Zahlen im Text direkt aus dem Modell erzeugen
+  en:
+    - Report several models side by side with modelsummary (CI, N, R²)
+    - Compare nested models on the same sample and make that visible in the table
+    - Build an APA table with rempsyc `nice_table()` from `model_parameters()`
+    - Read a model table and generate numbers in the text directly from the model

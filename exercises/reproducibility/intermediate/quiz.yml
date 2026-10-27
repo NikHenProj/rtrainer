@@ -1,0 +1,134 @@
+# Knowledge check: passed at >= `pass` share of correctly answered questions.
+lesson: reproducibility-intermediate
+pass: 0.8
+questions:
+  - id: rr-i-q-raw
+    prompt:
+      de: "Du findest einen Tippfehler in einer Spalte der Rohdaten. Was ist reproduzierbar?"
+      en: "You find a typo in a column of the raw data. What is reproducible?"
+    options:
+      - text:
+          de: "Die Rohdatei unverändert lassen und die Korrektur im Bereinigungsskript machen, mit Kommentar warum."
+          en: "Leave the raw file unchanged and make the correction in the cleaning script, with a comment why."
+        correct: true
+        explain:
+          de: "Richtig. So bleibt jeder Schritt nachvollziehbar, und die Korrektur läuft bei jedem neuen Export wieder mit."
+          en: "Right. That way every step stays traceable, and the correction runs again with every new export."
+      - text:
+          de: "Die Rohdatei in Excel korrigieren und speichern."
+          en: "Correct the raw file in Excel and save it."
+        correct: false
+        explain:
+          de: "Dann weiß niemand mehr, was geändert wurde, und Excel verändert beim Speichern oft Datum und Dezimalzeichen."
+          en: "Then nobody knows what was changed, and Excel often changes dates and decimal separators when saving."
+      - text:
+          de: "Die Zeile mit dem Fehler löschen."
+          en: "Delete the row with the error."
+        correct: false
+        explain:
+          de: "Das verliert Daten und ist ebenfalls nicht nachvollziehbar, wenn es außerhalb des Skripts passiert."
+          en: "That loses data and is also not traceable when it happens outside the script."
+  - id: rr-i-q-here
+    prompt:
+      de: "Ein Quarto-Bericht in `reports/` liest `read_csv(\"data/survey.csv\")` und bricht beim Rendern ab. Warum?"
+      en: "A Quarto report in `reports/` reads `read_csv(\"data/survey.csv\")` and stops when rendering. Why?"
+    options:
+      - text:
+          de: "Beim Rendern ist das Arbeitsverzeichnis der Ordner des Dokuments (`reports/`); `here::here(\"data\", \"survey.csv\")` gilt dagegen im ganzen Projekt."
+          en: "When rendering, the working directory is the document's folder (`reports/`); `here::here(\"data\", \"survey.csv\")` works throughout the project."
+        correct: true
+        explain:
+          de: "Richtig. Relative Pfade hängen vom Arbeitsverzeichnis ab, das sich zwischen Konsole und Rendern unterscheidet."
+          en: "Right. Relative paths depend on the working directory, which differs between console and rendering."
+      - text:
+          de: "Quarto kann keine CSV-Dateien lesen."
+          en: "Quarto cannot read CSV files."
+        correct: false
+        explain:
+          de: "Gelesen wird in R; Quarto führt den Code nur aus."
+          en: "R does the reading; Quarto only runs the code."
+      - text:
+          de: "Es fehlt `setwd()` am Anfang des Dokuments."
+          en: "`setwd()` is missing at the start of the document."
+        correct: false
+        explain:
+          de: "Ein `setwd()` mit absolutem Pfad läuft nur auf deinem Rechner; here löst das Problem überall."
+          en: "A `setwd()` with an absolute path only works on your computer; here solves the problem everywhere."
+  - id: rr-i-q-renv
+    prompt:
+      de: "Was hält `renv.lock` fest, und was nicht?"
+      en: "What does `renv.lock` record, and what not?"
+    options:
+      - text:
+          de: "R-Version und genaue Paketversionen mit Quelle; nicht das Betriebssystem und keine Systembibliotheken."
+          en: "The R version and exact package versions with source; not the operating system and no system libraries."
+        correct: true
+        explain:
+          de: "Richtig. Für das System braucht es zusätzlich z. B. einen Docker-Container; für die meisten Analysen reicht renv."
+          en: "Right. For the system you would additionally need e.g. a Docker container; for most analyses renv is enough."
+      - text:
+          de: "Eine Kopie aller Pakete, sodass das Projekt ohne Internet wiederhergestellt wird."
+          en: "A copy of all packages, so that the project is restored without internet."
+        correct: false
+        explain:
+          de: "Das Lockfile enthält nur Namen, Versionen und Quellen; `renv::restore()` lädt die Pakete herunter."
+          en: "The lockfile only contains names, versions and sources; `renv::restore()` downloads the packages."
+      - text:
+          de: "Die Daten und Ergebnisse des Projekts."
+          en: "The project's data and results."
+        correct: false
+        explain:
+          de: "Daten und Code gehören in git (Daten ggf. getrennt), nicht in das Lockfile."
+          en: "Data and code belong in git (data possibly separately), not in the lockfile."
+  - id: rr-i-q-git
+    prompt:
+      de: "Was gehört in ein git-Repository eines Analyseprojekts?"
+      en: "What belongs in the git repository of an analysis project?"
+    options:
+      - text:
+          de: "Skripte, Quarto-Dokumente, `renv.lock`, README; erzeugte Dateien (`output/`, gerenderte Berichte) nicht, die entstehen aus dem Code neu."
+          en: "Scripts, Quarto documents, `renv.lock`, README; not generated files (`output/`, rendered reports), which the code recreates."
+        correct: true
+        explain:
+          de: "Richtig. Erzeugtes steht in `.gitignore`. Rohdaten nur, wenn Datenschutz und Größe es erlauben."
+          en: "Right. Generated files go in `.gitignore`. Raw data only if data protection and size allow it."
+      - text:
+          de: "Alles im Projektordner, auch die `renv/library` mit den installierten Paketen."
+          en: "Everything in the project folder, including `renv/library` with the installed packages."
+        correct: false
+        explain:
+          de: "Die Bibliothek ist groß und rechnerabhängig; renv legt dafür selbst eine `.gitignore` an. Das Lockfile reicht."
+          en: "The library is large and machine-specific; renv creates its own `.gitignore` for it. The lockfile is enough."
+      - text:
+          de: "Nur den fertigen Bericht als PDF."
+          en: "Only the finished report as PDF."
+        correct: false
+        explain:
+          de: "Ohne Code kann niemand nachvollziehen, wie die Zahlen entstanden sind."
+          en: "Without code nobody can trace how the numbers came about."
+  - id: rr-i-q-seed
+    prompt:
+      de: "Ein Bootstrap-KI ändert sich in der zweiten Nachkommastelle bei jedem Rendern. Was tust du?"
+      en: "A bootstrap CI changes in the second decimal every time you render. What do you do?"
+    options:
+      - text:
+          de: "`set.seed()` vor den Bootstrap setzen und genug Ziehungen wählen, damit die berichteten Stellen stabil sind."
+          en: "Put `set.seed()` before the bootstrap and choose enough resamples so that the reported decimals are stable."
+        correct: true
+        explain:
+          de: "Richtig. Der Seed macht das Ergebnis wiederholbar, genug Ziehungen machen es unabhängig vom zufälligen Seed."
+          en: "Right. The seed makes the result repeatable, enough resamples make it independent of the arbitrary seed."
+      - text:
+          de: "So lange neu rendern, bis das KI die 0 ausschließt, und dann den Seed notieren."
+          en: "Render again until the CI excludes 0, and then note the seed."
+        correct: false
+        explain:
+          de: "Das ist Seed-Hacking: Das Ergebnis wäre ausgesucht, nicht geschätzt."
+          en: "That is seed hacking: the result would be selected, not estimated."
+      - text:
+          de: "Nichts; Bootstrap ist immer ungenau."
+          en: "Nothing; bootstrap is always imprecise."
+        correct: false
+        explain:
+          de: "Die Schwankung ist Monte-Carlo-Fehler; mehr Ziehungen verkleinern ihn, ein Seed macht ihn reproduzierbar."
+          en: "The variation is Monte Carlo error; more resamples reduce it, a seed makes it reproducible."

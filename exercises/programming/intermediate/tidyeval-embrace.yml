@@ -1,0 +1,110 @@
+id: pg-i-tidyeval-embrace
+lesson: programming-intermediate
+order: 1
+title:
+  de: Eigene dplyr-Funktion mit {{ }}
+  en: Your own dplyr function with {{ }}
+kind: complete
+required: true
+packages: [dplyr]
+data: [driving_sim]
+setup: |
+  library(dplyr)
+prompt:
+  de: |
+    `mean_by()` soll für eine beliebige Gruppierungs- und Messvariable
+    Mittelwert und Anzahl gültiger Werte liefern. Die Spalten werden wie in
+    dplyr **ohne Anführungszeichen** übergeben:
+    `mean_by(driving_sim, condition, rt_ms)`.
+
+    Ergänze die Lücken `______`, sodass der letzte Ausdruck beide Aufrufe
+    untereinander zurückgibt.
+  en: |
+    `mean_by()` should return the mean and the number of valid values for
+    any grouping and measurement variable. The columns are passed as in
+    dplyr, **without quotes**: `mean_by(driving_sim, condition, rt_ms)`.
+
+    Fill in the gaps `______` so that the last expression returns both
+    calls stacked on top of each other.
+starter: |
+  mean_by <- function(data, group, var) {
+    data |>
+      group_by(______) |>
+      summarise(
+        mean = mean(______, na.rm = TRUE),
+        n = sum(!is.na(______)),
+        .groups = "drop"
+      )
+  }
+  bind_rows(
+    mean_by(driving_sim, condition, rt_ms),
+    mean_by(driving_sim, experience, lane_dev)
+  )
+solution: |
+  mean_by <- function(data, group, var) {
+    data |>
+      group_by({{ group }}) |>
+      summarise(
+        mean = mean({{ var }}, na.rm = TRUE),
+        n = sum(!is.na({{ var }})),
+        .groups = "drop"
+      )
+  }
+  bind_rows(
+    mean_by(driving_sim, condition, rt_ms),
+    mean_by(driving_sim, experience, lane_dev)
+  )
+hints:
+  - de: "Innerhalb der Funktion gibt es keine Variable `condition`; dplyr soll den Ausdruck sehen, den der Aufrufer geschrieben hat."
+    en: "Inside the function there is no variable `condition`; dplyr should see the expression the caller wrote."
+  - de: "Ein Funktionsargument, das eine Spalte meint, wird in dplyr-Verben „umarmt“ (embracing)."
+    en: "A function argument that refers to a column is \"embraced\" in dplyr verbs."
+  - de: "`group_by({{ group }})` und überall sonst `{{ var }}`."
+    en: "`group_by({{ group }})` and everywhere else `{{ var }}`."
+explanation:
+  de: |
+    dplyr wertet Spaltennamen per Data Masking im Data Frame aus. In einer
+    eigenen Funktion ist `group` aber ein Argument: `group_by(group)` sucht
+    eine Spalte namens `group` und scheitert. `{{ group }}` (Embracing)
+    reicht das Argument als Ausdruck an das Verb weiter, so als hätte der
+    Aufrufer `group_by(condition)` selbst geschrieben. Darum funktioniert
+    dieselbe Funktion für `condition` und `experience`. `bind_rows()` legt
+    die Ergebnisse untereinander; die unterschiedlichen Gruppenspalten
+    werden mit `NA` aufgefüllt. Fallstrick: Einen String wie `"rt_ms"`
+    kann man nicht umarmen; für Spaltennamen als Text (z. B. aus einer
+    Schleife über Variablennamen) gibt es `.data[[var]]`.
+  en: |
+    dplyr evaluates column names in the data frame via data masking. In
+    your own function, however, `group` is an argument: `group_by(group)`
+    looks for a column called `group` and fails. `{{ group }}` (embracing)
+    passes the argument on to the verb as an expression, as if the caller
+    had written `group_by(condition)` themselves. That is why the same
+    function works for `condition` and `experience`. `bind_rows()` stacks
+    the results; the different grouping columns are filled with `NA`.
+    Pitfall: you cannot embrace a string like `"rt_ms"`; for column names
+    as text (e.g. from a loop over variable names) there is
+    `.data[[var]]`.
+misconception:
+  de: "Ein Funktionsargument mit einem Spaltennamen kann man in dplyr-Verben direkt wie eine Spalte verwenden."
+  en: "A function argument holding a column name can be used directly like a column in dplyr verbs."
+check:
+  type: value
+  ignore_col_order: false
+  tolerance: 1.0e-8
+common_mistakes:
+  - pattern: "______"
+    message:
+      de: "Es sind noch Lücken `______` offen."
+      en: "There are still gaps `______` left."
+  - pattern: "group_by\\(\\s*group\\s*\\)|mean\\(\\s*var\\b"
+    message:
+      de: "Ohne `{{ }}` sucht dplyr eine Spalte, die wirklich `group` oder `var` heißt, statt der übergebenen Spalte."
+      en: "Without `{{ }}`, dplyr looks for a column that is really called `group` or `var` instead of the column passed in."
+  - pattern: "group_by\\(\\s*\"|\\.data\\[\\["
+    message:
+      de: "Die Spalten kommen ohne Anführungszeichen an; `.data[[ ]]` passt nur für Strings. Hier braucht es `{{ }}`."
+      en: "The columns arrive without quotes; `.data[[ ]]` only fits strings. Here you need `{{ }}`."
+  - pattern: "!!\\s*(group|var)\\b"
+    message:
+      de: "`!!` allein reicht nicht: Das Argument müsste vorher mit `enquo()` eingefangen werden. `{{ }}` erledigt beides."
+      en: "`!!` alone is not enough: the argument would first have to be captured with `enquo()`. `{{ }}` does both."

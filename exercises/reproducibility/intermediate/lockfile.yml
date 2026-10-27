@@ -1,0 +1,108 @@
+id: rr-i-lockfile
+lesson: reproducibility-intermediate
+order: 4
+title:
+  de: Das Lockfile lesen
+  en: Reading the lockfile
+kind: write
+required: false
+packages: [jsonlite, purrr]
+data: []
+setup: |
+  library(jsonlite)
+  library(purrr)
+  .lock_path <- file.path(tempdir(), "renv.lock")
+  writeLines(c(
+    "{",
+    "  \"R\": {\"Version\": \"4.5.1\", \"Repositories\": [{\"Name\": \"CRAN\", \"URL\": \"https://cloud.r-project.org\"}]},",
+    "  \"Packages\": {",
+    "    \"dplyr\": {\"Package\": \"dplyr\", \"Version\": \"1.1.4\", \"Source\": \"Repository\"},",
+    "    \"lme4\": {\"Package\": \"lme4\", \"Version\": \"1.1-37\", \"Source\": \"Repository\"},",
+    "    \"lmerTest\": {\"Package\": \"lmerTest\", \"Version\": \"3.1-3\", \"Source\": \"Repository\"},",
+    "    \"here\": {\"Package\": \"here\", \"Version\": \"1.0.1\", \"Source\": \"Repository\"}",
+    "  }",
+    "}"
+  ), .lock_path)
+prompt:
+  de: |
+    Ein Kollege schickt dir ein Projekt mit `renv.lock`. Bevor du
+    `renv::restore()` ausführst, willst du sehen, mit welcher R-Version
+    und welchen Paketversionen gerechnet wurde. Das Lockfile ist eine
+    JSON-Datei; `read_json()` aus jsonlite macht daraus eine verschachtelte
+    Liste. Der Pfad steht in `.lock_path`.
+
+    1. Lies das Lockfile mit `read_json(.lock_path)` als `lock` ein.
+    2. Gib einen benannten Zeichenvektor zurück: zuerst die R-Version unter
+       dem Namen `R`, dann die Version jedes Pakets unter seinem Namen, also
+       `c(R = "4.5.1", dplyr = "1.1.4", ...)`.
+
+    Tipp: `str(lock, max.level = 2)` zeigt den Aufbau.
+  en: |
+    A colleague sends you a project with `renv.lock`. Before running
+    `renv::restore()`, you want to see which R version and which package
+    versions were used. The lockfile is a JSON file; jsonlite's
+    `read_json()` turns it into a nested list. The path is in `.lock_path`.
+
+    1. Read the lockfile with `read_json(.lock_path)` as `lock`.
+    2. Return a named character vector: first the R version under the name
+       `R`, then the version of each package under its name, i.e.
+       `c(R = "4.5.1", dplyr = "1.1.4", ...)`.
+
+    Tip: `str(lock, max.level = 2)` shows the structure.
+starter: |
+  lock <- read_json(.lock_path)
+  c(R = lock["R"]["Version"], lock["Packages"]["Version"])
+solution: |
+  lock <- read_json(.lock_path)
+  c(R = lock[["R"]][["Version"]], map_chr(lock[["Packages"]], "Version"))
+hints:
+  - de: "`[` liefert wieder eine Liste (ein Teilstück), `[[` bzw. `$` das Element selbst. Du brauchst am Ende Zeichenketten, keine Listen."
+    en: "`[` returns a list again (a piece), `[[` or `$` the element itself. In the end you need strings, not lists."
+  - de: "Die R-Version liegt zwei Ebenen tief: `lock` → `R` → `Version`. Für jedes Paket in `lock[[\"Packages\"]]` dasselbe Element holen: `map_chr()` mit einem Namen statt einer Funktion."
+    en: "The R version is two levels deep: `lock` → `R` → `Version`. For each package in `lock[[\"Packages\"]]` get the same element: `map_chr()` with a name instead of a function."
+  - de: "`c(R = lock[[\"R\"]][[\"Version\"]], map_chr(lock[[\"Packages\"]], \"Version\"))`."
+    en: "`c(R = lock[[\"R\"]][[\"Version\"]], map_chr(lock[[\"Packages\"]], \"Version\"))`."
+explanation:
+  de: |
+    `read_json()` übersetzt JSON-Objekte in benannte Listen: `lock$R` und
+    `lock$Packages` sind Listen, jedes Paket wieder eine Liste mit
+    `Package`, `Version`, `Source`. `[[` (oder `$`) holt den Inhalt eines
+    Elements; `lock["R"]` wäre eine Liste der Länge 1, die `R` enthält,
+    und `lock["R"]["Version"]` ergibt `list(NA = NULL)` statt eines
+    Fehlers. `map_chr(lock$Packages, "Version")` holt aus jedem Paket das
+    Element `Version` und behält die Paketnamen. So siehst du vor
+    `renv::restore()`: gerechnet wurde mit R 4.5.1 und lme4 1.1-37. Fehlt
+    eine passende R-Version, installiert renv die Paketversionen trotzdem,
+    aber Ergebnisse können minimal abweichen. Fallstrick: Das Lockfile
+    von Hand zu bearbeiten; ändere Versionen mit `renv::install()` und
+    `renv::snapshot()`.
+  en: |
+    `read_json()` translates JSON objects into named lists: `lock$R` and
+    `lock$Packages` are lists, each package again a list with `Package`,
+    `Version`, `Source`. `[[` (or `$`) gets the content of an element;
+    `lock["R"]` would be a list of length 1 containing `R`, and
+    `lock["R"]["Version"]` gives `list(NA = NULL)` instead of an error.
+    `map_chr(lock$Packages, "Version")` gets the element `Version` from
+    each package and keeps the package names. So before `renv::restore()`
+    you see: R 4.5.1 and lme4 1.1-37 were used. If a matching R version is
+    missing, renv still installs the package versions, but results can
+    differ slightly. Pitfall: editing the lockfile by hand; change versions
+    with `renv::install()` and `renv::snapshot()`.
+misconception:
+  de: "`[` und `[[` sind bei Listen austauschbar."
+  en: "`[` and `[[` are interchangeable for lists."
+check:
+  type: value
+common_mistakes:
+  - pattern: "lock\\[\\s*\"(R|Packages)\"\\s*\\]"
+    message:
+      de: "`lock[\"R\"]` liefert eine Liste, die `R` enthält, nicht `R` selbst. Nutze `[[` oder `$`."
+      en: "`lock[\"R\"]` returns a list containing `R`, not `R` itself. Use `[[` or `$`."
+  - pattern: "\\bmap\\(\\s*lock"
+    message:
+      de: "`map()` liefert eine Liste; für einen Zeichenvektor nimm `map_chr()`."
+      en: "`map()` returns a list; for a character vector use `map_chr()`."
+  - pattern: "unlist\\(\\s*lock"
+    message:
+      de: "`unlist()` über das ganze Lockfile mischt Versionen mit Namen, Quellen und URLs. Hole gezielt das Element `Version`."
+      en: "`unlist()` over the whole lockfile mixes versions with names, sources and URLs. Get the element `Version` specifically."

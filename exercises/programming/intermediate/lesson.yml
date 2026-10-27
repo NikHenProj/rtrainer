@@ -1,0 +1,19 @@
+# Lesson metadata; exercises are the other *.yml files in this folder
+# (sorted by `order`), the knowledge check is quiz.yml.
+lesson: programming-intermediate
+minutes: 50
+prerequisites: [descriptives-beginner, regression-beginner]
+langs: [de]
+packages: [dplyr, tidyr, purrr, parameters]
+data: [driving_sim]
+goals:
+  de:
+    - Eigene dplyr-Funktionen mit `{{ }}` schreiben, die Spaltennamen wie dplyr annehmen
+    - Mit purrr über Listen laufen (`map()`, `map2()`, typstabile Varianten)
+    - Ein Modell pro Person mit `nest()`, `map()` und `model_parameters()` schätzen
+    - Funktionen mit `...` und robuster Fehlerbehandlung (`tryCatch()`, `possibly()`) schreiben
+  en:
+    - Write your own dplyr functions with `{{ }}` that take column names like dplyr does
+    - Iterate over lists with purrr (`map()`, `map2()`, type-stable variants)
+    - Estimate one model per participant with `nest()`, `map()` and `model_parameters()`
+    - Write functions with `...` and robust error handling (`tryCatch()`, `possibly()`)

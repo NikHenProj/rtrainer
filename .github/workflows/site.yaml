@@ -75,6 +75,11 @@ jobs:
             any::pwr
             any::Superpower
             any::simr
+            any::modelsummary
+            any::rempsyc
+            any::flextable
+            any::here
+            any::jsonlite
             any::chromote
             any::processx
 

@@ -1,0 +1,81 @@
+id: pg-i-map2-debug
+lesson: programming-intermediate
+order: 2
+title:
+  de: Bedingungsspezifische Grenzwerte mit map2()
+  en: Condition-specific cut-offs with map2()
+kind: debug
+required: true
+packages: [purrr]
+data: [driving_sim]
+setup: |
+  library(purrr)
+  rts <- split(driving_sim$rt_ms, driving_sim$condition)
+  cutoffs <- c(auditory = 1100, haptic = 1000, visual = 1200)
+prompt:
+  de: |
+    `rts` ist eine Liste mit den Reaktionszeiten pro Bedingung, `cutoffs`
+    enthält pro Bedingung einen Grenzwert für „zu langsam“ (gleiche
+    Reihenfolge). Gesucht ist für jede Bedingung der Anteil gültiger
+    Durchgänge über ihrem **eigenen** Grenzwert, auf 3 Stellen gerundet,
+    als benannter Double-Vektor.
+
+    Der Code läuft, liefert aber falsche Anteile (und eine Warnung).
+    Repariere ihn.
+  en: |
+    `rts` is a list with the reaction times per condition, `cutoffs`
+    contains one cut-off for "too slow" per condition (same order). For
+    each condition, compute the share of valid trials above its **own**
+    cut-off, rounded to 3 decimals, as a named double vector.
+
+    The code runs but returns wrong shares (and a warning). Repair it.
+starter: |
+  map_dbl(rts, \(x, cut) round(mean(x > cut, na.rm = TRUE), 3), cut = cutoffs)
+solution: |
+  map2_dbl(rts, cutoffs, \(x, cut) round(mean(x > cut, na.rm = TRUE), 3))
+hints:
+  - de: "Welcher Wert steht in `cut`, wenn die Funktion für `rts$auditory` aufgerufen wird? Teste mit `print(cut)` in der Funktion."
+    en: "What value is in `cut` when the function is called for `rts$auditory`? Test with `print(cut)` inside the function."
+  - de: "Zusätzliche Argumente von `map()` werden unverändert an jeden Aufruf weitergegeben, nicht elementweise."
+    en: "Additional arguments to `map()` are passed unchanged to every call, not element by element."
+  - de: "Um über zwei Vektoren parallel zu laufen, gibt es eine eigene Variante mit `2` im Namen: `map2_dbl(rts, cutoffs, ...)`."
+    en: "To iterate over two vectors in parallel there is a variant with `2` in its name: `map2_dbl(rts, cutoffs, ...)`."
+explanation:
+  de: |
+    In `map_dbl(rts, f, cut = cutoffs)` bekommt jeder Aufruf den ganzen
+    Vektor `cutoffs`. `x > cut` vergleicht dann 160 Reaktionszeiten reihum
+    mit allen drei Grenzwerten (Recycling, daher die Warnung), der Anteil
+    ist ein Mischwert. `map2_dbl(rts, cutoffs, f)` läuft parallel über
+    beide Eingaben und übergibt pro Aufruf je ein Element: auditory .194,
+    haptic .342, visual .323. Fallstrick: `map2()` paart nach Position,
+    nicht nach Namen. `split()` sortiert die Bedingungen alphabetisch;
+    stünde `cutoffs` in anderer Reihenfolge, wäre `cutoffs[names(rts)]`
+    nötig.
+  en: |
+    In `map_dbl(rts, f, cut = cutoffs)` every call receives the whole
+    vector `cutoffs`. `x > cut` then compares 160 reaction times in turn
+    with all three cut-offs (recycling, hence the warning), and the share
+    is a mixture. `map2_dbl(rts, cutoffs, f)` iterates over both inputs in
+    parallel and passes one element of each per call: auditory .194,
+    haptic .342, visual .323. Pitfall: `map2()` pairs by position, not by
+    name. `split()` sorts the conditions alphabetically; if `cutoffs` were
+    in a different order, `cutoffs[names(rts)]` would be needed.
+misconception:
+  de: "Zusätzliche Argumente in `map()` werden wie die Hauptliste elementweise durchlaufen."
+  en: "Additional arguments in `map()` are iterated element by element like the main list."
+check:
+  type: value
+  tolerance: 1.0e-8
+common_mistakes:
+  - pattern: "cut\\s*=\\s*cutoffs"
+    message:
+      de: "Über `cut = cutoffs` bekommt jeder Aufruf alle drei Grenzwerte; `x > cut` recycelt sie. Lass `map2_dbl()` parallel über `rts` und `cutoffs` laufen."
+      en: "Via `cut = cutoffs` every call gets all three cut-offs; `x > cut` recycles them. Let `map2_dbl()` iterate over `rts` and `cutoffs` in parallel."
+  - pattern: "map2\\(\\s*rts"
+    message:
+      de: "`map2()` liefert eine Liste; gesucht ist ein Double-Vektor (`map2_dbl()`)."
+      en: "`map2()` returns a list; a double vector is required (`map2_dbl()`)."
+  - pattern: "cutoffs\\[\\[?\\s*1"
+    message:
+      de: "Damit gilt ein Grenzwert für alle Bedingungen. Jede Bedingung braucht ihren eigenen."
+      en: "That applies one cut-off to all conditions. Each condition needs its own."

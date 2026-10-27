@@ -1,0 +1,107 @@
+id: rr-i-seed-debug
+lesson: reproducibility-intermediate
+order: 3
+title:
+  de: Zufällige Zuteilung reproduzierbar machen
+  en: Making random assignment reproducible
+kind: debug
+required: true
+packages: [dplyr]
+data: []
+setup: |
+  library(dplyr)
+prompt:
+  de: |
+    Für die nächste Usability-Studie werden 24 Personen zufällig einer von
+    drei Reihenfolgen der Prototypen zugeteilt (je 8 Personen), und für
+    ein Nachinterview werden 6 Personen gezogen. Im Präregistrierungs-
+    dokument steht: „Zuteilung mit `set.seed(2026)`“.
+
+    Der Code liefert bei jedem Lauf eine andere Zuteilung. Repariere ihn so,
+    dass er mit `set.seed(2026)` bei jedem Lauf dasselbe Ergebnis gibt.
+    Ändere sonst nichts an der Reihenfolge der Zufallsschritte; die letzte
+    Zeile gibt `plan` zurück.
+  en: |
+    For the next usability study, 24 participants are randomly assigned to
+    one of three orders of the prototypes (8 each), and 6 participants are
+    drawn for a follow-up interview. The preregistration says: "assignment
+    with `set.seed(2026)`".
+
+    The code gives a different assignment on every run. Repair it so that
+    with `set.seed(2026)` it gives the same result on every run. Do not
+    change the order of the random steps otherwise; the last line returns
+    `plan`.
+starter: |
+  ids <- sprintf("p%02d", 1:24)
+  plan <- tibble(
+    participant = ids,
+    order = sample(rep(c("ABC", "BCA", "CAB"), each = 8))
+  )
+  set.seed(2026)
+  interview <- sample(ids, 6)
+  plan <- plan |>
+    mutate(interview = participant %in% interview)
+  plan
+solution: |
+  set.seed(2026)
+  ids <- sprintf("p%02d", 1:24)
+  plan <- tibble(
+    participant = ids,
+    order = sample(rep(c("ABC", "BCA", "CAB"), each = 8))
+  )
+  interview <- sample(ids, 6)
+  plan <- plan |>
+    mutate(interview = participant %in% interview)
+  plan
+hints:
+  - de: "Führe den Code zweimal aus und vergleiche: Welche Spalte ändert sich, welche bleibt gleich?"
+    en: "Run the code twice and compare: which column changes, which stays the same?"
+  - de: "`set.seed()` legt den Startpunkt des Zufallszahlengenerators fest; es wirkt nur auf Zufallsschritte, die *danach* kommen."
+    en: "`set.seed()` fixes the starting point of the random number generator; it only affects random steps that come *after* it."
+  - de: "Setze `set.seed(2026)` einmal ganz an den Anfang, vor das erste `sample()`."
+    en: "Put `set.seed(2026)` once at the very beginning, before the first `sample()`."
+explanation:
+  de: |
+    `set.seed()` stellt den Zufallsgenerator auf einen festen Startpunkt.
+    Im Ausgangscode kam er erst nach der Zuteilung: Die Interview-Auswahl
+    war reproduzierbar, die Reihenfolgen nicht. Einmal am Skriptanfang
+    reicht, solange die Zufallsschritte immer in derselben Reihenfolge
+    laufen; ein zusätzliches `sample()` davor verschiebt alle folgenden
+    Ziehungen. Für die Präregistrierung lohnt es, den Zuteilungsplan
+    selbst als Datei abzulegen (`write_csv(plan, ...)`), nicht nur den
+    Seed. Fallstrick: Zwischen R-Versionen kann sich der Algorithmus
+    ändern (R 3.6 hat `sample()` geändert); `sessionInfo()` und ein
+    renv-Lockfile halten fest, womit gerechnet wurde.
+  en: |
+    `set.seed()` sets the random number generator to a fixed starting
+    point. In the original code it came only after the assignment: the
+    interview selection was reproducible, the orders were not. Once at the
+    start of the script is enough as long as the random steps always run
+    in the same order; an additional `sample()` before them shifts all
+    subsequent draws. For the preregistration it is worth storing the
+    assignment plan itself as a file (`write_csv(plan, ...)`), not just the
+    seed. Pitfall: the algorithm can change between R versions (R 3.6
+    changed `sample()`); `sessionInfo()` and an renv lockfile record what
+    was used.
+misconception:
+  de: "`set.seed()` macht alle Zufallszahlen eines Skripts reproduzierbar, egal wo es steht."
+  en: "`set.seed()` makes all random numbers in a script reproducible, wherever it is placed."
+check:
+  type: value
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*set\\.seed)"
+    message:
+      de: "Ohne `set.seed()` ändert sich das Ergebnis bei jedem Lauf. Setze `set.seed(2026)` vor den ersten Zufallsschritt."
+      en: "Without `set.seed()` the result changes on every run. Put `set.seed(2026)` before the first random step."
+  - pattern: "set\\.seed\\(\\s*(?!2026)\\d+"
+    message:
+      de: "Die Präregistrierung nennt `set.seed(2026)`; ein anderer Seed ergibt eine andere Zuteilung."
+      en: "The preregistration names `set.seed(2026)`; another seed gives a different assignment."
+  - pattern: "set\\.seed\\(2026\\)[\\s\\S]*set\\.seed\\(2026\\)"
+    message:
+      de: "Ein zweites `set.seed()` setzt den Generator zurück, sodass sich beide Ziehungen auf denselben Startpunkt beziehen. Einmal am Anfang reicht."
+      en: "A second `set.seed()` resets the generator so that both draws start from the same point. Once at the beginning is enough."
+  - pattern: "sample\\([^)]*\\)[\\s\\S]*set\\.seed"
+    message:
+      de: "`set.seed()` steht noch nach einem `sample()`. Es wirkt nur auf die Ziehungen danach."
+      en: "`set.seed()` still comes after a `sample()`. It only affects the draws after it."

@@ -1,0 +1,151 @@
+---
+title: "R-Programmierung für Analysen"
+subtitle: "Intermediate · Eigene Funktionen, tidy eval, purrr, ein Modell pro Person"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, tidyr, purrr, parameters]
+resources:
+  - ../data/driving_sim.csv
+---
+
+{{< include /_generated/de/programming-intermediate/runtime.qmd >}}
+
+{{< include /_generated/de/programming-intermediate/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R läuft hier direkt im Browser. Beim ersten Besuch lädt es 10–30 Sekunden (Anzeige unten rechts), danach geht es schneller.
+:::
+
+## Wozu? {#why}
+
+**Forschungsfrage:** Wie stark werden die Fahrerinnen und Fahrer im Simulator über die Durchgänge schneller, und unterscheidet sich das zwischen Personen?
+
+Dafür brauchst du dieselbe Rechnung für 40 Personen, dieselbe Tabelle für fünf Variablen, dieselbe Bereinigung für jede neue Datenlieferung. Kopierter Code mit kleinen Änderungen ist die häufigste Fehlerquelle in Analyseskripten: Eine Kopie wird korrigiert, die anderen nicht. Eigene Funktionen und purrr machen aus der Wiederholung *eine* Stelle, die du prüfen kannst.
+
+## Konzept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 170" role="img" aria-labelledby="fig-pgi-title fig-pgi-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-pgi-title">Ein Modell pro Person mit nest und map</title>
+  <desc id="fig-pgi-desc">Links ein langer Datensatz mit allen Durchgängen. nest teilt ihn in eine Zeile pro Person mit einer Listenspalte data. map schätzt in jeder Zeile ein Modell und legt es in der Listenspalte model ab. map mit model_parameters und unnest machen daraus eine Tabelle mit Steigung und Konfidenzintervall pro Person.</desc>
+  <rect x="16" y="30" width="110" height="110" rx="4" class="rt-fig-box" />
+  <text x="71" y="56" text-anchor="middle" class="rt-fig-code">driving_sim</text>
+  <text x="71" y="80" text-anchor="middle" class="rt-fig-label">480 Zeilen</text>
+  <text x="71" y="100" text-anchor="middle" class="rt-fig-label">alle Durchgänge</text>
+  <rect x="200" y="30" width="160" height="110" rx="4" class="rt-fig-box-accent" />
+  <text x="280" y="56" text-anchor="middle" class="rt-fig-code">participant</text>
+  <text x="280" y="80" text-anchor="middle" class="rt-fig-code">data  &lt;tibble&gt;</text>
+  <text x="280" y="104" text-anchor="middle" class="rt-fig-code">model &lt;lm&gt;</text>
+  <text x="280" y="128" text-anchor="middle" class="rt-fig-label">40 Zeilen</text>
+  <rect x="434" y="30" width="110" height="110" rx="4" class="rt-fig-box" />
+  <text x="489" y="56" text-anchor="middle" class="rt-fig-code">slope</text>
+  <text x="489" y="80" text-anchor="middle" class="rt-fig-code">CI_low</text>
+  <text x="489" y="104" text-anchor="middle" class="rt-fig-code">CI_high</text>
+  <line x1="126" y1="85" x2="198" y2="85" class="rt-fig-line" />
+  <line x1="360" y1="85" x2="432" y2="85" class="rt-fig-line" />
+  <text x="162" y="160" text-anchor="middle" class="rt-fig-code">nest()</text>
+  <text x="396" y="160" text-anchor="middle" class="rt-fig-code">map() + unnest()</text>
+</svg>
+<figcaption><code>nest()</code> macht aus dem langen Datensatz eine Zeile pro Person mit den Daten als Listenspalte. <code>map()</code> schätzt je ein Modell, <code>model_parameters()</code> + <code>unnest()</code> machen daraus wieder eine flache Tabelle.</figcaption>
+</figure>
+```
+
+- **Eigene Funktionen:** Sobald du Code zum dritten Mal kopierst, wird er zur Funktion. Standardwerte (`digits = 1`) für das Übliche, `...` für alles, was an eine andere Funktion durchgereicht wird.
+- **Funktionen mit dplyr (tidy eval):** Spalten, die ohne Anführungszeichen ankommen, werden in dplyr-Verben „umarmt“: `group_by({{ group }})`. Spaltennamen als Text (aus einer Schleife, aus einer Konfiguration) gehen mit `.data[[var]]`. Neue Spaltennamen aus Argumenten: `"{{ var }}_mean" := ...`.
+- **purrr:** `map(x, f)` wendet `f` auf jedes Element an und gibt eine Liste zurück; `map_dbl()`, `map_int()`, `map_chr()` geben einen Vektor des genannten Typs zurück oder brechen ab. `map2()` läuft parallel über zwei Eingaben, `pmap()` über beliebig viele. `map(x, "name")` holt ein Element aus jedem Listeneintrag.
+- **Viele Modelle:** `nest(.by = participant)` → `map(data, \(d) lm(...))` → `map(model, model_parameters)` → `unnest()`. Die Modelle bleiben als Objekte erhalten.
+- **Fehler abfangen:** `tryCatch(expr, error = function(e) NA_real_)` oder kürzer `possibly(f, otherwise = NA_real_)`. Danach zählen, wie viele `NA` entstanden sind.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## Mehr dazu: Funktionen prüfen, pmap, mehrere Ausgaben
+
+- **Prüfen am Anfang:** `stopifnot(is.numeric(x))` oder `rlang::arg_match()` für erlaubte Werte geben klare Fehlermeldungen statt kryptischer Folgefehler.
+- **Tests:** Hilfsfunktionen in `R/` mit ein paar `testthat::expect_equal()`-Aufrufen absichern; sie sind die Grundlage vieler Ergebnisse.
+- **`pmap()`** für Modellspezifikationen: eine Tabelle mit den Spalten `formula` und `data`, jede Zeile ein Modell.
+- **`walk()`** statt `map()`, wenn nur Nebenwirkungen zählen (Dateien schreiben, Plots speichern), z. B. `walk2(plots, paths, ggsave)`.
+- **`across()` in eigenen Funktionen:** `summarise(across({{ vars }}, mean))` nimmt mehrere Spalten in einem Argument.
+:::
+
+## Beispiel {#example}
+
+Eine eigene Zusammenfassung mit `{{ }}`, für zwei Variablen wiederverwendet:
+
+```{webr}
+summary_by <- function(data, group, var) {
+  data |>
+    summarise(
+      M = mean({{ var }}, na.rm = TRUE),
+      SD = sd({{ var }}, na.rm = TRUE),
+      n = sum(!is.na({{ var }})),
+      .by = {{ group }}
+    )
+}
+summary_by(driving_sim, condition, rt_ms)
+summary_by(driving_sim, experience, lane_dev)
+```
+
+Ein Modell pro Person, Kennwerte als Tabelle:
+
+```{webr}
+per_person <- driving_sim |>
+  nest(.by = participant) |>
+  mutate(
+    model = map(data, \(d) lm(rt_ms ~ condition + trial, data = d)),
+    params = map(model, model_parameters)
+  ) |>
+  unnest(params) |>
+  filter(Parameter == "trial") |>
+  select(participant, slope = Coefficient, CI_low, CI_high)
+per_person
+median(per_person$slope)
+```
+
+Die mittlere Person wird etwa 31 ms pro Durchgang schneller, aber die Steigungen streuen von −105 bis +61 ms, und nur bei 9 von 40 Personen schließt das KI die 0 aus. Für eine Aussage über alle Personen schätzt ein Mixed Model mit Random Slope die Streuung direkt (Lektion Mixed Models); die Einzelmodelle sind ein guter erster Blick.
+
+## Paketvergleich {#packages}
+
+| Aufgabe | Empfehlung | Alternative |
+|---|---|---|
+| Über Listen/Vektoren iterieren | **purrr** `map()`, `map_dbl()`, `map2()`, `pmap()` | base `lapply()`, `vapply()` (typstabil), `Map()`; `for`-Schleifen mit vorab angelegtem Ergebnis |
+| Funktionen mit Spaltennamen | **dplyr** `{{ }}`, `.data[[ ]]` | rlang `enquo()`/`!!` (älterer Weg) |
+| Viele Modelle | **tidyr** `nest()` + purrr + `parameters::model_parameters()` | `group_modify()`; broom `tidy()` |
+| Fehler abfangen | **purrr** `possibly()`, `safely()` | base `tryCatch()`, `try()` |
+
+## Übungen {#exercises}
+
+Drei Pflichtübungen und zwei Zusatzübungen. **Ausführen und prüfen** startet deinen Code und prüft ihn sofort. Hinweise deckst du einzeln auf (**Hinweis zeigen**), die Lösung erst danach.
+
+{{< include /_generated/de/programming-intermediate/exercises.qmd >}}
+
+## Wissenscheck {#check}
+
+{{< include /_generated/de/programming-intermediate/quiz.qmd >}}
+
+## Spickzettel {#cheatsheet}
+
+```r
+# Funktion mit dplyr: Spalten umarmen
+mean_by <- function(data, group, var) {
+  data |> summarise(mean = mean({{ var }}, na.rm = TRUE), .by = {{ group }})
+}
+# Spaltenname als Text: .data[[var]]
+
+# purrr
+map_dbl(rts, mean, na.rm = TRUE)          # gleiche Zusatzargumente für alle
+map2_dbl(rts, cutoffs, \(x, cut) mean(x > cut, na.rm = TRUE))  # paarweise
+map_chr(lock$Packages, "Version")         # Element aus jedem Eintrag
+
+# Ein Modell pro Person
+data |>
+  nest(.by = participant) |>
+  mutate(model = map(data, \(d) lm(y ~ x, data = d)),
+         params = map(model, model_parameters),
+         n = map_int(model, nobs)) |>
+  unnest(params)
+
+# Fehler abfangen
+safe_slope <- possibly(slope, otherwise = NA_real_)
+tryCatch(expr, error = function(e) NA_real_)
+```
