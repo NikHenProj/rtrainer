@@ -1,6 +1,6 @@
 # rtrainer (Quarto course)
 
-## Milestone 9, package P9a: English intermediate lessons P4–P5
+## Milestone 9, package P9a: English intermediate lessons P4–P5 (accepted, merged into main)
 
 - P9 split in two sessions as planned: this part translates P4–P5; P6 (reporting, reproducibility, programming) and `project-intermediate` follow in P9b.
 - English pages `en/{robust,regression,glm,mixed-models,moderation-mediation,power}-intermediate.qmd`, translated from the accepted German lessons with identical code, data and exercise IDs (SVG labels and descriptions, "Run locally" boxes for glmmTMB and the simr power curve, cheat-sheet comments translated; the static `mediation` code block keeps its English comments); footer included; `langs: [de]` removed from their `lesson.yml`.
