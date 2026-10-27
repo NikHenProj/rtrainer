@@ -21,6 +21,11 @@ Stand (2026-10-27): **M9 Paket P5 (DE: mixed-models-, moderation-mediation-, pow
 - **Triage** `docs/legacy-triage.md`: 54 behalten (18 im Beginner-Pfad), 11 streichen, freigegeben. Migriert: 41 (markiert): alle Beginner-Aufgaben der Triage, P1 (10, 13, 18, 23, 24, 26), P2 (5, 14, 15, 48, 52), P3 (30, 31, 36, 37, 38), P4 (35) und P5 (40–43, 45, 46; 44 bleibt für mixed-models-expert). Stand: 41 von 54.
 - Alt: `legacy/exercises/` (65 Aufgaben), `legacy/driving_sim_v0.*`.
 
+## Online (2026-10-27, M9 P5)
+- Gepusht (7d74098, ca8080d). CI-Lauf 40429331075 grün (build 10,5 min, deploy ok): 123/123, `[ FAIL 0 | WARN 10 | SKIP 0 | PASS 243 ]`, Node 12/0, Rauchtest 0 failure(s).
+- Ladezeit im CI-Rauchtest (headless, Runner): mixed-models-intermediate 15,6 s, moderation-mediation-intermediate 18,1 s, power-intermediate 19,6 s; `powerSim()`-Übung bis zur Bewertung 27,2 s.
+- Build dauert jetzt 10,5 statt 6 min (neue Pakete; der Rauchtest wird länger).
+
 ## Geprüft (2026-10-27, M9 P5)
 Vorab Ladezeit in webR (headless, eine Messung): lme4/lmerTest/performance/parameters 12–18 s, simr danach 5,5 s, pwr + Superpower 2–16 s; `powerSim()` mit 50 Läufen 14,7 s, lavaan-Bootstrap mit 200 Ziehungen 21,8 s. glmmTMB lädt nicht (TMB 1.9.11 im webR-Repo, glmmTMB braucht ≥ 1.9.23).
 Über Verifier-Subagent (echte Ausgabe, gekürzt):
