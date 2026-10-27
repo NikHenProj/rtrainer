@@ -1,6 +1,6 @@
 # rtrainer (Quarto course)
 
-## Milestone 9, package P5: intermediate lessons mixed models, moderation-mediation, power (DE) (awaiting acceptance)
+## Milestone 9, package P5: intermediate lessons mixed models, moderation-mediation, power (DE) (accepted, merged into main)
 
 - Load check before writing (headless Chrome, webR 0.6.0, one measurement): lme4 + lmerTest + performance + parameters 12–18 s, simr afterwards 5.5 s, interactions + mediation + lavaan 3.6–15 s, pwr + Superpower 2–16 s (the spread depends on what was already loaded). All far below the 60 s limit. **glmmTMB does not load in webR** (`namespace 'TMB' 1.9.11 is being loaded, but >= 1.9.23 is required` in the webR repository), so it appears only in the package comparison and in a "Lokal ausführen" box (negative binomial mixed model).
 - In-browser run times: `powerSim()` with 50 simulations 14.7 s, lavaan bootstrap with 200 draws 21.8 s, `ANOVA_exact()` well below 1 s.
