@@ -1,6 +1,6 @@
 # STATUS
 
-Stand (2026-10-27): **M9 Paket P9b (EN: reporting-, reproducibility-, programming- und project-intermediate) abgenommen und in `main`.** Davor: **M9 Paket P9a (EN: Intermediate P4–P5, 6 Lektionen) abgenommen und in `main`.** Davor: **M9 Paket P8 (EN: Intermediate P1–P3, 9 Lektionen) abgenommen und in `main`.** Davor: **M9 Paket P7 (DE: project-intermediate) abgenommen und in `main`.** Davor: **M9 Paket P6 (DE: reporting-, reproducibility-, programming-intermediate) abgenommen und in `main`.** Davor: **M9 Paket P5 (DE: mixed-models-, moderation-mediation-, power-intermediate) abgenommen und in `main`.** **M6 bis M8 Teil 5 und M9 Paket P1 (DE: import-, cleaning-, reshaping-intermediate) abgenommen und in `main` und M9 Paket P2 (DE: missing-, visualisation-, descriptives-intermediate) abgenommen und in `main`; M9 Paket P3 (DE: scales-, sem-, group-comparisons-intermediate) und Datensatz `acceptance` abgenommen und in `main`; M9 Paket P4 (DE: robust-, regression-, glm-intermediate) abgenommen und in `main`** (alle 10 Beginner-Lektionen und Mini-Projekt Beginner, DE + EN). **Online seit 2026-10-26:** https://nikhenproj.github.io/rtrainer/ (Pages-Quelle GitHub Actions, letzter CI-Lauf 40575147997 grün). M9-Plan abgenommen (inkl. Datensatz `acceptance`): `docs/M9-plan.md`. Entscheidungen: NEWS.md.
+Stand (2026-10-27): **M9 Paket P9b (EN: reporting-, reproducibility-, programming- und project-intermediate) abgenommen und in `main`.** Davor: **M9 Paket P9a (EN: Intermediate P4–P5, 6 Lektionen) abgenommen und in `main`.** Davor: **M9 Paket P8 (EN: Intermediate P1–P3, 9 Lektionen) abgenommen und in `main`.** Davor: **M9 Paket P7 (DE: project-intermediate) abgenommen und in `main`.** Davor: **M9 Paket P6 (DE: reporting-, reproducibility-, programming-intermediate) abgenommen und in `main`.** Davor: **M9 Paket P5 (DE: mixed-models-, moderation-mediation-, power-intermediate) abgenommen und in `main`.** **M6 bis M8 Teil 5 und M9 Paket P1 (DE: import-, cleaning-, reshaping-intermediate) abgenommen und in `main` und M9 Paket P2 (DE: missing-, visualisation-, descriptives-intermediate) abgenommen und in `main`; M9 Paket P3 (DE: scales-, sem-, group-comparisons-intermediate) und Datensatz `acceptance` abgenommen und in `main`; M9 Paket P4 (DE: robust-, regression-, glm-intermediate) abgenommen und in `main`** (alle 10 Beginner-Lektionen und Mini-Projekt Beginner, DE + EN). **Online seit 2026-10-26:** https://nikhenproj.github.io/rtrainer/ (Pages-Quelle GitHub Actions, letzter CI-Lauf 40582158643 grün). M9-Plan abgenommen (inkl. Datensatz `acceptance`): `docs/M9-plan.md`. Entscheidungen: NEWS.md.
 
 ## Was steht
 - **Gerüst (M6):** Quarto-Website mit quarto-live/webR, Theme hell/dunkel (IBM Plex Sans, JetBrains Mono, Indigo), Kopfzeile Kursplan · Wiederholen (n fällig) · Pakete · Glossar · DE/EN · Hell/Dunkel · Suche.
@@ -26,6 +26,10 @@ Stand (2026-10-27): **M9 Paket P9b (EN: reporting-, reproducibility-, programmin
 - **Triage** `docs/legacy-triage.md`: 54 behalten (18 im Beginner-Pfad), 11 streichen, freigegeben. Migriert: 41 (markiert): alle Beginner-Aufgaben der Triage, P1 (10, 13, 18, 23, 24, 26), P2 (5, 14, 15, 48, 52), P3 (30, 31, 36, 37, 38), P4 (35), P5 (40–43, 45, 46; 44 bleibt für mixed-models-expert) und P6 (53, 54, 19, 21, 25, 28, 29; 4 als `rr-i-lockfile`, 20 als Wissenscheck-Frage). Stand: 50 von 54 (offen: 22, 27, 39, 44 für Expert).
 - Alt: `legacy/exercises/` (65 Aufgaben), `legacy/driving_sim_v0.*`.
 
+## Online (2026-10-27, M9 P9b)
+- Gepusht (f1c3337, e5f5eb7). CI-Lauf 40582158643 grün (build 9,1 min, deploy ok): 144/144, `[ FAIL 0 | WARN 16 | SKIP 0 | PASS 243 ]`, Node 12/0, Rauchtest 0 failure(s); „en: all 18 intermediate lessons linked in course plan“ und „en: project row links the English intermediate project“ ok.
+- Ladezeit im CI-Rauchtest: project-intermediate 13,6 s.
+
 ## Geprüft (2026-10-27, M9 P9b)
 EN-Texte der 4 Lektionen (Übungen + Wissenscheck) per Skript geprüft (fehlendes `en`, Umlaute, deutsche Anführungszeichen, Dezimalkomma, deutsche Wörter, „N %“): nichts fehlt, 20 Zeilen „N %“ → „N%“.
 Über Verifier-Subagent (echte Ausgabe, gekürzt):
@@ -33,7 +37,7 @@ EN-Texte der 4 Lektionen (Übungen + Wissenscheck) per Skript geprüft (fehlende
 - `testthat::test_dir("tools/tests")`: FAIL 0 | WARN 16 | SKIP 0 | PASS 243; `node --test tests/js`: 12 pass, 0 fail
 - `quarto render`: Exit 0, [69/69], keine Warnungen; 4 neue `_site/en/*-intermediate.html`, alle mit `rt-pager`
 - `Rscript tests/smoke-test.R`: 0 failure(s); „en: all 18 intermediate lessons linked in course plan“, „en: project row links the English intermediate project“ ok; project-intermediate bereit nach 23,8 s
-- Nicht geprüft: EN-Seiten nicht manuell durchgeklickt; EN-Übungen nicht im Browser bewertet (gleiche IDs/Checks wie DE); EN-Texte nur per Skript geprüft; nicht gepusht, CI nicht gelaufen.
+- Nicht geprüft: EN-Seiten nicht manuell durchgeklickt; EN-Übungen nicht im Browser bewertet (gleiche IDs/Checks wie DE); EN-Texte nur per Skript geprüft. CI siehe oben.
 
 ## Online (2026-10-27, M9 P9a)
 - Gepusht (682de00, 9c6baf2). CI-Lauf 40575147997 grün (build 13,1 min, deploy ok): 144/144, `[ FAIL 0 | WARN 16 | SKIP 0 | PASS 243 ]`, Node 12/0, Rauchtest 0 failure(s); „en: intermediate P1-P5 lessons linked in course plan“ (15 Slugs) und „en: German-only reporting-intermediate not linked“ ok.
