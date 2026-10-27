@@ -3,7 +3,6 @@
 lesson: scales-intermediate
 minutes: 50
 prerequisites: [scales-beginner]
-langs: [de]
 packages: [dplyr, tidyr, psych, GPArotation, parameters]
 data: [acceptance]
 goals:

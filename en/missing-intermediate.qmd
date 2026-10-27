@@ -1,0 +1,155 @@
+---
+title: "Missing values"
+subtitle: "Intermediate · Spotting patterns, excluding selectively, multiple imputation"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [mice, dplyr, tidyr, naniar]
+resources:
+  - ../data/driving_sim.csv
+  - ../data/survey.csv
+---
+
+{{< include /_generated/en/missing-intermediate/runtime.qmd >}}
+
+{{< include /_generated/en/missing-intermediate/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R runs directly in your browser. On the first visit it takes 10–30 seconds to load (status at the bottom right); after that it is faster.
+:::
+
+## Why? {#why}
+
+**Research question:** Does the finding "voice control frustrates more than touch" change if you treat respondents with gaps in the questionnaire differently?
+
+Almost every dataset has gaps: skipped items, sensor dropouts, aborted sessions. R functions handle them very differently. `mean()` returns `NA`, `lm()` silently drops whole cases, `drop_na()` removes rows because of columns you are not even analysing. Before you compute anything, you therefore need three answers: *how much* is missing, *where* (scattered or in blocks, explicit or as a missing row) and probably *why*. Only from these follows whether case deletion is enough or imputation is needed.
+
+## Concept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 210" role="img" aria-labelledby="fig-msi-title fig-msi-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-msi-title">Explicitly and implicitly missing values</title>
+  <desc id="fig-msi-desc">On the left a table with four trials of one participant; the third has NA for the response time, which is explicitly missing. On the right the same participant, but trial three is missing as a row altogether, which is implicitly missing. An arrow with complete shows that the missing row is added with NA. Below, the three mechanisms MCAR, MAR and MNAR.</desc>
+  <text x="20" y="18" class="rt-fig-label">explicit: NA in the cell</text>
+  <rect x="20" y="26" width="220" height="24" class="rt-fig-box-accent" />
+  <text x="28" y="43" class="rt-fig-code">participant trial rt_ms</text>
+  <rect x="20" y="50" width="220" height="96" class="rt-fig-box" />
+  <text x="28" y="68" class="rt-fig-code">p01         1     1377</text>
+  <text x="28" y="92" class="rt-fig-code">p01         2     1210</text>
+  <text x="28" y="116" class="rt-fig-code">p01         3     NA</text>
+  <text x="28" y="140" class="rt-fig-code">p01         4     1302</text>
+  <text x="300" y="18" class="rt-fig-label">implicit: row missing</text>
+  <rect x="300" y="26" width="220" height="24" class="rt-fig-box-accent" />
+  <text x="308" y="43" class="rt-fig-code">participant trial rt_ms</text>
+  <rect x="300" y="50" width="220" height="72" class="rt-fig-box" />
+  <text x="308" y="68" class="rt-fig-code">p01         1     1377</text>
+  <text x="308" y="92" class="rt-fig-code">p01         2     1210</text>
+  <text x="308" y="116" class="rt-fig-code">p01         4     1302</text>
+  <text x="300" y="142" class="rt-fig-label">complete() adds trial 3 as NA</text>
+  <text x="20" y="176" class="rt-fig-label">MCAR: missingness depends on nothing · MAR: on observed variables</text>
+  <text x="20" y="198" class="rt-fig-label rt-fig-muted">MNAR: on the missing value itself (cannot be checked from the data)</text>
+</svg>
+<figcaption>naniar only counts explicitly missing values. Missing rows only become visible by comparing with the design.</figcaption>
+</figure>
+```
+
+- **Counting per variable and per case:** `miss_var_summary()` (which column), `add_n_miss()` and `miss_case_table()` (how many gaps per person). Only both together show patterns: scattered single gaps or whole blocks.
+- **Implicitly missing:** what does not exist as a row, no `is.na()` can see. `complete()` (tidyr) compares with the design and makes the gaps explicit.
+- **Excluding selectively:** `drop_na(lane_dev)` instead of `drop_na()`. Without columns, it drops every row with any `NA` (listwise deletion).
+- **Mechanism:** MCAR (completely at random), MAR (depends on something observed, e.g. age), MNAR (depends on the missing value itself). Case deletion is only unbiased under MCAR; multiple imputation helps under MAR.
+- **Multiple imputation (mice):** creates *m* plausible complete datasets, fits the model in each and combines the results with `pool()`. The spread between the datasets enters the standard error as uncertainty.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## More: what belongs in an imputation model
+
+- **All variables of the analysis model**, including the dependent variable; otherwise relationships are biased towards zero.
+- **Auxiliary variables** that predict missingness or the missing value (other items of the same scale, age).
+- **No IDs and no derived sums**; compute scale scores after imputation or impute them passively.
+- **Number of imputations:** rule of thumb *m* ≈ percentage of incomplete cases (here 24% → 20–25). The value `fmi` in `pool()` shows how much information the gaps cost.
+- **Checking:** `densityplot(imp)` compares observed and imputed values; `plot(imp)` shows whether the chains converge.
+:::
+
+## Example {#example}
+
+How much is missing per variable? `miss_var_summary()` sorts in descending order:
+
+```{webr}
+miss_var_summary(survey) |>
+  filter(n_miss > 0)
+```
+
+No item is missing for more than about 6% of respondents. Per person it looks different: how many have any gap at all in the TLX scales?
+
+```{webr}
+survey |>
+  select(starts_with("tlx_")) |>
+  miss_case_table()
+```
+
+24% of respondents miss at least one TLX value. `lm()` would exclude all cases with a gap in the variables *used*. Complete-case analysis and multiple imputation compared (10 imputations; in the browser this takes a few seconds):
+
+```{webr}
+d <- survey |>
+  select(interface, tech_affinity, starts_with("tlx_"))
+
+cc <- lm(tlx_frustration ~ interface + tech_affinity, data = d)
+nobs(cc)
+round(confint(cc)["interfacevoice", ], 2)
+
+imp <- mice(d, m = 10, seed = 2026, printFlag = FALSE)
+fit <- with(imp, lm(tlx_frustration ~ interface + tech_affinity))
+summary(pool(fit), conf.int = TRUE) |>
+  select(term, estimate, std.error, `2.5 %`, `97.5 %`) |>
+  mutate(across(where(is.numeric), \(x) round(x, 2)))
+```
+
+For numeric columns, `mice()` uses *predictive mean matching* (`pmm`) by default: it inserts observed values of similar people, so imputed TLX values stay on the grid from 0 to 100 in steps of five. The other TLX scales serve as auxiliary variables.
+
+**How to report it (methods section):** Missing values (at most 6% per variable, 24% of respondents with at least one gap in the NASA-TLX) were replaced by multiple imputation (mice, *m* = 20, predictive mean matching, all TLX scales as predictors). The results did not differ from complete-case analysis (*n* = 154).
+
+## Package comparison {#packages}
+
+| Task | Recommendation | Alternative |
+|---|---|---|
+| Count gaps and see patterns | **naniar** `miss_var_summary()`, `miss_case_table()`, `gg_miss_var()` | base R `colSums(is.na(d))`, `rowSums(is.na(d))`; `mice::md.pattern()` as a pattern overview |
+| Implicitly missing rows | **tidyr** `complete()`, `nesting()` | `expand_grid()` + `left_join()`; `anti_join()` shows what is missing |
+| Selective exclusion | **tidyr** `drop_na(column)` | `filter(!is.na(column))`; `na.omit()` acts like `drop_na()` without columns |
+| Multiple imputation | **mice** `mice()`, `with()`, `pool()` | `Amelia` (multivariate normal), `missRanger` (random forest, single imputation only); FIML in lavaan (`missing = "fiml"`) |
+| Mean substitution | not recommended | shrinks spread and relationships; only as a stopgap for single scale items (person mean) |
+
+## Exercises {#exercises}
+
+Three required exercises and one optional exercise. **Run and check** runs your code and checks it right away. Reveal hints one at a time (**Show Hint**), the solution only after that.
+
+{{< include /_generated/en/missing-intermediate/exercises.qmd >}}
+
+## Knowledge check {#check}
+
+{{< include /_generated/en/missing-intermediate/quiz.qmd >}}
+
+## Cheat sheet {#cheatsheet}
+
+```r
+# How much, where?
+miss_var_summary(d)                           # per variable
+d |> add_n_miss(starts_with("trust_")) |>     # per case
+  count(n_miss_vars)
+
+# Make implicitly missing rows explicit
+d |> complete(nesting(participant, age), condition, trial = 1:4)
+
+# Exclude selectively
+d |> drop_na(lane_dev)
+
+# Multiple imputation
+imp <- mice(d, m = 20, seed = 1, printFlag = FALSE)
+fit <- with(imp, lm(y ~ x1 + x2))
+summary(pool(fit), conf.int = TRUE)
+```
+
+- First count per variable *and* per case; treat blocks differently from single gaps.
+- Always give `drop_na()` columns; report `n` before and after the exclusion.
+- Load `mice` before `dplyr` (or write `dplyr::filter()`): mice brings its own versions of `filter()` and `complete()`.
+
+{{< include /_generated/en/missing-intermediate/footer.qmd >}}

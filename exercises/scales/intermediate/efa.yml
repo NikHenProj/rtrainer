@@ -78,7 +78,7 @@ explanation:
     on "its" factor (complexity ≈ 1, no cross-loadings). Two things stand out:
     `peou_3` and `trust_4` load negatively because they are not reversed; this
     does not matter for the structure, but it does for sum scores. `pu_5` only
-    loads .40 and has a uniqueness of .85: the model does not explain 85 % of its
+    loads .40 and has a uniqueness of .85: the model does not explain 85% of its
     variance. Oblique rotation is the default for psychological constructs:
     usefulness and ease of use correlate .46 here (`efa$Phi`). Varimax forces
     uncorrelated factors and then spreads loadings artificially across several

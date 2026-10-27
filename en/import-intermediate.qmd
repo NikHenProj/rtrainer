@@ -1,0 +1,196 @@
+---
+title: "Importing data"
+subtitle: "Intermediate · Many files, SPSS labels, mixed Excel columns"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [readr, readxl, haven, purrr, dplyr, stringr, lubridate, janitor]
+resources:
+  - ../data/driving_sim.csv
+  - ../data/survey.csv
+  - ../data/usability.csv
+  - ../data/raw_export.xlsx
+---
+
+{{< include /_generated/en/import-intermediate/runtime.qmd >}}
+
+{{< include /_generated/en/import-intermediate/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R runs directly in your browser. On the first visit it takes 20–40 seconds to load (status at the bottom right); after that it is faster.
+:::
+
+## Why? {#why}
+
+**Research question:** Do drivers respond faster to haptic takeover warnings than to visual ones, and are the data of all participants available?
+
+In real studies, data rarely arrive as one clean file. The driving simulator writes one file per session, the usability tool one per prototype, the survey tool delivers an SPSS file with codes instead of words, and an Excel file mixes dates and text in one column. Copying this together by hand loses the origin of the rows, misses absent sessions or swaps codes. This lesson shows how to do it in a few steps you can check.
+
+## Concept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 190" role="img" aria-labelledby="fig-impi-title fig-impi-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-impi-title">Many files into one table</title>
+  <desc id="fig-impi-desc">On the left three files sim_p01.csv, sim_p02.csv and sim_p04.csv; the file sim_p03.csv is missing and drawn dashed. An arrow labelled read_csv with id equals file leads to a table on the right whose first column file holds the file name of each row. Below, the note to compare the expected list with the files present.</desc>
+  <rect x="10" y="20" width="150" height="28" rx="4" class="rt-fig-box-accent" />
+  <text x="20" y="39" class="rt-fig-code">sim_p01.csv</text>
+  <rect x="10" y="56" width="150" height="28" rx="4" class="rt-fig-box-accent" />
+  <text x="20" y="75" class="rt-fig-code">sim_p02.csv</text>
+  <rect x="10" y="92" width="150" height="28" rx="4" class="rt-fig-box" style="stroke-dasharray: 4 3" />
+  <text x="20" y="111" class="rt-fig-code rt-fig-muted">sim_p03.csv missing</text>
+  <rect x="10" y="128" width="150" height="28" rx="4" class="rt-fig-box-accent" />
+  <text x="20" y="147" class="rt-fig-code">sim_p04.csv</text>
+  <line x1="170" y1="88" x2="300" y2="88" class="rt-fig-arrow" />
+  <text x="235" y="78" text-anchor="middle" class="rt-fig-code" style="font-size: 12px">read_csv(id = "file")</text>
+  <rect x="310" y="40" width="240" height="28" class="rt-fig-box-accent" />
+  <rect x="310" y="68" width="240" height="76" class="rt-fig-box" />
+  <text x="316" y="59" class="rt-fig-code">file        trial rt_ms</text>
+  <text x="316" y="87" class="rt-fig-code">sim_p01.csv 1     1377</text>
+  <text x="316" y="111" class="rt-fig-code">sim_p02.csv 1     1295</text>
+  <text x="316" y="135" class="rt-fig-code">sim_p04.csv 1     1212</text>
+  <text x="10" y="180" class="rt-fig-label">Check: expected list vs. files present → p03 missing, name it in the report</text>
+</svg>
+<figcaption>Keep the origin of every row and make dropouts visible instead of skipping them silently.</figcaption>
+</figure>
+```
+
+- **Many files, one call:** `read_csv(files, id = "file")` reads a vector of paths and records the origin. The files must have the same structure.
+- **Finding files:** `list.files(dir, pattern = "\\.csv$", full.names = TRUE)`. The pattern is a regular expression: `\\.` is a literal dot, `$` the end.
+- **Expected vs. present:** the list of participants is the yardstick, not the folder contents. `file.exists()` shows what is missing.
+- **Catching errors:** `purrr::possibly(f, otherwise = NULL)` turns `f` into a function that returns `NULL` on an error; `safely(f)` also returns the error message.
+- **SPSS (`.sav`):** `haven::read_sav()` reads numbers with value labels (`<dbl+lbl>`). `as_factor()` turns them into levels; codes such as `99 = no answer` become `NA` by default.
+- **Mixed Excel columns:** a real Excel date is a number (days since 30 Dec 1899). If a column mixes dates and text, `read_excel()` reads text, and the date shows up as a number in quotes.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## More: when `read_csv(files)` is not enough
+
+- Different column names across files: `read_csv()` stops. Then read them one by one with `map()` and combine with `list_rbind()`; missing columns become `NA`.
+- Different formats (separators, header rows): write your own reading function and apply it with `map()`.
+- Fix column types: `col_types = cols(trial = col_integer(), .default = col_guess())`, so that an empty file does not turn everything into text.
+- Many Excel sheets: `excel_sheets(file) |> set_names() |> map(\(s) read_excel(file, sheet = s)) |> list_rbind(names_to = "sheet")`.
+:::
+
+## Example {#example}
+
+The usability tool stores one file per prototype. Here we create this export from `usability`, so there is something to read:
+
+```{webr}
+export_dir <- file.path(tempdir(), "usability_export")
+dir.create(export_dir, showWarnings = FALSE)
+for (p in c("A", "B", "C")) {
+  usability |>
+    filter(prototype == p) |>
+    select(-prototype) |>
+    write_csv(file.path(export_dir, paste0("usability_", p, ".csv")))
+}
+list.files(export_dir)
+```
+
+Read all files in one call. The prototype is only in the file name; `str_extract()` pulls it out (`(?=\\.csv)` means: followed by `.csv`, without including it):
+
+```{webr}
+files <- list.files(export_dir, pattern = "\\.csv$", full.names = TRUE)
+sessions <- read_csv(files, id = "file", show_col_types = FALSE) |>
+  mutate(prototype = str_extract(basename(file), "[A-Z](?=\\.csv)"), .before = 1) |>
+  select(-file)
+count(sessions, prototype)
+```
+
+According to the study plan there was also a prototype D. With the expected list as the yardstick, the gap shows. `safely()` reads each file and keeps result and error separately:
+
+```{webr}
+expected <- file.path(export_dir, paste0("usability_", c("A", "B", "C", "D"), ".csv"))
+read_safe <- safely(read_csv)
+results <- expected |>
+  set_names(basename) |>
+  map(\(f) read_safe(f, show_col_types = FALSE))
+
+results |> map("error") |> compact() |> names()
+results |> map("result") |> list_rbind(names_to = "file") |> count(file)
+```
+
+An SPSS file with value labels, as exported by Qualtrics, LimeSurvey or SoSci Survey. `read_sav()` shows code and label, `as_factor()` turns them into levels:
+
+```{webr}
+sav_file <- file.path(tempdir(), "usability.sav")
+usability |>
+  transmute(participant, task, expertise = labelled(as.numeric(expertise), c(novice = 1, expert = 2)), seq) |>
+  write_sav(sav_file)
+
+sav <- read_sav(sav_file)
+count(sav, expertise)
+sav |> mutate(expertise = as_factor(expertise)) |> count(expertise)
+```
+
+In the Excel file, `start_date` mixes real dates and text. How many entries are Excel numbers?
+
+```{webr}
+responses_xlsx <- read_excel(raw_export_xlsx, sheet = "Export", range = "A4:N86") |>
+  clean_names()
+responses_xlsx |>
+  count(excel_number = str_detect(start_date, "^\\d+(\\.\\d+)?$"))
+convert_to_datetime("46083.8439930556", tz = "UTC")
+```
+
+**How to report it (methods section):** The simulator data were saved per session as CSV files and combined in R (readr). For one of six participants the file is missing because the software crashed; this participant was not included in the analysis of response times.
+
+## Package comparison {#packages}
+
+| Task | Recommendation | Alternative |
+|---|---|---|
+| Many CSV files | **readr** `read_csv(files, id = "file")` | `data.table::fread()` + `rbindlist(idcol = "file")` (very fast); loop with `rbind()` (slow, origin easily lost) |
+| Catch errors per file | **purrr** `possibly()`, `safely()` | `tryCatch()` in a loop: equally powerful, more code |
+| SPSS, Stata, SAS | **haven** `read_sav()`, `read_dta()`, `read_sas()` | `foreign::read.spss()`: older, labels become factors right away, user missing values are lost |
+| Browse labels | `haven::print_labels()` | `labelled::look_for()` (variable and value labels as a table, checked locally only) |
+| Excel with format chaos | **readxl** + `janitor::convert_to_datetime()` | `tidyxl` (every cell with format and colour; "Run locally") |
+
+::: {.callout-note appearance="simple"}
+## Run locally
+
+In the browser, the files are created in a temporary folder. Locally they live in the project, e.g. `data/sim_logs/`:
+
+```r
+files <- fs::dir_ls("data/sim_logs", glob = "*.csv")
+sim <- readr::read_csv(files, id = "file")
+
+survey <- haven::read_sav("data/export.sav", user_na = TRUE)  # 99 stays visible
+labelled::look_for(survey)                                     # codebook from the file
+```
+:::
+
+## Exercises {#exercises}
+
+Three required exercises and one optional exercise. **Run and check** runs your code and checks it right away. Reveal hints one at a time (**Show Hint**), the solution only after that.
+
+{{< include /_generated/en/import-intermediate/exercises.qmd >}}
+
+## Knowledge check {#check}
+
+{{< include /_generated/en/import-intermediate/quiz.qmd >}}
+
+## Cheat sheet {#cheatsheet}
+
+```r
+# Many files, keep the origin
+files <- list.files(dir, pattern = "\\.csv$", full.names = TRUE)
+read_csv(files, id = "file") |>
+  mutate(participant = str_extract(basename(file), "p\\d+"))
+
+# Expected vs. present, catch errors
+expected[!file.exists(expected)]
+read_maybe <- possibly(read_csv, otherwise = NULL)
+map(set_names(expected, basename), read_maybe) |> list_rbind(names_to = "file")
+
+# SPSS with labels
+sav <- read_sav(file); count(sav, interface); mutate(sav, interface = as_factor(interface))
+
+# Excel: dates and text mixed
+convert_to_datetime(x, character_fun = \(x, tz) parse_date_time(x, orders, tz = tz), tz = "UTC")
+```
+
+- First the expected list, then read; name dropouts in the methods section.
+- Never translate codes into levels by hand; `as_factor()` reads the labels from the file.
+- Mixed Excel columns come in as text; Excel numbers are days since 30 Dec 1899.
+
+{{< include /_generated/en/import-intermediate/footer.qmd >}}

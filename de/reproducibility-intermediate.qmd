@@ -181,3 +181,5 @@ purrr::map_chr(lock$Packages, "Version")
 
 # Nie: setwd("C:/..."), Rohdaten überschreiben, library(pkg, character.only = TRUE)
 ```
+
+{{< include /_generated/de/reproducibility-intermediate/footer.qmd >}}

@@ -120,3 +120,5 @@ model_parameters(fit_p, exponentiate = TRUE)
 check_overdispersion(fit_p)
 fit_q <- update(fit_p, family = quasipoisson)   # gleiche IRR, breitere KIs
 ```
+
+{{< include /_generated/de/glm-intermediate/footer.qmd >}}

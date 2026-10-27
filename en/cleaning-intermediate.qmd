@@ -1,0 +1,181 @@
+---
+title: "Cleaning data"
+subtitle: "Intermediate · Splitting keys, regular expressions, time differences, categories"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [readr, dplyr, tidyr, stringr, forcats, lubridate, janitor]
+resources:
+  - ../data/driving_sim.csv
+  - ../data/raw_export.csv
+---
+
+{{< include /_generated/en/cleaning-intermediate/runtime.qmd >}}
+
+{{< include /_generated/en/cleaning-intermediate/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R runs directly in your browser. On the first visit it takes 20–40 seconds to load (status at the bottom right); after that it is faster.
+:::
+
+## Why? {#why}
+
+**Research question:** Which problems do the respondents of the remote study mention in their free-text comments, and are they related to the device?
+
+After importing, a lot of information still sits in text: in composite keys from logging (`p01_visual_3`), in file names, in free text and in time stamps. This lesson is about extracting this information reliably: so that edge cases show up instead of being handled wrongly in silence, and so that the script still works with the next export.
+
+## Concept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 170" role="img" aria-labelledby="fig-cli-title fig-cli-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-cli-title">Anatomy of a regular expression</title>
+  <desc id="fig-cli-desc">The expression caret p, bracket backslash d plus bracket close, square bracket underscore minus, bracket a to z plus bracket close, backslash dot csv dollar. Labels: caret means start, backslash d plus means one or more digits as group 1, square bracket means one of the characters, a to z plus means letters as group 2, backslash dot means a literal dot, dollar means end.</desc>
+  <rect x="20" y="62" width="520" height="40" rx="4" class="rt-fig-box-accent" />
+  <text x="36" y="88" class="rt-fig-code" style="font-size: 18px">^ p (\\d+) [_-] ([a-z]+) \\.csv $</text>
+  <text x="36" y="40" class="rt-fig-label">start</text>
+  <text x="92" y="24" class="rt-fig-label">group 1: digits</text>
+  <text x="196" y="40" class="rt-fig-label">_ or -</text>
+  <text x="270" y="24" class="rt-fig-label">group 2: letters</text>
+  <text x="396" y="130" class="rt-fig-label">literal dot</text>
+  <text x="500" y="130" class="rt-fig-label">end</text>
+  <text x="20" y="160" class="rt-fig-label rt-fig-muted">str_match() returns the full match + groups; without ^ and $ backup_p01_visual.csv.bak matches too</text>
+</svg>
+<figcaption>Anchors, character classes and groups: with these three building blocks you can solve most text-cleaning tasks.</figcaption>
+</figure>
+```
+
+- **Splitting keys:** `separate_wider_delim()` at a fixed delimiter, `separate_wider_regex()` with named sub-patterns. Both stop at edge cases; `too_few`/`too_many` decide what happens then.
+- **Regular expressions (stringr):** `str_detect()` tests, `str_extract()` pulls out one part, `str_match()` all groups. `regex(..., ignore_case = TRUE)` for upper/lower case.
+- **Time differences (lubridate):** `end - start` is a `difftime` with a unit R chooses based on the data. Always set it: `as.numeric(x, units = "secs")` or `time_length(x, "second")`.
+- **Categories (forcats):** `fct_recode()` renames, `fct_collapse()` bundles, `fct_lump_n()` lumps rare levels together, `fct_infreq()` orders by frequency.
+- **Checking (janitor):** `get_dupes()` shows duplicate keys, `tabyl()` counts with proportions, `remove_empty()` removes empty rows and columns.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## More: writing regular expressions in R
+
+- In R strings the backslash is doubled: `"\\d"` is the expression `\d`. Raw strings avoid this: `r"(\d+\.csv$)"`.
+- `str_view(x, pattern)` highlights matches in the text, ideal for trying things out.
+- Lookarounds extract a part without its surroundings: `"[A-Z](?=\\.csv)"` means "a capital letter followed by `.csv`".
+- For fixed text without special meaning, use `fixed(".csv")` instead of an expression.
+:::
+
+## Example {#example}
+
+The export, read as in the lesson "Importing data". Before removing anything, `get_dupes()` shows which IDs occur twice and whether the rows are identical:
+
+```{webr}
+header <- read_delim(raw_export_csv, delim = ";", skip = 3, n_max = 0, show_col_types = FALSE)
+responses_raw <- read_delim(
+  raw_export_csv, delim = ";", skip = 5, col_names = names(header),
+  locale = locale(decimal_mark = ","), na = c("", "NA", "n/a", "-99"),
+  show_col_types = FALSE
+) |>
+  clean_names()
+get_dupes(responses_raw, response_id) |>
+  select(response_id, dupe_count, start_date, end_date)
+```
+
+Both pairs are identical, so `distinct()` is enough. `remove_empty("cols")` removes the empty column at the end:
+
+```{webr}
+responses <- responses_raw |>
+  filter(status != "Survey Preview") |>
+  distinct() |>
+  remove_empty("cols")
+nrow(responses)
+```
+
+Coding free text: which comments mention the checkout, which mention usability problems? `str_squish()` removes line breaks and double spaces, `str_detect()` with `regex(ignore_case = TRUE)` searches regardless of case:
+
+```{webr}
+comments <- responses |>
+  mutate(comment = str_squish(q6_comments)) |>
+  filter(!is.na(comment), str_length(comment) > 2) |>
+  mutate(topic = case_when(
+    str_detect(comment, regex("checkout|address", ignore_case = TRUE)) ~ "checkout",
+    str_detect(comment, regex("hard to find|small|crash", ignore_case = TRUE)) ~ "usability problem",
+    .default = "other"
+  ))
+comments |> select(comment, topic)
+```
+
+Together with the device: `tabyl()` with two variables gives a cross table; the `adorn_*()` functions turn it into row percentages:
+
+```{webr}
+comments |>
+  mutate(device = fct_collapse(
+    str_to_lower(q3_device),
+    ios = c("iphone", "iphone 15"),
+    android = c("android", "android phone"),
+    desktop = c("desktop", "desktop pc")
+  )) |>
+  tabyl(device, topic) |>
+  adorn_percentages("row") |>
+  adorn_pct_formatting(digits = 0)
+```
+
+Time stamps: the study ran in two waves with different formats. How long did data collection take, and how many responses came in per week?
+
+```{webr}
+responses <- responses |>
+  mutate(start = parse_date_time(start_date, orders = c("Ymd HMS", "dmY HM", "mdY IMp"), tz = "UTC"))
+time_length(interval(min(responses$start), max(responses$start)), "day")
+count(responses, week = floor_date(start, "week", week_start = 1))
+```
+
+A key without delimiters, as older loggers write it: `separate_wider_regex()` describes each piece with a pattern; named pieces become columns:
+
+```{webr}
+tibble(key = c("p01visual3", "p12haptic10")) |>
+  separate_wider_regex(key, patterns = c(participant = "p\\d+", condition = "[a-z]+", trial = "\\d+"))
+```
+
+**How to report it (methods section):** The free-text comments (n = 34, without entries such as "ok" or "-") were assigned to the categories checkout, usability problem and other based on keywords; the assignment was checked by hand. Data collection ran over 20 days (2 to 23 March 2026).
+
+## Package comparison {#packages}
+
+| Task | Recommendation | Alternative |
+|---|---|---|
+| Split keys | **tidyr** `separate_wider_delim()`, `separate_wider_regex()` | `separate()`: superseded, fills edge cases with only a warning |
+| Patterns in text | **stringr** (`str_detect`, `str_extract`, `str_match`) | base R `grepl()`, `regmatches()`, `sub()`: same expressions, inconsistent arguments |
+| Time differences | **lubridate** `time_length()`, `interval()` | `difftime(end, start, units = "secs")` (base R, equally safe) |
+| Categories | **forcats** | `factor(x, levels = ...)` by hand: error-prone with many levels |
+| Cross tables | **janitor** `tabyl()` + `adorn_*()` | `table()` + `prop.table()`; `count()` + `pivot_wider()` |
+
+## Exercises {#exercises}
+
+Three required exercises and one optional exercise. **Run and check** runs your code and checks it right away. Reveal hints one at a time (**Show Hint**), the solution only after that.
+
+{{< include /_generated/en/cleaning-intermediate/exercises.qmd >}}
+
+## Knowledge check {#check}
+
+{{< include /_generated/en/cleaning-intermediate/quiz.qmd >}}
+
+## Cheat sheet {#cheatsheet}
+
+```r
+# Split keys
+separate_wider_delim(key, delim = "_", names = c("participant", "condition", "trial"),
+                     too_few = "align_start")          # then set types
+separate_wider_regex(key, patterns = c(participant = "p\\d+", condition = "[a-z]+"))
+
+# Regular expressions
+str_detect(x, regex("^p\\d+_[a-z]+\\.csv$", ignore_case = TRUE))
+str_match(x, "^p(\\d+)_([a-z]+)")                       # groups as columns 2, 3, ...
+sprintf("p%02d", 7)                                     # "p07"
+
+# Time
+as.numeric(end - start, units = "secs"); time_length(end - start, "second")
+
+# Categories and checks
+fct_recode(f, ios = "iphone"); fct_collapse(f, a = c("x", "y")); fct_infreq(f); fct_lump_n(f, 3)
+get_dupes(d, id); tabyl(d, a, b) |> adorn_percentages("row"); remove_empty(d, "cols")
+```
+
+- Strict functions (`separate_wider_*`) show edge cases; look at them first, then set `too_few`.
+- Anchor regular expressions with `^` and `$` and escape the dot.
+- Never leave time units to R: `units = "secs"`.
+
+{{< include /_generated/en/cleaning-intermediate/footer.qmd >}}

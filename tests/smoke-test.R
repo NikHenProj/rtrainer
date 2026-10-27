@@ -620,6 +620,17 @@ unlinked <- js(sprintf(
   paste0("'", beginner, "'", collapse = ", ")
 ))
 step("en: all beginner lessons linked in course plan", identical(unlinked, ""), unlinked)
+intermediate <- c(
+  "import", "cleaning", "reshaping", "missing", "visualisation",
+  "descriptives", "scales", "sem", "group-comparisons"
+)
+unlinked <- js(sprintf(
+  "[%s].filter(slug => !document.querySelector(`a[href*=\"${slug}-intermediate\"]`)).join(', ')",
+  paste0("'", intermediate, "'", collapse = ", ")
+))
+step("en: intermediate P1-P3 lessons linked in course plan", identical(unlinked, ""), unlinked)
+german_only <- js("!!document.querySelector('a[href*=\"robust-intermediate\"]')")
+step("en: German-only robust-intermediate not linked", identical(german_only, FALSE))
 project_row <- js("document.querySelector('tr.rt-plan-project a[href*=\"project-beginner\"]')?.getAttribute('href') || ''")
 step("en: project row links the English page", grepl("project-beginner", project_row) && !grepl("/de/", project_row), project_row)
 goto("/en/project-beginner.html")
@@ -629,6 +640,13 @@ en_project <- wait_for(
   timeout = 15
 )
 step("en: project page in English with exercises", !is.na(en_project))
+goto("/en/group-comparisons-intermediate.html")
+en_intermediate <- wait_for(
+  "document.documentElement.lang.startsWith('en') && document.querySelector('h1').textContent.includes('Group comparisons') &&
+   !!document.querySelector('#ex-gc-i-rm-anova') && !!document.querySelector('.rt-pager a')",
+  timeout = 15
+)
+step("en: intermediate page in English with exercise and pager", !is.na(en_intermediate))
 
 cat(sprintf("\n%d failure(s)\n", length(failures)))
 if (length(failures) > 0) quit(status = 1)

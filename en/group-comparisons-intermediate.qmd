@@ -1,0 +1,143 @@
+---
+title: "Group comparisons"
+subtitle: "Intermediate · Repeated-measures ANOVA (afex), contrasts, Holm"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, tidyr, afex, emmeans, modelbased, performance, parameters]
+resources:
+  - ../data/driving_sim.csv
+  - ../data/usability.csv
+---
+
+{{< include /_generated/en/group-comparisons-intermediate/runtime.qmd >}}
+
+{{< include /_generated/en/group-comparisons-intermediate/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R runs directly in your browser. On the first visit it takes 20–40 seconds to load (status at the bottom right); after that it is faster.
+:::
+
+## Why? {#why}
+
+**Research question:** Do participants make fewer usage errors with one of the three prototypes, and with which one exactly?
+
+In the usability test (`usability`), every participant worked with all three prototypes A, B and C on four tasks each. That is a repeated-measures design: the values of one person are related, and that is exactly what makes the comparison more precise if you take it into account. In the beginner part you compared two independent groups with the t-test. With three or more conditions in the same people you need the repeated-measures ANOVA, then targeted pairwise comparisons and a correction for multiple tests.
+
+## Concept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 200" role="img" aria-labelledby="fig-gci-title fig-gci-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-gci-title">Repeated measures: one line per person</title>
+  <desc id="fig-gci-desc">Three columns for the prototypes A, B and C. Each person is a line across the three prototypes. The lines lie at very different heights (differences between people) but run similarly: down from A to B, up from B to C. On the right the note: the repeated-measures ANOVA compares the courses within people; the height of the lines drops out of the error term.</desc>
+  <line x1="60" y1="170" x2="360" y2="170" class="rt-fig-axis" />
+  <text x="90" y="190" text-anchor="middle" class="rt-fig-label">A</text>
+  <text x="210" y="190" text-anchor="middle" class="rt-fig-label">B</text>
+  <text x="330" y="190" text-anchor="middle" class="rt-fig-label">C</text>
+  <polyline points="90,40 210,70 330,30" fill="none" class="rt-fig-a" />
+  <polyline points="90,85 210,110 330,75" fill="none" class="rt-fig-a" />
+  <polyline points="90,115 210,140 330,100" fill="none" class="rt-fig-b" />
+  <polyline points="90,140 210,160 330,125" fill="none" class="rt-fig-b" />
+  <text x="380" y="50" class="rt-fig-label">each line: one person</text>
+  <text x="380" y="80" class="rt-fig-label">height: person difference</text>
+  <text x="380" y="98" class="rt-fig-label rt-fig-muted">(drops out of the error)</text>
+  <text x="380" y="128" class="rt-fig-label">course: effect of the</text>
+  <text x="380" y="146" class="rt-fig-label">prototype (tested)</text>
+</svg>
+<figcaption>With repeated measures, the test compares the change within each person. That is why it needs fewer people than a comparison of independent groups.</figcaption>
+</figure>
+```
+
+- **Aggregate first, then test:** the independent unit is the person. `afex::aov_ez()` with `fun_aggregate = mean` averages the trials per person and condition; `aov()` on all trials would be pseudoreplication.
+- **within and between:** factors that every person experiences at all levels (prototype, warning modality) go into `within`; characteristics of the person (experience) into `between`. Both together give a mixed ANOVA.
+- **Sphericity:** the variances of the differences between all pairs of conditions should be equal. By default afex corrects the degrees of freedom with Greenhouse-Geisser (e.g. F(1.77, 39.03)); a pretest is not needed.
+- **Effect size:** afex reports generalised η² (`ges`). It is comparable across designs, unlike partial η², which becomes very large for within-subject factors.
+- **Pairwise comparisons:** `emmeans(fit, ~ prototype) |> pairs(adjust = "holm")`; report differences with CI (`confint()`). Holm controls the familywise error rate like Bonferroni but is never stricter. `modelbased::estimate_contrasts()` gives the same as a tidy table.
+- **Missing cells:** if a person misses a whole condition, the ANOVA excludes them (message "Missing values for … ID(s)"). A mixed model (lesson Repeated measures and mixed models) also uses incomplete participants.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## More: type III sums of squares, contrasts and assumptions
+
+- **Type III:** afex sets effect coding (`contr.sum`) and type III sums of squares as in SPSS. With unequal group sizes, main effects otherwise depend on the coding; `aov()` computes type I (the order of terms matters).
+- **Planned contrasts** instead of all pairs: `contrast(emmeans(fit, ~ prototype), list(B_vs_rest = c(-0.5, 1, -0.5)))` tests a targeted hypothesis with more power.
+- **Decomposing an interaction:** `emmeans(fit, ~ condition | experience)` gives the condition means separately per group; `pairs()` on that compares within each group.
+- **Assumptions:** `performance::check_homogeneity(fit)` (Levene for between factors), `check_normality(fit)` (residuals). Tests are no green-light switch; look at residual plots and compute robustly if needed (lesson Nonparametric and robust).
+:::
+
+## Example {#example}
+
+Average usage errors per person and prototype (four tasks) and run a repeated-measures ANOVA:
+
+```{webr}
+fit <- aov_ez(
+  id = "participant", dv = "errors", data = usability,
+  within = "prototype", fun_aggregate = mean
+)
+fit
+```
+
+The warning reports that p07 was excluded: prototype C is missing. 23 participants remain. The prototype affects the number of errors, F(1.77, 39.03) = 7.27, p = .003, η²G = .18. Which prototypes differ?
+
+```{webr}
+contrasts <- emmeans(fit, ~ prototype) |>
+  pairs(adjust = "holm")
+contrasts
+confint(contrasts)
+```
+
+B leads to fewer errors than A (Δ = 0.50 per task, p = .009) and than C (Δ = 0.74, p = .008); A and C do not differ detectably (p = .27). `confint()` corrects the intervals with Bonferroni because there are no simultaneous intervals for Holm. The same comparisons as a table with CI:
+
+```{webr}
+estimate_contrasts(fit, contrast = "prototype", p_adjust = "holm")
+```
+
+**How to report it:** The number of usage errors differed between the prototypes, F(1.77, 39.03) = 7.27, p = .003, η²G = .18 (Greenhouse-Geisser-corrected, n = 23; p07 without prototype C excluded). Pairwise comparisons (Holm) showed fewer errors with prototype B than with A, Δ = 0.50, 95% CI [0.17, 0.83], p = .009, and than with C, Δ = 0.74 [0.29, 1.19], p = .008.
+
+## Package comparison {#packages}
+
+| Task | Recommendation | Alternative |
+|---|---|---|
+| Repeated-measures and mixed ANOVA | **afex** `aov_ez()`, `aov_car()` | `rstatix::anova_test()` (tidy, same corrections); `aov()` with an `Error()` term (type I, no correction); with incomplete data a mixed model with `afex::mixed()` / lme4 |
+| Effect size | **afex** `ges` in the output | `effectsize::eta_squared(fit, generalized = TRUE)`, `omega_squared()` |
+| Pairwise comparisons, contrasts | **emmeans** `emmeans()` + `pairs()` / `contrast()` | **modelbased** `estimate_contrasts()` (table with CI, same computation); `rstatix::pairwise_t_test(paired = TRUE)` |
+| Correction | Holm (`adjust = "holm"`) | Tukey (all pairs), Bonferroni (stricter), `p.adjust()` for any p-values |
+| Assumptions | **performance** `check_normality()`, `check_homogeneity()` | `car::leveneTest()`; `check_sphericity()` is mostly redundant with the GG correction |
+
+## Exercises {#exercises}
+
+Three required exercises and two optional exercises. **Run and check** runs your code and checks it right away. Reveal hints one at a time (**Show Hint**), the solution only after that.
+
+{{< include /_generated/en/group-comparisons-intermediate/exercises.qmd >}}
+
+## Knowledge check {#check}
+
+{{< include /_generated/en/group-comparisons-intermediate/quiz.qmd >}}
+
+## Cheat sheet {#cheatsheet}
+
+```r
+# Repeated-measures ANOVA (averaged per person and condition)
+fit <- aov_ez(
+  id = "participant", dv = "rt_ms", data = d,
+  within = "condition", between = "experience",
+  fun_aggregate = mean, na.rm = TRUE
+)
+fit                                           # GG-corrected, ges = generalised eta2
+
+# Pairwise comparisons with Holm, differences with CI
+emmeans(fit, ~ condition) |> pairs(adjust = "holm")
+estimate_contrasts(fit, contrast = "condition", p_adjust = "holm")
+
+# Two conditions: paired at the person level
+wide <- d |>
+  summarise(rt = mean(rt_ms, na.rm = TRUE), .by = c(participant, condition)) |>
+  pivot_wider(names_from = condition, values_from = rt)
+t.test(wide$visual, wide$haptic, paired = TRUE)
+
+# Assumptions on the model
+check_normality(fit); check_homogeneity(fit)
+p.adjust(p, method = "holm")
+```
+
+{{< include /_generated/en/group-comparisons-intermediate/footer.qmd >}}

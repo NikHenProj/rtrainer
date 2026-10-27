@@ -98,7 +98,7 @@ questions:
         correct: false
         explain:
           de: "Das wäre ohne Korrektur. Bei drei Tests steigt sonst die Wahrscheinlichkeit für mindestens ein falsch positives Ergebnis auf bis zu 14 %."
-          en: "That would be without correction. With three tests, the chance of at least one false positive would otherwise rise to up to 14 %."
+          en: "That would be without correction. With three tests, the chance of at least one false positive would otherwise rise to up to 14%."
       - text:
           de: "Keiner, Holm teilt α durch die Anzahl der Tests im Quadrat."
           en: "None, Holm divides α by the squared number of tests."

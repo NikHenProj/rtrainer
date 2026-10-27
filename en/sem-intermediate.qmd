@@ -1,0 +1,166 @@
+---
+title: "CFA and SEM"
+subtitle: "Intermediate · Measurement model with lavaan, judging fit, comparing models"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, lavaan, semTools, parameters]
+resources:
+  - ../data/acceptance.csv
+---
+
+{{< include /_generated/en/sem-intermediate/runtime.qmd >}}
+
+{{< include /_generated/en/sem-intermediate/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R runs directly in your browser. On the first visit it takes 10–30 seconds to load (status at the bottom right); after that it is faster.
+:::
+
+## Why? {#why}
+
+**Research question:** Does the acceptance questionnaire measure the four constructs of the Technology Acceptance Model (usefulness, ease of use, trust, intention to use) as the theory specifies, and are usefulness and ease of use really two different things?
+
+The exploratory factor analysis (lesson Scales, intermediate) looks for a structure. For a questionnaire with theory behind it, you instead want to test a *fixed* structure: which item belongs to which factor, and nothing else. That is confirmatory factor analysis (CFA). It gives a verdict on how well the model fits the data, loadings free of measurement error and the basis for structural equation models (SEM), in which factors predict each other.
+
+## Concept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 220" role="img" aria-labelledby="fig-smi-title fig-smi-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-smi-title">Measurement model with two correlated factors</title>
+  <desc id="fig-smi-desc">Two factors as ellipses: usefulness pu on the left, ease of use peou on the right, connected by a double arrow with the correlation .46. From each factor, arrows lead to its items as rectangles below. Below each item a small arrow for the measurement error. At the bottom right the lavaan syntax pu =~ pu_1 + ... and peou =~ peou_1 + ....</desc>
+  <defs><marker id="rt-arrow-smi" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="rt-fig-arrowhead" /></marker></defs>
+  <ellipse cx="110" cy="40" rx="55" ry="22" class="rt-fig-box-accent" />
+  <text x="110" y="45" text-anchor="middle" class="rt-fig-label">pu</text>
+  <ellipse cx="330" cy="40" rx="55" ry="22" class="rt-fig-box-accent" />
+  <text x="330" y="45" text-anchor="middle" class="rt-fig-label">peou</text>
+  <path d="M165 34 Q220 6 275 34" fill="none" class="rt-fig-arrow" marker-start="url(#rt-arrow-smi)" marker-end="url(#rt-arrow-smi)" />
+  <text x="220" y="14" text-anchor="middle" class="rt-fig-label">.46</text>
+  <line x1="90" y1="62" x2="40" y2="128" class="rt-fig-arrow" marker-end="url(#rt-arrow-smi)" />
+  <line x1="105" y1="62" x2="95" y2="128" class="rt-fig-arrow" marker-end="url(#rt-arrow-smi)" />
+  <line x1="120" y1="62" x2="150" y2="128" class="rt-fig-arrow" marker-end="url(#rt-arrow-smi)" />
+  <line x1="135" y1="60" x2="205" y2="128" class="rt-fig-arrow" stroke-dasharray="4 4" marker-end="url(#rt-arrow-smi)" />
+  <line x1="305" y1="62" x2="270" y2="128" class="rt-fig-arrow" marker-end="url(#rt-arrow-smi)" />
+  <line x1="320" y1="62" x2="320" y2="128" class="rt-fig-arrow" marker-end="url(#rt-arrow-smi)" />
+  <line x1="340" y1="62" x2="370" y2="128" class="rt-fig-arrow" marker-end="url(#rt-arrow-smi)" />
+  <rect x="18" y="130" width="44" height="24" class="rt-fig-box" /><text x="40" y="147" text-anchor="middle" class="rt-fig-code">pu_1</text>
+  <rect x="73" y="130" width="44" height="24" class="rt-fig-box" /><text x="95" y="147" text-anchor="middle" class="rt-fig-code">pu_2</text>
+  <rect x="128" y="130" width="44" height="24" class="rt-fig-box" /><text x="150" y="147" text-anchor="middle" class="rt-fig-code">pu_3</text>
+  <rect x="183" y="130" width="44" height="24" class="rt-fig-box" /><text x="205" y="147" text-anchor="middle" class="rt-fig-code">pu_5</text>
+  <rect x="244" y="130" width="52" height="24" class="rt-fig-box" /><text x="270" y="147" text-anchor="middle" class="rt-fig-code">peou_1</text>
+  <rect x="294" y="130" width="52" height="24" class="rt-fig-box" /><text x="320" y="147" text-anchor="middle" class="rt-fig-code">peou_2</text>
+  <rect x="344" y="130" width="52" height="24" class="rt-fig-box" /><text x="370" y="147" text-anchor="middle" class="rt-fig-code">peou_3</text>
+  <text x="20" y="180" class="rt-fig-label rt-fig-muted">each item: loading × factor + measurement error</text>
+  <text x="20" y="202" class="rt-fig-label rt-fig-muted">(shortened: not all items shown; pu_5 loads weakly)</text>
+  <text x="410" y="96" class="rt-fig-code">pu =~ pu_1 +</text>
+  <text x="410" y="114" class="rt-fig-code">  pu_2 + ...</text>
+  <text x="410" y="140" class="rt-fig-code">peou =~</text>
+  <text x="410" y="158" class="rt-fig-code">  peou_1 + ...</text>
+</svg>
+<figcaption>In a CFA you specify which item loads on which factor; all other loadings are zero. The factors may correlate.</figcaption>
+</figure>
+```
+
+- **Syntax:** `=~` "is measured by", `~` regression, `~~` covariance. A model is a text with one line per factor; `cfa(model, data)` estimates it. The scale of each factor is set by its first item (loading 1); standardised loadings do not depend on this.
+- **Fit:** χ² tests whether the model reproduces the covariances exactly and is almost always significant with large n. So in addition: CFI (≥ .95 good), RMSEA with 90% CI (≤ .06 good), SRMR (≤ .08 good). These are guidelines from simulations, not test thresholds.
+- **Check locally:** good overall fit says nothing about single items. Standardised loadings (`standardizedSolution()`) and R² per item show weak indicators; `modindices()` shows where the model does not fit locally, but it is data-driven and no licence to patch the model.
+- **Comparing models:** nested models (one is a special case of the other, same variables) with `lavTestLRT()`; plus AIC/BIC and the fit indices of both models.
+- **Keying:** for fit and loadings it does not matter (negative loading). Everything that relies on sums (ω from the model with `semTools::compRelSEM()`, scale scores) needs reversed items.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## More: estimators, ordinal items, missing values
+
+- **Estimator:** the default is maximum likelihood (`ML`). With skewed Likert data, `estimator = "MLR"` (robust standard errors and a scaled χ² test) is the usual safeguard; then report the robust fit indices (`cfi.robust`, `rmsea.robust`).
+- **Ordinal items:** with few categories (≤ 5) or strong floor/ceiling effects, `cfa(..., ordered = TRUE)` (estimator WLSMV, polychoric correlations).
+- **Missing values:** `missing = "fiml"` uses all available answers instead of excluding cases (unbiased under MAR).
+- **Measurement invariance** (does the model hold equally in two groups?): `cfa(..., group = "gender")` with stepwise equality constraints; topic of the expert lesson.
+:::
+
+## Example {#example}
+
+First reverse, then the measurement model with all four factors:
+
+```{webr}
+reversed <- acceptance |>
+  mutate(across(c(peou_3, trust_4), \(x) 8 - x))
+
+model <- "
+  pu =~ pu_1 + pu_2 + pu_3 + pu_4 + pu_5
+  peou =~ peou_1 + peou_2 + peou_3 + peou_4
+  trust =~ trust_1 + trust_2 + trust_3 + trust_4 + trust_5
+  bi =~ bi_1 + bi_2 + bi_3 + bi_4
+"
+fit <- cfa(model, data = reversed)
+fitMeasures(fit, c("chisq", "df", "pvalue", "cfi", "rmsea", "rmsea.ci.lower", "rmsea.ci.upper", "srmr")) |>
+  round(3)
+```
+
+All guidelines met: χ²(129) = 143.8, p = .18, CFI = .99, RMSEA = .02 [.00, .04], SRMR = .04. Now the standardised loadings and factor correlations:
+
+```{webr}
+model_parameters(fit, standardize = TRUE, component = c("loading", "correlation"))
+```
+
+All loadings lie between .69 and .84; only `pu_5` falls behind with .37. Usefulness and ease of use correlate at .46, usefulness and trust practically not at all. You get the full lavaan output with `summary(fit, fit.measures = TRUE, standardized = TRUE)`.
+
+**Outlook SEM:** once the measurement model stands, you replace correlations with directed paths. Do the three beliefs predict the intention to use?
+
+```{webr}
+sem_model <- paste(model, "bi ~ pu + peou + trust")
+fit_sem <- sem(sem_model, data = reversed)
+model_parameters(fit_sem, standardize = TRUE, component = "regression")
+```
+
+All three paths are positive (β = .24 to .30); together they explain 32% of the variance of the intention to use (`inspect(fit_sem, "r2")`). Mediation (ease of use → usefulness → intention) follows in the lesson Moderation and mediation.
+
+**How to report it:** A confirmatory factor analysis (ML, lavaan) with four correlated factors fitted well, χ²(129) = 143.8, p = .18, CFI = .99, RMSEA = .02, 90% CI [.00, .04], SRMR = .04. The standardised loadings ranged from .69 to .84, except for pu_5 (.37).
+
+## Package comparison {#packages}
+
+| Task | Recommendation | Alternative |
+|---|---|---|
+| Estimate CFA and SEM | **lavaan** `cfa()`, `sem()` | `OpenMx` (more flexible, more effort); `psych::fa()` exploratory only |
+| Tabulate loadings, fit | **parameters** `model_parameters(fit, standardize = TRUE)`, **lavaan** `fitMeasures()` | `performance::model_performance(fit)` (all indices at once); `summary(fit, fit.measures = TRUE)` |
+| Compare models | **lavaan** `lavTestLRT()` | `performance::compare_performance()`; `semTools::compareFit()` |
+| ω from the model | **semTools** `compRelSEM()` | `psych::reliability()` (without a model) |
+| Path diagram | `semPlot::semPaths()` (run locally) | `lavaanPlot`, `tidySEM::graph_sem()` |
+
+## Exercises {#exercises}
+
+Three required exercises and two optional exercises. **Run and check** runs your code and checks it right away. Reveal hints one at a time (**Show Hint**), the solution only after that.
+
+{{< include /_generated/en/sem-intermediate/exercises.qmd >}}
+
+## Knowledge check {#check}
+
+{{< include /_generated/en/sem-intermediate/quiz.qmd >}}
+
+## Cheat sheet {#cheatsheet}
+
+```r
+# Measurement model: =~ measured by, ~ regression, ~~ covariance
+model <- "
+  pu   =~ pu_1 + pu_2 + pu_3 + pu_4 + pu_5
+  peou =~ peou_1 + peou_2 + peou_3 + peou_4
+"
+fit <- cfa(model, data = d)                   # estimator = "MLR" for skewed data
+
+# Fit: chi2, CFI >= .95, RMSEA <= .06 (with CI), SRMR <= .08
+fitMeasures(fit, c("chisq", "df", "pvalue", "cfi", "rmsea",
+                   "rmsea.ci.lower", "rmsea.ci.upper", "srmr"))
+
+# Local: standardised loadings, R2, modification indices
+model_parameters(fit, standardize = TRUE)
+inspect(fit, "r2")
+modindices(fit, sort. = TRUE, maximum.number = 5)
+
+# Compare nested models, omega from the model
+lavTestLRT(fit_a, fit_b)
+semTools::compRelSEM(fit)                    # reverse items first!
+
+# SEM: regression between factors
+fit_sem <- sem(paste(model, "bi ~ pu + peou"), data = d)
+```
+
+{{< include /_generated/en/sem-intermediate/footer.qmd >}}

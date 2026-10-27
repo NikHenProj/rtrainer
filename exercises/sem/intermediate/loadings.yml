@@ -60,8 +60,8 @@ explanation:
     ob ein Item inhaltlich zum Konstrukt passt. Bericht: „Alle standardisierten
     Ladungen lagen zwischen |.69| und |.84|, außer pu_5 (.37).“
   en: |
-    Only `pu_5` is below (λ = .37): the factor explains .37² ≈ 14 % of its
-    variance (R², `inspect(fit, "r2")`), 47–70 % for the other items. Without
+    Only `pu_5` is below (λ = .37): the factor explains .37² ≈ 14% of its
+    variance (R², `inspect(fit, "r2")`), 47–70% for the other items. Without
     `abs()`, `peou_3` and `trust_4` (λ ≈ −.71) would also be in the result,
     although they are good indicators; the sign only shows the keying. The
     unstandardised loadings (`parameterEstimates()`) are not suited for this

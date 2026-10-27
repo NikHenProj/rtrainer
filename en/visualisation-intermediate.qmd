@@ -1,0 +1,170 @@
+---
+title: "Visualising data"
+subtitle: "Intermediate · Confidence intervals, model plots, patchwork, export"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, ggplot2, modelbased, patchwork]
+resources:
+  - ../data/driving_sim.csv
+  - ../data/survey.csv
+---
+
+{{< include /_generated/en/visualisation-intermediate/runtime.qmd >}}
+
+{{< include /_generated/en/visualisation-intermediate/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R runs directly in your browser. On the first visit it takes 10–30 seconds to load (status at the bottom right); after that it is faster.
+:::
+
+## Why? {#why}
+
+**Research question:** Do experienced drivers respond faster with all warning modalities, and how do you show this in a figure a journal will accept?
+
+Exploratory plots may be rough. Figures for a report have to do more: the error bars show a named interval over the right unit, model results appear as predictions with uncertainty instead of raw means, plots that belong together form one labelled figure, and the file has the required size. This lesson shows the four steps with ggplot2, modelbased and patchwork.
+
+## Concept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 200" role="img" aria-labelledby="fig-vii-title fig-vii-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-vii-title">From the data to the figure in the manuscript</title>
+  <desc id="fig-vii-desc">Four boxes side by side with arrows: statistics from person means or model predictions, then ggplot with pointrange or ribbon, then patchwork combines panels A and B, then ggsave at the target size of 16 by 10 centimetres at 300 dpi.</desc>
+  <rect x="10" y="40" width="120" height="70" rx="4" class="rt-fig-box-accent" />
+  <text x="20" y="62" class="rt-fig-label">Statistics</text>
+  <text x="20" y="82" class="rt-fig-code">summarise()</text>
+  <text x="20" y="100" class="rt-fig-code">estimate_*()</text>
+  <text x="138" y="80" class="rt-fig-label">→</text>
+  <rect x="152" y="40" width="120" height="70" rx="4" class="rt-fig-box" />
+  <text x="162" y="62" class="rt-fig-label">Plot</text>
+  <text x="162" y="82" class="rt-fig-code">pointrange</text>
+  <text x="162" y="100" class="rt-fig-code">ribbon + line</text>
+  <text x="280" y="80" class="rt-fig-label">→</text>
+  <rect x="294" y="40" width="120" height="70" rx="4" class="rt-fig-box" />
+  <text x="304" y="62" class="rt-fig-label">Combine</text>
+  <text x="304" y="82" class="rt-fig-code">p1 + p2</text>
+  <text x="304" y="100" class="rt-fig-code">tags A, B</text>
+  <text x="422" y="80" class="rt-fig-label">→</text>
+  <rect x="436" y="40" width="114" height="70" rx="4" class="rt-fig-box" />
+  <text x="446" y="62" class="rt-fig-label">Save</text>
+  <text x="446" y="82" class="rt-fig-code">ggsave()</text>
+  <text x="446" y="100" class="rt-fig-code">16×10 cm</text>
+  <text x="10" y="140" class="rt-fig-label">Unit = person: average per person first, then the interval</text>
+  <text x="10" y="162" class="rt-fig-label">Name the interval: SE, SD or 95% CI in the caption</text>
+  <text x="10" y="184" class="rt-fig-label rt-fig-muted">Font sizes in pt stay correct only if you save at the target size</text>
+</svg>
+<figcaption>A figure for a report is made in four steps; each has a typical mistake.</figcaption>
+</figure>
+```
+
+- **Confidence interval from person means:** `m ± qt(0.975, n - 1) * se`, `n` = participants. Groups side by side with `position_dodge()`. With repeated measures, these intervals are too wide for comparisons between conditions; the CI of the difference comes from the model.
+- **Model plots:** modelbased returns predictions as a table: `estimate_means()` for means per level, `estimate_relation()` for trends over a continuous predictor. Columns `Mean`/`Predicted`, `CI_low`, `CI_high`.
+- **patchwork:** `p1 + p2` (side by side), `p1 / p2` (stacked), `plot_layout(guides = "collect")` for a shared legend, `plot_annotation(tag_levels = "A")` for panel letters.
+- **Themes:** first a complete theme (`theme_bw()`), then `theme()` adjustments; for a whole script `theme_set()`.
+- **Export:** `ggsave(file, plot, width, height, units = "cm", dpi = 300)`. Without `units`, inches apply.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## More: intervals with repeated measures
+
+- **Cousineau-Morey:** remove the person effect from the person means before computing the interval (centre each person on the grand mean) and correct with √(k/(k−1)); then the intervals fit the within-person comparison. Ready-made in `Rmisc::summarySEwithin()` (not in the browser).
+- **From the mixed model:** `estimate_means()` on an `lmer()` model (lesson "Repeated measures and mixed models") gives model-based intervals; show differences with `estimate_contrasts()`.
+- **Show the raw data too:** person means as points (`geom_jitter(width = 0.1, alpha = 0.3)`) beneath the means make spread and outliers visible.
+:::
+
+## Example {#example}
+
+Mean and 95% CI from person means, dodged by experience, with the person means in the background:
+
+```{webr}
+person <- driving_sim |>
+  summarise(rt = mean(rt_ms, na.rm = TRUE), .by = c(participant, experience, condition))
+ci <- person |>
+  summarise(m = mean(rt), se = sd(rt) / sqrt(n()), n = n(), .by = c(condition, experience)) |>
+  mutate(lo = m - qt(0.975, n - 1) * se, hi = m + qt(0.975, n - 1) * se)
+
+dodge <- position_dodge(width = 0.5)
+p_rt <- ggplot(ci, aes(condition, m, colour = experience)) +
+  geom_point(
+    data = person, aes(y = rt),
+    position = position_jitterdodge(jitter.width = 0.1, dodge.width = 0.5), alpha = 0.3
+  ) +
+  geom_pointrange(aes(ymin = lo, ymax = hi), position = dodge) +
+  labs(x = "Warning modality", y = "Reaction time (ms)", colour = "Experience") +
+  theme_bw()
+p_rt
+```
+
+A model plot: how does frustration in the questionnaire depend on technology affinity, separately per interface? `estimate_relation()` returns the predictions with CI as a table:
+
+```{webr}
+fit <- lm(tlx_frustration ~ interface * tech_affinity, data = survey)
+pred <- estimate_relation(fit, by = c("tech_affinity", "interface"))
+head(pred, 3)
+
+p_fit <- ggplot(pred, aes(tech_affinity, Predicted)) +
+  geom_ribbon(aes(ymin = CI_low, ymax = CI_high, fill = interface), alpha = 0.2) +
+  geom_line(aes(colour = interface)) +
+  labs(x = "Technology affinity (1–5)", y = "Frustration (0–100)", colour = NULL, fill = NULL) +
+  theme_bw()
+p_fit
+```
+
+Both plots as one figure with panel letters, saved at the target size. In the browser, the file ends up in webR's virtual file system; `file.size()` shows that it exists:
+
+```{webr}
+fig <- p_rt + p_fit + plot_annotation(tag_levels = "A")
+fig
+out_file <- file.path(tempdir(), "figure2.png")
+ggsave(out_file, fig, width = 17, height = 8, units = "cm", dpi = 300)
+file.size(out_file)
+```
+
+**How to report it (caption):** *Figure 2.* (A) Mean reaction time by warning modality and experience; points: person means, error bars: 95% CI across participants (*n* = 20 per group). (B) Predicted frustration (NASA-TLX) by technology affinity and interface with 95% confidence band from a linear model with interaction.
+
+## Package comparison {#packages}
+
+| Task | Recommendation | Alternative |
+|---|---|---|
+| Means with CI | **dplyr** + `geom_pointrange()` | `stat_summary(fun.data = mean_cl_normal)` (computes over rows, not participants; needs Hmisc) |
+| Predictions from models | **modelbased** `estimate_means()`, `estimate_relation()` | `ggeffects::predict_response()` (with its own `plot()`); `marginaleffects::plot_predictions()` |
+| Combine plots | **patchwork** | `cowplot::plot_grid()`; `facet_wrap()` only if all panels show the same variable |
+| Save | **ggplot2** `ggsave()` with `units = "cm"` | `ragg::agg_png()` / `svglite` directly; for Word also `.tiff` with `compression = "lzw"` |
+
+## Exercises {#exercises}
+
+Three required exercises and two optional exercises. **Run and check** runs your code and checks it right away. Reveal hints one at a time (**Show Hint**), the solution only after that.
+
+{{< include /_generated/en/visualisation-intermediate/exercises.qmd >}}
+
+## Knowledge check {#check}
+
+{{< include /_generated/en/visualisation-intermediate/quiz.qmd >}}
+
+## Cheat sheet {#cheatsheet}
+
+```r
+# CI from person means
+ci <- d |>
+  summarise(rt = mean(rt_ms, na.rm = TRUE), .by = c(participant, group, condition)) |>
+  summarise(m = mean(rt), se = sd(rt) / sqrt(n()), n = n(), .by = c(condition, group)) |>
+  mutate(lo = m - qt(0.975, n - 1) * se, hi = m + qt(0.975, n - 1) * se)
+ggplot(ci, aes(condition, m, ymin = lo, ymax = hi, colour = group)) +
+  geom_pointrange(position = position_dodge(width = 0.4))
+
+# Model plot
+pred <- estimate_relation(fit, by = c("x", "group"))
+ggplot(pred, aes(x, Predicted)) +
+  geom_ribbon(aes(ymin = CI_low, ymax = CI_high, fill = group), alpha = 0.2) +
+  geom_line(aes(colour = group))
+
+# Combine and save
+fig <- p1 + p2 + plot_layout(guides = "collect") + plot_annotation(tag_levels = "A")
+ggsave("figures/fig2.png", fig, width = 16, height = 8, units = "cm", dpi = 300)
+```
+
+- Always name error bars (SE, SD, 95% CI) and compute them across participants.
+- First a complete theme, then `theme()`; for all figures `theme_set()`.
+- Save at the target size; never scale in the manuscript.
+
+{{< include /_generated/en/visualisation-intermediate/footer.qmd >}}

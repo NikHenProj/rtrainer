@@ -1,0 +1,155 @@
+---
+title: "Questionnaires and scales"
+subtitle: "Intermediate · Reliability with ω, item analysis, exploratory factor analysis"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, tidyr, psych, GPArotation, parameters]
+resources:
+  - ../data/acceptance.csv
+---
+
+{{< include /_generated/en/scales-intermediate/runtime.qmd >}}
+
+{{< include /_generated/en/scales-intermediate/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R runs directly in your browser. On the first visit it takes 10–30 seconds to load (status at the bottom right); after that it is faster.
+:::
+
+## Why? {#why}
+
+**Research question:** Do the four scales of an acceptance questionnaire for a driver assistance system (usefulness, ease of use, trust, intention to use) measure what they are meant to measure, and how reliably?
+
+In the beginner part you reversed items, computed scale scores and calculated α. For a new or translated questionnaire that is not enough: α assumes that all items measure equally well, and it says nothing about whether the items form the intended scales at all. Before you compute with scale scores or set up a structural model, you therefore check three things: how reliable is each scale (ω)? Which items do not fit (item analysis)? Do the items form the expected factors (exploratory factor analysis, EFA)?
+
+## Concept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 200" role="img" aria-labelledby="fig-sci-title fig-sci-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-sci-title">One factor with five items and different loadings</title>
+  <desc id="fig-sci-desc">At the top the factor usefulness, below it five items pu_1 to pu_5. The arrows carry the loadings .76, .70, .83, .69 and .37; the arrow to pu_5 is dashed and weak. On the right the text: alpha assumes that all arrows are equally strong; omega uses the estimated loadings.</desc>
+  <defs><marker id="rt-arrow-sci" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10 z" class="rt-fig-arrowhead" /></marker></defs>
+  <rect x="150" y="14" width="120" height="34" rx="17" class="rt-fig-box-accent" />
+  <text x="210" y="36" text-anchor="middle" class="rt-fig-label">Usefulness</text>
+  <line x1="190" y1="48" x2="50" y2="146" class="rt-fig-arrow" marker-end="url(#rt-arrow-sci)" />
+  <line x1="200" y1="48" x2="130" y2="146" class="rt-fig-arrow" marker-end="url(#rt-arrow-sci)" />
+  <line x1="210" y1="48" x2="210" y2="146" class="rt-fig-arrow" marker-end="url(#rt-arrow-sci)" />
+  <line x1="220" y1="48" x2="290" y2="146" class="rt-fig-arrow" marker-end="url(#rt-arrow-sci)" />
+  <line x1="230" y1="48" x2="370" y2="146" class="rt-fig-arrow" stroke-dasharray="4 4" marker-end="url(#rt-arrow-sci)" />
+  <text x="92" y="100" class="rt-fig-label">.76</text>
+  <text x="148" y="100" class="rt-fig-label">.70</text>
+  <text x="214" y="100" class="rt-fig-label">.83</text>
+  <text x="258" y="100" class="rt-fig-label">.69</text>
+  <text x="312" y="100" class="rt-fig-label rt-fig-muted">.37</text>
+  <rect x="20" y="148" width="60" height="28" class="rt-fig-box" /><text x="50" y="167" text-anchor="middle" class="rt-fig-code">pu_1</text>
+  <rect x="100" y="148" width="60" height="28" class="rt-fig-box" /><text x="130" y="167" text-anchor="middle" class="rt-fig-code">pu_2</text>
+  <rect x="180" y="148" width="60" height="28" class="rt-fig-box" /><text x="210" y="167" text-anchor="middle" class="rt-fig-code">pu_3</text>
+  <rect x="260" y="148" width="60" height="28" class="rt-fig-box" /><text x="290" y="167" text-anchor="middle" class="rt-fig-code">pu_4</text>
+  <rect x="340" y="148" width="60" height="28" class="rt-fig-box" /><text x="370" y="167" text-anchor="middle" class="rt-fig-code">pu_5</text>
+  <text x="420" y="60" class="rt-fig-label">α: all arrows</text>
+  <text x="420" y="78" class="rt-fig-label">equally strong</text>
+  <text x="420" y="110" class="rt-fig-label">ω: estimated</text>
+  <text x="420" y="128" class="rt-fig-label">loadings</text>
+</svg>
+<figcaption>Standardised loadings of the usefulness scale. Because `pu_5` loads clearly more weakly, α underestimates the reliability (α = .80, ω = .83).</figcaption>
+</figure>
+```
+
+- **Reliability:** Cronbach's α assumes that all items load equally strongly (tau-equivalent). McDonald's ω (total) uses the estimated loadings and is therefore the better default; report α in addition for comparability. `psych::reliability()` computes both for several scales at once; reverse-keyed items get a minus sign in the key list (`"-peou_3"`).
+- **Item analysis:** the corrected item-total correlation `r.drop` is the correlation of an item with the sum of the *other* items. Rule of thumb: below .30 critical, below .40 look closer; negative almost always means: not reversed. "α if dropped" is a hint, not a decision rule.
+- **How many factors?** Parallel analysis (`fa.parallel()`) compares the eigenvalues of the data with those of random data and beats the Kaiser criterion (eigenvalue > 1).
+- **EFA:** `fa(items, nfactors, rotate = "oblimin", fm = "ml")`. Oblique rotation, because psychological constructs correlate; `model_parameters()` shows loadings, complexity (≈ 1: the item loads on one factor only) and uniqueness (unexplained share).
+- **EFA or CFA?** The EFA looks for a structure, the confirmatory factor analysis (CFA, next lesson) tests one specified in advance. For an established questionnaire the CFA is the main route; the EFA helps with new or translated instruments and with problems in the CFA.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## More: which ω?
+
+- **ω total** (`omega.tot`): share of the variance of the sum score explained by all common factors. The usual figure for a single scale.
+- **ω hierarchical** (`omega_h`): share explained by a general factor. Important if a scale has subfacets and you want to know whether a total score makes sense.
+- **ω from a CFA** (`semTools::compRelSEM()`): uses the loadings of your measurement model; with properly keyed items almost the same as `omega.tot`.
+- **Ordinal items** (few categories, skewed distributions): ω based on polychoric correlations (`psych::omega(..., poly = TRUE)`) is more accurate then. With 7 categories and symmetric answers little changes.
+:::
+
+## Example {#example}
+
+First the item analysis of the ease-of-use scale, as the data come from the export:
+
+```{webr}
+acceptance |>
+  select(peou_1:peou_4) |>
+  psych::alpha()
+```
+
+α = .13 and a warning: `peou_3` correlates negatively with the other items (`r.drop` = −.64). The item is not weak but not reversed; without `peou_3`, α would rise to .82. Instead of recoding, you mark it in the key list of `reliability()`:
+
+```{webr}
+keys <- list(
+  pu = paste0("pu_", 1:5),
+  peou = c("peou_1", "peou_2", "-peou_3", "peou_4")
+)
+psych::reliability(keys, select(acceptance, pu_1:pu_5, peou_1:peou_4))
+```
+
+With the minus sign: ease of use α = .84, ω = .86; usefulness α = .80, ω = .83. Do the nine items really form two factors? Parallel analysis, then EFA:
+
+```{webr}
+items <- select(acceptance, pu_1:pu_5, peou_1:peou_4)
+fa.parallel(items, fm = "ml", fa = "fa", plot = FALSE)
+
+efa <- fa(items, nfactors = 2, rotate = "oblimin", fm = "ml")
+model_parameters(efa, sort = TRUE, threshold = 0.3)
+round(efa$Phi, 2)
+```
+
+Two factors, each item loads only on its own (complexity ≈ 1). `peou_3` loads negatively because it is not reversed in `items`; for the structure the absolute value counts. `pu_5` falls behind with .40 and a uniqueness of .86. The factors correlate at .46 (`efa$Phi`), hence oblimin instead of varimax.
+
+**How to report it:** Usefulness (5 items, ω = .83, α = .80) and ease of use (4 items, ω = .86, α = .84) were reliable. An exploratory factor analysis (ML, oblimin, two factors according to parallel analysis) confirmed the assignment of the items; item pu_5 loaded weakly (λ = .40).
+
+## Package comparison {#packages}
+
+| Task | Recommendation | Alternative |
+|---|---|---|
+| α and ω for several scales | **psych** `reliability(keys, items)` | `psych::omega()` per scale (more detailed, more warnings); `performance::cronbachs_alpha()` (α only) |
+| Item analysis | **psych** `alpha()` (`r.drop`, "if dropped") | `performance::item_reliability()`, `item_difficulty()` |
+| Number of factors | **psych** `fa.parallel()` | `parameters::n_factors()` (many criteria, needs more packages) |
+| EFA | **psych** `fa()` + **parameters** `model_parameters()` | `factanal()` (base R, ML only, fewer rotations) |
+| ω from a CFA | **semTools** `compRelSEM()` | see lesson CFA and SEM |
+
+## Exercises {#exercises}
+
+Three required exercises and one optional exercise. **Run and check** runs your code and checks it right away. Reveal hints one at a time (**Show Hint**), the solution only after that.
+
+{{< include /_generated/en/scales-intermediate/exercises.qmd >}}
+
+## Knowledge check {#check}
+
+{{< include /_generated/en/scales-intermediate/quiz.qmd >}}
+
+## Cheat sheet {#cheatsheet}
+
+```r
+# alpha and omega for several scales, reverse-keyed items with a minus sign
+keys <- list(
+  pu = paste0("pu_", 1:5),
+  peou = c("peou_1", "peou_2", "-peou_3", "peou_4")
+)
+rel <- psych::reliability(keys, items)
+rel$result.df[, c("alpha", "omega.tot")]
+
+# Item analysis: r.drop, alpha if dropped
+psych::alpha(select(d, pu_1:pu_5))
+
+# Number of factors, then EFA
+fa.parallel(items, fm = "ml", fa = "fa", plot = FALSE)
+efa <- fa(items, nfactors = 4, rotate = "oblimin", fm = "ml")
+model_parameters(efa, sort = TRUE, threshold = "max")
+efa$Phi                                       # factor correlations
+
+# Reverse on 1–7: minimum + maximum − x
+d |> mutate(peou_3 = 8 - peou_3)
+datawizard::reverse_scale(d$peou_3, range = c(1, 7))
+```
+
+{{< include /_generated/en/scales-intermediate/footer.qmd >}}

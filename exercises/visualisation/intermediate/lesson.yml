@@ -3,7 +3,6 @@
 lesson: visualisation-intermediate
 minutes: 55
 prerequisites: [visualisation-beginner, group-comparisons-beginner]
-langs: [de]
 packages: [dplyr, ggplot2, modelbased, patchwork]
 data: [driving_sim, survey]
 goals:

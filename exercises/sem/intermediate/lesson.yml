@@ -3,7 +3,6 @@
 lesson: sem-intermediate
 minutes: 55
 prerequisites: [scales-intermediate]
-langs: [de]
 packages: [dplyr, lavaan, semTools, parameters]
 data: [acceptance]
 goals:

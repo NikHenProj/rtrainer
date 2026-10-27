@@ -136,3 +136,5 @@ check_collinearity(fit); check_heteroscedasticity(fit)
 check_normality(fit); check_outliers(fit)
 model_parameters(fit, vcov = "HC3")             # robuste SE (sandwich)
 ```
+
+{{< include /_generated/de/regression-intermediate/footer.qmd >}}

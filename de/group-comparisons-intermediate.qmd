@@ -139,3 +139,5 @@ t.test(wide$visual, wide$haptic, paired = TRUE)
 check_normality(fit); check_homogeneity(fit)
 p.adjust(p, method = "holm")
 ```
+
+{{< include /_generated/de/group-comparisons-intermediate/footer.qmd >}}

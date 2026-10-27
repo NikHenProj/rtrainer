@@ -3,7 +3,6 @@
 lesson: missing-intermediate
 minutes: 50
 prerequisites: [cleaning-beginner, reshaping-beginner]
-langs: [de]
 packages: [mice, dplyr, tidyr, naniar]
 data: [driving_sim, survey]
 goals:

@@ -141,3 +141,5 @@ icc(fit_x, by_group = TRUE); r2(fit_x)
 # Residuen zeilengenau bei fehlenden Werten
 fit <- lmer(rt_ms ~ condition + (1 | participant), data = d, na.action = na.exclude)
 ```
+
+{{< include /_generated/de/mixed-models-intermediate/footer.qmd >}}

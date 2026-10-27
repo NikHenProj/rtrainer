@@ -3,7 +3,6 @@
 lesson: reshaping-intermediate
 minutes: 50
 prerequisites: [reshaping-beginner]
-langs: [de]
 packages: [dplyr, tidyr, purrr]
 data: [driving_sim, usability]
 goals:

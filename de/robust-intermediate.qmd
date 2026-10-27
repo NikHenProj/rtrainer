@@ -134,3 +134,5 @@ complete |> friedman_test(y ~ condition | participant)
 complete |> friedman_effsize(y ~ condition | participant)   # Kendalls W
 complete |> wilcox_test(y ~ condition, paired = TRUE, p.adjust.method = "holm")
 ```
+
+{{< include /_generated/de/robust-intermediate/footer.qmd >}}

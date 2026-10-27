@@ -1,5 +1,12 @@
 # rtrainer (Quarto course)
 
+## Milestone 9, package P8: English intermediate lessons P1–P3
+
+- English pages `en/{import,cleaning,reshaping,missing,visualisation,descriptives,scales,sem,group-comparisons}-intermediate.qmd`, translated from the accepted German lessons with identical code, data and exercise IDs (SVG titles, labels and descriptions, cheat-sheet comments and "How to report it" texts translated; `labs()` axis titles were already English); `langs: [de]` removed from their `lesson.yml`, so the English course plan links them. P4–P7 stay German-only for now.
+- Proofread the English texts of the exercises and quizzes of the nine lessons with a script (missing `en`, umlauts, German quotes, decimal commas, German words, "N %"): no missing or German text; four percentages written without a space as in the beginner lessons ("14%"). The later packages (glm, mixed-models, power) still have "80 %" in English texts; fix with their translation.
+- Fix: the 12 German intermediate pages of P3–P6 did not include `footer.qmd`, so they had no back/next pager; the include is added to all of them.
+- Smoke test: the English course-plan step now expects the nine intermediate lessons linked and the still German-only `robust-intermediate` not linked, and opens `en/group-comparisons-intermediate.html` (English heading, exercise, pager).
+
 ## Milestone 9, package P7: mini project intermediate (DE) (accepted, merged into main)
 
 - Load check before writing (headless Chrome, webR 0.6.0, one measurement): webR 1.3 s, readxl + janitor + dplyr 3.8 s, lme4 + lmerTest + emmeans + parameters + ggplot2 3.7 s, reading the Excel export 3.2 s, `lmer()` + emmeans contrasts 5.9 s, `glmer()` 1.7 s; about 20 s in total. Model and contrast values in webR match local R to 6 digits; `glmer()` odds ratios differ in the second decimal (3.82 vs. 3.83), so `pj-i-success` checks with `tolerance: 0.02`.

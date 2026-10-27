@@ -1,0 +1,152 @@
+---
+title: "Reshaping and joining"
+subtitle: "Intermediate · Window functions, safeguarded joins, many tables"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, tidyr, purrr]
+resources:
+  - ../data/driving_sim.csv
+  - ../data/usability.csv
+---
+
+{{< include /_generated/en/reshaping-intermediate/runtime.qmd >}}
+
+{{< include /_generated/en/reshaping-intermediate/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R runs directly in your browser. On the first visit it takes 10–30 seconds to load (status at the bottom right); after that it is faster.
+:::
+
+## Why? {#why}
+
+**Research question:** Do participants in the usability test get faster from prototype to prototype (learning effect), and does the counterbalanced order even this out?
+
+For such questions you need values relative to another row of the same person: the time with the first prototype, the previous trial, a running total. On top of that come tables that belong together but are stored separately (demographics, task list, key figures). Window functions and joins are quick to write, but their errors are silent: wrong order, duplicate keys, lost participants. This lesson shows how to safeguard them.
+
+## Concept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 200" role="img" aria-labelledby="fig-rsi-title fig-rsi-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-rsi-title">Window functions within a group</title>
+  <desc id="fig-rsi-desc">A table with two participants, p01 with three trials and p02 with two. Arrows show that lag takes, for each row, the value of the previous row of the same participant. The first row of each participant has no predecessor and gets NA. Next to it the running total cumsum, which starts again for each participant.</desc>
+  <rect x="20" y="20" width="330" height="28" class="rt-fig-box-accent" />
+  <text x="28" y="39" class="rt-fig-code">participant trial rt  lag(rt) cumsum</text>
+  <rect x="20" y="48" width="330" height="72" class="rt-fig-box" />
+  <text x="28" y="67" class="rt-fig-code">p01         1     500 NA      500</text>
+  <text x="28" y="91" class="rt-fig-code">p01         2     650 500     1150</text>
+  <text x="28" y="115" class="rt-fig-code">p01         3     600 650     1750</text>
+  <rect x="20" y="128" width="330" height="48" class="rt-fig-box" />
+  <text x="28" y="147" class="rt-fig-code">p02         1     700 NA      700</text>
+  <text x="28" y="171" class="rt-fig-code">p02         2     720 700     1420</text>
+  <text x="365" y="67" class="rt-fig-label">no predecessor</text>
+  <text x="365" y="103" class="rt-fig-label">predecessor = previous row</text>
+  <text x="365" y="147" class="rt-fig-label">new group: start again</text>
+  <text x="20" y="196" class="rt-fig-label rt-fig-muted">Requirement: sorted (arrange) and grouped (.by)</text>
+</svg>
+<figcaption>Window functions compute within each group and depend on the row order.</figcaption>
+</figure>
+```
+
+- **Window functions** return as many values as they get and compute per group (`.by`): `lag()`/`lead()` (previous/next row), `cumsum()`, `cummax()`, `first()`, `last()`, `row_number()`.
+- **Order:** the predecessor is the previous *row*. Only `arrange()` (or `order_by = trial`) makes it the previous trial.
+- **`NA` spreads:** `cumsum()` is unknown from the first `NA` on. Decide beforehand what `NA` means (`coalesce(x, FALSE)`).
+- **Safeguarding joins:** every matching combination gives one row. `relationship = "many-to-one"` stops if a key is duplicated on the right; `unmatched = "error"` if a key on the left has no partner.
+- **Many tables:** `purrr::reduce(tables, \(x, y) left_join(x, y, by = ...))` combines a list of any length. The first table determines the rows.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## More: other joins with `join_by()`
+
+- **Inequalities:** `join_by(participant, start <= time, end >= time)` assigns events to a time window (e.g. gaze data of a task).
+- **Nearest value:** `join_by(participant, closest(time >= event_time))` takes the last event before each measurement (rolling join).
+- **Checking after the join:** `nrow()` before and after, `anti_join()` in both directions.
+:::
+
+## Example {#example}
+
+How much faster is each participant with a prototype compared with their first one? `first()` takes the value at position 1 per participant and task, so sort by `position` first:
+
+```{webr}
+learning <- usability |>
+  arrange(participant, task, position) |>
+  mutate(
+    time_vs_first = time_s - first(time_s),
+    .by = c(participant, task)
+  )
+learning |>
+  summarise(mean_change = round(mean(time_vs_first), 1), n = n(), .by = position)
+```
+
+A learning effect would grow with position. Because the order of the prototypes is counterbalanced (Latin square), it is spread evenly over A, B and C. Running total of errors per participant, sorted by position and task:
+
+```{webr}
+usability |>
+  arrange(participant, position, task) |>
+  mutate(errors_so_far = cumsum(errors), .by = participant) |>
+  filter(participant == "p01") |>
+  select(participant, position, prototype, task, errors, errors_so_far)
+```
+
+A safeguarded join: the expected time per task is in a separate table. `relationship = "many-to-one"` and `unmatched = "error"` make R stop if a task appears twice or not at all in `targets`:
+
+```{webr}
+targets <- tibble(
+  task = c("search", "filter", "compare", "checkout"),
+  target_s = c(30, 45, 60, 90)
+)
+usability |>
+  left_join(targets, by = join_by(task), relationship = "many-to-one", unmatched = "error") |>
+  summarise(within_target = mean(time_s <= target_s), .by = c(prototype, task)) |>
+  pivot_wider(names_from = prototype, values_from = within_target)
+```
+
+Remove `"checkout"` from `targets` in the last block and run it again: instead of silently returning `NA`, the error names the affected rows.
+
+**How to report it (results section, descriptive):** Compared with the first prototype tested, participants in second and third position were on average about 10 seconds faster (−9.8 s and −10.3 s per task), a learning effect mainly from the first to the second prototype. The counterbalanced order spreads this position effect evenly over the prototypes; in the model it can also be included as the predictor `position` (lesson "Mixed models").
+
+## Package comparison {#packages}
+
+| Task | Recommendation | Alternative |
+|---|---|---|
+| Previous/next value | **dplyr** `lag()`, `lead()` with `.by` | `data.table::shift()`; base R with `c(NA, head(x, -1))` per group (error-prone) |
+| Running statistics | `cumsum()`, `cummax()`, `cummean()` | `slider::slide_dbl()` for moving windows (e.g. mean of the last 3 trials) |
+| Safeguarding joins | **dplyr** `relationship`, `unmatched` | Look for duplicate keys beforehand with `janitor::get_dupes(y, key)`, compare `nrow()` afterwards |
+| Many tables | **purrr** `reduce()` | base R `Reduce(merge, list)`; several `left_join()` by hand |
+
+## Exercises {#exercises}
+
+Three required exercises and one optional exercise. **Run and check** runs your code and checks it right away. Reveal hints one at a time (**Show Hint**), the solution only after that.
+
+{{< include /_generated/en/reshaping-intermediate/exercises.qmd >}}
+
+## Knowledge check {#check}
+
+{{< include /_generated/en/reshaping-intermediate/quiz.qmd >}}
+
+## Cheat sheet {#cheatsheet}
+
+```r
+# Window functions: sort first, then compute per group
+d |>
+  arrange(participant, trial) |>
+  mutate(
+    diff = rt_ms - lag(rt_ms),
+    n_critical = cumsum(coalesce(lane_dev > 0.4, FALSE)),
+    vs_first = rt_ms - first(rt_ms),
+    .by = participant
+  )
+
+# Safeguarding joins
+count(y, key) |> filter(n > 1)
+left_join(x, y, by = join_by(key), relationship = "many-to-one", unmatched = "error")
+
+# Many tables
+reduce(tables, \(x, y) left_join(x, y, by = join_by(participant)))
+```
+
+- Predecessor = previous row: always `arrange()` or `order_by`.
+- Check `nrow()` after every join; more rows means duplicate keys.
+- In `reduce()`, the most complete table comes first.
+
+{{< include /_generated/en/reshaping-intermediate/footer.qmd >}}

@@ -162,3 +162,5 @@ model <- "
 fit <- sem(model, data = d, se = "bootstrap", bootstrap = 5000)
 parameterEstimates(fit, boot.ci.type = "perc")
 ```
+
+{{< include /_generated/de/moderation-mediation-intermediate/footer.qmd >}}

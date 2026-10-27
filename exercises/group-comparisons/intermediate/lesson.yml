@@ -3,7 +3,6 @@
 lesson: group-comparisons-intermediate
 minutes: 55
 prerequisites: [group-comparisons-beginner]
-langs: [de]
 packages: [dplyr, tidyr, afex, emmeans, modelbased, performance, parameters]
 data: [driving_sim, usability]
 goals:

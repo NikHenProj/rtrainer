@@ -162,3 +162,5 @@ semTools::compRelSEM(fit)                    # vorher umpolen!
 # SEM: Regression zwischen Faktoren
 fit_sem <- sem(paste(model, "bi ~ pu + peou"), data = d)
 ```
+
+{{< include /_generated/de/sem-intermediate/footer.qmd >}}

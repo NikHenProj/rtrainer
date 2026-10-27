@@ -1,0 +1,180 @@
+---
+title: "Descriptive statistics, Table 1"
+subtitle: "Intermediate · across() over scales, grouped results tables"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, tidyr, datawizard]
+resources:
+  - ../data/survey.csv
+---
+
+{{< include /_generated/en/descriptives-intermediate/runtime.qmd >}}
+
+{{< include /_generated/en/descriptives-intermediate/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R runs directly in your browser. On the first visit it takes 10–30 seconds to load (status at the bottom right); after that it is faster.
+:::
+
+## Why? {#why}
+
+**Research question:** Do touch and voice control differ in usability (SUS), workload (NASA-TLX) and trust, and how do you show this in a single table?
+
+A questionnaire quickly yields dozens of columns: ten SUS items, six TLX scales, six trust items. Typing out statistics column by column is error-prone and breaks as soon as a scale is added. This lesson shows two patterns that work with any number of columns: `across()` applies the same functions to many columns, and the principle "compute long, show wide" turns many scales into one results table with M (SD) per group.
+
+## Concept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 210" role="img" aria-labelledby="fig-dsi-title fig-dsi-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-dsi-title">Compute long, show wide</title>
+  <desc id="fig-dsi-desc">On the left a wide table with one row per person and the columns interface, sus, tlx, trust. An arrow pivot_longer leads to a long table with the columns interface, scale, score. An arrow summarise leads to a table with scale, interface, m and sd. An arrow pivot_wider leads to the results table with one row per scale and the columns touch and voice, with M (SD) in the cells.</desc>
+  <rect x="10" y="20" width="150" height="24" class="rt-fig-box-accent" />
+  <text x="16" y="37" class="rt-fig-code">if  sus tlx trust</text>
+  <rect x="10" y="44" width="150" height="48" class="rt-fig-box" />
+  <text x="16" y="62" class="rt-fig-code">to  48  41  3.5</text>
+  <text x="16" y="84" class="rt-fig-code">vo  65  30  4.2</text>
+  <text x="10" y="112" class="rt-fig-label rt-fig-muted">1 row per person</text>
+  <text x="168" y="62" class="rt-fig-label">→</text>
+  <rect x="190" y="20" width="150" height="24" class="rt-fig-box-accent" />
+  <text x="196" y="37" class="rt-fig-code">if  scale score</text>
+  <rect x="190" y="44" width="150" height="72" class="rt-fig-box" />
+  <text x="196" y="62" class="rt-fig-code">to  sus   48</text>
+  <text x="196" y="84" class="rt-fig-code">to  tlx   41</text>
+  <text x="196" y="106" class="rt-fig-code">…</text>
+  <text x="190" y="136" class="rt-fig-label rt-fig-muted">pivot_longer()</text>
+  <text x="348" y="62" class="rt-fig-label">→</text>
+  <rect x="370" y="20" width="180" height="24" class="rt-fig-box-accent" />
+  <text x="376" y="37" class="rt-fig-code">scale touch     voice</text>
+  <rect x="370" y="44" width="180" height="72" class="rt-fig-box" />
+  <text x="376" y="62" class="rt-fig-code">sus   51 (24)   62 (25)</text>
+  <text x="376" y="84" class="rt-fig-code">tlx   40 (15)   37 (13)</text>
+  <text x="376" y="106" class="rt-fig-code">trust 3.9 (1.3) 4.0 (1.3)</text>
+  <text x="370" y="136" class="rt-fig-label rt-fig-muted">summarise() + pivot_wider()</text>
+  <text x="10" y="176" class="rt-fig-label">One formula per statistic, however many scales</text>
+  <text x="10" y="198" class="rt-fig-label rt-fig-muted">Format (sprintf) only at the very end: afterwards it is text</text>
+</svg>
+<figcaption>First bring the data into long form, summarise per scale and group, then turn it into the table.</figcaption>
+</figure>
+```
+
+- **`across()`** in `summarise()` or `mutate()`: select columns (`starts_with("tlx_")`, `where(is.numeric)`), functions as a named list, names with `.names = "{.col}_{.fn}"`. Arguments such as `na.rm = TRUE` go into an anonymous function `\(x) mean(x, na.rm = TRUE)`.
+- **Row-wise over items:** `rowMeans(pick(...), na.rm = TRUE)` for scale scores; `rowSums(!is.na(pick(...)))` counts valid items for a minimum rule.
+- **Compute long, show wide:** `pivot_longer()` → `summarise(.by = c(scale, group))` → format → `pivot_wider()`.
+- **What belongs in the table:** M (SD) with a fixed number of decimals, n per cell (if it differs), an effect size with CI for the group comparison. Compare scales with different ranges via d, not via raw differences.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## More: Table 1 and results table
+
+- **Table 1** describes the sample (age, gender, prior experience) per group; ready-made with `gtsummary::tbl_summary(by = interface)` (lesson "Reporting results", beginner).
+- **The results table** shows the dependent variables. For Word: `flextable::flextable()` or `gt::gt()` on the pivoted table, or `modelsummary::datasummary()` with formulas such as `sus + tlx + trust ~ interface * (Mean + SD)`.
+- **Several statistics per scale** (median, IQR, skewness) come from `datawizard::describe_distribution()`, grouped, in one call.
+:::
+
+## Example {#example}
+
+Compute scale scores (SUS 0–100, raw TLX, trust with two reverse-keyed items) and exclude people who failed the attention check:
+
+```{webr}
+scored <- survey |>
+  filter(attention_check == 4) |>
+  mutate(
+    across(c(sus_01, sus_03, sus_05, sus_07, sus_09), \(x) x - 1),
+    across(c(sus_02, sus_04, sus_06, sus_08, sus_10), \(x) 5 - x),
+    across(c(trust_3, trust_5), \(x) 8 - x),
+    sus = 25 * rowMeans(pick(sus_01:sus_10), na.rm = TRUE),
+    tlx = rowMeans(pick(starts_with("tlx_")), na.rm = TRUE),
+    trust = rowMeans(pick(starts_with("trust_")), na.rm = TRUE)
+  ) |>
+  select(respondent, interface, sus, tlx, trust)
+scored
+```
+
+The same statistics for all three scales in one expression, per interface:
+
+```{webr}
+scored |>
+  summarise(
+    across(c(sus, tlx, trust), list(m = \(x) mean(x, na.rm = TRUE), sd = \(x) sd(x, na.rm = TRUE))),
+    n = n(),
+    .by = interface
+  )
+```
+
+Wide, this is hard to read. Computed long and pivoted at the end, with n per cell:
+
+```{webr}
+scored |>
+  pivot_longer(c(sus, tlx, trust), names_to = "scale", values_to = "score") |>
+  summarise(
+    n = sum(!is.na(score)),
+    m = mean(score, na.rm = TRUE),
+    sd = sd(score, na.rm = TRUE),
+    .by = c(scale, interface)
+  ) |>
+  mutate(cell = sprintf("%.1f (%.1f), n = %d", m, sd, n)) |>
+  select(scale, interface, cell) |>
+  pivot_wider(names_from = interface, values_from = cell)
+```
+
+datawizard gives more statistics at once (median, IQR, skewness, missing values):
+
+```{webr}
+scored |>
+  group_by(interface) |>
+  describe_distribution(select = c(sus, tlx, trust))
+```
+
+**How to report it (results section):** Voice control was rated better on the SUS (*M* = 61.5, *SD* = 24.5) than touch control (*M* = 51.1, *SD* = 24.1), *d* = 0.43, 95% CI [0.11, 0.74]. Workload (NASA-TLX) and trust hardly differed (|*d*| ≤ 0.21; Table 2).
+
+## Package comparison {#packages}
+
+| Task | Recommendation | Alternative |
+|---|---|---|
+| Statistics over many columns | **dplyr** `across()` | `datawizard::describe_distribution()` (many statistics, grouped); base R `sapply()` |
+| Scale scores | `rowMeans(pick(...))` | `datawizard::row_means(min_valid = )`; `psych::scoreItems()` (with reliability) |
+| Results table M (SD) | **tidyr** long → `summarise()` → `pivot_wider()` | `modelsummary::datasummary()`; `gtsummary::tbl_summary(by = , statistic = ~ "{mean} ({sd})")` |
+| Effect size for the comparison | **effectsize** `cohens_d()` | `rstatix::cohens_d()`; `report::report()` for the whole sentence |
+
+## Exercises {#exercises}
+
+Three required exercises and one optional exercise. **Run and check** runs your code and checks it right away. Reveal hints one at a time (**Show Hint**), the solution only after that.
+
+{{< include /_generated/en/descriptives-intermediate/exercises.qmd >}}
+
+## Knowledge check {#check}
+
+{{< include /_generated/en/descriptives-intermediate/quiz.qmd >}}
+
+## Cheat sheet {#cheatsheet}
+
+```r
+# Many columns, several statistics
+d |> summarise(
+  across(starts_with("tlx_"), list(m = \(x) mean(x, na.rm = TRUE), sd = \(x) sd(x, na.rm = TRUE)),
+         .names = "{.col}_{.fn}"),
+  .by = group
+)
+
+# Scale score with a minimum number of valid items
+d |> mutate(
+  across(c(item_3, item_5), \(x) 8 - x),
+  score = if_else(rowSums(!is.na(pick(starts_with("item_")))) >= 4,
+                  rowMeans(pick(starts_with("item_")), na.rm = TRUE), NA)
+)
+
+# Results table: compute long, show wide
+d |>
+  pivot_longer(c(sus, tlx, trust), names_to = "scale", values_to = "score") |>
+  summarise(m = mean(score, na.rm = TRUE), sd = sd(score, na.rm = TRUE), .by = c(scale, group)) |>
+  mutate(cell = sprintf("%.1f (%.1f)", m, sd)) |>
+  select(scale, group, cell) |>
+  pivot_wider(names_from = group, values_from = cell)
+```
+
+- Always pass arguments in `across()` via `\(x) f(x, ...)`.
+- Before `pivot_wider()`, keep only the keys and the cell.
+- `sprintf()` for display, at the very end; n per cell if it differs.
+
+{{< include /_generated/en/descriptives-intermediate/footer.qmd >}}

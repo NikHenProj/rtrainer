@@ -3,7 +3,6 @@
 lesson: descriptives-intermediate
 minutes: 45
 prerequisites: [descriptives-beginner, scales-beginner]
-langs: [de]
 packages: [dplyr, tidyr, datawizard]
 data: [survey]
 goals:

@@ -169,3 +169,5 @@ model_parameters(m2) |>
 # Zahlen im Text (Quarto): `r rempsyc::format_p(p)` statt abtippen
 # Word (lokal): flextable::save_as_docx(tab, path = "table2.docx")
 ```
+
+{{< include /_generated/de/reporting-intermediate/footer.qmd >}}

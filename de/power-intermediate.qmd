@@ -136,3 +136,5 @@ fixef(fit)["trial_c"] <- -15
 fit60 <- extend(fit, along = "participant", n = 60)
 powerSim(fit60, test = fixed("trial_c", "z"), nsim = 50)
 ```
+
+{{< include /_generated/de/power-intermediate/footer.qmd >}}

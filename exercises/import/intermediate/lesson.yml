@@ -3,7 +3,6 @@
 lesson: import-intermediate
 minutes: 50
 prerequisites: [import-beginner]
-langs: [de]
 packages: [readr, readxl, haven, purrr, dplyr, stringr, lubridate, janitor]
 data: [driving_sim, survey, usability, raw_export_xlsx]
 goals:

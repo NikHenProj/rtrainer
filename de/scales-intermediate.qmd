@@ -151,3 +151,5 @@ efa$Phi                                       # Faktorkorrelationen
 d |> mutate(peou_3 = 8 - peou_3)
 datawizard::reverse_scale(d$peou_3, range = c(1, 7))
 ```
+
+{{< include /_generated/de/scales-intermediate/footer.qmd >}}

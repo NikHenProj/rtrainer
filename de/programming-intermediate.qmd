@@ -149,3 +149,5 @@ data |>
 safe_slope <- possibly(slope, otherwise = NA_real_)
 tryCatch(expr, error = function(e) NA_real_)
 ```
+
+{{< include /_generated/de/programming-intermediate/footer.qmd >}}
