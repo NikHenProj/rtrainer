@@ -623,17 +623,18 @@ step("en: all beginner lessons linked in course plan", identical(unlinked, ""), 
 intermediate <- c(
   "import", "cleaning", "reshaping", "missing", "visualisation",
   "descriptives", "scales", "sem", "group-comparisons", "robust",
-  "regression", "glm", "mixed-models", "moderation-mediation", "power"
+  "regression", "glm", "mixed-models", "moderation-mediation", "power",
+  "reporting", "reproducibility", "programming"
 )
 unlinked <- js(sprintf(
   "[%s].filter(slug => !document.querySelector(`a[href*=\"${slug}-intermediate\"]`)).join(', ')",
   paste0("'", intermediate, "'", collapse = ", ")
 ))
-step("en: intermediate P1-P5 lessons linked in course plan", identical(unlinked, ""), unlinked)
-german_only <- js("!!document.querySelector('a[href*=\"reporting-intermediate\"]')")
-step("en: German-only reporting-intermediate not linked", identical(german_only, FALSE))
+step("en: all 18 intermediate lessons linked in course plan", identical(unlinked, ""), unlinked)
 project_row <- js("document.querySelector('tr.rt-plan-project a[href*=\"project-beginner\"]')?.getAttribute('href') || ''")
 step("en: project row links the English page", grepl("project-beginner", project_row) && !grepl("/de/", project_row), project_row)
+project_row <- js("document.querySelector('tr.rt-plan-project a[href*=\"project-intermediate\"]')?.getAttribute('href') || ''")
+step("en: project row links the English intermediate project", grepl("project-intermediate", project_row) && !grepl("/de/", project_row), project_row)
 goto("/en/project-beginner.html")
 en_project <- wait_for(
   "document.documentElement.lang.startsWith('en') && document.querySelector('h1').textContent.includes('Mini project') &&

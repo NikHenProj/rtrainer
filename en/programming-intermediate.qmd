@@ -1,0 +1,153 @@
+---
+title: "R programming for analyses"
+subtitle: "Intermediate · Your own functions, tidy eval, purrr, one model per person"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, tidyr, purrr, parameters]
+resources:
+  - ../data/driving_sim.csv
+---
+
+{{< include /_generated/en/programming-intermediate/runtime.qmd >}}
+
+{{< include /_generated/en/programming-intermediate/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R runs directly in your browser. On the first visit it takes 10–30 seconds to load (status at the bottom right); after that it is faster.
+:::
+
+## Why? {#why}
+
+**Research question:** How much faster do drivers in the simulator get across trials, and does this differ between people?
+
+For this you need the same computation for 40 people, the same table for five variables, the same cleaning for every new data delivery. Copied code with small changes is the most common source of errors in analysis scripts: one copy gets fixed, the others do not. Your own functions and purrr turn the repetition into *one* place you can check.
+
+## Concept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 170" role="img" aria-labelledby="fig-pgi-title fig-pgi-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-pgi-title">One model per person with nest and map</title>
+  <desc id="fig-pgi-desc">On the left a long data set with all trials. nest splits it into one row per person with a list column data. map fits a model in each row and stores it in the list column model. map with model_parameters and unnest turn this into a table with slope and confidence interval per person.</desc>
+  <rect x="16" y="30" width="110" height="110" rx="4" class="rt-fig-box" />
+  <text x="71" y="56" text-anchor="middle" class="rt-fig-code">driving_sim</text>
+  <text x="71" y="80" text-anchor="middle" class="rt-fig-label">480 rows</text>
+  <text x="71" y="100" text-anchor="middle" class="rt-fig-label">all trials</text>
+  <rect x="200" y="30" width="160" height="110" rx="4" class="rt-fig-box-accent" />
+  <text x="280" y="56" text-anchor="middle" class="rt-fig-code">participant</text>
+  <text x="280" y="80" text-anchor="middle" class="rt-fig-code">data  &lt;tibble&gt;</text>
+  <text x="280" y="104" text-anchor="middle" class="rt-fig-code">model &lt;lm&gt;</text>
+  <text x="280" y="128" text-anchor="middle" class="rt-fig-label">40 rows</text>
+  <rect x="434" y="30" width="110" height="110" rx="4" class="rt-fig-box" />
+  <text x="489" y="56" text-anchor="middle" class="rt-fig-code">slope</text>
+  <text x="489" y="80" text-anchor="middle" class="rt-fig-code">CI_low</text>
+  <text x="489" y="104" text-anchor="middle" class="rt-fig-code">CI_high</text>
+  <line x1="126" y1="85" x2="198" y2="85" class="rt-fig-line" />
+  <line x1="360" y1="85" x2="432" y2="85" class="rt-fig-line" />
+  <text x="162" y="160" text-anchor="middle" class="rt-fig-code">nest()</text>
+  <text x="396" y="160" text-anchor="middle" class="rt-fig-code">map() + unnest()</text>
+</svg>
+<figcaption><code>nest()</code> turns the long data set into one row per person with the data as a list column. <code>map()</code> fits one model each, <code>model_parameters()</code> + <code>unnest()</code> turn this back into a flat table.</figcaption>
+</figure>
+```
+
+- **Your own functions:** As soon as you copy code for the third time, it becomes a function. Defaults (`digits = 1`) for the usual case, `...` for everything that is passed on to another function.
+- **Functions with dplyr (tidy eval):** Columns that arrive without quotes are "embraced" in dplyr verbs: `group_by({{ group }})`. Column names as text (from a loop, from a configuration) work with `.data[[var]]`. New column names from arguments: `"{{ var }}_mean" := ...`.
+- **purrr:** `map(x, f)` applies `f` to every element and returns a list; `map_dbl()`, `map_int()`, `map_chr()` return a vector of the named type or stop with an error. `map2()` runs in parallel over two inputs, `pmap()` over any number. `map(x, "name")` extracts an element from every list entry.
+- **Many models:** `nest(.by = participant)` → `map(data, \(d) lm(...))` → `map(model, model_parameters)` → `unnest()`. The models stay available as objects.
+- **Catching errors:** `tryCatch(expr, error = function(e) NA_real_)` or, shorter, `possibly(f, otherwise = NA_real_)`. Afterwards, count how many `NA`s were produced.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## More: checking functions, pmap, several outputs
+
+- **Check at the start:** `stopifnot(is.numeric(x))` or `rlang::arg_match()` for allowed values give clear error messages instead of cryptic follow-up errors.
+- **Tests:** Secure helper functions in `R/` with a few `testthat::expect_equal()` calls; many results rest on them.
+- **`pmap()`** for model specifications: a table with the columns `formula` and `data`, each row one model.
+- **`walk()`** instead of `map()` when only side effects matter (writing files, saving plots), e.g. `walk2(plots, paths, ggsave)`.
+- **`across()` in your own functions:** `summarise(across({{ vars }}, mean))` takes several columns in one argument.
+:::
+
+## Example {#example}
+
+Your own summary with `{{ }}`, reused for two variables:
+
+```{webr}
+summary_by <- function(data, group, var) {
+  data |>
+    summarise(
+      M = mean({{ var }}, na.rm = TRUE),
+      SD = sd({{ var }}, na.rm = TRUE),
+      n = sum(!is.na({{ var }})),
+      .by = {{ group }}
+    )
+}
+summary_by(driving_sim, condition, rt_ms)
+summary_by(driving_sim, experience, lane_dev)
+```
+
+One model per person, estimates as a table:
+
+```{webr}
+per_person <- driving_sim |>
+  nest(.by = participant) |>
+  mutate(
+    model = map(data, \(d) lm(rt_ms ~ condition + trial, data = d)),
+    params = map(model, model_parameters)
+  ) |>
+  unnest(params) |>
+  filter(Parameter == "trial") |>
+  select(participant, slope = Coefficient, CI_low, CI_high)
+per_person
+median(per_person$slope)
+```
+
+The median person gets about 31 ms faster per trial, but the slopes range from −105 to +61 ms, and for only 9 of 40 people does the CI exclude 0. For a statement about all people, a mixed model with a random slope estimates the spread directly (lesson Mixed models); the individual models are a good first look.
+
+## Package comparison {#packages}
+
+| Task | Recommendation | Alternative |
+|---|---|---|
+| Iterate over lists/vectors | **purrr** `map()`, `map_dbl()`, `map2()`, `pmap()` | base `lapply()`, `vapply()` (type-stable), `Map()`; `for` loops with a pre-allocated result |
+| Functions with column names | **dplyr** `{{ }}`, `.data[[ ]]` | rlang `enquo()`/`!!` (older approach) |
+| Many models | **tidyr** `nest()` + purrr + `parameters::model_parameters()` | `group_modify()`; broom `tidy()` |
+| Catching errors | **purrr** `possibly()`, `safely()` | base `tryCatch()`, `try()` |
+
+## Exercises {#exercises}
+
+Three required exercises and two optional exercises. **Run and check** runs your code and checks it right away. Reveal hints one at a time (**Show Hint**), the solution only after that.
+
+{{< include /_generated/en/programming-intermediate/exercises.qmd >}}
+
+## Knowledge check {#check}
+
+{{< include /_generated/en/programming-intermediate/quiz.qmd >}}
+
+## Cheat sheet {#cheatsheet}
+
+```r
+# Function with dplyr: embrace the columns
+mean_by <- function(data, group, var) {
+  data |> summarise(mean = mean({{ var }}, na.rm = TRUE), .by = {{ group }})
+}
+# Column name as text: .data[[var]]
+
+# purrr
+map_dbl(rts, mean, na.rm = TRUE)          # same extra arguments for all
+map2_dbl(rts, cutoffs, \(x, cut) mean(x > cut, na.rm = TRUE))  # pairwise
+map_chr(lock$Packages, "Version")         # element from every entry
+
+# One model per person
+data |>
+  nest(.by = participant) |>
+  mutate(model = map(data, \(d) lm(y ~ x, data = d)),
+         params = map(model, model_parameters),
+         n = map_int(model, nobs)) |>
+  unnest(params)
+
+# Catching errors
+safe_slope <- possibly(slope, otherwise = NA_real_)
+tryCatch(expr, error = function(e) NA_real_)
+```
+
+{{< include /_generated/en/programming-intermediate/footer.qmd >}}

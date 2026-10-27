@@ -74,7 +74,7 @@ explanation:
     upper limit of 180 s (censored); with them, a prototype with many
     aborts would look artificially slow although the problem is success.
     So you analyse success separately. `position` captures the learning
-    effect: time drops by about 10 % per round (factor 0.90). Because the
+    effect: time drops by about 10% per round (factor 0.90). Because the
     order is counterbalanced, it does not bias the prototype comparison but
     makes it more precise. The fixed effects on the original scale
     (`model_parameters(fit, exponentiate = TRUE, effects = "fixed")`):

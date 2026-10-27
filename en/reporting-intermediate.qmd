@@ -1,0 +1,173 @@
+---
+title: "Reporting results"
+subtitle: "Intermediate · modelsummary, APA tables with rempsyc, numbers from the model"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, tidyr, parameters, modelsummary, rempsyc, flextable]
+resources:
+  - ../data/acceptance.csv
+  - ../data/survey.csv
+---
+
+{{< include /_generated/en/reporting-intermediate/runtime.qmd >}}
+
+{{< include /_generated/en/reporting-intermediate/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R runs directly in your browser. On the first visit it takes 20–40 seconds to load (status at the bottom right); after that it is faster.
+:::
+
+## Why? {#why}
+
+**Research question:** Does trust in the driver assistance system predict behavioural intention beyond usefulness and ease of use, and how do you show this in a table that reviewers and supervisors can read at a glance?
+
+In the beginner lesson you reported one model with gtsummary and `report()`. A real results section usually compares several models, needs an APA-style table for Word and numbers in the text that match the table. Every number you type by hand is a source of error; every table built from the model object can be recreated in seconds after a data correction.
+
+## Concept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 170" role="img" aria-labelledby="fig-rpi-title fig-rpi-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-rpi-title">From model to report</title>
+  <desc id="fig-rpi-desc">A model object on the left. Arrows lead to three routes: modelsummary for several models side by side, model_parameters and rempsyc nice_table for an APA table, inline code for numbers in the text. All three end in the report as a Word or Quarto document.</desc>
+  <rect x="20" y="66" width="110" height="38" rx="4" class="rt-fig-box-accent" />
+  <text x="75" y="90" text-anchor="middle" class="rt-fig-code">lm(…)</text>
+  <rect x="200" y="14" width="170" height="34" rx="4" class="rt-fig-box" />
+  <text x="285" y="36" text-anchor="middle" class="rt-fig-code">modelsummary()</text>
+  <rect x="200" y="68" width="170" height="34" rx="4" class="rt-fig-box" />
+  <text x="285" y="90" text-anchor="middle" class="rt-fig-code">nice_table()</text>
+  <rect x="200" y="122" width="170" height="34" rx="4" class="rt-fig-box" />
+  <text x="285" y="144" text-anchor="middle" class="rt-fig-code">`r format_p(p)`</text>
+  <rect x="440" y="66" width="100" height="38" rx="4" class="rt-fig-box-accent" />
+  <text x="490" y="90" text-anchor="middle" class="rt-fig-label">Report</text>
+  <line x1="130" y1="78" x2="198" y2="31" class="rt-fig-line" />
+  <line x1="130" y1="85" x2="198" y2="85" class="rt-fig-line" />
+  <line x1="130" y1="92" x2="198" y2="139" class="rt-fig-line" />
+  <line x1="370" y1="31" x2="438" y2="78" class="rt-fig-line" />
+  <line x1="370" y1="85" x2="438" y2="85" class="rt-fig-line" />
+  <line x1="370" y1="139" x2="438" y2="92" class="rt-fig-line" />
+</svg>
+<figcaption>Tables and numbers in the text come from the same model object: modelsummary for model comparisons, rempsyc for an APA table from <code>model_parameters()</code>, inline code for the text. That way everything matches, even after a correction.</figcaption>
+</figure>
+```
+
+- **Several models:** `modelsummary(list("Model 1" = m1, "Model 2" = m2), statistic = "conf.int", gof_map = c("nobs", "r.squared"))`. CIs instead of stars, only the fit statistics you use in the text.
+- **Same sample:** Compare nested models only on the same people. `lm()` silently drops rows with missing values; first build a shared data set with `drop_na()` over the variables of the largest model. The N row in the table makes this checkable.
+- **APA table:** `model_parameters()` provides the estimates, `rempsyc::nice_table()` formats them in APA style (italic headers, *p* without leading zero, "95% CI [ , ]"). The formatting depends on the column names: `b`, `B` (standardised), `t`, `p`, `CI_lower`, `CI_upper`. Do not round beforehand.
+- **Numbers in the text:** In the Quarto report with inline code from the model, e.g. `` `r format_p(p)` `` or `report()`; never type them by hand.
+- **Output:** A `nice_table()` result is a flextable; `flextable::save_as_docx()` writes it as an editable Word table; `modelsummary(..., output = "table2.docx")` does the same. This does not work in the browser (see the box below).
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## More: tables with effect sizes, mixed models, extra rows
+
+- **Standardised coefficients** as a second column: `model_parameters(fit, standardize = "refit")` and name the column `B`; in modelsummary `standardize = "refit"`.
+- **Extra rows** (e.g. ΔR² and the F-test from `anova(m1, m2)`) go into modelsummary via `add_rows = data.frame(...)`.
+- **Mixed models and afex:** modelsummary takes `lmer()` models directly (variance components below the fit statistics); ANOVA tables from afex with `nice_table(as.data.frame(fit$anova_table))` or `parameters::model_parameters(fit)`.
+- **Descriptive statistics:** `datasummary_skim()` and `datasummary()` from modelsummary create Table 1 when gtsummary does not fit.
+:::
+
+## Example {#example}
+
+Build scale scores and fit two nested models. `acceptance` has no missing values, so both models are based on all 300 people:
+
+```{webr}
+tam <- acceptance |>
+  mutate(
+    across(c(peou_3, trust_4), \(x) 8 - x),
+    pu = rowMeans(pick(pu_1:pu_4)),
+    peou = rowMeans(pick(peou_1:peou_4)),
+    trust = rowMeans(pick(trust_1:trust_5)),
+    bi = rowMeans(pick(bi_1:bi_4))
+  )
+m1 <- lm(bi ~ pu + peou, data = tam)
+m2 <- lm(bi ~ pu + peou + trust, data = tam)
+modelsummary(
+  list("Model 1" = m1, "Model 2" = m2),
+  statistic = "conf.int",
+  gof_map = c("nobs", "r.squared"),
+  output = "markdown"
+)
+anova(m1, m2)
+```
+
+R² rises from .21 to .25; the increase is significant, F(1, 296) = 17.61, p < .001. For the APA table of model 2, name the columns the way rempsyc recognises them:
+
+```{webr}
+model_parameters(m2) |>
+  as.data.frame() |>
+  select(Term = Parameter, b = Coefficient, CI_lower = CI_low, CI_upper = CI_high, t, p) |>
+  nice_table(title = c("Table 2", "Prediction of Behavioural Intention"))
+```
+
+**How to report it:** Trust predicted behavioural intention beyond usefulness and ease of use, *b* = 0.21, 95% CI [0.11, 0.32], *t*(296) = 4.20, *p* < .001; the explained variance rose from *R*² = .21 to .25, Δ*R*² = .04, *F*(1, 296) = 17.61, *p* < .001 (Table 2).
+
+## Package comparison {#packages}
+
+| Task | Recommendation | Alternative |
+|---|---|---|
+| Several models side by side | **modelsummary** `modelsummary()` | gtsummary `tbl_regression()` + `tbl_merge()`; stargazer (no longer maintained) |
+| APA table from a data frame | **rempsyc** `nice_table()` | papaja `apa_table()` (only in papaja documents); flextable directly |
+| Numbers in the text | Inline code with `rempsyc::format_p()`, `report()` | papaja `apa_print()` |
+| Word output | `flextable::save_as_docx()`, Quarto `format: docx` | `modelsummary(output = "x.docx")`; officer for whole documents |
+
+::: {.callout-note appearance="simple"}
+## Run locally: table to Word, numbers in the Quarto text
+
+Saving as `.docx` (officer) crashes in webR; locally it works like this:
+
+```r
+tab2 <- model_parameters(m2) |>
+  as.data.frame() |>
+  select(Term = Parameter, b = Coefficient, CI_lower = CI_low, CI_upper = CI_high, t, p) |>
+  nice_table(title = c("Table 2", "Prediction of Behavioural Intention"))
+flextable::save_as_docx(tab2, path = here::here("output", "table2.docx"))
+modelsummary(list("Model 1" = m1, "Model 2" = m2), statistic = "conf.int",
+             gof_map = c("nobs", "r.squared"), output = here::here("output", "table3.docx"))
+```
+
+In the Quarto report (`format: docx`) you take the numbers for the text from the model:
+
+````markdown
+```{r}
+trust_row <- model_parameters(m2) |> filter(Parameter == "trust")
+```
+Trust predicted behavioural intention, *b* = `r round(trust_row$Coefficient, 2)`,
+*p* `r rempsyc::format_p(trust_row$p)`.
+````
+:::
+
+## Exercises {#exercises}
+
+Three required exercises and one optional exercise. **Run and check** runs your code and checks it right away. Reveal hints one at a time (**Show Hint**), the solution only after that.
+
+{{< include /_generated/en/reporting-intermediate/exercises.qmd >}}
+
+## Knowledge check {#check}
+
+{{< include /_generated/en/reporting-intermediate/quiz.qmd >}}
+
+## Cheat sheet {#cheatsheet}
+
+```r
+# Shared sample for nested models
+complete <- data |> drop_na(y, x1, x2, x3)
+m1 <- lm(y ~ x1 + x2, data = complete)
+m2 <- lm(y ~ x1 + x2 + x3, data = complete)
+anova(m1, m2)                                   # test ΔR²
+
+# Models side by side
+modelsummary(list("Model 1" = m1, "Model 2" = m2),
+             statistic = "conf.int", gof_map = c("nobs", "r.squared"))
+
+# APA table: column names control the formatting, do not round beforehand
+model_parameters(m2) |>
+  as.data.frame() |>
+  select(Term = Parameter, b = Coefficient, CI_lower = CI_low, CI_upper = CI_high, t, p) |>
+  nice_table()
+
+# Numbers in the text (Quarto): `r rempsyc::format_p(p)` instead of typing them
+# Word (local): flextable::save_as_docx(tab, path = "table2.docx")
+```
+
+{{< include /_generated/en/reporting-intermediate/footer.qmd >}}

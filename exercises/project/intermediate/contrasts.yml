@@ -76,8 +76,8 @@ explanation:
   en: |
     Because the model contains `log(time_s)`, emmeans detects the
     transformation: with `type = "response"`, the difference of logs becomes
-    a ratio. B / A = 0.88 means that with B, solved tasks take 12 % less
-    time (95 % CI [0.79, 0.99], p = .020), with C 15 % less (0.85
+    a ratio. B / A = 0.88 means that with B, solved tasks take 12% less
+    time (95% CI [0.79, 0.99], p = .020), with C 15% less (0.85
     [0.75, 0.96], p = .006). B and C hardly differ (C / B = 0.96
     [0.85, 1.09], p = .47). `reverse = TRUE` turns "A / B" (1.13) into the
     easier-to-read "B / A". The CIs are Bonferroni-adjusted for three

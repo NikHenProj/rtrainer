@@ -3,7 +3,6 @@
 lesson: reporting-intermediate
 minutes: 45
 prerequisites: [reporting-beginner, regression-intermediate]
-langs: [de]
 packages: [dplyr, tidyr, parameters, modelsummary, rempsyc, flextable]
 data: [acceptance, survey]
 goals:

@@ -1,5 +1,12 @@
 # rtrainer (Quarto course)
 
+## Milestone 9, package P9b: English intermediate lessons P6 and intermediate mini project
+
+- English pages `en/{reporting,reproducibility,programming,project}-intermediate.qmd`, translated from the accepted German pages with identical code, data and exercise IDs (SVG titles, labels and descriptions, "Run locally" boxes, cheat-sheet and checklist comments, "How to report it" texts with decimal points and "N%"); footer included; `langs: [de]` removed from their `lesson.yml`. All 18 intermediate lessons and both mini projects are now bilingual.
+- The axis label in the full script of the English project page is English ("Time ratio with 95% CI (< 1 = faster)"); the shared solution of `pj-i-figure` keeps its German label, because the plot check does not compare label text and the German page stays unchanged.
+- Proofread the English texts of the exercises and quizzes of the four lessons with the P8 script: no missing `en`, no German leftovers. 20 lines with "N %" changed to "N%" only inside `en:` blocks; checks (`pattern`) and German texts unchanged.
+- Smoke test: the English course-plan step now expects all 18 intermediate lessons linked (the German-only check is gone) and the project row to link the English `project-intermediate`.
+
 ## Milestone 9, package P9a: English intermediate lessons P4–P5 (accepted, merged into main)
 
 - P9 split in two sessions as planned: this part translates P4–P5; P6 (reporting, reproducibility, programming) and `project-intermediate` follow in P9b.

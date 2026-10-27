@@ -38,7 +38,7 @@ prompt:
     Gib die Nummern der richtigen Aussagen aufsteigend als Vektor ein, z. B. `c(1, 3)`.
   en: |
     Table 2 of a report (modelsummary, intention `bi` 1–7, predictors
-    scale scores 1–7; 95 % CI in brackets):
+    scale scores 1–7; 95% CI in brackets):
 
     ```
                   Model 1          Model 2

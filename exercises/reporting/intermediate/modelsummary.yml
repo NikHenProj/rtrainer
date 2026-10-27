@@ -40,7 +40,7 @@ prompt:
     Report both models in **one** table with `modelsummary()`:
 
     - columns are called `"Model 1"` and `"Model 2"`,
-    - below each coefficient the 95 % CI instead of the standard error,
+    - below each coefficient the 95% CI instead of the standard error,
     - as goodness-of-fit only the number of observations and R²
       (`gof_map = c("nobs", "r.squared")`),
     - output as a data frame (`output = "data.frame"`) so that the check
@@ -81,7 +81,7 @@ explanation:
   en: |
     The table shows what readers need for the comparison: equal N (300
     and 300), R² rises from .21 to .25, and trust predicts intention
-    beyond usefulness and ease of use (b = 0.21, 95 % CI [0.11, 0.32]).
+    beyond usefulness and ease of use (b = 0.21, 95% CI [0.11, 0.32]).
     Whether the increase of ΔR² = .04 is significant is tested by
     `anova(m1, m2)`: F(1, 296) = 17.61, p < .001. CIs instead of standard
     errors can be interpreted directly and are recommended in APA 7; the

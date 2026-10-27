@@ -3,7 +3,6 @@
 lesson: programming-intermediate
 minutes: 50
 prerequisites: [descriptives-beginner, regression-beginner]
-langs: [de]
 packages: [dplyr, tidyr, purrr, parameters]
 data: [driving_sim]
 goals:

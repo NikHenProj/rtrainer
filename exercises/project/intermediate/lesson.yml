@@ -6,7 +6,6 @@
 lesson: project-intermediate
 minutes: 75
 prerequisites: [reporting-intermediate, mixed-models-intermediate]
-langs: [de]
 packages: [readxl, janitor, dplyr, lme4, lmerTest, emmeans, parameters, ggplot2]
 data: [raw_export_xlsx, usability]
 goals:

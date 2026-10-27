@@ -35,7 +35,7 @@ questions:
     options:
       - text:
           de: "Das 95-%-Konfidenzintervall (oder SE), dazu der exakte p-Wert; Sterne sind nicht nötig."
-          en: "The 95 % confidence interval (or SE), plus the exact p-value; stars are not needed."
+          en: "The 95% confidence interval (or SE), plus the exact p-value; stars are not needed."
         correct: true
         explain:
           de: "Richtig. Das KI zeigt Größe und Unsicherheit zugleich; Sterne geben nur eine Schwelle wieder."

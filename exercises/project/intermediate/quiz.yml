@@ -61,7 +61,7 @@ questions:
     options:
       - text:
           de: "Mit B dauern gelöste Aufgaben 12 % kürzer als mit A, plausibel zwischen 1 % und 21 %."
-          en: "With B, solved tasks take 12 % less time than with A, plausibly between 1 % and 21 %."
+          en: "With B, solved tasks take 12% less time than with A, plausibly between 1% and 21%."
         correct: true
         explain:
           de: "Auf der Log-Skala werden Differenzen zu Verhältnissen; 1 heißt gleich schnell."
@@ -72,7 +72,7 @@ questions:
         correct: false
         explain:
           de: "0,88 ist ein Faktor, keine Differenz. In Sekunden hängt der Unterschied von der Aufgabe ab (12 % von 85 s sind mehr als von 35 s)."
-          en: "0.88 is a factor, not a difference. In seconds, the difference depends on the task (12 % of 85 s is more than of 35 s)."
+          en: "0.88 is a factor, not a difference. In seconds, the difference depends on the task (12% of 85 s is more than of 35 s)."
       - text:
           de: "B ist um 0,88 Standardabweichungen schneller."
           en: "B is 0.88 standard deviations faster."
