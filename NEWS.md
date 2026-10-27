@@ -1,5 +1,11 @@
 # rtrainer (Quarto course)
 
+## Milestone 10: plan for the expert level (draft)
+
+- `docs/M10-plan.md`: 16 expert lessons in six packages following the `curriculum.yml` order (the recommended path is built from it), P0 for tooling and data first, then English, then `project-expert`; `signals`, `text` and `machine-learning` stay in M11.
+- Expert lessons start with a skippable challenge ("Try it yourself first"), planned as an exercise field `challenge: true` that does not count towards completion.
+- webR index checked for the planned packages; listed but known not to run in the browser (brms, glmmTMB, officer, targets) are planned as "Run locally". Bayesian lessons work on posterior draws pre-computed locally with brms (new dataset `bayes_draws`); measurement invariance gets a new dataset `tam_markets`, leaving `acceptance` unchanged.
+
 ## Milestone 9, package P9b: English intermediate lessons P6 and intermediate mini project (accepted, merged into main)
 
 - English pages `en/{reporting,reproducibility,programming,project}-intermediate.qmd`, translated from the accepted German pages with identical code, data and exercise IDs (SVG titles, labels and descriptions, "Run locally" boxes, cheat-sheet and checklist comments, "How to report it" texts with decimal points and "N%"); footer included; `langs: [de]` removed from their `lesson.yml`. All 18 intermediate lessons and both mini projects are now bilingual.
