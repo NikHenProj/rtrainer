@@ -1,4 +1,4 @@
-# M10: Expert-Stufe (Plan, Entwurf 2026-10-27, Abnahme offen)
+# M10: Expert-Stufe (Plan, abgenommen 2026-10-27)
 
 Grundlage: SPEC.md „Struktur: Themen × Stufen“, „Lektion (Aufbau)“ und „Meilensteine“, `curriculum.yml`, `docs/legacy-triage.md`.
 Ablauf wie M9: P0 (Werkzeug + Daten), dann DE in Paketen zu höchstens 3 Lektionen (je eine Sitzung, danach Verifier + Abnahme), dann EN, dann Mini-Projekt Expert (DE, danach EN).
@@ -41,7 +41,7 @@ Voraussetzungen: jeweilige Intermediate-Lektion; zusätzlich bayes-expert → re
 - **Neu `bayes_draws`:** Posterior-Ziehungen (z. B. 4 × 1000) aus lokal mit brms geschätzten Modellen: `lmer`-Analogon für `driving_sim` (Bedingung × Durchgang) und logistisches GLMM für `usability` (Erfolg), dazu Prior-Ziehungen für Savage-Dickey. Gespeichert als CSV (lange Form: `model`, `draw`, `parameter`, `value`). Das Skript in `data-raw/` braucht brms + Stan (lokal vorhanden) und läuft nicht in CI; die CSV wird eingecheckt. Tests prüfen Spalten und Zusammenfassungen.
 - **Vorhandene Daten prüfen:** `usability$errors` (149 Nullen bei 284) reicht für Überdispersion/Nullen. `survey` reicht für mice; MNAR-Sensitivität rechnet mit einer angenommenen Verschiebung, ohne neue Daten.
 
-## Offen (bei Abnahme klären, keine Blockade)
-1. **Daten für project-expert:** (a) neuer Datensatz `takeover` (Übernahmezeiten beim automatisierten Fahren, Messwiederholung, zensierte Zeiten, Ausfälle). Damit muss das Gelernte auf neue Daten übertragen werden. Oder (b) vorhandene Daten (`driving_sim` + `usability`), was weniger Aufwand ist. Empfehlung: (a), erzeugt in P9 vor dem Schreiben.
-2. **Herausforderung:** als Übung mit Bewertung (Vorschlag) oder nur als Aufgabe mit Musterlösung ohne Check.
-3. **P6 nur mit programming:** Die Pakete folgen der Reihenfolge in `curriculum.yml`, weil „Als Nächstes“ den Pfad daraus bildet. Dadurch bleibt programming-expert allein. Das passt, weil das Multiversum (Triage 22) direkt in project-expert weiterverwendet wird. Alternative: Pfadreihenfolge je Stufe konfigurierbar machen (Werkzeug + Tests) und programming in P1 vorziehen. Empfehlung: nicht vorziehen.
+## Entscheidungen bei der Abnahme (2026-10-27)
+1. **Daten für project-expert:** neuer Datensatz `takeover` (Übernahmezeiten beim automatisierten Fahren, Messwiederholung, zensierte Zeiten, Ausfälle), erzeugt in P9 vor dem Schreiben.
+2. **Herausforderung:** als bewertete Übung (`challenge: true`, eigener Check wie andere Übungen, zählt nicht für „Abgeschlossen“).
+3. **programming-expert allein in P6:** Pakete und Pfad folgen der Reihenfolge in `curriculum.yml`; keine konfigurierbare Pfadreihenfolge.

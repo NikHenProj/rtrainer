@@ -1,6 +1,8 @@
 # rtrainer (Quarto course)
 
-## Milestone 10: plan for the expert level (draft)
+## Milestone 10: plan for the expert level (accepted)
+
+- Decisions at acceptance: a new dataset `takeover` for `project-expert`; the challenge is a graded exercise; `programming-expert` stays alone in P6, the path keeps the `curriculum.yml` order.
 
 - `docs/M10-plan.md`: 16 expert lessons in six packages following the `curriculum.yml` order (the recommended path is built from it), P0 for tooling and data first, then English, then `project-expert`; `signals`, `text` and `machine-learning` stay in M11.
 - Expert lessons start with a skippable challenge ("Try it yourself first"), planned as an exercise field `challenge: true` that does not count towards completion.
