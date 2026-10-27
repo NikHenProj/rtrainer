@@ -1,6 +1,6 @@
 # STATUS
 
-Stand (2026-10-27): **M9 Paket P9a (EN: Intermediate P4–P5, 6 Lektionen) abgenommen und in `main`.** Davor: **M9 Paket P8 (EN: Intermediate P1–P3, 9 Lektionen) abgenommen und in `main`.** Davor: **M9 Paket P7 (DE: project-intermediate) abgenommen und in `main`.** Davor: **M9 Paket P6 (DE: reporting-, reproducibility-, programming-intermediate) abgenommen und in `main`.** Davor: **M9 Paket P5 (DE: mixed-models-, moderation-mediation-, power-intermediate) abgenommen und in `main`.** **M6 bis M8 Teil 5 und M9 Paket P1 (DE: import-, cleaning-, reshaping-intermediate) abgenommen und in `main` und M9 Paket P2 (DE: missing-, visualisation-, descriptives-intermediate) abgenommen und in `main`; M9 Paket P3 (DE: scales-, sem-, group-comparisons-intermediate) und Datensatz `acceptance` abgenommen und in `main`; M9 Paket P4 (DE: robust-, regression-, glm-intermediate) abgenommen und in `main`** (alle 10 Beginner-Lektionen und Mini-Projekt Beginner, DE + EN). **Online seit 2026-10-26:** https://nikhenproj.github.io/rtrainer/ (Pages-Quelle GitHub Actions, letzter CI-Lauf 40568702740 grün). M9-Plan abgenommen (inkl. Datensatz `acceptance`): `docs/M9-plan.md`. Entscheidungen: NEWS.md.
+Stand (2026-10-27): **M9 Paket P9a (EN: Intermediate P4–P5, 6 Lektionen) abgenommen und in `main`.** Davor: **M9 Paket P8 (EN: Intermediate P1–P3, 9 Lektionen) abgenommen und in `main`.** Davor: **M9 Paket P7 (DE: project-intermediate) abgenommen und in `main`.** Davor: **M9 Paket P6 (DE: reporting-, reproducibility-, programming-intermediate) abgenommen und in `main`.** Davor: **M9 Paket P5 (DE: mixed-models-, moderation-mediation-, power-intermediate) abgenommen und in `main`.** **M6 bis M8 Teil 5 und M9 Paket P1 (DE: import-, cleaning-, reshaping-intermediate) abgenommen und in `main` und M9 Paket P2 (DE: missing-, visualisation-, descriptives-intermediate) abgenommen und in `main`; M9 Paket P3 (DE: scales-, sem-, group-comparisons-intermediate) und Datensatz `acceptance` abgenommen und in `main`; M9 Paket P4 (DE: robust-, regression-, glm-intermediate) abgenommen und in `main`** (alle 10 Beginner-Lektionen und Mini-Projekt Beginner, DE + EN). **Online seit 2026-10-26:** https://nikhenproj.github.io/rtrainer/ (Pages-Quelle GitHub Actions, letzter CI-Lauf 40575147997 grün). M9-Plan abgenommen (inkl. Datensatz `acceptance`): `docs/M9-plan.md`. Entscheidungen: NEWS.md.
 
 ## Was steht
 - **Gerüst (M6):** Quarto-Website mit quarto-live/webR, Theme hell/dunkel (IBM Plex Sans, JetBrains Mono, Indigo), Kopfzeile Kursplan · Wiederholen (n fällig) · Pakete · Glossar · DE/EN · Hell/Dunkel · Suche.
@@ -25,6 +25,10 @@ Stand (2026-10-27): **M9 Paket P9a (EN: Intermediate P4–P5, 6 Lektionen) abgen
 - **Triage** `docs/legacy-triage.md`: 54 behalten (18 im Beginner-Pfad), 11 streichen, freigegeben. Migriert: 41 (markiert): alle Beginner-Aufgaben der Triage, P1 (10, 13, 18, 23, 24, 26), P2 (5, 14, 15, 48, 52), P3 (30, 31, 36, 37, 38), P4 (35), P5 (40–43, 45, 46; 44 bleibt für mixed-models-expert) und P6 (53, 54, 19, 21, 25, 28, 29; 4 als `rr-i-lockfile`, 20 als Wissenscheck-Frage). Stand: 50 von 54 (offen: 22, 27, 39, 44 für Expert).
 - Alt: `legacy/exercises/` (65 Aufgaben), `legacy/driving_sim_v0.*`.
 
+## Online (2026-10-27, M9 P9a)
+- Gepusht (682de00, 9c6baf2). CI-Lauf 40575147997 grün (build 13,1 min, deploy ok): 144/144, `[ FAIL 0 | WARN 16 | SKIP 0 | PASS 243 ]`, Node 12/0, Rauchtest 0 failure(s); „en: intermediate P1-P5 lessons linked in course plan“ (15 Slugs) und „en: German-only reporting-intermediate not linked“ ok.
+- Ladezeit im CI-Rauchtest: project-intermediate 22,7 s.
+
 ## Geprüft (2026-10-27, M9 P9a)
 Über Verifier-Subagent (echte Ausgabe, gekürzt):
 - `Rscript tools/generate.R`: Generated 554 files, 144 exercises. `Rscript tools/selftest.R`: 144/144 exercises ok
@@ -32,7 +36,7 @@ Stand (2026-10-27): **M9 Paket P9a (EN: Intermediate P4–P5, 6 Lektionen) abgen
 - `quarto render`: Exit 0, [65/65], keine Warnungen; 6 neue `_site/en/*-intermediate.html`, keine `en/reporting-intermediate.html`
 - `Rscript tests/smoke-test.R`: 0 failure(s); „en: intermediate P1-P5 lessons linked in course plan“ (15 Slugs), „en: German-only reporting-intermediate not linked“ ok
 - Umgebung: Selbsttest und R-Tests waren zunächst rot, weil eine knitr-Installation (27.10., 20:10, nicht aus dieser Sitzung) abgebrochen war (leerer Ordner + `00LOCK-knitr`) und `~/.Renviron` fehlte. Nach Rückfrage: Sperrordner entfernt, knitr 1.52 neu installiert, `~/.Renviron` mit `CHROMOTE_CHROME` neu angelegt; danach grün. Ein alter, unabhängiger Rest `00LOCK-arrow` (25.07.) liegt noch in der Bibliothek; arrow wird im Kurs nicht genutzt, nicht angefasst.
-- Nicht geprüft: EN-Seiten nicht manuell durchgeklickt; EN-Übungen nicht im Browser bewertet (gleiche IDs/Checks wie DE); EN-Texte nur per Skript geprüft; nicht gepusht, CI nicht gelaufen.
+- Nicht geprüft: EN-Seiten nicht manuell durchgeklickt; EN-Übungen nicht im Browser bewertet (gleiche IDs/Checks wie DE); EN-Texte nur per Skript geprüft. CI siehe oben.
 
 ## Online (2026-10-27, M9 P8)
 - Gepusht (ce3a2ad, 7f7efd9). CI-Lauf 40568702740 grün (build 11,9 min, deploy ok): 144/144, `[ FAIL 0 | WARN 16 | SKIP 0 | PASS 243 ]`, Node 12/0, Rauchtest 0 failure(s); alle 9 „en:“-Schritte ok, inkl. Intermediate-Links im EN-Kursplan und EN-Seite group-comparisons-intermediate mit Übung und Zurück/Weiter.
