@@ -1,6 +1,6 @@
 # rtrainer (Quarto course)
 
-## Milestone 9, package P9b: English intermediate lessons P6 and intermediate mini project
+## Milestone 9, package P9b: English intermediate lessons P6 and intermediate mini project (accepted, merged into main)
 
 - English pages `en/{reporting,reproducibility,programming,project}-intermediate.qmd`, translated from the accepted German pages with identical code, data and exercise IDs (SVG titles, labels and descriptions, "Run locally" boxes, cheat-sheet and checklist comments, "How to report it" texts with decimal points and "N%"); footer included; `langs: [de]` removed from their `lesson.yml`. All 18 intermediate lessons and both mini projects are now bilingual.
 - The axis label in the full script of the English project page is English ("Time ratio with 95% CI (< 1 = faster)"); the shared solution of `pj-i-figure` keeps its German label, because the plot check does not compare label text and the German page stays unchanged.
