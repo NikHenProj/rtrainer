@@ -1,6 +1,6 @@
 # STATUS
 
-Stand (2026-10-26): **M6 bis M8 Teil 5 und M9 Paket P1 (DE: import-, cleaning-, reshaping-intermediate) abgenommen und in `main` und M9 Paket P2 (DE: missing-, visualisation-, descriptives-intermediate) abgenommen und in `main`; M9 Paket P3 (DE: scales-, sem-, group-comparisons-intermediate) und Datensatz `acceptance` abgenommen und in `main`; M9 Paket P4 (DE: robust-, regression-, glm-intermediate) abgenommen und in `main`** (alle 10 Beginner-Lektionen und Mini-Projekt Beginner, DE + EN). **Online seit 2026-10-26:** https://nikhenproj.github.io/rtrainer/ (Pages-Quelle GitHub Actions, CI-Lauf 40326391796 grün). M9-Plan abgenommen (inkl. Datensatz `acceptance`): `docs/M9-plan.md`. Entscheidungen: NEWS.md.
+Stand (2026-10-26): **M6 bis M8 Teil 5 und M9 Paket P1 (DE: import-, cleaning-, reshaping-intermediate) abgenommen und in `main` und M9 Paket P2 (DE: missing-, visualisation-, descriptives-intermediate) abgenommen und in `main`; M9 Paket P3 (DE: scales-, sem-, group-comparisons-intermediate) und Datensatz `acceptance` abgenommen und in `main`; M9 Paket P4 (DE: robust-, regression-, glm-intermediate) abgenommen und in `main`** (alle 10 Beginner-Lektionen und Mini-Projekt Beginner, DE + EN). **Online seit 2026-10-26:** https://nikhenproj.github.io/rtrainer/ (Pages-Quelle GitHub Actions, letzter CI-Lauf 40424325670 grün). M9-Plan abgenommen (inkl. Datensatz `acceptance`): `docs/M9-plan.md`. Entscheidungen: NEWS.md.
 
 ## Was steht
 - **Gerüst (M6):** Quarto-Website mit quarto-live/webR, Theme hell/dunkel (IBM Plex Sans, JetBrains Mono, Indigo), Kopfzeile Kursplan · Wiederholen (n fällig) · Pakete · Glossar · DE/EN · Hell/Dunkel · Suche.
@@ -19,6 +19,11 @@ Stand (2026-10-26): **M6 bis M8 Teil 5 und M9 Paket P1 (DE: import-, cleaning-, 
 - **Daten (M8.1):** `driving_sim`, `survey` (Fragebogen: SUS, NASA-TLX, Vertrauen mit umgepolten Items, fehlende Werte, Aufmerksamkeitsfrage), `usability` (24 × 3 Prototypen × 4 Aufgaben, Lateinisches Quadrat, Timeout 180 s, p07 ohne C), `raw_export` (.csv mit `;`/Dezimalkomma) + `raw_export_xlsx` (gleiche Antworten, Titel-/Summenzeilen, gemischte Datumsformate, Codebook). Skripte in `data-raw/`, Einträge in `data/datasets.yml`, Tests `tools/tests/test-datasets.R`. Neu (vor P3): `acceptance` (TAM-Fragebogen, n = 300, 4 Skalen 1–7, `peou_3`/`trust_4` umgepolt, schwaches Item `pu_5`, Erfahrung, Alter).
 - **Triage** `docs/legacy-triage.md`: 54 behalten (18 im Beginner-Pfad), 11 streichen, freigegeben. Migriert: 35 (markiert): alle Beginner-Aufgaben der Triage, P1 (10, 13, 18, 23, 24, 26), P2 (5, 14, 15, 48, 52), P3 (30, 31, 36, 37, 38) und P4 (35).
 - Alt: `legacy/exercises/` (65 Aufgaben), `legacy/driving_sim_v0.*`.
+
+## Online (2026-10-27, M9 P4)
+- Gepusht (ba2a5ad, 103c4d5). Erster CI-Lauf 40369342263 rot: 107/108, `rb-i-mann-whitney` brauchte coin für `rstatix::wilcox_effsize()` (lokal installiert, in CI und Browser nicht). Fix 736afb2: coin in Lektion, Übung, Seite und Workflow, vor rstatix geladen (coin hat eigenes `wilcox_test()`); Rauchtest bewertet die Übung jetzt in webR.
+- CI-Lauf 40424325670 grün (build 6,1 min, deploy ok): 108/108, `[ FAIL 0 | WARN 8 | SKIP 0 | PASS 243 ]`, Node 12/0, Rauchtest 0 failure(s).
+- Ladezeit im CI-Rauchtest (headless, Runner): robust-intermediate (mit coin) 12,6 s, regression-intermediate 6,5 s, glm-intermediate 7,5 s.
 
 ## Geprüft (2026-10-26, M9 P4)
 Über Verifier-Subagent (echte Ausgabe, gekürzt):
