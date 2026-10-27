@@ -1,0 +1,134 @@
+# Knowledge check: passed at >= `pass` share of correctly answered questions.
+lesson: moderation-mediation-intermediate
+pass: 0.8
+questions:
+  - id: mo-i-q-difference
+    prompt:
+      de: "Was unterscheidet Moderation von Mediation?"
+      en: "What distinguishes moderation from mediation?"
+    options:
+      - text:
+          de: "Ein Moderator verändert, *wie stark* x mit y zusammenhängt (Interaktion); ein Mediator liegt *zwischen* x und y und überträgt einen Teil des Effekts."
+          en: "A moderator changes *how strongly* x relates to y (interaction); a mediator lies *between* x and y and carries part of the effect."
+        correct: true
+        explain:
+          de: "Richtig. Moderation: `y ~ x * m`. Mediation: `m ~ a * x`, `y ~ b * m + c * x`, indirekter Effekt `a * b`."
+          en: "Right. Moderation: `y ~ x * m`. Mediation: `m ~ a * x`, `y ~ b * m + c * x`, indirect effect `a * b`."
+      - text:
+          de: "Beides ist dasselbe, nur in verschiedenen Fächern anders benannt."
+          en: "Both are the same, just named differently in different fields."
+        correct: false
+        explain:
+          de: "Die Modelle und Fragen sind verschieden: „für wen/wann?“ (Moderation) gegen „wie/über welchen Weg?“ (Mediation)."
+          en: "The models and questions differ: \"for whom/when?\" (moderation) versus \"how/through which path?\" (mediation)."
+      - text:
+          de: "Ein Mediator muss kategorial sein, ein Moderator kontinuierlich."
+          en: "A mediator must be categorical, a moderator continuous."
+        correct: false
+        explain:
+          de: "Beide können kategorial oder kontinuierlich sein; entscheidend ist ihre Rolle im Modell."
+          en: "Both can be categorical or continuous; what matters is their role in the model."
+  - id: mo-i-q-jn
+    prompt:
+      de: "Warum ist ein Johnson-Neyman-Intervall oft aufschlussreicher als einfache Steigungen bei −1 SD, Mittelwert und +1 SD?"
+      en: "Why is a Johnson-Neyman interval often more informative than simple slopes at −1 SD, mean and +1 SD?"
+    options:
+      - text:
+          de: "Es zeigt für den ganzen Wertebereich des Moderators, wo die Steigung signifikant ist, statt für drei willkürliche Punkte."
+          en: "It shows for the whole range of the moderator where the slope is significant, instead of for three arbitrary points."
+        correct: true
+        explain:
+          de: "Richtig. Grenzen außerhalb der beobachteten Werte haben aber keine Bedeutung."
+          en: "Right. Bounds outside the observed values have no meaning, though."
+      - text:
+          de: "Es ersetzt den Test der Interaktion; der Koeffizient `x:m` muss nicht berichtet werden."
+          en: "It replaces the test of the interaction; the coefficient `x:m` need not be reported."
+        correct: false
+        explain:
+          de: "Die Interaktion mit KI bleibt das Hauptergebnis; Johnson-Neyman beschreibt sie nur genauer."
+          en: "The interaction with its CI remains the main result; Johnson-Neyman only describes it in more detail."
+      - text:
+          de: "Seine Grenzen sind Schwellenwerte in der Population, die nicht von der Stichprobengröße abhängen."
+          en: "Its bounds are thresholds in the population that do not depend on sample size."
+        correct: false
+        explain:
+          de: "Die Grenzen hängen an der Signifikanz und rücken mit mehr Daten näher an 0."
+          en: "The bounds depend on significance and move closer to 0 with more data."
+  - id: mo-i-q-indirect
+    prompt:
+      de: "Wie prüfst du den indirekten Effekt `a * b` am besten?"
+      en: "How do you best test the indirect effect `a * b`?"
+    options:
+      - text:
+          de: "Mit einem Bootstrap-KI für `a * b` (z. B. 5000 Ziehungen, Perzentil); schließt es 0 aus, ist der indirekte Effekt nachweisbar."
+          en: "With a bootstrap CI for `a * b` (e.g. 5000 draws, percentile); if it excludes 0, the indirect effect is detectable."
+        correct: true
+        explain:
+          de: "Richtig. Das Produkt zweier Schätzer ist schief verteilt; das Bootstrap-KI bildet das ab."
+          en: "Right. The product of two estimates has a skewed distribution; the bootstrap CI reflects that."
+      - text:
+          de: "Wenn `a` und `b` beide signifikant sind, ist auch `a * b` signifikant; ein eigener Test ist unnötig."
+          en: "If `a` and `b` are both significant, `a * b` is significant too; a separate test is unnecessary."
+        correct: false
+        explain:
+          de: "Das stimmt oft, aber nicht immer, und liefert weder Schätzer noch KI für den indirekten Effekt."
+          en: "This is often true but not always, and gives neither an estimate nor a CI for the indirect effect."
+      - text:
+          de: "Erst muss der Gesamteffekt signifikant sein, sonst gibt es nichts zu vermitteln."
+          en: "The total effect must be significant first, otherwise there is nothing to mediate."
+        correct: false
+        explain:
+          de: "Das war ein Schritt bei Baron & Kenny (1986). Ein indirekter Effekt kann auch ohne signifikanten Gesamteffekt bestehen (z. B. bei gegenläufigen Pfaden)."
+          en: "That was a step in Baron & Kenny (1986). An indirect effect can exist without a significant total effect (e.g. with opposing paths)."
+  - id: mo-i-q-causal
+    prompt:
+      de: "Alle Variablen wurden gleichzeitig in einem Fragebogen erhoben. Was darfst du aus einem signifikanten indirekten Effekt schließen?"
+      en: "All variables were measured at the same time in one questionnaire. What may you conclude from a significant indirect effect?"
+    options:
+      - text:
+          de: "Die Daten sind mit dem angenommenen Wirkpfad vereinbar; die Richtung selbst ist eine Annahme aus Theorie oder Design."
+          en: "The data are compatible with the assumed causal path; the direction itself is an assumption from theory or design."
+        correct: true
+        explain:
+          de: "Richtig. Umgekehrte Modelle passen oft genauso gut. Für kausale Aussagen: Experiment oder Längsschnitt."
+          en: "Right. Reversed models often fit just as well. For causal claims: experiment or longitudinal design."
+      - text:
+          de: "Dass x über m auf y wirkt, weil lavaan die Pfade gerichtet schätzt."
+          en: "That x affects y through m, because lavaan estimates directed paths."
+        correct: false
+        explain:
+          de: "Die Pfeilrichtung legst du in der Modellsyntax fest; die Daten können sie nicht prüfen."
+          en: "You set the arrow direction in the model syntax; the data cannot test it."
+      - text:
+          de: "Nichts, Mediationsanalysen sind mit Querschnittsdaten verboten."
+          en: "Nothing, mediation analyses are forbidden with cross-sectional data."
+        correct: false
+        explain:
+          de: "Sie sind erlaubt und als Zerlegung nützlich, nur die kausale Deutung ist begrenzt."
+          en: "They are allowed and useful as a decomposition; only the causal interpretation is limited."
+  - id: mo-i-q-centre
+    prompt:
+      de: "In `lm(bi ~ pu * experience)` ist der Koeffizient von `pu` 0.16 (p = .135). Was bedeutet er?"
+      en: "In `lm(bi ~ pu * experience)`, the coefficient of `pu` is 0.16 (p = .135). What does it mean?"
+    options:
+      - text:
+          de: "Die Steigung von `pu` bei 0 Jahren Erfahrung, also am Rand der Daten."
+          en: "The slope of `pu` at 0 years of experience, i.e. at the edge of the data."
+        correct: true
+        explain:
+          de: "Richtig. Mit zentrierter Erfahrung wäre es die Steigung beim Mittelwert (3 Jahre): 0.37."
+          en: "Right. With centred experience it would be the slope at the mean (3 years): 0.37."
+      - text:
+          de: "Der durchschnittliche Effekt der Nützlichkeit über alle Personen."
+          en: "The average effect of usefulness across all participants."
+        correct: false
+        explain:
+          de: "Das gilt nur, wenn der Moderator zentriert ist. Hier ist es der Effekt bei `experience = 0`."
+          en: "That only holds if the moderator is centred. Here it is the effect at `experience = 0`."
+      - text:
+          de: "Dass die Nützlichkeit keinen Einfluss hat, weil p > .05."
+          en: "That usefulness has no influence, because p > .05."
+        correct: false
+        explain:
+          de: "Er gilt nur bei 0 Jahren, und nicht signifikant heißt nicht null; beim Mittelwert ist die Steigung deutlich positiv."
+          en: "It only applies at 0 years, and not significant does not mean zero; at the mean, the slope is clearly positive."

@@ -1,0 +1,138 @@
+---
+title: "Power und Stichprobenplanung"
+subtitle: "Intermediate · pwr, Superpower, Simulation mit simr"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, pwr, Superpower, simr]
+resources:
+  - ../data/driving_sim.csv
+---
+
+{{< include /_generated/de/power-intermediate/runtime.qmd >}}
+
+{{< include /_generated/de/power-intermediate/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R läuft hier direkt im Browser. Beim ersten Besuch lädt es 20–40 Sekunden (Anzeige unten rechts), danach geht es schneller.
+:::
+
+## Wozu? {#why}
+
+**Forschungsfrage:** Wie viele Personen braucht die nächste Simulatorstudie, damit sie einen Unterschied, der für die Gestaltung zählt, auch zuverlässig findet?
+
+Zu kleine Studien übersehen relevante Effekte, und wenn sie doch signifikant werden, überschätzen sie den Effekt. Zu große kosten Zeit und Testpersonen. Eine Poweranalyse vor der Studie macht die Planung nachvollziehbar und gehört in jede Präregistrierung und jeden Ethikantrag. Nach der Studie ist sie kein Werkzeug mehr, um ein Ergebnis zu erklären.
+
+## Konzept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 190" role="img" aria-labelledby="fig-pwi-title fig-pwi-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-pwi-title">Vier Größen der Poweranalyse</title>
+  <desc id="fig-pwi-desc">Vier Kästen im Kreis: Effektgröße, Stichprobengröße, Alpha und Power. In der Mitte steht: Drei festlegen, die vierte ausrechnen. Darunter drei Wege: a priori rechnet n aus, Sensitivität rechnet den kleinsten auffindbaren Effekt aus, Simulation erzeugt Daten aus einem Modell und zählt signifikante Ergebnisse.</desc>
+  <rect x="40" y="20" width="130" height="34" rx="4" class="rt-fig-box-accent" />
+  <text x="105" y="42" text-anchor="middle" class="rt-fig-label">Effekt (d, f)</text>
+  <rect x="390" y="20" width="130" height="34" rx="4" class="rt-fig-box-accent" />
+  <text x="455" y="42" text-anchor="middle" class="rt-fig-label">n</text>
+  <rect x="40" y="100" width="130" height="34" rx="4" class="rt-fig-box" />
+  <text x="105" y="122" text-anchor="middle" class="rt-fig-label">α (meist .05)</text>
+  <rect x="390" y="100" width="130" height="34" rx="4" class="rt-fig-box" />
+  <text x="455" y="122" text-anchor="middle" class="rt-fig-label">Power (1 − β)</text>
+  <text x="280" y="70" text-anchor="middle" class="rt-fig-label">drei festlegen,</text>
+  <text x="280" y="88" text-anchor="middle" class="rt-fig-label">die vierte ausrechnen</text>
+  <text x="105" y="170" text-anchor="middle" class="rt-fig-code">a priori → n</text>
+  <text x="280" y="170" text-anchor="middle" class="rt-fig-code">Sensitivität → d</text>
+  <text x="455" y="170" text-anchor="middle" class="rt-fig-code">Simulation → Power</text>
+</svg>
+<figcaption>Effekt, Stichprobe, α und Power hängen zusammen. A priori legst du Effekt, α und Power fest und rechnest n aus; bei fester Stichprobe rechnest du den kleinsten Effekt aus, den sie zuverlässig findet. Für komplexe Modelle wird die Power simuliert.</figcaption>
+</figure>
+```
+
+- **Kleinster interessierender Effekt (SESOI):** Plane aus dem Effekt, der praktisch zählt (z. B. 5 SUS-Punkte, 40 ms Reaktionszeit), nicht aus einem Pilot-Effekt; diese sind unsicher und meist zu groß.
+- **pwr** für Standardtests: `pwr.t.test()` (unabhängig, gepaart, `type =`), `pwr.r.test()`, `pwr.anova.test()`, `pwr.f2.test()` (Regression). Die Größe, die du weglässt, wird berechnet.
+- **Messwiederholung:** Für gepaarte Tests ist d die Differenz geteilt durch die SD der Differenzen (d_z). Für mehrere Bedingungen rechnet **Superpower** `ANOVA_design()` + `ANOVA_exact()` mit Mittelwerten, SD und Korrelation `r`; die Korrelation entscheidet viel.
+- **Mixed Models:** keine Formel. **simr** nimmt ein Pilotmodell, setzt den erwarteten Effekt (`fixef(fit)["x"] <- ...`), erweitert das Design (`extend()`) und simuliert (`powerSim()`, `powerCurve()`).
+- **Sensitivität statt „post hoc“-Power:** Nach der Studie zählt, welche Effekte das Design finden konnte (`pwr.t.test(n = ..., power = .8)`), und das KI des Effekts. Die mit dem beobachteten Effekt berechnete Power ist nur der umgerechnete p-Wert.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## Mehr dazu: Äquivalenz, Interaktionen, eigene Simulation
+
+- **Äquivalenz planen:** Willst du zeigen, dass zwei Prototypen *gleich gut* sind, plane einen Äquivalenztest (TOST) mit Grenzen ±SESOI; `TOSTER::power_t_TOST()`. Das braucht mehr Personen als ein Unterschiedstest.
+- **Interaktionen** brauchen deutlich mehr Personen als Haupteffekte; in Superpower `design = "2b*3w"` und die Zeile der Interaktion in `main_results`.
+- **Eigene Simulation** für beliebige Designs: Daten mit dem angenommenen Effekt erzeugen, Modell rechnen, p-Wert speichern, z. B. 1000-mal mit `replicate()` oder `purrr::map()`; Anteil p < .05 ist die Power. simr macht genau das für `lmer()`-Modelle.
+- **Mehrere Tests:** Plane auf den wichtigsten Vergleich, bei Holm-Korrektur mit kleinerem α.
+:::
+
+## Beispiel {#example}
+
+Wie viele Personen pro Gruppe braucht ein t-Test für einen mittleren Effekt (d = 0.5) mit 80 % Power, und welchen Effekt findet eine Studie mit 20 pro Gruppe zuverlässig?
+
+```{webr}
+pwr.t.test(d = 0.5, power = 0.8)
+pwr.t.test(n = 20, power = 0.8)
+```
+
+64 Personen pro Gruppe, also 128 insgesamt. Mit 20 pro Gruppe hat die Studie 80 % Power erst ab d = 0.91, nur für sehr große Effekte. Innerhalb der Personen sieht das anders aus:
+
+```{webr}
+pwr.t.test(n = 20, power = 0.8, type = "paired")
+```
+
+Gepaart reicht d_z = 0.66: Dieselben 20 Personen finden viel kleinere Unterschiede, wenn jede alle Bedingungen sieht.
+
+**So berichtest du es (Methodenteil):** Die Stichprobengröße wurde a priori mit pwr (Champely, 2020) bestimmt. Für den kleinsten interessierenden Unterschied von 5 SUS-Punkten (SD = 12, d = 0.42) benötigt ein zweiseitiger t-Test für unabhängige Gruppen mit α = .05 und 90 % Power 123 Personen pro Gruppe.
+
+## Paketvergleich {#packages}
+
+| Aufgabe | Empfehlung | Alternative |
+|---|---|---|
+| t-Test, Korrelation, einfache ANOVA, Regression | **pwr** `pwr.t.test()`, `pwr.r.test()`, `pwr.f2.test()` | G*Power (Programm außerhalb von R); `stats::power.t.test()` |
+| Messwiederholung, gemischte ANOVA, Kontraste | **Superpower** `ANOVA_design()`, `ANOVA_exact()`, `plot_power()` | eigene Simulation mit afex |
+| Mixed Models | **simr** `powerSim()`, `extend()`, `powerCurve()` | eigene Simulation; mixedpower, faux (Daten simulieren) |
+| Äquivalenz | TOSTER `power_t_TOST()` | – |
+
+::: {.callout-note appearance="simple"}
+## Lokal ausführen: Powerkurve mit simr
+
+Im Browser sind 50 Simulationen ein Kompromiss. Für die echte Planung lokal mit 1000 Läufen über mehrere Stichprobengrößen (dauert einige Minuten):
+
+```r
+library(simr)
+fit <- lmer(rt_ms ~ condition + trial_c + (1 + trial_c | participant), data = sim)
+fixef(fit)["trial_c"] <- -15
+fit100 <- extend(fit, along = "participant", n = 100)
+curve <- powerCurve(fit100, test = fixed("trial_c", "t"), along = "participant",
+                    breaks = c(30, 40, 50, 60, 80, 100), nsim = 1000)
+plot(curve)
+```
+:::
+
+## Übungen {#exercises}
+
+Drei Pflichtübungen und zwei Zusatzübungen. **Ausführen und prüfen** startet deinen Code und prüft ihn sofort. Hinweise deckst du einzeln auf (**Hinweis zeigen**), die Lösung erst danach.
+
+{{< include /_generated/de/power-intermediate/exercises.qmd >}}
+
+## Wissenscheck {#check}
+
+{{< include /_generated/de/power-intermediate/quiz.qmd >}}
+
+## Spickzettel {#cheatsheet}
+
+```r
+# A priori: n aus kleinstem interessierenden Effekt
+pwr.t.test(d = 5 / 12, power = 0.9)                    # n pro Gruppe
+pwr.t.test(d = 40 / 90, power = 0.9, type = "paired")  # d_z = Diff. / SD der Diff.
+# Sensitivität: welcher Effekt bei festem n?
+pwr.t.test(n = 40, power = 0.8)
+
+# Messwiederholung mit Korrelation
+design <- ANOVA_design(design = "3w", n = 20, mu = c(1000, 960, 940),
+                       sd = 140, r = 0.85, plot = FALSE)
+ANOVA_exact(design, verbose = FALSE)$main_results
+
+# Mixed Model simulieren
+fixef(fit)["trial_c"] <- -15
+fit60 <- extend(fit, along = "participant", n = 60)
+powerSim(fit60, test = fixed("trial_c", "z"), nsim = 50)
+```

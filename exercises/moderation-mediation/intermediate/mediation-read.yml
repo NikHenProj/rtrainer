@@ -1,0 +1,115 @@
+id: mo-i-mediation-read
+lesson: moderation-mediation-intermediate
+order: 3
+title:
+  de: Indirekten Effekt mit Bootstrap-KI deuten
+  en: Interpreting an indirect effect with a bootstrap CI
+kind: interpret
+required: true
+packages: []
+data: []
+setup: ""
+prompt:
+  de: |
+    Das Mediationsmodell Bedienbarkeit → Nützlichkeit → Nutzungsabsicht
+    (n = 300, Querschnitt nach einer Testfahrt), mit 1000 Bootstrap-Ziehungen
+    (gekürzt):
+
+    ```
+    > fit <- sem(model, data = tam, se = "bootstrap", bootstrap = 1000)
+    > parameterEstimates(fit, boot.ci.type = "perc")
+           lhs op   rhs    label   est    se pvalue ci.lower ci.upper
+    1       pu  ~  peou        a 0.371 0.049      0    0.275    0.461
+    2       bi  ~    pu        b 0.259 0.056      0    0.149    0.369
+    3       bi  ~  peou        c 0.290 0.056      0    0.183    0.400
+    7 indirect :=   a*b indirect 0.096 0.027      0    0.051    0.155
+    8    total := c+a*b    total 0.386 0.052      0    0.285    0.490
+    ```
+
+    Welche Aussagen stimmen?
+
+    1. Das Bootstrap-KI des indirekten Effekts schließt 0 aus: Ein Teil des Zusammenhangs von Bedienbarkeit und Absicht läuft statistisch über die Nützlichkeit.
+    2. Weil der direkte Effekt `c` deutlich von 0 verschieden bleibt, liegt keine Mediation vor.
+    3. Der indirekte Effekt macht etwa ein Viertel des Gesamteffekts aus.
+    4. Die Analyse belegt, dass eine bessere Bedienbarkeit die Nutzungsabsicht kausal über die Nützlichkeit erhöht.
+
+    Gib die Nummern der richtigen Aussagen aufsteigend als Vektor ein, z. B. `c(1, 2)`.
+  en: |
+    The mediation model ease of use → usefulness → intention (n = 300,
+    cross-sectional after a test drive), with 1000 bootstrap draws (shortened):
+
+    ```
+    > fit <- sem(model, data = tam, se = "bootstrap", bootstrap = 1000)
+    > parameterEstimates(fit, boot.ci.type = "perc")
+           lhs op   rhs    label   est    se pvalue ci.lower ci.upper
+    1       pu  ~  peou        a 0.371 0.049      0    0.275    0.461
+    2       bi  ~    pu        b 0.259 0.056      0    0.149    0.369
+    3       bi  ~  peou        c 0.290 0.056      0    0.183    0.400
+    7 indirect :=   a*b indirect 0.096 0.027      0    0.051    0.155
+    8    total := c+a*b    total 0.386 0.052      0    0.285    0.490
+    ```
+
+    Which statements are true?
+
+    1. The bootstrap CI of the indirect effect excludes 0: part of the relationship between ease of use and intention runs statistically through usefulness.
+    2. Because the direct effect `c` stays clearly different from 0, there is no mediation.
+    3. The indirect effect makes up about a quarter of the total effect.
+    4. The analysis proves that better ease of use causally increases intention through usefulness.
+
+    Enter the numbers of the true statements in ascending order as a vector, e.g. `c(1, 2)`.
+starter: |
+  # Nummern der richtigen Aussagen / numbers of the true statements, z. B. c(1, 2)
+solution: |
+  c(1, 3)
+hints:
+  - de: "Für den indirekten Effekt zählt sein eigenes KI (Zeile `indirect`), nicht die Signifikanz von `a`, `b` oder `c` einzeln."
+    en: "For the indirect effect, its own CI counts (row `indirect`), not the significance of `a`, `b` or `c` alone."
+  - de: "Teile den indirekten durch den Gesamteffekt. Und: Wie wurden die Daten erhoben?"
+    en: "Divide the indirect by the total effect. And: how were the data collected?"
+  - de: "0.096 / 0.386 ≈ 0.25. Ein direkter Effekt schließt einen indirekten nicht aus. Zwei Aussagen stimmen."
+    en: "0.096 / 0.386 ≈ 0.25. A direct effect does not rule out an indirect one. Two statements are true."
+explanation:
+  de: |
+    Richtig sind 1 und 3. Der indirekte Effekt 0.10, 95-%-KI [0.05, 0.16]
+    (Bootstrap-Perzentil), schließt 0 aus; er macht 0.096 / 0.386 ≈ 25 % des
+    Gesamteffekts aus. Aussage 2 ist falsch: Ein bleibender direkter Effekt
+    heißt nur, dass nicht der ganze Zusammenhang über diesen Mediator läuft;
+    die Einteilung „vollständige vs. partielle Mediation“ hängt stark an der
+    Stichprobengröße und wird heute eher vermieden. Berichte stattdessen
+    indirekten und direkten Effekt mit KI. Aussage 4 ist falsch: Alle drei
+    Variablen wurden gleichzeitig erfragt. Ein umgekehrtes Modell (Absicht →
+    Nützlichkeit) passt genauso gut zu den Daten; ein Mediationsmodell zerlegt
+    Zusammenhänge, beweist aber keine Wirkrichtung. Dafür braucht es
+    Experimente (z. B. Bedienbarkeit manipulieren) oder Längsschnittdaten.
+    APA-Satz: „Der indirekte Effekt der Bedienbarkeit auf die
+    Nutzungsabsicht über die Nützlichkeit betrug b = 0.10, 95-%-KI [0.05,
+    0.16] (1000 Bootstrap-Ziehungen); der direkte Effekt b = 0.29 [0.18,
+    0.40].“
+  en: |
+    Statements 1 and 3 are true. The indirect effect 0.10, 95 % CI [0.05,
+    0.16] (bootstrap percentile), excludes 0; it makes up 0.096 / 0.386 ≈ 25 %
+    of the total effect. Statement 2 is false: a remaining direct effect only
+    means that not the whole relationship runs through this mediator; the
+    classification "full vs. partial mediation" depends heavily on sample size
+    and is avoided nowadays. Instead, report indirect and direct effects with
+    CIs. Statement 4 is false: all three variables were measured at the same
+    time. A reversed model (intention → usefulness) fits the data just as
+    well; a mediation model decomposes relationships but does not prove a
+    causal direction. That needs experiments (e.g. manipulating ease of use)
+    or longitudinal data. APA sentence: "The indirect effect of ease of use on
+    intention through usefulness was b = 0.10, 95 % CI [0.05, 0.16] (1000
+    bootstrap draws); the direct effect b = 0.29 [0.18, 0.40]."
+misconception:
+  de: "Ein signifikanter indirekter Effekt beweist eine kausale Wirkkette, und ein signifikanter direkter Effekt spricht gegen Mediation."
+  en: "A significant indirect effect proves a causal chain, and a significant direct effect speaks against mediation."
+check:
+  type: value
+common_mistakes:
+  - pattern: "^[\\s\\S]*?c\\([^)]*2[^)]*\\)\\s*$"
+    message:
+      de: "Aussage 2 stimmt nicht: Ein direkter Effekt schließt einen indirekten nicht aus. Entscheidend ist das KI der Zeile `indirect`."
+      en: "Statement 2 is false: a direct effect does not rule out an indirect one. What matters is the CI of the row `indirect`."
+  - pattern: "^[\\s\\S]*?c\\([^)]*4\\s*\\)\\s*$"
+    message:
+      de: "Aussage 4 stimmt nicht: Die Daten sind ein Querschnitt; die Richtung der Pfade ist eine Annahme, kein Ergebnis."
+      en: "Statement 4 is false: the data are cross-sectional; the direction of the paths is an assumption, not a result."

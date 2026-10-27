@@ -1,0 +1,19 @@
+# Lesson metadata; exercises are the other *.yml files in this folder
+# (sorted by `order`), the knowledge check is quiz.yml.
+lesson: moderation-mediation-intermediate
+minutes: 55
+prerequisites: [regression-intermediate]
+langs: [de]
+packages: [dplyr, parameters, interactions, lavaan]
+data: [acceptance]
+goals:
+  de:
+    - Moderation über einfache Steigungen hinaus mit Johnson-Neyman-Intervallen deuten (interactions)
+    - Ein einfaches Mediationsmodell mit benannten Pfaden in lavaan aufstellen
+    - Indirekte Effekte mit Bootstrap-KI berichten, ohne „vollständige/partielle Mediation“ und Kausalität zu überdehnen
+    - lavaan-Modelle mit Labels und definierten Parametern (`:=`) korrekt schreiben
+  en:
+    - Interpret moderation beyond simple slopes with Johnson-Neyman intervals (interactions)
+    - Set up a simple mediation model with labelled paths in lavaan
+    - Report indirect effects with bootstrap CIs without overstretching "full/partial mediation" and causality
+    - Write lavaan models with labels and defined parameters (`:=`) correctly

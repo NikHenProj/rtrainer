@@ -1,0 +1,98 @@
+id: pw-i-pwr-t
+lesson: power-intermediate
+order: 1
+title:
+  de: A priori und Sensitivität mit pwr
+  en: A priori and sensitivity with pwr
+kind: write
+required: true
+packages: [pwr]
+data: []
+setup: |
+  library(pwr)
+prompt:
+  de: |
+    Eine Folgestudie vergleicht Touch- und Sprachbedienung zwischen zwei
+    Gruppen über den SUS-Wert. Das Team legt fest: Ein Unterschied von 5
+    SUS-Punkten ist der kleinste, der für die Produktentscheidung zählt; die SD
+    aus früheren Studien ist 12 Punkte.
+
+    1. Wie viele Personen braucht jede Gruppe für 90 % Power (α = .05,
+       zweiseitig)? Aufgerundet.
+    2. Das Budget reicht nur für 40 Personen pro Gruppe. Ab welchem d hat die
+       Studie dann 80 % Power? Auf 2 Stellen gerundet.
+
+    Gib einen benannten Vektor `c(n = ..., d_min = ...)` zurück.
+  en: |
+    A follow-up study compares touch and voice control between two groups on
+    the SUS score. The team decides: a difference of 5 SUS points is the
+    smallest that matters for the product decision; the SD from earlier
+    studies is 12 points.
+
+    1. How many participants does each group need for 90 % power (α = .05,
+       two-sided)? Rounded up.
+    2. The budget only covers 40 participants per group. From which d does
+       the study then have 80 % power? Rounded to 2 decimals.
+
+    Return a named vector `c(n = ..., d_min = ...)`.
+starter: |
+  a_priori <- pwr.t.test(d = 5, power = 0.9)
+  sensitivity <- pwr.t.test(n = 40, d = 0.5)
+  c(n = ceiling(a_priori$n), d_min = round(sensitivity$d, 2))
+solution: |
+  a_priori <- pwr.t.test(d = 5 / 12, power = 0.9)
+  sensitivity <- pwr.t.test(n = 40, power = 0.8)
+  c(n = ceiling(a_priori$n), d_min = round(sensitivity$d, 2))
+hints:
+  - de: "`pwr.t.test()` rechnet die Größe aus, die du weglässt: Gib genau drei von `n`, `d`, `power` (und `sig.level`) an."
+    en: "`pwr.t.test()` computes the quantity you leave out: give exactly three of `n`, `d`, `power` (and `sig.level`)."
+  - de: "`d` ist standardisiert: Rohdifferenz geteilt durch die SD. Für die Sensitivität lässt du `d` weg."
+    en: "`d` is standardised: raw difference divided by the SD. For the sensitivity, leave out `d`."
+  - de: "`pwr.t.test(d = 5 / 12, power = 0.9)` und `pwr.t.test(n = 40, power = 0.8)`."
+    en: "`pwr.t.test(d = 5 / 12, power = 0.9)` and `pwr.t.test(n = 40, power = 0.8)`."
+explanation:
+  de: |
+    n = 123 pro Gruppe (d = 0.42, 90 % Power), zusammen 246 Personen. Mit 40
+    pro Gruppe hat die Studie 80 % Power erst ab d = 0.63, also etwa 7.6
+    SUS-Punkten (0.63 × 12). Ob das reicht, ist eine inhaltliche Frage: Sind
+    kleinere Unterschiede für das Produkt egal, ist die kleine Studie
+    vertretbar; sonst lohnt sie kaum. Berichte die Sensitivität im
+    Methodenteil: „Mit n = 40 pro Gruppe hatte die Studie 80 % Power für
+    Effekte ab d = 0.63 (α = .05, zweiseitig).“ Fallstrick: Den Effekt aus
+    einer kleinen Pilotstudie zu übernehmen. Pilot-Effekte streuen stark und
+    sind nach Auswahl („es sah vielversprechend aus“) meist zu groß; plane
+    besser aus dem kleinsten Effekt, der praktisch zählt.
+  en: |
+    n = 123 per group (d = 0.42, 90 % power), 246 participants in total. With
+    40 per group, the study has 80 % power only from d = 0.63, i.e. about 7.6
+    SUS points (0.63 × 12). Whether that is enough is a substantive question:
+    if smaller differences do not matter for the product, the small study is
+    justifiable; otherwise it is hardly worth it. Report the sensitivity in
+    the methods: "With n = 40 per group, the study had 80 % power for effects
+    from d = 0.63 (α = .05, two-sided)." Pitfall: taking the effect from a
+    small pilot study. Pilot effects vary widely and, after selection ("it
+    looked promising"), are usually too large; better plan from the smallest
+    effect that matters in practice.
+misconception:
+  de: "Die Stichprobe plant man aus dem Effekt der Pilotstudie, und `d` ist die Differenz in Rohpunkten."
+  en: "You plan the sample from the pilot study's effect, and `d` is the difference in raw points."
+check:
+  type: value
+  tolerance: 1.0e-8
+common_mistakes:
+  - pattern: "d\\s*=\\s*5\\s*[,)]"
+    message:
+      de: "`d` ist standardisiert. 5 SUS-Punkte bei SD 12 sind d = 5 / 12."
+      en: "`d` is standardised. 5 SUS points with SD 12 are d = 5 / 12."
+  - pattern: "type\\s*=\\s*\"(paired|one\\.sample)\""
+    message:
+      de: "Zwei unabhängige Gruppen: der Standard `type = \"two.sample\"`."
+      en: "Two independent groups: the default `type = \"two.sample\"`."
+  - pattern: "n\\s*=\\s*80"
+    message:
+      de: "`n` ist bei `pwr.t.test()` die Größe *pro Gruppe*: 40."
+      en: "In `pwr.t.test()`, `n` is the size *per group*: 40."
+  - pattern: "^(?![\\s\\S]*ceiling)"
+    message:
+      de: "Personen gibt es nur ganz: Runde `n` mit `ceiling()` auf, nicht mit `round()` ab."
+      en: "Participants only come whole: round `n` up with `ceiling()`, not down with `round()`."

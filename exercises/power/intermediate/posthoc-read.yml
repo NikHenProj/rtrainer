@@ -1,0 +1,99 @@
+id: pw-i-posthoc-read
+lesson: power-intermediate
+order: 5
+title:
+  de: Beobachtete Power und Sensitivität deuten
+  en: Interpreting observed power and sensitivity
+kind: interpret
+required: false
+packages: []
+data: []
+setup: ""
+prompt:
+  de: |
+    Eine Studie mit 24 Personen pro Gruppe fand d = 0.35, p = .23. Im
+    Gutachten steht: „Die Power war zu gering.“ Die Autorinnen rechnen nach:
+
+    ```
+    > pwr.t.test(n = 24, d = 0.35)$power      # „beobachtete Power“
+    [1] 0.2206591
+    > pwr.t.test(n = 24, power = 0.8)$d       # Sensitivität
+    [1] 0.8261315
+    ```
+
+    Welche Aussagen stimmen?
+
+    1. Die beobachtete Power von 22 % zeigt, dass die Studie den wahren Effekt wahrscheinlich übersehen hat.
+    2. Die Sensitivitätsanalyse zeigt: Mit 24 pro Gruppe hatte die Studie 80 % Power nur für Effekte ab d ≈ 0.83.
+    3. Weil p > .05 und die Power niedrig war, ist belegt, dass es keinen Effekt gibt.
+    4. Die Folgestudie sollte aus einem kleinsten interessierenden Effekt geplant werden, nicht aus dem beobachteten d = 0.35.
+
+    Gib die Nummern der richtigen Aussagen aufsteigend als Vektor ein, z. B. `c(1, 2)`.
+  en: |
+    A study with 24 participants per group found d = 0.35, p = .23. The review
+    says: "Power was too low." The authors recompute:
+
+    ```
+    > pwr.t.test(n = 24, d = 0.35)$power      # "observed power"
+    [1] 0.2206591
+    > pwr.t.test(n = 24, power = 0.8)$d       # sensitivity
+    [1] 0.8261315
+    ```
+
+    Which statements are true?
+
+    1. The observed power of 22 % shows that the study probably missed the true effect.
+    2. The sensitivity analysis shows: with 24 per group, the study had 80 % power only for effects from d ≈ 0.83.
+    3. Because p > .05 and power was low, it is proven that there is no effect.
+    4. The follow-up study should be planned from a smallest effect of interest, not from the observed d = 0.35.
+
+    Enter the numbers of the true statements in ascending order as a vector, e.g. `c(1, 2)`.
+starter: |
+  # Nummern der richtigen Aussagen / numbers of the true statements, z. B. c(1, 2)
+solution: |
+  c(2, 4)
+hints:
+  - de: "Die beobachtete Power setzt das beobachtete d ein. Was hängt alles am beobachteten d?"
+    en: "Observed power plugs in the observed d. What else depends on the observed d?"
+  - de: "Bei gegebenem n ist die beobachtete Power nur eine Umrechnung des p-Werts: p > .05 heißt immer beobachtete Power < 50 %."
+    en: "For a given n, observed power is just a transformation of the p value: p > .05 always means observed power < 50 %."
+  - de: "Sensitivität fragt nach den Effekten, die das Design finden konnte, unabhängig vom Ergebnis. Zwei Aussagen stimmen."
+    en: "Sensitivity asks which effects the design could detect, independent of the result. Two statements are true."
+explanation:
+  de: |
+    Richtig sind 2 und 4. Die beobachtete („post hoc“) Power ist eine reine
+    Umrechnung des p-Werts: Jedes nicht signifikante Ergebnis hat eine
+    beobachtete Power unter 50 %. Sie sagt nichts Neues und nichts über den
+    wahren Effekt (Aussage 1 falsch). Aussage 3 ist falsch: Ein nicht
+    signifikantes Ergebnis belegt keine Abwesenheit; das 95-%-KI für d reicht
+    hier etwa von −0.22 bis 0.92 und schließt große Effekte nicht aus. Für
+    „kein relevanter Effekt“ braucht es einen Äquivalenztest. Informativ sind
+    die Sensitivität (80 % Power erst ab d = 0.83, also nur für große
+    Effekte) und das KI. Für die Folgestudie: kleinsten interessierenden
+    Effekt festlegen und daraus n planen; das beobachtete d = 0.35 aus 48
+    Personen ist zu unsicher.
+  en: |
+    Statements 2 and 4 are true. Observed ("post hoc") power is a mere
+    transformation of the p value: every non-significant result has an
+    observed power below 50 %. It says nothing new and nothing about the true
+    effect (statement 1 false). Statement 3 is false: a non-significant result
+    does not prove absence; the 95 % CI for d ranges here from about −0.22 to
+    0.92 and does not rule out large effects. "No relevant effect" requires an
+    equivalence test. Informative are the sensitivity (80 % power only from
+    d = 0.83, i.e. only for large effects) and the CI. For the follow-up
+    study: set a smallest effect of interest and plan n from it; the observed
+    d = 0.35 from 48 participants is too uncertain.
+misconception:
+  de: "Eine nachträglich mit dem beobachteten Effekt berechnete Power erklärt, warum ein Ergebnis nicht signifikant war."
+  en: "Power computed afterwards with the observed effect explains why a result was not significant."
+check:
+  type: value
+common_mistakes:
+  - pattern: "^[\\s\\S]*?c\\(\\s*1\\b"
+    message:
+      de: "Aussage 1 stimmt nicht: Die beobachtete Power folgt direkt aus p; bei p > .05 ist sie immer unter 50 %."
+      en: "Statement 1 is false: observed power follows directly from p; with p > .05 it is always below 50 %."
+  - pattern: "^[\\s\\S]*?c\\([^)]*3[^)]*\\)\\s*$"
+    message:
+      de: "Aussage 3 stimmt nicht: Ein nicht signifikantes Ergebnis belegt keinen Nulleffekt; dafür braucht es einen Äquivalenztest."
+      en: "Statement 3 is false: a non-significant result does not prove a null effect; that requires an equivalence test."

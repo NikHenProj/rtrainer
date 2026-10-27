@@ -1,0 +1,134 @@
+# Knowledge check: passed at >= `pass` share of correctly answered questions.
+lesson: power-intermediate
+pass: 0.8
+questions:
+  - id: pw-i-q-definition
+    prompt:
+      de: "Eine Studie hat 80 % Power für d = 0.5. Was heißt das?"
+      en: "A study has 80 % power for d = 0.5. What does that mean?"
+    options:
+      - text:
+          de: "Wenn der wahre Effekt d = 0.5 ist, wird der Test in 80 % solcher Studien signifikant."
+          en: "If the true effect is d = 0.5, the test becomes significant in 80 % of such studies."
+        correct: true
+        explain:
+          de: "Richtig. Power ist eine Eigenschaft des Designs für einen angenommenen Effekt, nicht des Ergebnisses."
+          en: "Right. Power is a property of the design for an assumed effect, not of the result."
+      - text:
+          de: "Mit 80 % Wahrscheinlichkeit gibt es einen Effekt von d = 0.5."
+          en: "With 80 % probability there is an effect of d = 0.5."
+        correct: false
+        explain:
+          de: "Power setzt den Effekt voraus; über die Wahrscheinlichkeit des Effekts sagt sie nichts."
+          en: "Power assumes the effect; it says nothing about the probability of the effect."
+      - text:
+          de: "Ein signifikantes Ergebnis ist zu 80 % richtig."
+          en: "A significant result is correct with 80 % probability."
+        correct: false
+        explain:
+          de: "Wie oft ein signifikantes Ergebnis stimmt, hängt zusätzlich davon ab, wie plausibel der Effekt vorher war."
+          en: "How often a significant result is correct also depends on how plausible the effect was beforehand."
+  - id: pw-i-q-sesoi
+    prompt:
+      de: "Woraus planst du die Stichprobe am besten?"
+      en: "What do you best plan the sample size from?"
+    options:
+      - text:
+          de: "Aus dem kleinsten Effekt, der praktisch zählt (z. B. 5 SUS-Punkte), und einer realistischen SD aus früheren Daten."
+          en: "From the smallest effect that matters in practice (e.g. 5 SUS points) and a realistic SD from earlier data."
+        correct: true
+        explain:
+          de: "Richtig. Dann findet die Studie mit hoher Wahrscheinlichkeit alles, was relevant ist."
+          en: "Right. Then the study detects everything relevant with high probability."
+      - text:
+          de: "Aus dem Effekt einer kleinen Pilotstudie."
+          en: "From the effect of a small pilot study."
+        correct: false
+        explain:
+          de: "Pilot-Effekte sind sehr unsicher und nach Auswahl meist zu groß; die Studie wird dann zu klein."
+          en: "Pilot effects are very uncertain and, after selection, usually too large; the study then becomes too small."
+      - text:
+          de: "Aus Cohens Faustregel „mittlerer Effekt“ d = 0.5, weil sie für alle Fächer gilt."
+          en: "From Cohen's rule of thumb \"medium effect\" d = 0.5, because it applies to all fields."
+        correct: false
+        explain:
+          de: "Die Faustregeln sind ein letzter Ausweg; was „klein“ oder „groß“ ist, hängt vom Kontext ab."
+          en: "The rules of thumb are a last resort; what is \"small\" or \"large\" depends on context."
+  - id: pw-i-q-correlation
+    prompt:
+      de: "In Superpower steigt bei gleichem Effekt die Power von 20 % (r = 0) auf 88 % (r = 0.85). Warum?"
+      en: "In Superpower, with the same effect, power rises from 20 % (r = 0) to 88 % (r = 0.85). Why?"
+    options:
+      - text:
+          de: "Je stärker die Messungen derselben Person korrelieren, desto kleiner ist die Streuung der Differenzen innerhalb der Person."
+          en: "The more strongly the measurements of the same participant correlate, the smaller the spread of the differences within participants."
+        correct: true
+        explain:
+          de: "Richtig. Stabile Personenunterschiede fallen aus dem Fehler; darum ist Messwiederholung so effizient."
+          en: "Right. Stable differences between participants drop out of the error; that is why repeated measures are so efficient."
+      - text:
+          de: "Mit r = 0.85 gibt es mehr Messungen pro Person."
+          en: "With r = 0.85 there are more measurements per participant."
+        correct: false
+        explain:
+          de: "Die Zahl der Messungen bleibt gleich; r beschreibt ihren Zusammenhang."
+          en: "The number of measurements stays the same; r describes their relationship."
+      - text:
+          de: "Superpower rechnet bei hohem r einen einseitigen Test."
+          en: "Superpower uses a one-sided test when r is high."
+        correct: false
+        explain:
+          de: "Der Test bleibt derselbe F-Test; nur die Fehlervarianz ändert sich."
+          en: "The test stays the same F test; only the error variance changes."
+  - id: pw-i-q-simulation
+    prompt:
+      de: "Warum simuliert man die Power für ein Mixed Model mit simr, statt eine Formel zu nehmen?"
+      en: "Why simulate power for a mixed model with simr instead of using a formula?"
+    options:
+      - text:
+          de: "Die Power hängt von Zahl der Personen und Durchgänge, Zufallsvarianzen und Korrelationen zugleich ab; dafür gibt es keine allgemeine Formel."
+          en: "Power depends on the number of participants and trials, random variances and correlations at the same time; there is no general formula for that."
+        correct: true
+        explain:
+          de: "Richtig. Die Simulation erzeugt Daten aus dem angenommenen Modell und zählt die signifikanten Ergebnisse."
+          en: "Right. The simulation generates data from the assumed model and counts the significant results."
+      - text:
+          de: "Weil Formeln für Mixed Models immer zu optimistisch sind."
+          en: "Because formulas for mixed models are always too optimistic."
+        correct: false
+        explain:
+          de: "Für Spezialfälle gibt es Näherungen; das Problem ist, dass keine Formel alle Designs abdeckt."
+          en: "Approximations exist for special cases; the problem is that no formula covers all designs."
+      - text:
+          de: "Weil simr den wahren Effekt aus den Pilotdaten schätzt."
+          en: "Because simr estimates the true effect from the pilot data."
+        correct: false
+        explain:
+          de: "Den Effekt setzt du selbst (`fixef(fit)[...] <-`); aus dem Pilot kommen nur die Varianzen."
+          en: "You set the effect yourself (`fixef(fit)[...] <-`); only the variances come from the pilot."
+  - id: pw-i-q-nsim
+    prompt:
+      de: "`powerSim()` mit `nsim = 50` meldet 78 %, 95-%-KI [64, 88]. Was folgt daraus?"
+      en: "`powerSim()` with `nsim = 50` reports 78 %, 95 % CI [64, 88]. What follows?"
+    options:
+      - text:
+          de: "Die Schätzung ist wegen der wenigen Simulationen ungenau; für die Planung lokal mit z. B. 1000 Läufen wiederholen."
+          en: "The estimate is imprecise because of the few simulations; for planning, repeat locally with e.g. 1000 runs."
+        correct: true
+        explain:
+          de: "Richtig. Das KI beschreibt nur die Simulationsunsicherheit; mit mehr Läufen wird es schmaler."
+          en: "Right. The CI only describes the simulation uncertainty; with more runs it becomes narrower."
+      - text:
+          de: "Die wahre Power liegt mit 95 % Sicherheit zwischen 64 und 88 %, egal wie gut die Annahmen sind."
+          en: "The true power lies between 64 and 88 % with 95 % certainty, no matter how good the assumptions are."
+        correct: false
+        explain:
+          de: "Das KI gilt nur unter den Modellannahmen (Effekt, Varianzen). Sind sie falsch, ist auch die Power falsch."
+          en: "The CI only holds under the model assumptions (effect, variances). If they are wrong, the power is wrong too."
+      - text:
+          de: "Die Studie ist zu klein, weil die untere Grenze unter 80 % liegt."
+          en: "The study is too small because the lower bound is below 80 %."
+        correct: false
+        explain:
+          de: "Die untere Grenze spiegelt hier vor allem die wenigen Läufe; erst eine genauere Simulation zeigt, ob 80 % erreicht werden."
+          en: "Here the lower bound mainly reflects the few runs; only a more precise simulation shows whether 80 % is reached."

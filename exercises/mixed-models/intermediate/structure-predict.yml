@@ -1,0 +1,98 @@
+id: mm-i-structure-predict
+lesson: mixed-models-intermediate
+order: 5
+title:
+  de: Aufbau eines Random-Slope-Modells vorhersagen
+  en: Predicting the structure of a random slope model
+kind: predict
+required: false
+packages: []
+data: []
+setup: ""
+prompt:
+  de: |
+    `driving_sim` hat 40 Personen mit je 3 Modalitäten × 4 Durchgängen
+    (480 Zeilen, 12 fehlende `rt_ms`). Was liefert der folgende Code? Führe
+    ihn nicht aus, sondern gib das Ergebnis als R-Wert ein (z. B.
+    `c(10, 20, 30, 40)`).
+
+    ```r
+    fit <- lmer(rt_ms ~ condition + trial_c + (1 + trial_c | participant),
+                data = sim)
+    c(
+      length(fixef(fit)),
+      ncol(ranef(fit)$participant),
+      nrow(ranef(fit)$participant),
+      nrow(as.data.frame(VarCorr(fit)))
+    )
+    ```
+  en: |
+    `driving_sim` has 40 participants with 3 modalities × 4 trials each
+    (480 rows, 12 missing `rt_ms`). What does the following code return? Do
+    not run it, but enter the result as an R value (e.g. `c(10, 20, 30, 40)`).
+
+    ```r
+    fit <- lmer(rt_ms ~ condition + trial_c + (1 + trial_c | participant),
+                data = sim)
+    c(
+      length(fixef(fit)),
+      ncol(ranef(fit)$participant),
+      nrow(ranef(fit)$participant),
+      nrow(as.data.frame(VarCorr(fit)))
+    )
+    ```
+starter: |
+  # Deine Vorhersage / your prediction, z. B. c(10, 20, 30, 40)
+solution: |
+  c(4, 2, 40, 4)
+hints:
+  - de: "Zähle getrennt: Was wird für alle gemeinsam geschätzt, was pro Person, und welche Varianzparameter hat das Modell?"
+    en: "Count separately: what is estimated jointly for everyone, what per participant, and which variance parameters does the model have?"
+  - de: "`condition` hat 3 Stufen, also 2 Kontraste neben dem Achsenabschnitt. `ranef()` hat eine Zeile pro Gruppe und eine Spalte pro Zufallseffekt."
+    en: "`condition` has 3 levels, so 2 contrasts besides the intercept. `ranef()` has one row per group and one column per random effect."
+  - de: "`VarCorr()` enthält zwei Varianzen, die Korrelation zwischen Intercept und Slope und die Residualvarianz."
+    en: "`VarCorr()` contains two variances, the correlation between intercept and slope, and the residual variance."
+explanation:
+  de: |
+    Fest sind Achsenabschnitt, zwei Modalitätskontraste (Referenz `visual`)
+    und `trial_c`: 4 Koeffizienten. Pro Person gibt es zwei Abweichungen
+    (Intercept, Slope), also 2 Spalten und 40 Zeilen; die Zahl der Gruppen
+    hängt nicht an fehlenden Durchgängen. Geschätzt werden aber nicht 80
+    Personenparameter, sondern nur ihre Verteilung: zwei
+    Standardabweichungen, eine Korrelation und die Residual-SD (4 Zeilen in
+    `VarCorr()`). Das unterscheidet das Mixed Model von 40 getrennten
+    `lm()`-Fits: Die Personenwerte in `ranef()` sind Vorhersagen (BLUPs) aus
+    dieser Verteilung, keine freien Parameter.
+  en: |
+    Fixed are the intercept, two modality contrasts (reference `visual`) and
+    `trial_c`: 4 coefficients. Per participant there are two deviations
+    (intercept, slope), so 2 columns and 40 rows; the number of groups does
+    not depend on missing trials. But the model does not estimate 80
+    participant parameters, only their distribution: two standard deviations,
+    one correlation and the residual SD (4 rows in `VarCorr()`). This
+    distinguishes the mixed model from 40 separate `lm()` fits: the
+    participant values in `ranef()` are predictions (BLUPs) from this
+    distribution, not free parameters.
+misconception:
+  de: "Ein Mixed Model schätzt für jede Person eigene Parameter wie getrennte Regressionen, und `(1 + trial_c | participant)` hat nur zwei Varianzparameter."
+  en: "A mixed model estimates separate parameters for each participant like separate regressions, and `(1 + trial_c | participant)` has only two variance parameters."
+check:
+  type: value
+  tolerance: 1.0e-8
+common_mistakes:
+  - pattern: "^[\\s\\S]*?c\\(\\s*[35]\\s*,"
+    message:
+      de: "Zähle die festen Koeffizienten: Achsenabschnitt, 2 Kontraste für 3 Modalitäten (die Referenz hat keinen eigenen) und `trial_c`."
+      en: "Count the fixed coefficients: intercept, 2 contrasts for 3 modalities (the reference has none of its own) and `trial_c`."
+  - pattern: "^[\\s\\S]*?c\\([^)]*\\b4[0-9]{2}\\b"
+    message:
+      de: "`ranef()` hat eine Zeile pro Gruppe (`participant`), nicht pro Beobachtung: 40 Personen."
+      en: "`ranef()` has one row per group (`participant`), not per observation: 40 participants."
+  - pattern: "^[\\s\\S]*?c\\([^)]*,\\s*[23]\\s*\\)\\s*$"
+    message:
+      de: "`VarCorr()` enthält neben den zwei Varianzen auch die Korrelation zwischen Intercept und Slope sowie die Residualvarianz."
+      en: "`VarCorr()` contains, besides the two variances, the correlation between intercept and slope and the residual variance."
+  - pattern: "^[\\s\\S]*?c\\(\\s*4\\s*,\\s*[13]\\s*,"
+    message:
+      de: "Pro Person gibt es genau die Zufallseffekte aus `(1 + trial_c | participant)`: eine Intercept- und eine Slope-Abweichung."
+      en: "Per participant there are exactly the random effects from `(1 + trial_c | participant)`: one intercept and one slope deviation."

@@ -1,0 +1,116 @@
+id: pw-i-simr
+lesson: power-intermediate
+order: 3
+title:
+  de: Power für ein Mixed Model simulieren
+  en: Simulating power for a mixed model
+kind: complete
+required: true
+packages: [dplyr, simr]
+data: [driving_sim]
+setup: |
+  library(dplyr)
+  library(simr)
+  sim <- driving_sim |>
+    mutate(trial_c = trial - 2.5)
+prompt:
+  de: |
+    Für Mixed Models gibt es keine Formel; die Power wird simuliert. Eine
+    Folgestudie soll einen kleineren Übungseffekt finden als im Pilot: −15 ms
+    pro Durchgang statt −31 ms. Reicht dafür ein Design mit 60 statt 40
+    Personen?
+
+    Ergänze die Lücken `______`:
+
+    1. Setze im Pilotmodell den festen Effekt von `trial_c` auf den
+       erwarteten Wert −15.
+    2. Erweitere das Modell mit `extend()` auf 60 Personen (`participant`).
+    3. Simuliere mit `powerSim()` 50 Datensätze und teste `trial_c` mit dem
+       z-Test.
+
+    Gib `summary(ps)` zurück. Die Simulation dauert im Browser etwa 20–30 s.
+  en: |
+    There is no formula for mixed models; power is simulated. A follow-up
+    study is to detect a smaller practice effect than in the pilot: −15 ms per
+    trial instead of −31 ms. Is a design with 60 instead of 40 participants
+    enough?
+
+    Fill in the blanks `______`:
+
+    1. In the pilot model, set the fixed effect of `trial_c` to the expected
+       value −15.
+    2. Extend the model to 60 participants (`participant`) with `extend()`.
+    3. Simulate 50 data sets with `powerSim()` and test `trial_c` with the
+       z test.
+
+    Return `summary(ps)`. The simulation takes about 20–30 s in the browser.
+starter: |
+  fit <- lmer(rt_ms ~ condition + trial_c + (1 + trial_c | participant), data = sim)
+  fixef(fit)["trial_c"] <- ______
+  fit60 <- extend(fit, along = "______", n = ______)
+  set.seed(42)
+  ps <- powerSim(fit60, test = fixed("trial_c", "z"), nsim = ______, progress = FALSE)
+  summary(ps)
+solution: |
+  fit <- lmer(rt_ms ~ condition + trial_c + (1 + trial_c | participant), data = sim)
+  fixef(fit)["trial_c"] <- -15
+  fit60 <- extend(fit, along = "participant", n = 60)
+  set.seed(42)
+  ps <- powerSim(fit60, test = fixed("trial_c", "z"), nsim = 50, progress = FALSE)
+  summary(ps)
+hints:
+  - de: "Die Varianzen (Personen, Steigungen, Residuum) übernimmt simr aus dem Pilotmodell; nur den Effekt setzt du auf den erwarteten Wert."
+    en: "simr takes the variances (participants, slopes, residual) from the pilot model; you only set the effect to the expected value."
+  - de: "`extend(fit, along = \"participant\", n = 60)` kopiert das Design für weitere Personen. `nsim` ist die Zahl der Simulationen."
+    en: "`extend(fit, along = \"participant\", n = 60)` copies the design for more participants. `nsim` is the number of simulations."
+  - de: "`-15`, `\"participant\"`, `60`, `50`."
+    en: "`-15`, `\"participant\"`, `60`, `50`."
+explanation:
+  de: |
+    47 von 50 Simulationen finden den Effekt: Power ≈ 94 %, 95-%-KI [83, 99].
+    Mit den 40 Personen des Pilots wären es 78 % [64, 88]. Die Simulation
+    erzeugt Datensätze aus dem Modell (mit den Varianzen des Pilots und dem
+    gesetzten Effekt), rechnet das Modell neu und zählt, wie oft p < .05.
+    Das KI zeigt die Simulationsunsicherheit: Mit 50 Läufen ist es breit; für
+    die Planung lokal 1000 Läufe und `powerCurve(fit60, along =
+    "participant")` für mehrere Stichprobengrößen. Fallstricke: Der Pilot-
+    Effekt (−31 ms) wäre zu optimistisch, deshalb wird er auf den kleinsten
+    interessierenden Wert gesetzt. Auch die Varianzen aus einem kleinen Pilot
+    sind unsicher; prüfe, wie sich die Power bei größerer Slope-SD ändert.
+    Der z-Test ist schnell, bei wenigen Personen leicht liberal; lokal geht
+    `fixed("trial_c", "t")` (Satterthwaite).
+  en: |
+    47 of 50 simulations detect the effect: power ≈ 94 %, 95 % CI [83, 99].
+    With the 40 participants of the pilot it would be 78 % [64, 88]. The
+    simulation generates data sets from the model (with the pilot's variances
+    and the set effect), refits the model and counts how often p < .05. The CI
+    shows the simulation uncertainty: with 50 runs it is wide; for planning,
+    run 1000 locally and `powerCurve(fit60, along = "participant")` for
+    several sample sizes. Pitfalls: the pilot effect (−31 ms) would be too
+    optimistic, so it is set to the smallest value of interest. The variances
+    from a small pilot are uncertain too; check how power changes with a
+    larger slope SD. The z test is fast, slightly liberal with few
+    participants; locally, `fixed("trial_c", "t")` (Satterthwaite) works.
+misconception:
+  de: "Die Power eines Mixed Models hängt nur von der Zahl der Beobachtungen ab, nicht von Personen und Zufallseffekten."
+  en: "The power of a mixed model depends only on the number of observations, not on participants and random effects."
+check:
+  type: value
+  tolerance: 1.0e-6
+common_mistakes:
+  - pattern: "______"
+    message:
+      de: "Es sind noch Lücken `______` offen."
+      en: "There are still blanks `______` left."
+  - pattern: "fixef\\(fit\\)\\[\"trial_c\"\\]\\s*<-\\s*15\\b"
+    message:
+      de: "Der Übungseffekt ist eine Beschleunigung: −15 ms pro Durchgang."
+      en: "The practice effect is a speed-up: −15 ms per trial."
+  - pattern: "along\\s*=\\s*\"(trial|trial_c|condition)\""
+    message:
+      de: "Mehr Durchgänge oder Bedingungen wären ein anderes Design. Gefragt sind mehr Personen: `along = \"participant\"`."
+      en: "More trials or conditions would be a different design. More participants are asked for: `along = \"participant\"`."
+  - pattern: "n\\s*=\\s*20\\s*\\)"
+    message:
+      de: "`n` in `extend()` ist die neue Gesamtzahl der Personen (60), nicht die Zahl der zusätzlichen."
+      en: "`n` in `extend()` is the new total number of participants (60), not the number of additional ones."

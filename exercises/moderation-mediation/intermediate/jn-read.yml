@@ -1,0 +1,112 @@
+id: mo-i-jn-read
+lesson: moderation-mediation-intermediate
+order: 4
+title:
+  de: Johnson-Neyman-Ausgabe deuten
+  en: Interpreting Johnson-Neyman output
+kind: interpret
+required: false
+packages: []
+data: []
+setup: ""
+prompt:
+  de: |
+    Moderation der Nützlichkeit durch die Erfahrung, `lm(bi ~ pu * experience)`,
+    n = 300, Erfahrung 0–9 Jahre (14 Personen mit 0 Jahren):
+
+    ```
+    Parameter       | Coefficient |   SE |        95% CI | t(296) |      p
+    (Intercept)     |        3.17 | 0.42 | [ 2.35, 3.99] |   7.60 | < .001
+    pu              |        0.16 | 0.10 | [-0.05, 0.36] |   1.50 | 0.135
+    experience      |       -0.22 | 0.13 | [-0.48, 0.03] |  -1.72 | 0.086
+    pu × experience |        0.07 | 0.03 | [ 0.01, 0.13] |   2.35 | 0.019
+
+    JOHNSON-NEYMAN INTERVAL
+    When experience is OUTSIDE the interval [-28.64, 0.41], the slope of pu is
+    p < .05.
+    Note: The range of observed values of experience is [0.00, 9.00]
+    ```
+
+    Welche Aussagen stimmen?
+
+    1. Bei Personen mit mehr als 28.6 Jahren Erfahrung wird der Effekt der Nützlichkeit negativ.
+    2. Für alle Personen mit mindestens einem Jahr Erfahrung (286 von 300) ist der Zusammenhang von Nützlichkeit und Absicht nachweisbar positiv.
+    3. Mit jedem Jahr Erfahrung wird die Steigung von `pu` um etwa 0.07 Punkte steiler.
+    4. Für Personen ohne Erfahrung ist belegt, dass die Nützlichkeit keine Rolle spielt.
+
+    Gib die Nummern der richtigen Aussagen aufsteigend als Vektor ein, z. B. `c(1, 2)`.
+  en: |
+    Moderation of usefulness by experience, `lm(bi ~ pu * experience)`,
+    n = 300, experience 0–9 years (14 participants with 0 years):
+
+    ```
+    Parameter       | Coefficient |   SE |        95% CI | t(296) |      p
+    (Intercept)     |        3.17 | 0.42 | [ 2.35, 3.99] |   7.60 | < .001
+    pu              |        0.16 | 0.10 | [-0.05, 0.36] |   1.50 | 0.135
+    experience      |       -0.22 | 0.13 | [-0.48, 0.03] |  -1.72 | 0.086
+    pu × experience |        0.07 | 0.03 | [ 0.01, 0.13] |   2.35 | 0.019
+
+    JOHNSON-NEYMAN INTERVAL
+    When experience is OUTSIDE the interval [-28.64, 0.41], the slope of pu is
+    p < .05.
+    Note: The range of observed values of experience is [0.00, 9.00]
+    ```
+
+    Which statements are true?
+
+    1. For participants with more than 28.6 years of experience, the effect of usefulness becomes negative.
+    2. For all participants with at least one year of experience (286 of 300), the relationship between usefulness and intention is detectably positive.
+    3. With each year of experience, the slope of `pu` becomes about 0.07 points steeper.
+    4. For participants without experience, it is proven that usefulness plays no role.
+
+    Enter the numbers of the true statements in ascending order as a vector, e.g. `c(1, 2)`.
+starter: |
+  # Nummern der richtigen Aussagen / numbers of the true statements, z. B. c(1, 2)
+solution: |
+  c(2, 3)
+hints:
+  - de: "„OUTSIDE the interval“: Signifikant ist die Steigung unterhalb von −28.64 und oberhalb von 0.41. Welcher Teil davon liegt im Datenbereich?"
+    en: "\"OUTSIDE the interval\": the slope is significant below −28.64 and above 0.41. Which part of that lies within the data range?"
+  - de: "Der Interaktionskoeffizient sagt, um wie viel sich die Steigung von `pu` pro Einheit des Moderators ändert."
+    en: "The interaction coefficient says by how much the slope of `pu` changes per unit of the moderator."
+  - de: "Bei 0 Jahren ist die Steigung 0.16 mit KI [−0.05, 0.36]: nicht signifikant ist nicht dasselbe wie null. Zwei Aussagen stimmen."
+    en: "At 0 years the slope is 0.16 with CI [−0.05, 0.36]: not significant is not the same as zero. Two statements are true."
+explanation:
+  de: |
+    Richtig sind 2 und 3. Die Steigung von `pu` ist außerhalb von [−28.64,
+    0.41] signifikant; im Datenbereich also ab 0.41 Jahren, für alle mit
+    mindestens einem Jahr Erfahrung. Sie wächst um 0.07 pro Jahr (KI [0.01,
+    0.13]). Aussage 1 ist falsch: −28.64 ist eine untere Grenze bei negativer
+    Erfahrung, also eine reine Extrapolation der Geraden, keine Aussage über
+    erfahrene Personen. Aussage 4 ist falsch: Bei 0 Jahren ist die Steigung
+    0.16, das KI reicht von −0.05 bis 0.36; mit 14 Personen ist das nur
+    ungenau geschätzt. Bericht: „Die Erfahrung moderierte den Zusammenhang von
+    Nützlichkeit und Nutzungsabsicht, b = 0.07, 95-%-KI [0.01, 0.13], p =
+    .019. Nach dem Johnson-Neyman-Verfahren war der Zusammenhang ab 0.4
+    Jahren Erfahrung signifikant positiv.“
+  en: |
+    Statements 2 and 3 are true. The slope of `pu` is significant outside
+    [−28.64, 0.41]; within the data range, i.e. from 0.41 years, for everyone
+    with at least one year of experience. It grows by 0.07 per year (CI
+    [0.01, 0.13]). Statement 1 is false: −28.64 is a lower bound at negative
+    experience, a pure extrapolation of the line, not a statement about
+    experienced participants. Statement 4 is false: at 0 years, the slope is
+    0.16, the CI ranges from −0.05 to 0.36; with 14 participants this is only
+    estimated imprecisely. Report: "Experience moderated the relationship
+    between usefulness and intention, b = 0.07, 95 % CI [0.01, 0.13], p =
+    .019. According to the Johnson-Neyman technique, the relationship was
+    significantly positive from 0.4 years of experience."
+misconception:
+  de: "Grenzen eines Johnson-Neyman-Intervalls sind auch außerhalb der Daten sinnvoll, und „nicht signifikant“ heißt „kein Effekt“."
+  en: "Bounds of a Johnson-Neyman interval are meaningful outside the data too, and \"not significant\" means \"no effect\"."
+check:
+  type: value
+common_mistakes:
+  - pattern: "^[\\s\\S]*?c\\(\\s*1\\b"
+    message:
+      de: "Aussage 1 stimmt nicht: −28.64 liegt bei negativer Erfahrung, weit außerhalb der Daten (0–9 Jahre)."
+      en: "Statement 1 is false: −28.64 lies at negative experience, far outside the data (0–9 years)."
+  - pattern: "^[\\s\\S]*?c\\([^)]*4\\s*\\)\\s*$"
+    message:
+      de: "Aussage 4 stimmt nicht: Nicht signifikant ist nicht dasselbe wie null; das KI bei 0 Jahren reicht bis 0.36."
+      en: "Statement 4 is false: not significant is not the same as zero; the CI at 0 years reaches up to 0.36."

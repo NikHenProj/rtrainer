@@ -69,6 +69,12 @@ jobs:
             any::WRS2
             any::marginaleffects
             any::sandwich
+            any::lme4
+            any::lmerTest
+            any::interactions
+            any::pwr
+            any::Superpower
+            any::simr
             any::chromote
             any::processx
 

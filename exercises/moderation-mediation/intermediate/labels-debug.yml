@@ -1,0 +1,93 @@
+id: mo-i-labels-debug
+lesson: moderation-mediation-intermediate
+order: 5
+title:
+  de: Fehlende Labels in lavaan
+  en: Missing labels in lavaan
+kind: debug
+required: false
+packages: [dplyr, lavaan]
+data: [acceptance]
+setup: |
+  library(dplyr)
+  library(lavaan)
+  tam <- acceptance |>
+    mutate(
+      across(c(peou_3, trust_4), \(x) 8 - x),
+      pu = rowMeans(pick(pu_1:pu_4)),
+      peou = rowMeans(pick(peou_1:peou_4)),
+      trust = rowMeans(pick(trust_1:trust_5)),
+      bi = rowMeans(pick(bi_1:bi_4))
+    )
+prompt:
+  de: |
+    Läuft der Zusammenhang von Vertrauen (`trust`) und Nutzungsabsicht (`bi`)
+    über die Nützlichkeit (`pu`)? Das Modell bricht mit der Meldung ab, dass
+    `a` und `b` unbekannte Labels seien.
+
+    Repariere das Modell, ohne die Zeile `indirect := a * b` zu ändern, und gib
+    `fit` zurück.
+  en: |
+    Does the relationship between trust (`trust`) and intention (`bi`) run
+    through usefulness (`pu`)? The model fails with the message that `a` and
+    `b` are unknown labels.
+
+    Repair the model without changing the line `indirect := a * b`, and return
+    `fit`.
+starter: |
+  model <- "
+    pu ~ trust
+    bi ~ pu + trust
+    indirect := a * b
+  "
+  fit <- sem(model, data = tam)
+  fit
+solution: |
+  model <- "
+    pu ~ a * trust
+    bi ~ b * pu + trust
+    indirect := a * b
+  "
+  fit <- sem(model, data = tam)
+  fit
+hints:
+  - de: "`:=` rechnet mit Namen von Parametern. Wo im Modell bekommen die Pfade Namen?"
+    en: "`:=` calculates with parameter names. Where in the model do the paths get names?"
+  - de: "Ein Label steht mit `*` vor der Variablen, deren Pfad es benennt: `y ~ label * x`."
+    en: "A label goes with `*` before the variable whose path it names: `y ~ label * x`."
+  - de: "`a` ist der Pfad `pu ~ trust`, `b` der Pfad von `pu` auf `bi`."
+    en: "`a` is the path `pu ~ trust`, `b` the path from `pu` to `bi`."
+explanation:
+  de: |
+    lavaan vergibt keine Labels von selbst; `a` und `b` gibt es erst, wenn du
+    sie in die Regressionszeilen schreibst (`pu ~ a * trust`). Ergebnis:
+    a = 0.02, 95-%-KI [−0.09, 0.13], b = 0.38 [0.27, 0.48], indirekter Effekt
+    0.007 [−0.03, 0.05]; der direkte Pfad von Vertrauen auf die Absicht ist
+    0.27 [0.17, 0.37]. Vertrauen wirkt hier also nicht über die Nützlichkeit,
+    sondern direkt: ein sinnvolles Ergebnis, kein Fehler. Fallstrick: `bi ~ pu + b * trust` benennt den direkten statt den
+    Mediatorpfad; das Modell läuft dann, rechnet aber das falsche Produkt.
+    Das Label gehört zur Variablen direkt rechts vom `*`.
+  en: |
+    lavaan does not assign labels on its own; `a` and `b` only exist once you
+    write them into the regression lines (`pu ~ a * trust`). Result: a = 0.02,
+    95 % CI [−0.09, 0.13], b = 0.38 [0.27, 0.48], indirect effect 0.007
+    [−0.03, 0.05]; the direct path from trust to intention is 0.27 [0.17,
+    0.37]. So trust does not act through usefulness here but directly: a
+    meaningful result, not an error. Pitfall:
+    `bi ~ pu + b * trust` names the direct path instead of the mediator path;
+    the model then runs but computes the wrong product. The label belongs to
+    the variable directly right of the `*`.
+misconception:
+  de: "lavaan nummeriert die Pfade automatisch als a, b, c."
+  en: "lavaan automatically numbers the paths as a, b, c."
+check:
+  type: value
+common_mistakes:
+  - pattern: "bi\\s*~\\s*pu\\s*\\+\\s*b\\s*\\*\\s*trust|bi\\s*~\\s*a\\s*\\*\\s*pu"
+    message:
+      de: "Das Label sitzt am falschen Pfad. `b` gehört zu `pu` in der Gleichung für `bi`, `a` zu `trust` in der Gleichung für `pu`."
+      en: "The label is on the wrong path. `b` belongs to `pu` in the equation for `bi`, `a` to `trust` in the equation for `pu`."
+  - pattern: "indirect\\s*:=\\s*(?!a\\s*\\*\\s*b)"
+    message:
+      de: "Die Zeile `indirect := a * b` soll bleiben; ergänze die Labels in den Regressionszeilen."
+      en: "The line `indirect := a * b` should stay; add the labels in the regression lines."

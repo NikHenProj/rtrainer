@@ -1,0 +1,109 @@
+id: mm-i-condition-trial
+lesson: mixed-models-intermediate
+order: 1
+title:
+  de: Bedingung × Durchgang mit Satterthwaite-Tests
+  en: Condition × trial with Satterthwaite tests
+kind: complete
+required: true
+packages: [dplyr, lme4, lmerTest]
+data: [driving_sim]
+setup: |
+  library(dplyr)
+  library(lmerTest)
+prompt:
+  de: |
+    Im Fahrsimulator hat jede Person 12 Übernahmen gefahren: 3 Warnmodalitäten
+    (`condition`) × 4 Durchgänge (`trial`). Werden die Reaktionen über die
+    Durchgänge schneller (Übungseffekt), und hängt dieser Effekt von der
+    Modalität ab?
+
+    Ergänze die Lücken `______`:
+
+    1. Zentriere `trial` auf die Mitte der vier Durchgänge (neue Spalte `trial_c`).
+    2. Rechne mit `lmer()` ein Modell für `rt_ms` mit `condition`, `trial_c`,
+       ihrer Interaktion und einem Zufallsintercept pro `participant`.
+    3. Gib die Typ-III-Tabelle mit Satterthwaite-Freiheitsgraden zurück
+       (`anova()`, lmerTest ist geladen).
+  en: |
+    In the driving simulator, each participant drove 12 take-overs: 3 warning
+    modalities (`condition`) × 4 trials (`trial`). Do reactions get faster over
+    the trials (practice effect), and does this effect depend on the modality?
+
+    Fill in the blanks `______`:
+
+    1. Centre `trial` on the middle of the four trials (new column `trial_c`).
+    2. Fit an `lmer()` model for `rt_ms` with `condition`, `trial_c`, their
+       interaction and a random intercept per `participant`.
+    3. Return the type III table with Satterthwaite degrees of freedom
+       (`anova()`, lmerTest is loaded).
+starter: |
+  sim <- driving_sim |>
+    mutate(trial_c = ______)
+  fit <- lmer(rt_ms ~ ______ + (______), data = sim)
+  ______(fit)
+solution: |
+  sim <- driving_sim |>
+    mutate(trial_c = trial - 2.5)
+  fit <- lmer(rt_ms ~ condition * trial_c + (1 | participant), data = sim)
+  anova(fit)
+hints:
+  - de: "Die Mitte von 1, 2, 3, 4 ist 2.5. `a * b` in der Formel erzeugt beide Haupteffekte und die Interaktion."
+    en: "The middle of 1, 2, 3, 4 is 2.5. `a * b` in the formula creates both main effects and the interaction."
+  - de: "Der Zufallsteil steht in Klammern: links, was pro Gruppe variiert (`1` = Achsenabschnitt), rechts vom `|` die Gruppe."
+    en: "The random part goes in brackets: on the left what varies per group (`1` = intercept), right of the `|` the group."
+  - de: "`lmer(rt_ms ~ condition * trial_c + (1 | participant), data = sim)`, danach `anova(fit)`."
+    en: "`lmer(rt_ms ~ condition * trial_c + (1 | participant), data = sim)`, then `anova(fit)`."
+explanation:
+  de: |
+    Übungseffekt: F(1, 423) = 44.8, p < .001; mit visueller Warnung werden
+    die Reaktionen pro Durchgang um 34 ms schneller, 95-%-KI [−50, −18].
+    Modalität: F(2, 423) = 174.3, p < .001 (auditiv −159 ms, haptisch −232
+    ms gegenüber visuell). Die Interaktion ist nicht nachweisbar,
+    F(2, 423) = 0.75, p = .473; die KIs der Steigungsunterschiede (etwa
+    [−11, 33] und [−24, 21] ms pro Durchgang) schließen kleine Unterschiede
+    aber nicht aus. Warum zentrieren? Mit Interaktion gilt der
+    Modalitätseffekt dort, wo `trial_c = 0` ist, also in der Mitte der
+    Durchgänge. Unzentriert würde er bei einem Durchgang 0 geprüft, den es
+    nicht gibt (F = 30 statt 174). Die Nenner-df (423) sind groß, weil nur
+    der Achsenabschnitt zufällig ist; variiert der Übungseffekt zwischen
+    Personen, sind die Tests zu liberal (nächste Übung: Random Slope).
+    `anova()` aus lmerTest gibt Satterthwaite-df und p-Werte; `lme4::lmer()`
+    allein liefert keine p-Werte.
+  en: |
+    Practice effect: F(1, 423) = 44.8, p < .001; with the visual warning,
+    reactions get 34 ms faster per trial, 95 % CI [−50, −18]. Modality:
+    F(2, 423) = 174.3, p < .001 (auditory −159 ms, haptic −232 ms versus
+    visual). The interaction is not detectable, F(2, 423) = 0.75, p = .473;
+    but the CIs of the slope differences (about [−11, 33] and [−24, 21] ms
+    per trial) do not rule out small differences. Why centre? With an
+    interaction, the modality effect applies where `trial_c = 0`, i.e. in the
+    middle of the trials. Uncentred, it would be tested at a trial 0 that
+    does not exist (F = 30 instead of 174). The denominator df (423) are large
+    because only the intercept is random; if the practice effect varies
+    between participants, the tests are too liberal (next exercise: random
+    slope). `anova()` from lmerTest gives Satterthwaite df and p values;
+    `lme4::lmer()` alone gives no p values.
+misconception:
+  de: "Haupteffekte in einem Modell mit Interaktion sind Durchschnittseffekte, egal wo die kontinuierliche Variable ihre Null hat."
+  en: "Main effects in a model with an interaction are average effects, no matter where the continuous variable has its zero."
+check:
+  type: value
+  tolerance: 1.0e-4
+common_mistakes:
+  - pattern: "______"
+    message:
+      de: "Es sind noch Lücken `______` offen."
+      en: "There are still blanks `______` left."
+  - pattern: "lme4::lmer"
+    message:
+      de: "`lme4::lmer()` umgeht lmerTest; dessen `anova()` liefert dann keine Satterthwaite-df und keine p-Werte. Nutze `lmer()` ohne Namespace."
+      en: "`lme4::lmer()` bypasses lmerTest; its `anova()` then gives no Satterthwaite df and no p values. Use `lmer()` without a namespace."
+  - pattern: "\\(\\s*1\\s*\\|\\s*(condition|trial|trial_c)\\s*\\)"
+    message:
+      de: "Gruppe ist die Person (`participant`). `condition` und `trial` sind feste Effekte, deren Wirkung du schätzen willst."
+      en: "The group is the participant (`participant`). `condition` and `trial` are fixed effects whose effect you want to estimate."
+  - pattern: "condition\\s*\\*\\s*trial\\b(?!_c)"
+    message:
+      de: "Mit dem unzentrierten `trial` gilt der Modalitätseffekt für Durchgang 0, den es nicht gibt. Nimm `trial_c`."
+      en: "With the uncentred `trial`, the modality effect applies to trial 0, which does not exist. Use `trial_c`."

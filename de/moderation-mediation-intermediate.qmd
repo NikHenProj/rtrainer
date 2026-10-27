@@ -1,0 +1,164 @@
+---
+title: "Moderation und Mediation"
+subtitle: "Intermediate · Johnson-Neyman mit interactions, Mediation mit lavaan"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, parameters, interactions, lavaan]
+resources:
+  - ../data/acceptance.csv
+---
+
+{{< include /_generated/de/moderation-mediation-intermediate/runtime.qmd >}}
+
+{{< include /_generated/de/moderation-mediation-intermediate/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R läuft hier direkt im Browser. Beim ersten Besuch lädt es 20–40 Sekunden (Anzeige unten rechts), danach geht es schneller.
+:::
+
+## Wozu? {#why}
+
+**Forschungsfragen:** *Für wen* hängt die Nützlichkeit eines Fahrerassistenzsystems mit der Nutzungsabsicht zusammen? Und *über welchen Weg* wirkt eine gute Bedienbarkeit auf die Absicht?
+
+Die erste Frage ist eine **Moderation**: Die Erfahrung mit Assistenzsystemen verändert die Stärke eines Zusammenhangs. Die zweite ist eine **Mediation**: Die Nützlichkeit liegt zwischen Bedienbarkeit und Absicht und überträgt einen Teil des Effekts. Grundlage ist der Akzeptanzfragebogen `acceptance` (n = 300, Technology Acceptance Model). Die Interaktion mit einfachen Steigungen kennst du aus der Lektion Regression (Intermediate); hier geht es um den ganzen Verlauf und um indirekte Effekte.
+
+## Konzept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 190" role="img" aria-labelledby="fig-moi-title fig-moi-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-moi-title">Moderation und Mediation als Pfaddiagramm</title>
+  <desc id="fig-moi-desc">Links Moderation: Ein Pfeil von Nützlichkeit zu Absicht, ein zweiter Pfeil von Erfahrung trifft auf die Mitte dieses Pfeils. Rechts Mediation: Bedienbarkeit zeigt mit Pfad a auf Nützlichkeit, Nützlichkeit mit Pfad b auf Absicht, und ein direkter Pfad c führt von Bedienbarkeit zu Absicht. Der indirekte Effekt ist a mal b.</desc>
+  <rect x="10" y="120" width="90" height="34" rx="4" class="rt-fig-box" />
+  <text x="55" y="142" text-anchor="middle" class="rt-fig-label">pu</text>
+  <rect x="180" y="120" width="90" height="34" rx="4" class="rt-fig-box" />
+  <text x="225" y="142" text-anchor="middle" class="rt-fig-label">bi</text>
+  <rect x="95" y="20" width="90" height="34" rx="4" class="rt-fig-box-accent" />
+  <text x="140" y="42" text-anchor="middle" class="rt-fig-label">experience</text>
+  <line x1="100" y1="137" x2="176" y2="137" class="rt-fig-arrow" />
+  <line x1="140" y1="54" x2="140" y2="133" class="rt-fig-arrow" />
+  <text x="140" y="178" text-anchor="middle" class="rt-fig-code">bi ~ pu * experience</text>
+  <rect x="300" y="120" width="90" height="34" rx="4" class="rt-fig-box" />
+  <text x="345" y="142" text-anchor="middle" class="rt-fig-label">peou</text>
+  <rect x="385" y="20" width="90" height="34" rx="4" class="rt-fig-box-accent" />
+  <text x="430" y="42" text-anchor="middle" class="rt-fig-label">pu</text>
+  <rect x="465" y="120" width="90" height="34" rx="4" class="rt-fig-box" />
+  <text x="510" y="142" text-anchor="middle" class="rt-fig-label">bi</text>
+  <line x1="360" y1="120" x2="405" y2="58" class="rt-fig-arrow" />
+  <text x="370" y="84" class="rt-fig-code">a</text>
+  <line x1="455" y1="58" x2="495" y2="116" class="rt-fig-arrow" />
+  <text x="483" y="84" class="rt-fig-code">b</text>
+  <line x1="390" y1="137" x2="461" y2="137" class="rt-fig-arrow" />
+  <text x="425" y="130" text-anchor="middle" class="rt-fig-code">c</text>
+  <text x="428" y="178" text-anchor="middle" class="rt-fig-code">indirect := a * b</text>
+</svg>
+<figcaption>Moderation (links): Die Erfahrung verändert die Stärke des Pfeils von Nützlichkeit zu Absicht. Mediation (rechts): Der indirekte Effekt läuft über die Nützlichkeit (a × b), der direkte Effekt c ist der Rest.</figcaption>
+</figure>
+```
+
+- **Moderation** ist eine Interaktion: `lm(y ~ x * m)`. Der Koeffizient `x:m` sagt, um wie viel die Steigung von x pro Einheit von m steiler wird. Ohne Zentrierung ist der Koeffizient von x die Steigung bei m = 0.
+- **Johnson-Neyman** `interactions::johnson_neyman(fit, pred = x, modx = m)`: Für jeden Wert von m, ob die Steigung von x signifikant ist; Ausgabe sind Grenzen und eine Abbildung. `sim_slopes()` gibt einfache Steigungen an festen Punkten, `interact_plot()` die Vorhersagelinien.
+- **Mediation** in lavaan: Pfade mit Labels benennen (`m ~ a * x`, `y ~ b * m + c * x`), daraus mit `:=` den indirekten Effekt `a * b` und den Gesamteffekt `c + a * b` definieren.
+- **Indirekten Effekt testen:** mit einem Bootstrap-KI (`se = "bootstrap"`, `parameterEstimates(fit, boot.ci.type = "perc")`), weil das Produkt a × b schief verteilt ist. Der Weg über einzelne Regressionen (Baron & Kenny) und die Einteilung „vollständig/partiell“ sind veraltet.
+- **Kausalität:** Ein Mediationsmodell zerlegt Zusammenhänge. Die Pfeilrichtung legst du fest; mit Querschnittsdaten bleibt sie eine Annahme.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## Mehr dazu: kategoriale Moderatoren, mehrere Mediatoren, moderierte Mediation
+
+- **Kategorialer Moderator:** `lm(y ~ x * group)`; `sim_slopes(fit, pred = x, modx = group)` oder `modelbased::estimate_slopes(fit, trend = "x", by = "group")` gibt die Steigung je Gruppe.
+- **Mehrere Mediatoren** parallel: `m1 ~ a1 * x`, `m2 ~ a2 * x`, `y ~ b1 * m1 + b2 * m2 + c * x`, dann `ind1 := a1 * b1`, `ind2 := a2 * b2`, `diff := ind1 - ind2`.
+- **Latente Variablen:** Statt Skalenmittelwerten kannst du die Messmodelle aus der Lektion SEM einsetzen (`pu =~ pu_1 + …`); dann sind die Pfade messfehlerbereinigt.
+- **Moderierte Mediation:** Der Pfad a hängt von einem Moderator ab (`m ~ a1 * x + a2 * w + a3 * x:w`); der indirekte Effekt wird zur Funktion von w, z. B. `ind_hi := (a1 + a3 * 5) * b`.
+:::
+
+## Beispiel {#example}
+
+Skalenwerte bilden wie in der Lektion Regression, dann die Moderation durch die Erfahrung über den ganzen Bereich:
+
+```{webr}
+tam <- acceptance |>
+  mutate(
+    across(c(peou_3, trust_4), \(x) 8 - x),
+    pu = rowMeans(pick(pu_1:pu_4)),
+    peou = rowMeans(pick(peou_1:peou_4)),
+    trust = rowMeans(pick(trust_1:trust_5)),
+    bi = rowMeans(pick(bi_1:bi_4))
+  )
+fit_mod <- lm(bi ~ pu * experience, data = tam)
+johnson_neyman(fit_mod, pred = pu, modx = experience)
+```
+
+Die Interaktion ist b = 0.07 pro Jahr, 95-%-KI [0.01, 0.13], p = .019. Ab 0.41 Jahren Erfahrung ist die Steigung von `pu` signifikant positiv, also für alle mit mindestens einem Jahr; die zweite Grenze (−28.6) liegt außerhalb der Daten. Nun die Mediation:
+
+```{webr}
+model <- "
+  pu ~ a * peou
+  bi ~ b * pu + c * peou
+  indirect := a * b
+  total := c + a * b
+"
+fit_med <- sem(model, data = tam)
+model_parameters(fit_med)
+```
+
+Der indirekte Effekt über die Nützlichkeit ist 0.10 [0.05, 0.15] (Delta-Methode), der direkte 0.29 [0.18, 0.40]. Für den Bericht gehört ein Bootstrap-KI dazu. Im Browser dauern 200 Ziehungen etwa 20 Sekunden; für den Bericht lokal 5000:
+
+```{webr}
+set.seed(1)
+fit_boot <- sem(model, data = tam, se = "bootstrap", bootstrap = 200)
+parameterEstimates(fit_boot, boot.ci.type = "perc") |>
+  filter(op == ":=")
+```
+
+**So berichtest du es:** Die Erfahrung moderierte den Zusammenhang von Nützlichkeit und Nutzungsabsicht, b = 0.07, 95-%-KI [0.01, 0.13], p = .019; nach dem Johnson-Neyman-Verfahren war er ab 0.4 Jahren Erfahrung signifikant positiv. In einem Mediationsmodell war der indirekte Effekt der Bedienbarkeit auf die Absicht über die Nützlichkeit b = 0.10, 95-%-KI [0.05, 0.16] (1000 Bootstrap-Ziehungen, Perzentil), der direkte Effekt b = 0.29 [0.18, 0.40]. Da alle Maße gleichzeitig erhoben wurden, ist die Pfadrichtung eine theoretische Annahme.
+
+## Paketvergleich {#packages}
+
+| Aufgabe | Empfehlung | Alternative |
+|---|---|---|
+| Interaktion deuten | **interactions** `johnson_neyman()`, `sim_slopes()`, `interact_plot()` | **modelbased** `estimate_slopes()` (auch mit Johnson-Neyman-Bereich), `emmeans::emtrends()`, marginaleffects `slopes()` |
+| Mediation | **lavaan** mit Labels und `:=`, Bootstrap-KI | **mediation** `mediate()` (siehe unten); PROCESS-Makro (SPSS, nicht R) |
+| Mediation mit latenten Variablen, mehreren Mediatoren | **lavaan** | piecewiseSEM; brms (multivariat, lokal) |
+
+**Warum lavaan statt des `mediation`-Pakets?** lavaan wächst mit: Mehrere Mediatoren, latente Variablen und moderierte Mediation sind dieselbe Syntax, und du kennst sie aus der Lektion SEM. Das `mediation`-Paket ist eine gute Ergänzung, wenn Mediator oder Ergebnis nicht normalverteilt sind (logistische Modelle, `lmer()`) oder wenn du eine Sensitivitätsanalyse für unbeobachtete Störvariablen willst (`medsens()`). Für dieses Beispiel liefert es dasselbe Ergebnis (indirekt 0.097 [0.052, 0.152], Anteil vermittelt 25 %):
+
+```r
+library(mediation)
+med <- mediate(
+  lm(pu ~ peou, data = tam),            # Mediatormodell
+  lm(bi ~ pu + peou, data = tam),       # Ergebnismodell
+  treat = "peou", mediator = "pu", sims = 1000
+)
+summary(med)   # ACME = indirekter, ADE = direkter Effekt
+```
+
+## Übungen {#exercises}
+
+Drei Pflichtübungen und zwei Zusatzübungen. **Ausführen und prüfen** startet deinen Code und prüft ihn sofort. Hinweise deckst du einzeln auf (**Hinweis zeigen**), die Lösung erst danach.
+
+{{< include /_generated/de/moderation-mediation-intermediate/exercises.qmd >}}
+
+## Wissenscheck {#check}
+
+{{< include /_generated/de/moderation-mediation-intermediate/quiz.qmd >}}
+
+## Spickzettel {#cheatsheet}
+
+```r
+# Moderation: Interaktion, ganzer Verlauf
+fit <- lm(y ~ x * m, data = d)
+johnson_neyman(fit, pred = x, modx = m)   # Grenzen + Abbildung
+sim_slopes(fit, pred = x, modx = m)       # Steigungen bei −1 SD, M, +1 SD
+interact_plot(fit, pred = x, modx = m)
+
+# Mediation mit lavaan: Labels und definierte Parameter
+model <- "
+  m ~ a * x
+  y ~ b * m + c * x
+  indirect := a * b
+  total := c + a * b
+"
+fit <- sem(model, data = d, se = "bootstrap", bootstrap = 5000)
+parameterEstimates(fit, boot.ci.type = "perc")
+```

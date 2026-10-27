@@ -422,6 +422,80 @@ run_exercise("gl-i-comparisons", "avg_comparisons(fit, variables = \"prototype\"
 checked <- wait_for("!!document.querySelector('#ex-gl-i-comparisons .exercise-grade.alert-success')", timeout = 90)
 step("glm-intermediate: cluster-robust comparisons graded correct", !is.na(checked), sprintf("%s s", checked))
 
+# 12. Intermediate P5: load time with lme4/lmerTest (mixed models),
+# interactions/lavaan (moderation-mediation) and pwr/Superpower/simr (power);
+# crossed random effects, a Johnson-Neyman interval, a lavaan mediation
+# model, a Superpower design and a simr simulation are graded in webR.
+loaded <- wait_lesson("/de/mixed-models-intermediate.html", "mm-i-crossed-icc")
+step("mixed-models-intermediate: webR, lme4, lmerTest and performance ready", !is.na(loaded), sprintf("%s s", loaded))
+run_exercise("mm-i-crossed-icc", paste(
+  "fit <- lmer(log(time_s) ~ prototype + (1 | participant/task), data = usability)",
+  "icc(fit, by_group = TRUE)",
+  sep = "\n"
+))
+hinted <- wait_for("(document.querySelector('#ex-mm-i-crossed-icc .exercise-grade.alert-danger')?.textContent || '').includes('(1 | task)')", timeout = 90)
+step("mixed-models-intermediate: nested instead of crossed gets the hint", !is.na(hinted))
+run_exercise("mm-i-crossed-icc", paste(
+  "fit <- lmer(log(time_s) ~ prototype + (1 | participant) + (1 | task), data = usability)",
+  "icc(fit, by_group = TRUE)",
+  sep = "\n"
+))
+checked <- wait_for("!!document.querySelector('#ex-mm-i-crossed-icc .exercise-grade.alert-success')", timeout = 90)
+step("mixed-models-intermediate: crossed random effects graded correct", !is.na(checked), sprintf("%s s", checked))
+
+loaded <- wait_lesson("/de/moderation-mediation-intermediate.html", "mo-i-mediation")
+step("moderation-mediation-intermediate: webR, interactions and lavaan ready", !is.na(loaded), sprintf("%s s", loaded))
+run_exercise("mo-i-johnson-neyman", paste(
+  "fit <- lm(bi ~ pu * experience, data = tam)",
+  "jn <- johnson_neyman(fit, pred = pu, modx = experience)",
+  "round(jn$bounds, 2)",
+  sep = "\n"
+))
+checked <- wait_for("!!document.querySelector('#ex-mo-i-johnson-neyman .exercise-grade.alert-success')", timeout = 90)
+step("moderation-mediation-intermediate: Johnson-Neyman bounds graded correct", !is.na(checked), sprintf("%s s", checked))
+run_exercise("mo-i-mediation", paste(
+  "model <- \"",
+  "  pu ~ a * peou",
+  "  bi ~ b * pu + c * peou",
+  "  indirect := a * b",
+  "  total := c + a * b",
+  "\"",
+  "fit <- sem(model, data = tam)",
+  "fit",
+  sep = "\n"
+))
+checked <- wait_for("!!document.querySelector('#ex-mo-i-mediation .exercise-grade.alert-success')", timeout = 90)
+step("moderation-mediation-intermediate: lavaan mediation model graded correct", !is.na(checked), sprintf("%s s", checked))
+
+loaded <- wait_lesson("/de/power-intermediate.html", "pw-i-simr")
+step("power-intermediate: webR, pwr, Superpower and simr ready", !is.na(loaded), sprintf("%s s", loaded))
+superpower_code <- function(r) paste(
+  "design <- ANOVA_design(",
+  sprintf("  design = \"3w\", n = 20, mu = c(1000, 960, 940), sd = 140,%s", r),
+  "  plot = FALSE",
+  ")",
+  "result <- ANOVA_exact(design, verbose = FALSE)",
+  "round(result$main_results$power, 1)",
+  sep = "\n"
+)
+run_exercise("pw-i-superpower", superpower_code(""))
+hinted <- wait_for("(document.querySelector('#ex-pw-i-superpower .exercise-grade.alert-danger')?.textContent || '').includes('r = 0')", timeout = 90)
+step("power-intermediate: Superpower design without r gets the hint", !is.na(hinted))
+run_exercise("pw-i-superpower", superpower_code(" r = 0.85,"))
+checked <- wait_for("!!document.querySelector('#ex-pw-i-superpower .exercise-grade.alert-success')", timeout = 90)
+step("power-intermediate: Superpower power graded correct", !is.na(checked), sprintf("%s s", checked))
+run_exercise("pw-i-simr", paste(
+  "fit <- lmer(rt_ms ~ condition + trial_c + (1 + trial_c | participant), data = sim)",
+  "fixef(fit)[\"trial_c\"] <- -15",
+  "fit60 <- extend(fit, along = \"participant\", n = 60)",
+  "set.seed(42)",
+  "ps <- powerSim(fit60, test = fixed(\"trial_c\", \"z\"), nsim = 50, progress = FALSE)",
+  "summary(ps)",
+  sep = "\n"
+))
+checked <- wait_for("!!document.querySelector('#ex-pw-i-simr .exercise-grade.alert-success')", timeout = 240)
+step("power-intermediate: simr powerSim() graded correct", !is.na(checked), sprintf("%s s", checked))
+
 goto("/en/index.html")
 Sys.sleep(1)
 beginner <- c(

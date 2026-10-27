@@ -1,0 +1,134 @@
+# Knowledge check: passed at >= `pass` share of correctly answered questions.
+lesson: mixed-models-intermediate
+pass: 0.8
+questions:
+  - id: mm-i-q-pseudo
+    prompt:
+      de: "Warum nicht einfach `lm(rt_ms ~ condition, data = driving_sim)` über alle 468 Durchgänge?"
+      en: "Why not simply `lm(rt_ms ~ condition, data = driving_sim)` over all 468 trials?"
+    options:
+      - text:
+          de: "Die Durchgänge derselben Person hängen zusammen. `lm()` zählt sie als unabhängig; Standardfehler und p-Werte stimmen dann nicht (Pseudoreplikation)."
+          en: "Trials of the same participant are related. `lm()` counts them as independent; standard errors and p values are then wrong (pseudoreplication)."
+        correct: true
+        explain:
+          de: "Richtig. Die Schätzer sind oft ähnlich, die Unsicherheit nicht: Für Personenmerkmale (z. B. `experience`) sind die SE von `lm()` zu klein, für Bedingungen innerhalb der Person meist zu groß (hier 19.7 statt 13.3 ms). Ein Zufallsintercept pro Person bildet die Abhängigkeit ab."
+          en: "Right. The estimates are often similar, the uncertainty is not: for participant characteristics (e.g. `experience`) the SEs of `lm()` are too small, for within-participant conditions usually too large (here 19.7 instead of 13.3 ms). A random intercept per participant models the dependence."
+      - text:
+          de: "`lm()` kann mit fehlenden Werten nicht umgehen."
+          en: "`lm()` cannot handle missing values."
+        correct: false
+        explain:
+          de: "`lm()` entfernt fehlende Werte genauso wie `lmer()`. Das Problem ist die Abhängigkeit der Beobachtungen."
+          en: "`lm()` drops missing values just like `lmer()`. The problem is the dependence of the observations."
+      - text:
+          de: "`lm()` gibt bei Messwiederholung verzerrte Mittelwertsunterschiede."
+          en: "`lm()` gives biased mean differences with repeated measures."
+        correct: false
+        explain:
+          de: "Bei ausbalancierten Daten sind die Schätzer fast gleich. Falsch sind die Standardfehler, KIs und p-Werte."
+          en: "With balanced data, the estimates are almost the same. The standard errors, CIs and p values are wrong."
+  - id: mm-i-q-icc
+    prompt:
+      de: "Das Nullmodell `lmer(rt_ms ~ 1 + (1 | participant))` hat ICC = 0.40. Was heißt das?"
+      en: "The null model `lmer(rt_ms ~ 1 + (1 | participant))` has ICC = 0.40. What does that mean?"
+    options:
+      - text:
+          de: "40 % der Varianz der Reaktionszeiten liegt zwischen Personen; zwei Durchgänge derselben Person korrelieren im Mittel zu 0.40."
+          en: "40 % of the variance in reaction times lies between participants; two trials of the same participant correlate at 0.40 on average."
+        correct: true
+        explain:
+          de: "Richtig. Je höher die ICC, desto weniger unabhängige Information steckt in weiteren Durchgängen derselben Person."
+          en: "Right. The higher the ICC, the less independent information further trials of the same participant contain."
+      - text:
+          de: "Das Modell erklärt 40 % der Varianz."
+          en: "The model explains 40 % of the variance."
+        correct: false
+        explain:
+          de: "Das Nullmodell hat keinen Prädiktor. Varianzaufklärung durch feste Effekte zeigt `r2()` (marginales R²)."
+          en: "The null model has no predictor. Variance explained by fixed effects is shown by `r2()` (marginal R²)."
+      - text:
+          de: "Die Personen-SD ist 40 % der Residual-SD."
+          en: "The participant SD is 40 % of the residual SD."
+        correct: false
+        explain:
+          de: "Die ICC ist ein Varianzanteil: Personenvarianz geteilt durch Personen- plus Residualvarianz, kein SD-Verhältnis."
+          en: "The ICC is a share of variance: participant variance divided by participant plus residual variance, not a ratio of SDs."
+  - id: mm-i-q-singular
+    prompt:
+      de: "`lmer(rt_ms ~ condition + (1 + condition | participant))` meldet „boundary (singular) fit“. Was ist ein vernünftiger nächster Schritt?"
+      en: "`lmer(rt_ms ~ condition + (1 + condition | participant))` reports \"boundary (singular) fit\". What is a sensible next step?"
+    options:
+      - text:
+          de: "`VarCorr(fit)` ansehen: Liegt eine Varianz nahe 0 oder eine Korrelation nahe ±1, die Zufallsstruktur vereinfachen (z. B. nur `(1 | participant)`) und das begründen."
+          en: "Look at `VarCorr(fit)`: if a variance is near 0 or a correlation near ±1, simplify the random structure (e.g. only `(1 | participant)`) and justify it."
+        correct: true
+        explain:
+          de: "Richtig. Hier sind die Slope-SDs 14 und 3 ms bei einer Korrelation von −0.96: Die Daten tragen diese Struktur nicht."
+          en: "Right. Here the slope SDs are 14 and 3 ms with a correlation of −0.96: the data do not support this structure."
+      - text:
+          de: "Die Meldung ignorieren, sie ist nur ein Hinweis."
+          en: "Ignore the message, it is just a note."
+        correct: false
+        explain:
+          de: "Die festen Effekte sind oft trotzdem brauchbar, aber ein singuläres Modell ist überparametrisiert; Tests und Konvergenz können leiden."
+          en: "The fixed effects are often still usable, but a singular model is overparameterised; tests and convergence can suffer."
+      - text:
+          de: "`condition` als Zufallseffekt statt als festen Effekt aufnehmen: `(1 | condition)`."
+          en: "Include `condition` as a random effect instead of a fixed effect: `(1 | condition)`."
+        correct: false
+        explain:
+          de: "Mit 3 Stufen lässt sich keine Varianz sinnvoll schätzen, und der Modalitätsvergleich ist die Forschungsfrage."
+          en: "With 3 levels no variance can be estimated sensibly, and the modality comparison is the research question."
+  - id: mm-i-q-crossed
+    prompt:
+      de: "Im Usability-Test bearbeiten alle 24 Personen dieselben 4 Aufgaben. Welche Zufallsstruktur passt?"
+      en: "In the usability test, all 24 participants work on the same 4 tasks. Which random structure fits?"
+    options:
+      - text:
+          de: "`(1 | participant) + (1 | task)`: Person und Aufgabe sind gekreuzt."
+          en: "`(1 | participant) + (1 | task)`: participant and task are crossed."
+        correct: true
+        explain:
+          de: "Richtig. Jede Aufgabe kommt bei jeder Person vor; beide Gruppierungen bekommen einen eigenen Term."
+          en: "Right. Each task occurs for every participant; both groupings get their own term."
+      - text:
+          de: "`(1 | participant/task)`: Aufgaben sind in Personen geschachtelt."
+          en: "`(1 | participant/task)`: tasks are nested in participants."
+        correct: false
+        explain:
+          de: "Geschachtelt wäre es, wenn jede Person eigene Aufgaben hätte (wie Schüler in Klassen). „search“ ist für alle dieselbe Aufgabe."
+          en: "Nested would mean each participant had their own tasks (like pupils in classes). \"search\" is the same task for everyone."
+      - text:
+          de: "`(1 | task)` allein, weil die Aufgaben mehr Varianz haben."
+          en: "`(1 | task)` alone, because the tasks have more variance."
+        correct: false
+        explain:
+          de: "Dann wären die 12 Messungen pro Person wieder unabhängig; die Personenvarianz gehört trotzdem ins Modell."
+          en: "Then the 12 measurements per participant would be independent again; the participant variance still belongs in the model."
+  - id: mm-i-q-slope
+    prompt:
+      de: "Mit Random Slope für den Durchgang sinkt der Test des Übungseffekts von t(423) auf t(39). Warum?"
+      en: "With a random slope for trial, the test of the practice effect drops from t(423) to t(39). Why?"
+    options:
+      - text:
+          de: "Variiert die Steigung zwischen Personen, ist die Zahl der Personen (40) die relevante Stichprobe für den Übungseffekt, nicht die Zahl der Durchgänge."
+          en: "If the slope varies between participants, the number of participants (40) is the relevant sample for the practice effect, not the number of trials."
+        correct: true
+        explain:
+          de: "Richtig. Ohne Random Slope wäre der Test zu liberal, sobald Personen unterschiedlich schnell lernen."
+          en: "Right. Without a random slope the test would be too liberal as soon as participants learn at different rates."
+      - text:
+          de: "Das Modell hat Durchgänge mit fehlenden Werten entfernt."
+          en: "The model dropped trials with missing values."
+        correct: false
+        explain:
+          de: "Es fehlen in beiden Modellen dieselben 12 Werte. Die df ändern sich wegen der Zufallsstruktur."
+          en: "Both models miss the same 12 values. The df change because of the random structure."
+      - text:
+          de: "Satterthwaite-df sind ungenau; besser wäre `lm()`."
+          en: "Satterthwaite df are inaccurate; `lm()` would be better."
+        correct: false
+        explain:
+          de: "Satterthwaite ist eine gute Näherung für Mixed Models; `lm()` ignoriert die Abhängigkeit ganz."
+          en: "Satterthwaite is a good approximation for mixed models; `lm()` ignores the dependence entirely."

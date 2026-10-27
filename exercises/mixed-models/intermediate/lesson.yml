@@ -1,0 +1,19 @@
+# Lesson metadata; exercises are the other *.yml files in this folder
+# (sorted by `order`), the knowledge check is quiz.yml.
+lesson: mixed-models-intermediate
+minutes: 60
+prerequisites: [group-comparisons-intermediate, regression-intermediate]
+langs: [de]
+packages: [dplyr, lme4, lmerTest, parameters, performance]
+data: [driving_sim, usability]
+goals:
+  de:
+    - Messwiederholung mit `lmer()` und einem Zufallsintercept pro Person modellieren, Tests mit Satterthwaite-Freiheitsgraden
+    - Zufällige Steigungen einsetzen und Shrinkage gegenüber einem `lm()` pro Person verstehen
+    - Gekreuzte Zufallseffekte (Person × Aufgabe) rechnen und Varianzanteile mit `icc()` deuten
+    - Modellaufbau und Residuen bei fehlenden Werten prüfen
+  en:
+    - Model repeated measures with `lmer()` and a random intercept per participant, tests with Satterthwaite degrees of freedom
+    - Use random slopes and understand shrinkage compared with one `lm()` per participant
+    - Fit crossed random effects (participant × task) and interpret variance shares with `icc()`
+    - Check model structure and residuals with missing values

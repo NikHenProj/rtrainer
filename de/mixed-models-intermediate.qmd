@@ -1,0 +1,143 @@
+---
+title: "Messwiederholung und Mixed Models"
+subtitle: "Intermediate · lme4/lmerTest, Random Slopes, ICC, gekreuzte Effekte"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, lme4, lmerTest, parameters, performance]
+resources:
+  - ../data/driving_sim.csv
+  - ../data/usability.csv
+---
+
+{{< include /_generated/de/mixed-models-intermediate/runtime.qmd >}}
+
+{{< include /_generated/de/mixed-models-intermediate/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R läuft hier direkt im Browser. Beim ersten Besuch lädt es 20–40 Sekunden (Anzeige unten rechts), danach geht es schneller.
+:::
+
+## Wozu? {#why}
+
+**Forschungsfrage:** Reagieren Fahrerinnen und Fahrer auf haptische Übernahmewarnungen schneller als auf visuelle, und werden sie über die Durchgänge schneller?
+
+Im Fahrsimulator (`driving_sim`) fährt jede der 40 Personen 12 Übernahmen: 3 Modalitäten × 4 Durchgänge. Die 12 Messungen einer Person hängen zusammen; manche Personen sind generell schneller. Die Messwiederholungs-ANOVA (Lektion Gruppenvergleiche) mittelt dafür pro Person und Bedingung und verliert so den Durchgang und jede Person mit einem fehlenden Wert. Ein **Mixed Model** nutzt alle Einzelmessungen und bildet die Abhängigkeit über Zufallseffekte ab.
+
+## Konzept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 200" role="img" aria-labelledby="fig-mmi-title fig-mmi-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-mmi-title">Zufallsintercept und Random Slope</title>
+  <desc id="fig-mmi-desc">Zwei Diagramme mit Reaktionszeit über vier Durchgänge. Links: drei parallele Linien für drei Personen, jede auf eigener Höhe, alle mit derselben fallenden Steigung (Zufallsintercept). Rechts: drei Linien auf eigener Höhe mit unterschiedlich steilen Steigungen (Random Slope). Eine dickere Linie in der Mitte zeigt jeweils den festen Effekt.</desc>
+  <line x1="40" y1="170" x2="250" y2="170" class="rt-fig-axis" />
+  <line x1="40" y1="170" x2="40" y2="20" class="rt-fig-axis" />
+  <line x1="55" y1="45" x2="240" y2="75" class="rt-fig-b" />
+  <line x1="55" y1="80" x2="240" y2="110" class="rt-fig-a" />
+  <line x1="55" y1="115" x2="240" y2="145" class="rt-fig-b" />
+  <text x="145" y="190" text-anchor="middle" class="rt-fig-label">(1 | participant)</text>
+  <line x1="310" y1="170" x2="520" y2="170" class="rt-fig-axis" />
+  <line x1="310" y1="170" x2="310" y2="20" class="rt-fig-axis" />
+  <line x1="325" y1="40" x2="510" y2="95" class="rt-fig-b" />
+  <line x1="325" y1="80" x2="510" y2="110" class="rt-fig-a" />
+  <line x1="325" y1="120" x2="510" y2="128" class="rt-fig-b" />
+  <text x="415" y="190" text-anchor="middle" class="rt-fig-label">(1 + trial_c | participant)</text>
+  <text x="30" y="30" text-anchor="end" class="rt-fig-label rt-fig-muted">rt</text>
+</svg>
+<figcaption>Links darf jede Person ihr eigenes Grundniveau haben, lernt aber gleich schnell. Rechts darf auch der Übungseffekt zwischen Personen variieren. Die mittlere Linie ist der feste Effekt, den du berichtest.</figcaption>
+</figure>
+```
+
+- **Formel** `lmer(y ~ feste Effekte + (zufällige Effekte | Gruppe))`: Feste Effekte sind das, was du testen willst (Modalität, Durchgang). In Klammern steht, was pro Gruppe variieren darf: `(1 | participant)` ein eigenes Grundniveau pro Person.
+- **Tests:** lme4 gibt keine p-Werte. Mit geladenem **lmerTest** liefern `summary()` und `anova()` Tests mit Satterthwaite-Freiheitsgraden; `parameters::model_parameters()` zeigt KIs.
+- **Random Slope** `(1 + trial_c | participant)`: Auch der Effekt darf zwischen Personen variieren. Faustregel: Effekte, die *innerhalb* der Person variieren und zwischen Personen streuen können, bekommen einen Random Slope, sonst sind die Tests zu liberal. Personenmerkmale (`experience`) nie.
+- **ICC** `performance::icc(fit)`: Anteil der Varianz zwischen den Gruppen. Hoch heißt: Weitere Durchgänge derselben Person bringen wenig neue Information.
+- **Gekreuzt oder geschachtelt:** Bearbeiten alle Personen dieselben Aufgaben, sind Person und Aufgabe gekreuzt: `(1 | participant) + (1 | task)`. Geschachtelt (`(1 | school/class)`) heißt, jede Klasse gehört zu genau einer Schule.
+- **Singulär:** „boundary (singular) fit“ heißt, eine Varianz ist ≈ 0 oder eine Korrelation ≈ ±1. Dann die Zufallsstruktur schrittweise vereinfachen und das berichten.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## Mehr dazu: REML, Modellvergleich, Effektgrößen
+
+- **REML vs. ML:** `lmer()` schätzt standardmäßig mit REML (unverzerrte Varianzen). Für Modellvergleiche mit unterschiedlichen *festen* Effekten braucht `anova(m1, m2)` ML; es rechnet dafür automatisch neu (`refit = TRUE`). Für unterschiedliche Zufallsstrukturen bei gleichen festen Effekten `anova(m1, m2, refit = FALSE)`.
+- **R² für Mixed Models:** `performance::r2(fit)` gibt das marginale R² (nur feste Effekte, hier 0.24) und das konditionale (mit Zufallseffekten, 0.65).
+- **Kontraste und Mittelwerte** funktionieren wie bei afex: `modelbased::estimate_contrasts(fit, contrast = "condition", p_adjust = "holm")` oder emmeans.
+- **Konvergenzwarnungen:** `lme4::allFit(fit)` rechnet mit allen Optimierern; stimmen die Schätzer überein, ist die Warnung meist harmlos.
+:::
+
+## Beispiel {#example}
+
+Modalität mit einem Zufallsintercept pro Person, zum Vergleich ein `lm()`, das die Abhängigkeit ignoriert:
+
+```{webr}
+fit <- lmer(rt_ms ~ condition + (1 | participant), data = driving_sim)
+model_parameters(fit)
+model_parameters(lm(rt_ms ~ condition, data = driving_sim))
+```
+
+Die Schätzer sind fast gleich (auditiv −159 vs. −161 ms), die Standardfehler nicht: Das Mixed Model schätzt die Modalitätseffekte *innerhalb* der Personen (SE 13.3 statt 19.7 ms), weil es die Unterschiede zwischen Personen aus dem Fehler herausnimmt. Wie viel davon ist das?
+
+```{webr}
+icc(lmer(rt_ms ~ 1 + (1 | participant), data = driving_sim))
+anova(fit)
+```
+
+ICC = 0.40: 40 % der Varianz liegt zwischen Personen. Modalität: F(2, 426) = 157.6, p < .001.
+
+**So berichtest du es:** Ein lineares Mixed Model mit Zufallsintercept pro Person (ICC des Nullmodells = .40) zeigte einen Effekt der Warnmodalität, F(2, 426) = 157.6, p < .001 (Satterthwaite). Gegenüber visuellen Warnungen reagierten die Personen auf auditive um 159 ms schneller, 95-%-KI [133, 185], auf haptische um 231 ms [205, 258].
+
+## Paketvergleich {#packages}
+
+| Aufgabe | Empfehlung | Alternative |
+|---|---|---|
+| Lineares Mixed Model | **lme4** `lmer()` + **lmerTest** (Satterthwaite) | `afex::mixed()` (Typ-III-Tests, Kenward-Roger); nlme `lme()` (Korrelationsstrukturen über die Zeit) |
+| Nicht-normale Daten | `lme4::glmer()` (binomial, poisson) | **glmmTMB** (Negativ-Binomial, Null-Inflation, Beta), lokal |
+| Ergebnisse, Varianzanteile | **parameters** `model_parameters()`, **performance** `icc()`, `r2()`, `check_model()` | `summary()`, `VarCorr()`, `broom.mixed::tidy()` |
+| Bayesianisch | – | brms (Stan), lokal |
+
+::: {.callout-note appearance="simple"}
+## Lokal ausführen: glmmTMB
+
+glmmTMB lädt im Browser derzeit nicht (Versionskonflikt mit TMB im webR-Paketindex). Lokal: Fehlerzahlen pro Aufgabe mit Überdispersion als Negativ-Binomial-Modell.
+
+```r
+library(glmmTMB)
+fit_nb <- glmmTMB(errors ~ prototype + (1 | participant) + (1 | task),
+                  family = nbinom2, data = usability)
+model_parameters(fit_nb, exponentiate = TRUE)
+```
+:::
+
+## Übungen {#exercises}
+
+Drei Pflichtübungen und zwei Zusatzübungen. **Ausführen und prüfen** startet deinen Code und prüft ihn sofort. Hinweise deckst du einzeln auf (**Hinweis zeigen**), die Lösung erst danach.
+
+{{< include /_generated/de/mixed-models-intermediate/exercises.qmd >}}
+
+## Wissenscheck {#check}
+
+{{< include /_generated/de/mixed-models-intermediate/quiz.qmd >}}
+
+## Spickzettel {#cheatsheet}
+
+```r
+library(lmerTest)   # lmer() mit Satterthwaite-Tests
+
+# Zufallsintercept pro Person
+fit <- lmer(rt_ms ~ condition + (1 | participant), data = d)
+anova(fit)                    # Typ III, Satterthwaite
+model_parameters(fit)         # Schätzer, KIs, Zufallseffekte
+
+# Random Slope, Durchgang zentriert
+d <- d |> mutate(trial_c = trial - 2.5)
+fit_rs <- lmer(rt_ms ~ condition + trial_c + (1 + trial_c | participant), data = d)
+coef(fit_rs)$participant      # Steigung pro Person (fest + Abweichung)
+isSingular(fit_rs); VarCorr(fit_rs)
+
+# Gekreuzt: Person × Aufgabe
+fit_x <- lmer(log(time_s) ~ prototype + (1 | participant) + (1 | task), data = u)
+icc(fit_x, by_group = TRUE); r2(fit_x)
+
+# Residuen zeilengenau bei fehlenden Werten
+fit <- lmer(rt_ms ~ condition + (1 | participant), data = d, na.action = na.exclude)
+```

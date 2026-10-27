@@ -1,0 +1,90 @@
+id: mm-i-residuals-debug
+lesson: mixed-models-intermediate
+order: 4
+title:
+  de: Residuen mit fehlenden Werten an die Daten hängen
+  en: Attaching residuals with missing values to the data
+kind: debug
+required: false
+packages: [lme4, lmerTest]
+data: [driving_sim]
+setup: |
+  library(lmerTest)
+prompt:
+  de: |
+    Zur Diagnostik sollen die Residuen des Modells als Spalte an `driving_sim`
+    gehängt werden, um ihre Streuung je Modalität zu vergleichen
+    (Varianzhomogenität). Der Code bricht ab.
+
+    Repariere ihn so, dass jede Zeile ihr eigenes Residuum bekommt (bei
+    fehlender `rt_ms` `NA`) und das Modell alle Zeilen mit vorhandener `rt_ms`
+    nutzt. Der letzte Ausdruck bleibt die Residual-SD je Modalität (benannter
+    Vektor aus `tapply()`).
+  en: |
+    For diagnostics, the model's residuals are to be attached to
+    `driving_sim` as a column, to compare their spread per modality
+    (homogeneity of variance). The code fails.
+
+    Repair it so that each row gets its own residual (`NA` where `rt_ms` is
+    missing) and the model uses all rows with an available `rt_ms`. The last
+    expression stays the residual SD per modality (named vector from
+    `tapply()`).
+starter: |
+  fit <- lmer(rt_ms ~ condition + (1 | participant), data = driving_sim)
+  driving_sim$resid <- residuals(fit)
+  tapply(driving_sim$resid, driving_sim$condition, sd)
+solution: |
+  fit <- lmer(rt_ms ~ condition + (1 | participant), data = driving_sim,
+              na.action = na.exclude)
+  driving_sim$resid <- residuals(fit)
+  tapply(driving_sim$resid, driving_sim$condition, sd, na.rm = TRUE)
+hints:
+  - de: "Wie viele Werte liefert `residuals(fit)`, und wie viele Zeilen hat `driving_sim`?"
+    en: "How many values does `residuals(fit)` return, and how many rows does `driving_sim` have?"
+  - de: "`lmer()` entfernt die 12 Zeilen mit fehlender `rt_ms` (`na.omit`). Es gibt eine `na.action`, die die Lücken in Residuen und Vorhersagen wieder mit `NA` füllt."
+    en: "`lmer()` drops the 12 rows with missing `rt_ms` (`na.omit`). There is an `na.action` that fills the gaps in residuals and predictions with `NA` again."
+  - de: "`na.action = na.exclude` im Modell, danach `sd(..., na.rm = TRUE)` über `tapply()`."
+    en: "`na.action = na.exclude` in the model, then `sd(..., na.rm = TRUE)` via `tapply()`."
+explanation:
+  de: |
+    Standardmäßig wirft `lmer()` Zeilen mit fehlenden Werten weg, und
+    `residuals()` liefert nur 468 Werte für 480 Zeilen. `na.exclude` merkt
+    sich die Positionen und füllt sie mit `NA`, sodass Residuen und `fitted()`
+    zeilengenau passen. Die Residual-SD liegt je Modalität zwischen 110
+    (auditiv) und 116 ms (visuell), ein Verhältnis von 1.05: kein Hinweis auf
+    problematisch ungleiche Varianzen. Fallstrick: `na.omit(driving_sim)` oder
+    `drop_na()` ohne Spalte entfernen auch die 9 Zeilen, in denen nur
+    `lane_dev` fehlt, und ändern damit das Modell. Für die ganze Diagnostik
+    auf einen Blick: `performance::check_model(fit)` (Residuen, Normalität der
+    Personeneffekte, Ausreißer); das braucht mehr Pakete und läuft am besten
+    lokal.
+  en: |
+    By default, `lmer()` drops rows with missing values, and `residuals()`
+    returns only 468 values for 480 rows. `na.exclude` remembers the positions
+    and fills them with `NA`, so residuals and `fitted()` line up row by row.
+    The residual SD per modality lies between 110 (auditory) and 116 ms
+    (visual), a ratio of 1.05: no sign of problematically unequal variances.
+    Pitfall: `na.omit(driving_sim)` or `drop_na()` without a column also drop
+    the 9 rows where only `lane_dev` is missing, and so change the model. For
+    the whole diagnostics at a glance: `performance::check_model(fit)`
+    (residuals, normality of the participant effects, outliers); it needs more
+    packages and runs best locally.
+misconception:
+  de: "Residuen haben immer so viele Elemente, wie der Data Frame Zeilen hat."
+  en: "Residuals always have as many elements as the data frame has rows."
+check:
+  type: value
+  tolerance: 1.0e-6
+common_mistakes:
+  - pattern: "rep\\s*\\(\\s*NA|c\\s*\\(\\s*residuals\\s*\\(|length\\s*\\([^)]*\\)\\s*<-"
+    message:
+      de: "Mit `NA` am Ende aufgefüllt landen die Residuen in den falschen Zeilen: Die fehlenden `rt_ms` liegen mitten im Datensatz. Nutze `na.action = na.exclude`."
+      en: "Padded with `NA` at the end, the residuals land in the wrong rows: the missing `rt_ms` are in the middle of the data. Use `na.action = na.exclude`."
+  - pattern: "na\\.omit\\s*\\(\\s*driving_sim\\s*\\)|drop_na\\s*\\(\\s*\\)|complete\\.cases\\s*\\(\\s*driving_sim\\s*\\)"
+    message:
+      de: "Das entfernt auch Zeilen, in denen nur `lane_dev` fehlt; das Modell verliert Durchgänge mit gültiger `rt_ms`. Nur fehlende `rt_ms` dürfen wegfallen."
+      en: "This also drops rows where only `lane_dev` is missing; the model loses trials with a valid `rt_ms`. Only missing `rt_ms` may be dropped."
+  - pattern: "na\\.exclude(?![\\s\\S]*na\\.rm)"
+    message:
+      de: "Die Residuen passen jetzt, enthalten aber `NA`; `sd()` braucht dann `na.rm = TRUE`."
+      en: "The residuals fit now, but contain `NA`; `sd()` then needs `na.rm = TRUE`."

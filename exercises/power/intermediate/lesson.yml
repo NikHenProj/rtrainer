@@ -1,0 +1,19 @@
+# Lesson metadata; exercises are the other *.yml files in this folder
+# (sorted by `order`), the knowledge check is quiz.yml.
+lesson: power-intermediate
+minutes: 50
+prerequisites: [group-comparisons-beginner, regression-beginner]
+langs: [de]
+packages: [dplyr, pwr, Superpower, simr]
+data: [driving_sim]
+goals:
+  de:
+    - Stichproben a priori aus einem kleinsten interessierenden Effekt planen und Sensitivität berechnen (pwr)
+    - Power für Messwiederholungsdesigns mit Superpower bestimmen und die Rolle der Korrelation verstehen
+    - Power für Mixed Models simulieren und das Design erweitern (simr)
+    - Beobachtete („post hoc“) Power als Fehlschluss erkennen
+  en:
+    - Plan sample sizes a priori from a smallest effect size of interest and compute sensitivity (pwr)
+    - Determine power for repeated-measures designs with Superpower and understand the role of the correlation
+    - Simulate power for mixed models and extend the design (simr)
+    - Recognise observed ("post hoc") power as a fallacy

@@ -1,0 +1,115 @@
+id: mo-i-mediation
+lesson: moderation-mediation-intermediate
+order: 2
+title:
+  de: Mediationsmodell mit benannten Pfaden
+  en: Mediation model with labelled paths
+kind: write
+required: true
+packages: [dplyr, lavaan]
+data: [acceptance]
+setup: |
+  library(dplyr)
+  library(lavaan)
+  tam <- acceptance |>
+    mutate(
+      across(c(peou_3, trust_4), \(x) 8 - x),
+      pu = rowMeans(pick(pu_1:pu_4)),
+      peou = rowMeans(pick(peou_1:peou_4)),
+      trust = rowMeans(pick(trust_1:trust_5)),
+      bi = rowMeans(pick(bi_1:bi_4))
+    )
+prompt:
+  de: |
+    Das Technology Acceptance Model sagt: Ein leicht bedienbares System wirkt
+    nützlicher, und wer es nützlich findet, will es nutzen. Läuft ein Teil des
+    Zusammenhangs von Bedienbarkeit (`peou`) und Nutzungsabsicht (`bi`) über die
+    Nützlichkeit (`pu`)?
+
+    Schreibe ein lavaan-Modell mit drei benannten Pfaden: `a` (`pu` auf
+    `peou`), `b` (`bi` auf `pu`) und `c` (direkter Pfad `bi` auf `peou`).
+    Definiere mit `:=` den indirekten Effekt `indirect` (`a * b`) und den
+    Gesamteffekt `total` (`c + a * b`). Rechne das Modell mit `sem()` auf
+    `tam` und gib `fit` zurück.
+  en: |
+    The Technology Acceptance Model says: an easy-to-use system seems more
+    useful, and whoever finds it useful wants to use it. Does part of the
+    relationship between ease of use (`peou`) and behavioural intention (`bi`)
+    run through usefulness (`pu`)?
+
+    Write a lavaan model with three labelled paths: `a` (`pu` on `peou`), `b`
+    (`bi` on `pu`) and `c` (direct path `bi` on `peou`). Define with `:=` the
+    indirect effect `indirect` (`a * b`) and the total effect `total`
+    (`c + a * b`). Fit the model with `sem()` on `tam` and return `fit`.
+starter: |
+  model <- "
+    pu ~ peou
+    bi ~ pu + peou
+  "
+  fit <- sem(model, data = tam)
+  fit
+solution: |
+  model <- "
+    pu ~ a * peou
+    bi ~ b * pu + c * peou
+    indirect := a * b
+    total := c + a * b
+  "
+  fit <- sem(model, data = tam)
+  fit
+hints:
+  - de: "Ein Label steht mit `*` vor der Variablen: `y ~ label * x`. Danach kannst du mit dem Label rechnen."
+    en: "A label goes before the variable with `*`: `y ~ label * x`. Afterwards you can calculate with the label."
+  - de: "`name := Ausdruck` definiert einen neuen Parameter aus Labels; lavaan gibt ihm einen Standardfehler (Delta-Methode)."
+    en: "`name := expression` defines a new parameter from labels; lavaan gives it a standard error (delta method)."
+  - de: "`pu ~ a * peou`, `bi ~ b * pu + c * peou`, `indirect := a * b`, `total := c + a * b`."
+    en: "`pu ~ a * peou`, `bi ~ b * pu + c * peou`, `indirect := a * b`, `total := c + a * b`."
+explanation:
+  de: |
+    a = 0.37, 95-%-KI [0.27, 0.47]: Eine um einen Punkt höhere Bedienbarkeit
+    geht mit 0.37 Punkten mehr Nützlichkeit einher. b = 0.26 [0.14, 0.37],
+    direkter Effekt c = 0.29 [0.18, 0.40]. Indirekter Effekt a × b = 0.10
+    [0.05, 0.15], Gesamteffekt 0.39 [0.28, 0.49]: Etwa ein Viertel des
+    Zusammenhangs läuft über die Nützlichkeit. Diese Standardfehler kommen aus
+    der Delta-Methode, die für ein Produkt a × b eine symmetrische Verteilung
+    annimmt. Besser ist ein Bootstrap-KI: `sem(model, data = tam, se =
+    "bootstrap", bootstrap = 5000)` und `parameterEstimates(fit, boot.ci.type
+    = "perc")` (lokal rechnen; im Browser dauern schon 200 Ziehungen etwa 20
+    s). Fallstrick: Ohne Labels kann `:=` die Pfade nicht ansprechen. Und:
+    Mit Querschnittsdaten zeigt das Modell eine mit der Theorie vereinbare
+    Zerlegung, keinen Beleg für die kausale Richtung.
+  en: |
+    a = 0.37, 95 % CI [0.27, 0.47]: one point more ease of use goes along with
+    0.37 points more usefulness. b = 0.26 [0.14, 0.37], direct effect c = 0.29
+    [0.18, 0.40]. Indirect effect a × b = 0.10 [0.05, 0.15], total effect
+    0.39 [0.28, 0.49]: about a quarter of the relationship runs through
+    usefulness. These standard errors come from the delta method, which
+    assumes a symmetric distribution for a product a × b. A bootstrap CI is
+    better: `sem(model, data = tam, se = "bootstrap", bootstrap = 5000)` and
+    `parameterEstimates(fit, boot.ci.type = "perc")` (run locally; in the
+    browser even 200 draws take about 20 s). Pitfall: without labels, `:=`
+    cannot address the paths. And: with cross-sectional data, the model shows
+    a decomposition compatible with the theory, not evidence for the causal
+    direction.
+misconception:
+  de: "Für eine Mediation muss zuerst der Gesamteffekt signifikant sein, und der indirekte Effekt wird über getrennte Regressionen geprüft (Baron & Kenny)."
+  en: "For mediation, the total effect must first be significant, and the indirect effect is tested via separate regressions (Baron & Kenny)."
+check:
+  type: value
+common_mistakes:
+  - pattern: "pu\\s*~\\s*a\\s*\\*\\s*peou(?![\\s\\S]*:=)"
+    message:
+      de: "Die Pfade haben Labels, es fehlen aber die definierten Parameter: `indirect := a * b` und `total := c + a * b`."
+      en: "The paths have labels, but the defined parameters are missing: `indirect := a * b` and `total := c + a * b`."
+  - pattern: "peou\\s*~\\s*[a-z]*\\s*\\*?\\s*pu\\b"
+    message:
+      de: "Richtung vertauscht: `pu ~ peou` heißt „pu wird durch peou vorhergesagt“. Der Mediator `pu` steht links."
+      en: "Direction swapped: `pu ~ peou` means \"pu is predicted by peou\". The mediator `pu` goes on the left."
+  - pattern: "indirect\\s*:=\\s*a\\s*\\*\\s*b\\s*\\*\\s*c|indirect\\s*:=\\s*a\\s*\\+\\s*b"
+    message:
+      de: "Der indirekte Effekt ist das Produkt der beiden Pfade über den Mediator: `a * b`."
+      en: "The indirect effect is the product of the two paths through the mediator: `a * b`."
+  - pattern: "\\bcfa\\s*\\("
+    message:
+      de: "`cfa()` ist für Messmodelle. Für Regressionspfade nimm `sem()`."
+      en: "`cfa()` is for measurement models. Use `sem()` for regression paths."

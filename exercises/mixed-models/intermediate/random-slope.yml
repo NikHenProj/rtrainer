@@ -1,0 +1,116 @@
+id: mm-i-random-slope
+lesson: mixed-models-intermediate
+order: 2
+title:
+  de: Random Slope statt einem lm() pro Person
+  en: Random slope instead of one lm() per participant
+kind: complete
+required: true
+packages: [dplyr, lme4, lmerTest]
+data: [driving_sim]
+setup: |
+  library(dplyr)
+  library(lmerTest)
+  sim <- driving_sim |>
+    mutate(trial_c = trial - 2.5)
+prompt:
+  de: |
+    Lernen alle Personen gleich schnell? Ein `lm()` pro Person gibt jeder
+    Person ihre eigene Übungssteigung, ein Random-Slope-Modell schätzt die
+    Steigungen gemeinsam. `sim` enthält schon `trial_c` (Durchgang zentriert).
+
+    Ergänze die Lücken `______`, sodass eine Tabelle mit einer Zeile pro
+    Person und den Spalten `participant`, `slope_lm` (Steigung von `trial_c`
+    aus dem `lm()` pro Person) und `slope_mixed` (Steigung der Person aus dem
+    Mixed Model: fester Effekt plus Abweichung) entsteht. Das Mixed Model hat
+    feste Effekte `condition + trial_c` und zufällig Achsenabschnitt und
+    `trial_c`-Steigung pro `participant`.
+  en: |
+    Do all participants learn equally fast? One `lm()` per participant gives
+    each person their own practice slope; a random slope model estimates the
+    slopes jointly. `sim` already contains `trial_c` (trial centred).
+
+    Fill in the blanks `______` so that you get a table with one row per
+    participant and the columns `participant`, `slope_lm` (slope of `trial_c`
+    from the `lm()` per participant) and `slope_mixed` (the participant's
+    slope from the mixed model: fixed effect plus deviation). The mixed model
+    has fixed effects `condition + trial_c` and a random intercept and
+    `trial_c` slope per `participant`.
+starter: |
+  per_person <- sim |>
+    summarise(
+      slope_lm = coef(lm(rt_ms ~ condition + trial_c, data = pick(everything())))[["trial_c"]],
+      .by = participant
+    )
+  fit <- lmer(rt_ms ~ condition + trial_c + (______ | ______), data = sim)
+  person <- ______(fit)$participant
+  per_person |>
+    mutate(slope_mixed = person[participant, "______"])
+solution: |
+  per_person <- sim |>
+    summarise(
+      slope_lm = coef(lm(rt_ms ~ condition + trial_c, data = pick(everything())))[["trial_c"]],
+      .by = participant
+    )
+  fit <- lmer(rt_ms ~ condition + trial_c + (1 + trial_c | participant), data = sim)
+  person <- coef(fit)$participant
+  per_person |>
+    mutate(slope_mixed = person[participant, "trial_c"])
+hints:
+  - de: "Links vom `|` steht, was pro Person variieren darf: Achsenabschnitt und Steigung."
+    en: "Left of the `|` goes what may vary per participant: intercept and slope."
+  - de: "`ranef()` gibt nur die Abweichungen vom festen Effekt, `coef()` die Summe aus festem Effekt und Abweichung, eine Zeile pro Person."
+    en: "`ranef()` gives only the deviations from the fixed effect, `coef()` the sum of fixed effect and deviation, one row per participant."
+  - de: "`(1 + trial_c | participant)`, `coef(fit)$participant`, Spalte `\"trial_c\"`."
+    en: "`(1 + trial_c | participant)`, `coef(fit)$participant`, column `\"trial_c\"`."
+explanation:
+  de: |
+    Feste Steigung: −31 ms pro Durchgang, 95-%-KI [−42, −20]; die
+    Steigungs-SD zwischen Personen schätzt das Modell auf 21 ms. Die
+    Steigungen aus den 40 Einzel-`lm()` streuen viel stärker (SD 36 ms, von
+    −105 bis +61 ms) als die Mixed-Model-Steigungen (SD 12 ms, von −57 bis
+    +1 ms). Grund: Aus 12 Durchgängen ist eine Einzelsteigung sehr unsicher;
+    ein Großteil ihrer Streuung ist Schätzfehler. Das Mixed Model zieht
+    unsichere Einzelwerte zur gemeinsamen Steigung (Shrinkage, partial
+    pooling), z. B. p03 von +14.5 auf −15.3 ms. Für die Population gilt die
+    geschätzte Slope-SD; die einzelnen Personenwerte (BLUPs) sind bewusst
+    konservativ. Mit Random Slope wird der Test des Übungseffekts ehrlicher:
+    t(39) statt t(423), weil die Steigung jetzt zwischen Personen variieren
+    darf. Fallstrick: `ranef()` allein liefert nur die Abweichungen um 0.
+  en: |
+    Fixed slope: −31 ms per trial, 95 % CI [−42, −20]; the model estimates
+    the slope SD between participants at 21 ms. The slopes from the 40
+    separate `lm()` fits vary much more (SD 36 ms, from −105 to +61 ms) than
+    the mixed model slopes (SD 12 ms, from −57 to +1 ms). Reason: from 12
+    trials, a single slope is very uncertain; much of their spread is
+    estimation error. The mixed model pulls uncertain single values towards
+    the common slope (shrinkage, partial pooling), e.g. p03 from +14.5 to
+    −15.3 ms. For the population, the estimated slope SD applies; the
+    individual values (BLUPs) are deliberately conservative. With a random
+    slope, the test of the practice effect becomes more honest: t(39) instead
+    of t(423), because the slope may now vary between participants. Pitfall:
+    `ranef()` alone gives only the deviations around 0.
+misconception:
+  de: "Ein `lm()` pro Person misst die echten Unterschiede zwischen Personen; die Streuung der Einzelsteigungen ist die Slope-Varianz."
+  en: "One `lm()` per participant measures the true differences between participants; the spread of the single slopes is the slope variance."
+check:
+  type: value
+  tolerance: 1.0e-4
+  ignore_row_order: true
+common_mistakes:
+  - pattern: "______"
+    message:
+      de: "Es sind noch Lücken `______` offen."
+      en: "There are still blanks `______` left."
+  - pattern: "ranef\\s*\\(\\s*fit\\s*\\)"
+    message:
+      de: "`ranef()` gibt nur die Abweichungen von der festen Steigung (um 0 herum). Gefragt ist die Steigung der Person: `coef()`."
+      en: "`ranef()` gives only the deviations from the fixed slope (around 0). The participant's slope is asked for: `coef()`."
+  - pattern: "\\(\\s*0\\s*\\+\\s*trial_c"
+    message:
+      de: "Mit `0 +` fehlt der Zufallsintercept: Alle Personen müssten gleich schnell starten. Nimm `(1 + trial_c | participant)`."
+      en: "With `0 +`, the random intercept is missing: all participants would have to start equally fast. Use `(1 + trial_c | participant)`."
+  - pattern: "\\(\\s*1\\s*\\|\\s*participant\\s*\\)"
+    message:
+      de: "Mit `(1 | participant)` haben alle dieselbe Steigung; `slope_mixed` wäre für alle gleich. Die Steigung muss links vom `|` stehen."
+      en: "With `(1 | participant)`, everyone has the same slope; `slope_mixed` would be equal for all. The slope must go left of the `|`."

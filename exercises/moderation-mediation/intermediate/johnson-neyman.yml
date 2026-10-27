@@ -1,0 +1,103 @@
+id: mo-i-johnson-neyman
+lesson: moderation-mediation-intermediate
+order: 1
+title:
+  de: Johnson-Neyman-Intervall
+  en: Johnson-Neyman interval
+kind: write
+required: true
+packages: [dplyr, interactions]
+data: [acceptance]
+setup: |
+  library(dplyr)
+  tam <- acceptance |>
+    mutate(
+      across(c(peou_3, trust_4), \(x) 8 - x),
+      pu = rowMeans(pick(pu_1:pu_4)),
+      peou = rowMeans(pick(peou_1:peou_4)),
+      trust = rowMeans(pick(trust_1:trust_5)),
+      bi = rowMeans(pick(bi_1:bi_4))
+    )
+  library(interactions)
+prompt:
+  de: |
+    In der Lektion Regression (Intermediate) hast du gesehen, dass der Einfluss
+    der Nützlichkeit `pu` auf die Nutzungsabsicht `bi` mit der Erfahrung
+    (`experience`, 0–9 Jahre) wächst. Einfache Steigungen bei −1 SD, Mittelwert
+    und +1 SD sind aber willkürliche Punkte. Ab wie vielen Jahren Erfahrung ist
+    der Zusammenhang nachweisbar?
+
+    Rechne `lm(bi ~ pu * experience, data = tam)` und daraus mit
+    `johnson_neyman()` aus interactions das Johnson-Neyman-Intervall
+    (`pred = pu`, `modx = experience`). Gib die Intervallgrenzen
+    (`$bounds`) auf 2 Stellen gerundet zurück.
+  en: |
+    In the lesson Regression (intermediate) you saw that the influence of
+    perceived usefulness `pu` on behavioural intention `bi` grows with
+    experience (`experience`, 0–9 years). But simple slopes at −1 SD, mean and
+    +1 SD are arbitrary points. From how many years of experience is the
+    relationship detectable?
+
+    Fit `lm(bi ~ pu * experience, data = tam)` and from it the Johnson-Neyman
+    interval with `johnson_neyman()` from interactions (`pred = pu`,
+    `modx = experience`). Return the interval bounds (`$bounds`) rounded to
+    2 decimals.
+starter: |
+  fit <- lm(bi ~ pu * experience, data = tam)
+  sim_slopes(fit, pred = pu, modx = experience, johnson_neyman = FALSE)
+solution: |
+  fit <- lm(bi ~ pu * experience, data = tam)
+  jn <- johnson_neyman(fit, pred = pu, modx = experience)
+  round(jn$bounds, 2)
+hints:
+  - de: "Das Johnson-Neyman-Intervall rechnet für jeden Wert des Moderators aus, ob die Steigung von `pu` signifikant ist, und gibt die Grenzwerte."
+    en: "The Johnson-Neyman interval computes, for every value of the moderator, whether the slope of `pu` is significant, and gives the boundary values."
+  - de: "`johnson_neyman(fit, pred = pu, modx = experience)` nimmt die Variablennamen ohne Anführungszeichen; das Ergebnis hat das Element `bounds`."
+    en: "`johnson_neyman(fit, pred = pu, modx = experience)` takes the variable names without quotes; the result has the element `bounds`."
+  - de: "`jn <- johnson_neyman(...)`, dann `round(jn$bounds, 2)`."
+    en: "`jn <- johnson_neyman(...)`, then `round(jn$bounds, 2)`."
+explanation:
+  de: |
+    Grenzen −28.64 und 0.41: Außerhalb dieses Intervalls ist die Steigung von
+    `pu` signifikant. Im Datenbereich (0–9 Jahre) heißt das: ab etwa einem
+    halben Jahr Erfahrung, also für 286 der 300 Personen (alle mit mindestens
+    einem Jahr). Die untere Grenze −28.64 liegt weit außerhalb der Daten und
+    ist bedeutungslos (negative Erfahrung gibt es nicht). Die Interaktion
+    selbst: b = 0.07 pro Jahr, 95-%-KI [0.01, 0.13], p = .019; bei 1.2
+    Jahren (−1 SD) ist die Steigung 0.24, bei 4.8 Jahren (+1 SD) 0.50.
+    Vorteil gegenüber einfachen Steigungen: Du siehst den ganzen Verlauf
+    statt dreier Punkte. Fallstrick: Die Grenze ist kein Schwellenwert in
+    der Population, sondern hängt an der Stichprobengröße; mit mehr Daten
+    rückt sie näher an 0. Berichte deshalb die Interaktion mit KI und zeige
+    die Johnson-Neyman-Abbildung (`johnson_neyman()` zeichnet sie).
+  en: |
+    Bounds −28.64 and 0.41: outside this interval, the slope of `pu` is
+    significant. Within the data range (0–9 years) this means: from about
+    half a year of experience, i.e. for 286 of the 300 participants (all with
+    at least one year). The lower bound −28.64 lies far outside the data and
+    is meaningless (there is no negative experience). The interaction itself:
+    b = 0.07 per year, 95 % CI [0.01, 0.13], p = .019; at 1.2 years (−1 SD)
+    the slope is 0.24, at 4.8 years (+1 SD) 0.50. Advantage over simple
+    slopes: you see the whole course instead of three points. Pitfall: the
+    bound is not a threshold in the population but depends on sample size;
+    with more data it moves closer to 0. So report the interaction with its
+    CI and show the Johnson-Neyman plot (`johnson_neyman()` draws it).
+misconception:
+  de: "Einfache Steigungen bei ±1 SD zeigen, ab wann ein Moderator den Effekt verändert."
+  en: "Simple slopes at ±1 SD show from when a moderator changes the effect."
+check:
+  type: value
+  tolerance: 1.0e-6
+common_mistakes:
+  - pattern: "pred\\s*=\\s*experience|modx\\s*=\\s*pu\\b"
+    message:
+      de: "Vertauscht: `pred` ist der Prädiktor, dessen Steigung du betrachtest (`pu`), `modx` der Moderator (`experience`)."
+      en: "Swapped: `pred` is the predictor whose slope you look at (`pu`), `modx` the moderator (`experience`)."
+  - pattern: "^(?![\\s\\S]*round)[\\s\\S]*bounds"
+    message:
+      de: "Fast: Runde die Grenzen auf 2 Stellen mit `round(..., 2)`."
+      en: "Almost: round the bounds to 2 decimals with `round(..., 2)`."
+  - pattern: "bi\\s*~\\s*pu\\s*\\+\\s*experience\\s*,"
+    message:
+      de: "Ohne Interaktion (`pu * experience`) ist die Steigung von `pu` für alle gleich; es gibt nichts zu moderieren."
+      en: "Without the interaction (`pu * experience`), the slope of `pu` is the same for everyone; there is nothing to moderate."

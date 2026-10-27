@@ -1,0 +1,100 @@
+id: mm-i-crossed-icc
+lesson: mixed-models-intermediate
+order: 3
+title:
+  de: Gekreuzte Zufallseffekte und ICC
+  en: Crossed random effects and ICC
+kind: write
+required: true
+packages: [lme4, lmerTest, performance]
+data: [usability]
+setup: |
+  library(lmerTest)
+  library(performance)
+prompt:
+  de: |
+    Im Usability-Test (`usability`) bearbeitet jede Person mit jedem Prototyp
+    dieselben vier Aufgaben (`task`). Manche Personen sind generell schneller,
+    manche Aufgaben generell länger: Person und Aufgabe sind **gekreuzt**.
+    Wie viel der Variation in der Bearbeitungszeit geht auf Personen, wie viel
+    auf Aufgaben zurück?
+
+    Rechne mit `lmer()` ein Modell für `log(time_s)` mit `prototype` als
+    festem Effekt und je einem Zufallsintercept für `participant` und für
+    `task`. Gib `icc(fit, by_group = TRUE)` aus performance zurück.
+  en: |
+    In the usability test (`usability`), every participant works on the same
+    four tasks (`task`) with each prototype. Some participants are generally
+    faster, some tasks generally take longer: participant and task are
+    **crossed**. How much of the variation in completion time is due to
+    participants, how much to tasks?
+
+    Fit an `lmer()` model for `log(time_s)` with `prototype` as a fixed effect
+    and one random intercept each for `participant` and for `task`. Return
+    `icc(fit, by_group = TRUE)` from performance.
+starter: |
+  fit <- lmer(log(time_s) ~ prototype + (1 | participant), data = usability)
+  icc(fit)
+solution: |
+  fit <- lmer(log(time_s) ~ prototype + (1 | participant) + (1 | task), data = usability)
+  icc(fit, by_group = TRUE)
+hints:
+  - de: "Jede Gruppierung bekommt ihren eigenen Term in Klammern; die Terme werden mit `+` verbunden."
+    en: "Each grouping gets its own term in brackets; the terms are joined with `+`."
+  - de: "Gekreuzt heißt: nicht `(1 | participant/task)` (geschachtelt), sondern zwei getrennte Zufallsintercepts. `by_group = TRUE` zeigt den Anteil je Gruppe."
+    en: "Crossed means: not `(1 | participant/task)` (nested), but two separate random intercepts. `by_group = TRUE` shows the share per group."
+  - de: "`lmer(log(time_s) ~ prototype + (1 | participant) + (1 | task), data = usability)`"
+    en: "`lmer(log(time_s) ~ prototype + (1 | participant) + (1 | task), data = usability)`"
+explanation:
+  de: |
+    ICC Person = 0.21, ICC Aufgabe = 0.39: Gut ein Fünftel der Restvarianz
+    (nach Prototyp) liegt zwischen Personen, fast zwei Fünftel zwischen den
+    Aufgaben. Die Aufgaben unterscheiden sich also stärker als die Personen.
+    Ohne `(1 | task)` landet diese Varianz im Residuum, und der Modellvergleich
+    zeigt deutlich, dass sie hingehört (χ²(1) = 136, p < .001). Der
+    Prototypeffekt bleibt ähnlich: Mit B dauern die Aufgaben 19 % kürzer,
+    `exp(−0.21) = 0.81`, 95-%-KI [0.71, 0.91] (`model_parameters(fit,
+    exponentiate = TRUE)`). Gekreuzte Effekte sind wichtig, wenn du über die
+    getesteten Aufgaben hinaus verallgemeinern willst (Aufgaben als
+    Stichprobe aus möglichen Aufgaben). Mit nur 4 Aufgaben ist die
+    Aufgaben-Varianz allerdings unsicher geschätzt; ab etwa 5–6 Stufen pro
+    Gruppierung ist ein Zufallseffekt gut begründet, sonst `task` als festen
+    Effekt aufnehmen. `log()` macht die rechtsschiefen Zeiten symmetrischer
+    und Effekte zu Verhältnissen.
+  en: |
+    ICC participant = 0.21, ICC task = 0.39: a good fifth of the remaining
+    variance (after prototype) lies between participants, almost two fifths
+    between tasks. So the tasks differ more than the participants. Without
+    `(1 | task)`, this variance ends up in the residual, and the model
+    comparison clearly shows that it belongs there (χ²(1) = 136, p < .001).
+    The prototype effect stays similar: with B, tasks take 19 % less time,
+    `exp(−0.21) = 0.81`, 95 % CI [0.71, 0.91] (`model_parameters(fit,
+    exponentiate = TRUE)`). Crossed effects matter when you want to
+    generalise beyond the tested tasks (tasks as a sample of possible tasks).
+    With only 4 tasks, though, the task variance is estimated with
+    uncertainty; from about 5–6 levels per grouping a random effect is well
+    justified, otherwise include `task` as a fixed effect. `log()` makes the
+    right-skewed times more symmetric and turns effects into ratios.
+misconception:
+  de: "Bei Messwiederholung reicht immer ein Zufallseffekt pro Person; die Aufgaben sind nur Wiederholungen."
+  en: "With repeated measures, one random effect per participant is always enough; the tasks are just repetitions."
+check:
+  type: value
+  tolerance: 1.0e-4
+common_mistakes:
+  - pattern: "participant\\s*/\\s*task|task\\s*/\\s*participant|participant\\s*:\\s*task"
+    message:
+      de: "`/` bzw. `:` steht für geschachtelte Gruppen (jede Aufgabe gehört zu genau einer Person). Hier bearbeiten alle Personen dieselben Aufgaben: zwei getrennte Terme `(1 | participant) + (1 | task)`."
+      en: "`/` or `:` stands for nested groups (each task belongs to exactly one participant). Here, all participants work on the same tasks: two separate terms `(1 | participant) + (1 | task)`."
+  - pattern: "^(?![\\s\\S]*by_group)[\\s\\S]*icc\\("
+    message:
+      de: "Ohne `by_group = TRUE` gibt `icc()` nur einen Gesamtwert für alle Zufallseffekte. Gefragt ist der Anteil je Gruppe."
+      en: "Without `by_group = TRUE`, `icc()` gives only one overall value for all random effects. The share per group is asked for."
+  - pattern: "\\(\\s*1\\s*\\|\\s*prototype\\s*\\)"
+    message:
+      de: "`prototype` ist der feste Effekt, den du vergleichen willst, mit nur 3 Stufen. Zufällig sind Person und Aufgabe."
+      en: "`prototype` is the fixed effect you want to compare, with only 3 levels. Participant and task are random."
+  - pattern: "^(?![\\s\\S]*log\\()"
+    message:
+      de: "Gefragt ist das Modell für `log(time_s)`."
+      en: "The model for `log(time_s)` is asked for."

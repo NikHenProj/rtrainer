@@ -1,0 +1,83 @@
+id: pw-i-paired-debug
+lesson: power-intermediate
+order: 4
+title:
+  de: Poweranalyse für ein Innersubjektdesign
+  en: Power analysis for a within-subjects design
+kind: debug
+required: false
+packages: [pwr]
+data: []
+setup: |
+  library(pwr)
+prompt:
+  de: |
+    Eine Studie vergleicht zwei Warnungen *innerhalb* derselben Personen.
+    Erwartet wird ein Unterschied von 40 ms. Die SD der Reaktionszeiten in
+    einer Bedingung ist 140 ms, die SD der Differenzen pro Person (visuell −
+    auditiv) im Pilot 90 ms.
+
+    Der Code unten ergibt 259 Personen, viel zu viele für den Simulator.
+    Repariere ihn so, dass er die nötige Zahl an Personen für 90 % Power
+    (α = .05, zweiseitig) aufgerundet zurückgibt.
+  en: |
+    A study compares two warnings *within* the same participants. A
+    difference of 40 ms is expected. The SD of reaction times in one condition
+    is 140 ms, the SD of the per-participant differences (visual − auditory)
+    in the pilot 90 ms.
+
+    The code below gives 259 participants, far too many for the simulator.
+    Repair it so that it returns the required number of participants for
+    90 % power (α = .05, two-sided), rounded up.
+starter: |
+  res <- pwr.t.test(d = 40 / 140, power = 0.9)
+  ceiling(res$n)
+solution: |
+  res <- pwr.t.test(d = 40 / 90, power = 0.9, type = "paired")
+  ceiling(res$n)
+hints:
+  - de: "Zwei Dinge passen nicht zum Design: welcher Test und welche Standardabweichung."
+    en: "Two things do not fit the design: which test and which standard deviation."
+  - de: "Für gepaarte Daten ist `d` die mittlere Differenz geteilt durch die SD der Differenzen (d_z); `pwr.t.test()` braucht dazu `type = \"paired\"`."
+    en: "For paired data, `d` is the mean difference divided by the SD of the differences (d_z); `pwr.t.test()` then needs `type = \"paired\"`."
+  - de: "`d = 40 / 90` und `type = \"paired\"`."
+    en: "`d = 40 / 90` and `type = \"paired\"`."
+explanation:
+  de: |
+    56 Personen (d_z = 0.44). Der Ausgangscode rechnet zwei unabhängige
+    Gruppen mit je 259 Personen. Nur `type = "paired"` mit d = 40/140 ergäbe
+    131, nur d_z mit zwei Gruppen 108: Beide Korrekturen gehören zusammen. Die
+    SD der Differenzen ist klein, weil die Reaktionszeiten derselben Person
+    in beiden Bedingungen hoch korrelieren (hier etwa r = 0.8):
+    SD_diff = SD × √(2(1 − r)). Fallstrick: In Artikeln steht oft ein d, das
+    mit der SD einer Bedingung berechnet ist (d_av); für die Planung einer
+    Messwiederholung brauchst du d_z oder die Korrelation. Berichte, welches
+    d du verwendet hast.
+  en: |
+    56 participants (d_z = 0.44). The original code computes two independent
+    groups with 259 participants each. Only `type = "paired"` with d = 40/140
+    would give 131, only d_z with two groups 108: both corrections belong
+    together. The SD of the differences is small because the reaction times of
+    the same participant correlate highly across conditions (here about r =
+    0.8): SD_diff = SD × √(2(1 − r)). Pitfall: articles often report a d
+    computed with the SD of one condition (d_av); to plan repeated measures
+    you need d_z or the correlation. Report which d you used.
+misconception:
+  de: "Ein Effekt d ist immer gleich, egal ob er zwischen Gruppen oder innerhalb von Personen berechnet wurde."
+  en: "An effect d is always the same, regardless of whether it was computed between groups or within participants."
+check:
+  type: value
+  tolerance: 1.0e-8
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*paired)[\\s\\S]*40\\s*/\\s*90"
+    message:
+      de: "Das d stimmt jetzt, aber `pwr.t.test()` rechnet noch zwei Gruppen. Ergänze `type = \"paired\"`."
+      en: "The d is right now, but `pwr.t.test()` still computes two groups. Add `type = \"paired\"`."
+  - pattern: "paired[\\s\\S]*40\\s*/\\s*140|40\\s*/\\s*140[\\s\\S]*paired"
+    message:
+      de: "Der Test stimmt, aber für gepaarte Daten gehört die SD der Differenzen (90 ms) in den Nenner, nicht die SD einer Bedingung."
+      en: "The test is right, but for paired data the SD of the differences (90 ms) goes in the denominator, not the SD of one condition."
+  - pattern: "\\*\\s*2\\s*$|res\\$n\\s*\\*\\s*2"
+    message:
+      de: "Bei `type = \"paired\"` ist `n` schon die Zahl der Personen (Paare); nicht verdoppeln."
+      en: "With `type = \"paired\"`, `n` is already the number of participants (pairs); do not double it."
