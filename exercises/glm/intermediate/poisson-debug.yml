@@ -53,7 +53,7 @@ explanation:
     traten weniger Bedienfehler auf als mit A, IRR = 0.41, 95-%-KI
     [0.28, 0.60], p < .001.“
   en: |
-    IRR for B = 0.41, 95 % CI [0.28, 0.60], p < .001: with B, 59 % fewer
+    IRR for B = 0.41, 95% CI [0.28, 0.60], p < .001: with B, 59% fewer
     errors occur per task than with A; C does not differ detectably (1.20
     [0.91, 1.59]). The intercept 0.96 is the mean number of errors per task
     with A. In the starter code, `family` was left out; `glm()` then fitted a
@@ -63,7 +63,7 @@ explanation:
     that variance and mean are equal; check this with
     `check_overdispersion(fit)` (here 1.55, i.e. overdispersion, see the extra
     exercise). Report: "Fewer operating errors occurred with prototype B than
-    with A, IRR = 0.41, 95 % CI [0.28, 0.60], p < .001."
+    with A, IRR = 0.41, 95% CI [0.28, 0.60], p < .001."
 misconception:
   de: "`glm()` erkennt an den Daten selbst, welche Verteilung passt."
   en: "`glm()` works out from the data which distribution fits."

@@ -71,7 +71,7 @@ explanation:
     freedom used. Pitfall: if one of the new predictors has missing values,
     `lm()` fits `m2` on fewer rows and `anova()` stops ("models were not all
     fitted to the same size of dataset"); then filter to complete cases first.
-    Report: "Usefulness, ease of use and trust explained 21 % of the variance
+    Report: "Usefulness, ease of use and trust explained 21% of the variance
     in intention beyond age and experience, ΔR² = .21, F(3, 294) = 28.36,
     p < .001."
 misconception:

@@ -20,7 +20,7 @@ questions:
         correct: false
         explain:
           de: "Poisson erlaubt Werte über 1 und kann Wahrscheinlichkeiten über 100 % vorhersagen."
-          en: "Poisson allows values above 1 and can predict probabilities above 100 %."
+          en: "Poisson allows values above 1 and can predict probabilities above 100%."
       - text:
           de: "Beides mit `lm()`, weil es bei n > 30 egal ist."
           en: "Both with `lm()`, because it does not matter with n > 30."
@@ -42,11 +42,11 @@ questions:
           en: "Yes. The link of logistic regression is the logit; exponentiate to interpret it as odds ratios."
       - text:
           de: "Die Erfolgswahrscheinlichkeit mit B (78 %)."
-          en: "The probability of success with B (78 %)."
+          en: "The probability of success with B (78%)."
         correct: false
         explain:
           de: "Koeffizienten sind Differenzen auf der Logit-Skala, keine Wahrscheinlichkeiten. Die vorhergesagte Quote mit B ist 89 %."
-          en: "Coefficients are differences on the logit scale, not probabilities. The predicted rate with B is 89 %."
+          en: "Coefficients are differences on the logit scale, not probabilities. The predicted rate with B is 89%."
       - text:
           de: "B erhöht die Erfolgswahrscheinlichkeit um 78 Prozentpunkte."
           en: "B increases the probability of success by 78 percentage points."
@@ -61,7 +61,7 @@ questions:
     options:
       - text:
           de: "Mit B entstehen 59 % weniger Fehler, im Mittel etwa 0.40 statt 0.96 pro Aufgabe."
-          en: "With B, 59 % fewer errors occur, on average about 0.40 instead of 0.96 per task."
+          en: "With B, 59% fewer errors occur, on average about 0.40 instead of 0.96 per task."
         correct: true
         explain:
           de: "Richtig: 0.96 × 0.41 ≈ 0.39. Effekte sind multiplikativ."
@@ -75,7 +75,7 @@ questions:
           en: "That would be a difference. The rate ratio is a factor; the difference here is about 0.56 errors."
       - text:
           de: "41 % der Aufgaben mit B sind fehlerfrei."
-          en: "41 % of the tasks with B are error-free."
+          en: "41% of the tasks with B are error-free."
         correct: false
         explain:
           de: "Das Rate Ratio sagt nichts über den Anteil der Nullen."

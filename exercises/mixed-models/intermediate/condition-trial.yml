@@ -72,7 +72,7 @@ explanation:
     allein liefert keine p-Werte.
   en: |
     Practice effect: F(1, 423) = 44.8, p < .001; with the visual warning,
-    reactions get 34 ms faster per trial, 95 % CI [−50, −18]. Modality:
+    reactions get 34 ms faster per trial, 95% CI [−50, −18]. Modality:
     F(2, 423) = 174.3, p < .001 (auditory −159 ms, haptic −232 ms versus
     visual). The interaction is not detectable, F(2, 423) = 0.75, p = .473;
     but the CIs of the slope differences (about [−11, 33] and [−24, 21] ms

@@ -80,8 +80,8 @@ explanation:
     Der z-Test ist schnell, bei wenigen Personen leicht liberal; lokal geht
     `fixed("trial_c", "t")` (Satterthwaite).
   en: |
-    47 of 50 simulations detect the effect: power ≈ 94 %, 95 % CI [83, 99].
-    With the 40 participants of the pilot it would be 78 % [64, 88]. The
+    47 of 50 simulations detect the effect: power ≈ 94%, 95% CI [83, 99].
+    With the 40 participants of the pilot it would be 78% [64, 88]. The
     simulation generates data sets from the model (with the pilot's variances
     and the set effect), refits the model and counts how often p < .05. The CI
     shows the simulation uncertainty: with 50 runs it is wide; for planning,

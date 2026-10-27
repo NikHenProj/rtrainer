@@ -1,5 +1,12 @@
 # rtrainer (Quarto course)
 
+## Milestone 9, package P9a: English intermediate lessons P4–P5
+
+- P9 split in two sessions as planned: this part translates P4–P5; P6 (reporting, reproducibility, programming) and `project-intermediate` follow in P9b.
+- English pages `en/{robust,regression,glm,mixed-models,moderation-mediation,power}-intermediate.qmd`, translated from the accepted German lessons with identical code, data and exercise IDs (SVG labels and descriptions, "Run locally" boxes for glmmTMB and the simr power curve, cheat-sheet comments translated; the static `mediation` code block keeps its English comments); footer included; `langs: [de]` removed from their `lesson.yml`.
+- Proofread the English texts of the exercises and quizzes of the six lessons with the script from P8: no missing `en`, no German leftovers. 72 lines had "N %" in English text ("95 % CI", "80 % power"); changed to "N%" only inside `en:` blocks, German texts and printed R output (`2.5 % 97.5 %`) unchanged.
+- Smoke test: the English course-plan step now expects 15 intermediate lessons linked and the still German-only `reporting-intermediate` not linked.
+
 ## Milestone 9, package P8: English intermediate lessons P1–P3 (accepted, merged into main)
 
 - English pages `en/{import,cleaning,reshaping,missing,visualisation,descriptives,scales,sem,group-comparisons}-intermediate.qmd`, translated from the accepted German lessons with identical code, data and exercise IDs (SVG titles, labels and descriptions, cheat-sheet comments and "How to report it" texts translated; `labs()` axis titles were already English); `langs: [de]` removed from their `lesson.yml`, so the English course plan links them. P4–P7 stay German-only for now.

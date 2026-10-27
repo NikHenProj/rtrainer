@@ -67,8 +67,8 @@ explanation:
     between tasks. So the tasks differ more than the participants. Without
     `(1 | task)`, this variance ends up in the residual, and the model
     comparison clearly shows that it belongs there (χ²(1) = 136, p < .001).
-    The prototype effect stays similar: with B, tasks take 19 % less time,
-    `exp(−0.21) = 0.81`, 95 % CI [0.71, 0.91] (`model_parameters(fit,
+    The prototype effect stays similar: with B, tasks take 19% less time,
+    `exp(−0.21) = 0.81`, 95% CI [0.71, 0.91] (`model_parameters(fit,
     exponentiate = TRUE)`). Crossed effects matter when you want to
     generalise beyond the tested tasks (tasks as a sample of possible tasks).
     With only 4 tasks, though, the task variance is estimated with

@@ -70,15 +70,15 @@ explanation:
     Vergleiche, die du wirklich testen willst, nicht nur auf den
     Omnibus-Test.
   en: |
-    Power = 87.5 % (partial η² = .25, Cohen's f = 0.58). Without correlation
-    (`r = 0`, as between groups) it would be only 20.3 %, with r = 0.5 37.1 %.
+    Power = 87.5% (partial η² = .25, Cohen's f = 0.58). Without correlation
+    (`r = 0`, as between groups) it would be only 20.3%, with r = 0.5 37.1%.
     Repeated measures are so efficient because the stable differences between
     participants drop out of the error; the higher r, the smaller the error
     variance of the differences. So r belongs in every power analysis for
     repeated measures, ideally from earlier studies and chosen cautiously.
     `ANOVA_exact()` computes exactly with an ideal data set (no simulation)
     and also gives the power of the pairwise comparisons (`pc_results`): for
-    1000 vs. 960 ms it is only 60 %. Plan for the comparisons you actually
+    1000 vs. 960 ms it is only 60%. Plan for the comparisons you actually
     want to test, not just for the omnibus test.
 misconception:
   de: "Für Messwiederholung kann man die Power wie für unabhängige Gruppen rechnen; die Korrelation spielt keine Rolle."

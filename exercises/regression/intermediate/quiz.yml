@@ -23,7 +23,7 @@ questions:
           en: "The simple correlation is .37; the coefficient is unstandardised and adjusted for the other predictors."
       - text:
           de: "Nützlichkeit erklärt 27 % der Varianz der Absicht."
-          en: "Usefulness explains 27 % of the variance in intention."
+          en: "Usefulness explains 27% of the variance in intention."
         correct: false
         explain:
           de: "Ein Koeffizient ist kein Varianzanteil. Das ganze Modell erklärt R² = .27."

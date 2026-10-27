@@ -1,0 +1,138 @@
+---
+title: "Nonparametric and robust"
+subtitle: "Intermediate · Rank tests with rstatix, trimmed means with WRS2"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, coin, rstatix, effectsize, WRS2]
+resources:
+  - ../data/driving_sim.csv
+  - ../data/survey.csv
+  - ../data/usability.csv
+---
+
+{{< include /_generated/en/robust-intermediate/runtime.qmd >}}
+
+{{< include /_generated/en/robust-intermediate/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R runs directly in your browser. On the first visit it takes 20–40 seconds to load (status at the bottom right); after that it is faster.
+:::
+
+## Why? {#why}
+
+**Research question:** Is voice control more frustrating than touch control, even if a few extreme answers are not allowed to tip the balance?
+
+In the questionnaire (`survey`), 160 people used either touch or voice and then filled in the NASA-TLX. Frustration (0–100) is skewed: many answers lie at 20–50, single ones at 80 or 90. The t-test and ANOVA compare means, and means react strongly to such values. Rank tests and trimmed means are the two ways to safeguard the result against them. They answer slightly different questions, though.
+
+## Concept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 200" role="img" aria-labelledby="fig-rbi-title fig-rbi-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-rbi-title">Mean, trimmed mean and ranks</title>
+  <desc id="fig-rbi-desc">A number line with ten values, two of them far to the right (outliers). Because of the outliers, the mean lies to the right of the centre of most values. The 20% trimmed mean leaves out the two smallest and two largest values and lies in the middle of the bulk. Below, the same values as ranks 1 to 10: the outliers get ranks 9 and 10, no matter how far away they are.</desc>
+  <line x1="30" y1="70" x2="530" y2="70" class="rt-fig-axis" />
+  <circle cx="60" cy="70" r="6" class="rt-fig-b" />
+  <circle cx="85" cy="70" r="6" class="rt-fig-b" />
+  <circle cx="110" cy="70" r="6" class="rt-fig-a" />
+  <circle cx="130" cy="70" r="6" class="rt-fig-a" />
+  <circle cx="150" cy="70" r="6" class="rt-fig-a" />
+  <circle cx="165" cy="70" r="6" class="rt-fig-a" />
+  <circle cx="185" cy="70" r="6" class="rt-fig-a" />
+  <circle cx="210" cy="70" r="6" class="rt-fig-a" />
+  <circle cx="440" cy="70" r="6" class="rt-fig-b" />
+  <circle cx="510" cy="70" r="6" class="rt-fig-b" />
+  <line x1="235" y1="40" x2="235" y2="100" class="rt-fig-mean" />
+  <text x="240" y="36" class="rt-fig-label">mean</text>
+  <line x1="158" y1="40" x2="158" y2="100" class="rt-fig-mean" />
+  <text x="40" y="36" class="rt-fig-label">trimmed mean</text>
+  <text x="380" y="100" class="rt-fig-label rt-fig-muted">light: trimmed (20% each)</text>
+  <text x="30" y="150" class="rt-fig-label">Ranks:</text>
+  <text x="100" y="150" class="rt-fig-code">1 2 3 4 5 6 7 8 9 10</text>
+  <text x="30" y="180" class="rt-fig-label rt-fig-muted">An outlier counts as rank 10, no matter how far away it lies.</text>
+</svg>
+<figcaption>Two ways to deal with outliers: trimmed means leave the tails out of the mean and stay on the scale of the data. Rank tests replace values by ranks and compare which group lies systematically higher.</figcaption>
+</figure>
+```
+
+- **Rank tests** replace each value by its rank. Mann-Whitney U (two independent groups), Wilcoxon signed-rank (two measurements of the same person), Kruskal-Wallis (several independent groups), Friedman (several measurements of the same person). In rstatix: `wilcox_test()`, `wilcox_test(paired = TRUE)`, `kruskal_test()`, `friedman_test()`, all with formula and pipe.
+- **What they compare:** whether the values of one group lie systematically higher (probability that a random value from A is larger than one from B). This is a comparison of medians only if both distributions have the same shape.
+- **Effect sizes:** r = |z| / √N (`wilcox_effsize()`) or the rank-biserial correlation with CI (`effectsize::rank_biserial()`), η²[H] for Kruskal-Wallis (`kruskal_effsize()`), Kendall's W for Friedman (`friedman_effsize()`). The Hodges-Lehmann location shift (`detailed = TRUE`) gives a difference in scale units with CI.
+- **Trimmed means** (WRS2): `yuen()` compares two independent groups via 20% trimmed means, `yuend()` two dependent measurements, `t1way()` several groups, `rmanova()` repeated measures. The result stays interpretable in scale points.
+- **Level and pairing** apply as for the t-test: average per person first; compute repeated measures paired, with complete participants.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## More: when to go robust, ties, bootstrap
+
+- **Decide in advance:** the choice belongs in the analysis plan (level of measurement, expected skewness). Running the t-test first and switching to a rank test when p > .05 is hidden multiple testing.
+- **Ties:** Likert data have many equal values. R then uses the normal approximation and reports "cannot compute exact p-value with ties"; that is a message, not an error.
+- **Robust does not mean assumption-free:** rank tests assume independent observations, and the participants must be the unit. For models with covariates, robust standard errors (`parameters::model_parameters(fit, vcov = "HC3")`, lesson Correlation and regression) or the bootstrap (`WRS2::yuenbt()`) help.
+- **Ordinal with many levels:** for single items, an ordinal model (`ordinal::clm()`) is the better choice; scale means of several items can usually be treated as metric.
+:::
+
+## Example {#example}
+
+Frustration by interface, first as a rank test with effect size:
+
+```{webr}
+survey |>
+  wilcox_test(tlx_frustration ~ interface, detailed = TRUE)
+survey |>
+  wilcox_effsize(tlx_frustration ~ interface)
+rank_biserial(tlx_frustration ~ interface, data = survey)
+```
+
+W = 2204, p = .006. The location shift (touch − voice) is −10 points, 95% CI [−15, −5]. The rank-biserial correlation is −.26 [−.42, −.08]: a randomly drawn touch value is clearly more likely to lie below a voice value than above it. The same question with 20% trimmed means:
+
+```{webr}
+yuen(tlx_frustration ~ interface, data = survey)
+```
+
+The trimmed means differ by 8.76 points, 95% CI [1.57, 15.94], t(83.69) = 2.42, p = .018. Both robust methods confirm the Welch test (difference in means 9.27, p = .002): voice control frustrates more, probably due to recognition errors.
+
+**How to report it:** Frustration was higher with voice control than with touch, Mann-Whitney W = 2204, p = .006, rank-biserial r = −.26, 95% CI [−.42, −.08]; Hodges-Lehmann shift = 10 points [5, 15]. A comparison of 20% trimmed means came to the same result, difference = 8.76 [1.57, 15.94], Yuen t(83.69) = 2.42, p = .018.
+
+## Package comparison {#packages}
+
+| Task | Recommendation | Alternative |
+|---|---|---|
+| Rank tests | **rstatix** `wilcox_test()`, `kruskal_test()`, `friedman_test()` (pipe, tidy, Holm built in) | base R `wilcox.test()`, `kruskal.test()`, `friedman.test()` (same computation, `htest` object); `coin` for exact permutation tests |
+| Effect size for rank tests | **effectsize** `rank_biserial()`, `rank_epsilon_squared()`, `kendalls_w()` (with CI) | **rstatix** `wilcox_effsize()`, `kruskal_effsize()`, `friedman_effsize()` (without CI, with size label) |
+| Pairwise comparisons | **rstatix** `wilcox_test(p.adjust.method = "holm")`, `dunn_test()` | `pairwise.wilcox.test()` |
+| Trimmed means | **WRS2** `yuen()`, `yuend()`, `t1way()`, `rmanova()` + `lincon()`/`rmmcp()` | bootstrap: `yuenbt()`; robust regression: `MASS::rlm()`, `robustbase` |
+
+## Exercises {#exercises}
+
+Three required exercises and one optional exercise. **Run and check** runs your code and checks it right away. Reveal hints one at a time (**Show Hint**), the solution only after that.
+
+{{< include /_generated/en/robust-intermediate/exercises.qmd >}}
+
+## Knowledge check {#check}
+
+{{< include /_generated/en/robust-intermediate/quiz.qmd >}}
+
+## Cheat sheet {#cheatsheet}
+
+```r
+# Average per person first, then test
+pp <- d |> summarise(y = mean(y, na.rm = TRUE), .by = c(participant, group))
+
+# Two independent groups
+pp |> wilcox_test(y ~ group, detailed = TRUE)    # W, Hodges-Lehmann + CI
+pp |> wilcox_effsize(y ~ group)                  # r = |z| / sqrt(N)
+rank_biserial(y ~ group, data = pp)              # with sign and CI
+yuen(y ~ group, data = pp)                       # 20% trimmed means (WRS2)
+
+# Several independent groups
+pp |> kruskal_test(y ~ group); pp |> kruskal_effsize(y ~ group)
+pp |> wilcox_test(y ~ group, p.adjust.method = "holm")
+
+# Repeated measures: complete participants only
+complete <- pp |> filter(n() == 3, .by = participant)
+complete |> friedman_test(y ~ condition | participant)
+complete |> friedman_effsize(y ~ condition | participant)   # Kendall's W
+complete |> wilcox_test(y ~ condition, paired = TRUE, p.adjust.method = "holm")
+```
+
+{{< include /_generated/en/robust-intermediate/footer.qmd >}}

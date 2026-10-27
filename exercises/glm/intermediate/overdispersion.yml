@@ -54,7 +54,7 @@ explanation:
     Grund direkt modelliert. Der Test ist kein Freigabeschalter: Eine
     Dispersion um 1 ist unkritisch, ab etwa 1.5 lohnt die Korrektur.
   en: |
-    IRR for B = 0.41, 95 % CI [0.25, 0.65], t(281) = −3.68, p < .001; for C
+    IRR for B = 0.41, 95% CI [0.25, 0.65], t(281) = −3.68, p < .001; for C
     1.20 [0.85, 1.71]. The rate ratios are the same as in the Poisson model,
     only the intervals are wider (B before [0.28, 0.60]): the standard errors
     grow by √1.55 ≈ 1.25. The cause of the overdispersion here is mainly that

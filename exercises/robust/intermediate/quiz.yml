@@ -57,18 +57,18 @@ questions:
   - id: rb-i-q-trimmed
     prompt:
       de: "Was macht der Yuen-Test mit 20 % Trimmung?"
-      en: "What does Yuen's test with 20 % trimming do?"
+      en: "What does Yuen's test with 20% trimming do?"
     options:
       - text:
           de: "Er vergleicht die Mittel der mittleren 60 % jeder Gruppe und schätzt den Standardfehler aus winsorisierten Varianzen."
-          en: "It compares the means of the middle 60 % of each group and estimates the standard error from winsorised variances."
+          en: "It compares the means of the middle 60% of each group and estimates the standard error from winsorised variances."
         correct: true
         explain:
           de: "Richtig. 20 % an jedem Ende fallen aus dem Mittel; die Streuung geht über die Winsorisierung trotzdem ein. Bei Normalverteilung verliert er wenig Power, bei schiefen Daten gewinnt er viel."
-          en: "Right. 20 % at each end drop out of the mean; the spread still enters through winsorising. Under normality it loses little power, with skewed data it gains a lot."
+          en: "Right. 20% at each end drop out of the mean; the spread still enters through winsorising. Under normality it loses little power, with skewed data it gains a lot."
       - text:
           de: "Er löscht 20 % der Personen als Ausreißer und rechnet dann einen normalen t-Test."
-          en: "It deletes 20 % of the participants as outliers and then runs an ordinary t-test."
+          en: "It deletes 20% of the participants as outliers and then runs an ordinary t-test."
         correct: false
         explain:
           de: "Ein t-Test auf den gekürzten Daten hätte zu kleine Standardfehler. Yuen korrigiert das."

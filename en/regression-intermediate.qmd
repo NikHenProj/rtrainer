@@ -1,0 +1,140 @@
+---
+title: "Correlation and regression"
+subtitle: "Intermediate · Multiple regression, interactions, diagnostics with performance"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, parameters, performance, effectsize, modelbased]
+resources:
+  - ../data/acceptance.csv
+---
+
+{{< include /_generated/en/regression-intermediate/runtime.qmd >}}
+
+{{< include /_generated/en/regression-intermediate/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R runs directly in your browser. On the first visit it takes 20–40 seconds to load (status at the bottom right); after that it is faster.
+:::
+
+## Why? {#why}
+
+**Research question:** What determines whether drivers want to use an assistance system: usefulness, ease of use or trust? And does usefulness matter more for experienced drivers?
+
+The acceptance questionnaire (`acceptance`, n = 300) contains four scales from the Technology Acceptance Model, plus age and years of experience with driver assistance. In the beginner part you had one or two predictors. Now several go into the model together: each coefficient becomes a partial effect, models are compared, and one effect can depend on another predictor (interaction).
+
+## Concept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 210" role="img" aria-labelledby="fig-rgi-title fig-rgi-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-rgi-title">Interaction as different slopes</title>
+  <desc id="fig-rgi-desc">x-axis usefulness, y-axis intention to use. Three lines for 0, 3 and 6 years of experience. The line for 0 years is flat, the one for 3 years medium, the one for 6 years the steepest. All three cross roughly in the middle. On the right the text: interaction means that the slope of usefulness depends on experience; simple slopes give it for selected values.</desc>
+  <line x1="50" y1="180" x2="330" y2="180" class="rt-fig-axis" />
+  <line x1="50" y1="180" x2="50" y2="20" class="rt-fig-axis" />
+  <text x="190" y="202" text-anchor="middle" class="rt-fig-label">Usefulness (pu)</text>
+  <text x="20" y="100" text-anchor="middle" class="rt-fig-label" transform="rotate(-90 20 100)">Intention (bi)</text>
+  <line x1="60" y1="115" x2="320" y2="85" class="rt-fig-b" />
+  <line x1="60" y1="140" x2="320" y2="60" class="rt-fig-a" />
+  <line x1="60" y1="165" x2="320" y2="35" class="rt-fig-a" />
+  <text x="326" y="88" class="rt-fig-label rt-fig-muted">0 years: 0.16</text>
+  <text x="326" y="63" class="rt-fig-label">3 years: 0.37</text>
+  <text x="326" y="38" class="rt-fig-label">6 years: 0.58</text>
+  <text x="326" y="130" class="rt-fig-label">The slope of pu depends</text>
+  <text x="326" y="148" class="rt-fig-label">on experience:</text>
+  <text x="326" y="166" class="rt-fig-code">+0.07 per year</text>
+</svg>
+<figcaption>An interaction means different slopes. The main effect in the model is the slope where the other predictor is 0; so centre beforehand and report simple slopes.</figcaption>
+</figure>
+```
+
+- **Partial effects:** in `lm(bi ~ pu + peou + trust + age + experience)`, each coefficient is the difference in `bi` per unit of the predictor when all other predictors are equal. That is why a coefficient changes when you add predictors.
+- **Comparing:** standardised coefficients (`effectsize::standardize_parameters()`) put all predictors in SD units. Whether a block of predictors adds anything is tested by the model comparison `anova(m1, m2)` (ΔR², F test); the models must be nested and based on the same rows.
+- **Interaction** `a * b` = `a + b + a:b`: the effect of `a` depends on `b`. Centre the predictors beforehand (`mutate(a_c = a - mean(a))`); then the main effect applies to the average. Interpret via simple slopes: `modelbased::estimate_slopes(fit, trend = "a_c", by = "b_c")`.
+- **Diagnostics on the model** with performance: `check_collinearity()` (VIF; look closer from about 5), `check_heteroscedasticity()`, `check_normality()` (residuals), `check_outliers()` (Cook's distance). `check_model()` shows everything as plots (locally, needs see).
+- **Causal interpretation** of the coefficients is not allowed here: this is a survey, usefulness was not assigned.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## More: robust standard errors, factors, model selection
+
+- **Robust standard errors:** with unequal error variance the coefficients stay unbiased, the standard errors do not. `model_parameters(fit, vcov = "HC3")` (needs sandwich) gives corrected SEs, CIs and p-values.
+- **Factor × continuous:** `lm(y ~ group * x_c)` gives one slope per group; `estimate_slopes(fit, trend = "x_c", by = "group")` shows them directly.
+- **Model selection:** `compare_performance(m1, m2)` shows R², AIC and BIC side by side. Selecting predictors stepwise by p-value leads to overestimated effects; better specify them based on theory.
+- **Moderation in depth** (Johnson-Neyman intervals, interactions package) and mediation follow in the lesson Moderation and mediation.
+:::
+
+## Example {#example}
+
+Compute scale scores (two reversed items; `pu_5` loads weakly and stays out, see lesson Scales) and put all predictors into the model together:
+
+```{webr}
+tam <- acceptance |>
+  mutate(
+    across(c(peou_3, trust_4), \(x) 8 - x),
+    pu = rowMeans(pick(pu_1:pu_4)),
+    peou = rowMeans(pick(peou_1:peou_4)),
+    trust = rowMeans(pick(trust_1:trust_5)),
+    bi = rowMeans(pick(bi_1:bi_4))
+  )
+fit <- lm(bi ~ age + experience + pu + peou + trust, data = tam)
+model_parameters(fit)
+r2(fit)
+```
+
+Usefulness (b = 0.27 [0.16, 0.38]), ease of use (0.22 [0.11, 0.33]) and trust (0.21 [0.11, 0.31]) each predict intention on their own; with every decade of age it drops by 0.13 points (b = −0.013 per year). Experience has no effect of its own beyond the scales (p = .955). Together the model explains R² = .27 (adjusted .26). Then the assumptions:
+
+```{webr}
+check_collinearity(fit)
+check_heteroscedasticity(fit)
+check_normality(fit)
+```
+
+All VIFs lie between 1.06 and 1.30, the error variance is even (p = .159), the residuals are approximately normal (p = .310). The tests do not replace a look at the residuals; locally, `check_model(fit)` shows all diagnostic plots at once.
+
+**How to report it:** A multiple regression explained 27% of the variance in intention to use, R² = .27, F(5, 294) = 21.51, p < .001. Perceived usefulness, b = 0.27, 95% CI [0.16, 0.38], ease of use, b = 0.22 [0.11, 0.33], and trust, b = 0.21 [0.11, 0.31], predicted intention independently of each other; older respondents had a slightly lower intention, b = −0.013 per year [−0.024, −0.002].
+
+## Package comparison {#packages}
+
+| Task | Recommendation | Alternative |
+|---|---|---|
+| Coefficients | **parameters** `model_parameters()` (CI, robust SE with `vcov`) | `summary()`, `broom::tidy(conf.int = TRUE)` |
+| Standardise | **effectsize** `standardize_parameters()` | `lm()` with `scale()` variables; `lm.beta` |
+| Model comparison | `anova(m1, m2)` + **performance** `compare_performance()`, `r2()` | `test_performance()` (also non-nested models) |
+| Simple slopes | **modelbased** `estimate_slopes()`, `estimate_relation()` | `emmeans::emtrends()`; `interactions::sim_slopes()` (Johnson-Neyman) |
+| Diagnostics | **performance** `check_collinearity()`, `check_heteroscedasticity()`, `check_normality()`, `check_outliers()`, `check_model()` | `car::vif()`, `plot(fit)` |
+
+## Exercises {#exercises}
+
+Three required exercises and one optional exercise. **Run and check** runs your code and checks it right away. Reveal hints one at a time (**Show Hint**), the solution only after that.
+
+{{< include /_generated/en/regression-intermediate/exercises.qmd >}}
+
+## Knowledge check {#check}
+
+{{< include /_generated/en/regression-intermediate/quiz.qmd >}}
+
+## Cheat sheet {#cheatsheet}
+
+```r
+# Multiple regression: partial effects, standardised
+fit <- lm(y ~ x1 + x2 + x3, data = d)
+model_parameters(fit); r2(fit)
+standardize_parameters(fit)
+
+# Hierarchical: nested models on the same rows
+m1 <- lm(y ~ age + experience, data = d)
+m2 <- update(m1, . ~ . + x1 + x2)
+anova(m1, m2); compare_performance(m1, m2)
+
+# Interaction with centred predictors
+d_c <- d |> mutate(x_c = x - mean(x), m_c = m - mean(m))
+fit <- lm(y ~ x_c * m_c, data = d_c)
+estimate_slopes(fit, trend = "x_c", by = "m_c")
+
+# Diagnostics on the model
+check_collinearity(fit); check_heteroscedasticity(fit)
+check_normality(fit); check_outliers(fit)
+model_parameters(fit, vcov = "HC3")             # robust SE (sandwich)
+```
+
+{{< include /_generated/en/regression-intermediate/footer.qmd >}}

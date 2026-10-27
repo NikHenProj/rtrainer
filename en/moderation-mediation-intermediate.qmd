@@ -1,0 +1,166 @@
+---
+title: "Moderation and mediation"
+subtitle: "Intermediate · Johnson-Neyman with interactions, mediation with lavaan"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, parameters, interactions, lavaan]
+resources:
+  - ../data/acceptance.csv
+---
+
+{{< include /_generated/en/moderation-mediation-intermediate/runtime.qmd >}}
+
+{{< include /_generated/en/moderation-mediation-intermediate/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R runs directly in your browser. On the first visit it takes 20–40 seconds to load (status at the bottom right); after that it is faster.
+:::
+
+## Why? {#why}
+
+**Research questions:** *For whom* is the usefulness of a driver assistance system related to the intention to use it? And *through which path* does good ease of use affect intention?
+
+The first question is a **moderation**: experience with assistance systems changes the strength of a relationship. The second is a **mediation**: usefulness lies between ease of use and intention and carries part of the effect. The basis is the acceptance questionnaire `acceptance` (n = 300, Technology Acceptance Model). You know the interaction with simple slopes from the lesson Regression (intermediate); here it is about the whole range and about indirect effects.
+
+## Concept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 190" role="img" aria-labelledby="fig-moi-title fig-moi-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-moi-title">Moderation and mediation as path diagrams</title>
+  <desc id="fig-moi-desc">Left, moderation: an arrow from usefulness to intention; a second arrow from experience hits the middle of this arrow. Right, mediation: ease of use points with path a to usefulness, usefulness with path b to intention, and a direct path c leads from ease of use to intention. The indirect effect is a times b.</desc>
+  <rect x="10" y="120" width="90" height="34" rx="4" class="rt-fig-box" />
+  <text x="55" y="142" text-anchor="middle" class="rt-fig-label">pu</text>
+  <rect x="180" y="120" width="90" height="34" rx="4" class="rt-fig-box" />
+  <text x="225" y="142" text-anchor="middle" class="rt-fig-label">bi</text>
+  <rect x="95" y="20" width="90" height="34" rx="4" class="rt-fig-box-accent" />
+  <text x="140" y="42" text-anchor="middle" class="rt-fig-label">experience</text>
+  <line x1="100" y1="137" x2="176" y2="137" class="rt-fig-arrow" />
+  <line x1="140" y1="54" x2="140" y2="133" class="rt-fig-arrow" />
+  <text x="140" y="178" text-anchor="middle" class="rt-fig-code">bi ~ pu * experience</text>
+  <rect x="300" y="120" width="90" height="34" rx="4" class="rt-fig-box" />
+  <text x="345" y="142" text-anchor="middle" class="rt-fig-label">peou</text>
+  <rect x="385" y="20" width="90" height="34" rx="4" class="rt-fig-box-accent" />
+  <text x="430" y="42" text-anchor="middle" class="rt-fig-label">pu</text>
+  <rect x="465" y="120" width="90" height="34" rx="4" class="rt-fig-box" />
+  <text x="510" y="142" text-anchor="middle" class="rt-fig-label">bi</text>
+  <line x1="360" y1="120" x2="405" y2="58" class="rt-fig-arrow" />
+  <text x="370" y="84" class="rt-fig-code">a</text>
+  <line x1="455" y1="58" x2="495" y2="116" class="rt-fig-arrow" />
+  <text x="483" y="84" class="rt-fig-code">b</text>
+  <line x1="390" y1="137" x2="461" y2="137" class="rt-fig-arrow" />
+  <text x="425" y="130" text-anchor="middle" class="rt-fig-code">c</text>
+  <text x="428" y="178" text-anchor="middle" class="rt-fig-code">indirect := a * b</text>
+</svg>
+<figcaption>Moderation (left): experience changes the strength of the arrow from usefulness to intention. Mediation (right): the indirect effect runs through usefulness (a × b); the direct effect c is the rest.</figcaption>
+</figure>
+```
+
+- **Moderation** is an interaction: `lm(y ~ x * m)`. The coefficient `x:m` says how much steeper the slope of x gets per unit of m. Without centring, the coefficient of x is the slope at m = 0.
+- **Johnson-Neyman** `interactions::johnson_neyman(fit, pred = x, modx = m)`: for each value of m, whether the slope of x is significant; the output is the bounds and a plot. `sim_slopes()` gives simple slopes at fixed points, `interact_plot()` the prediction lines.
+- **Mediation** in lavaan: name paths with labels (`m ~ a * x`, `y ~ b * m + c * x`), then define the indirect effect `a * b` and the total effect `c + a * b` with `:=`.
+- **Testing the indirect effect:** with a bootstrap CI (`se = "bootstrap"`, `parameterEstimates(fit, boot.ci.type = "perc")`), because the product a × b has a skewed distribution. The route via separate regressions (Baron & Kenny) and the labels "full/partial" mediation are outdated.
+- **Causality:** a mediation model decomposes associations. You set the direction of the arrows; with cross-sectional data it remains an assumption.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## More: categorical moderators, several mediators, moderated mediation
+
+- **Categorical moderator:** `lm(y ~ x * group)`; `sim_slopes(fit, pred = x, modx = group)` or `modelbased::estimate_slopes(fit, trend = "x", by = "group")` gives the slope per group.
+- **Several mediators** in parallel: `m1 ~ a1 * x`, `m2 ~ a2 * x`, `y ~ b1 * m1 + b2 * m2 + c * x`, then `ind1 := a1 * b1`, `ind2 := a2 * b2`, `diff := ind1 - ind2`.
+- **Latent variables:** instead of scale means you can use the measurement models from the lesson SEM (`pu =~ pu_1 + …`); then the paths are corrected for measurement error.
+- **Moderated mediation:** path a depends on a moderator (`m ~ a1 * x + a2 * w + a3 * x:w`); the indirect effect becomes a function of w, e.g. `ind_hi := (a1 + a3 * 5) * b`.
+:::
+
+## Example {#example}
+
+Compute scale scores as in the lesson Regression, then the moderation by experience over the whole range:
+
+```{webr}
+tam <- acceptance |>
+  mutate(
+    across(c(peou_3, trust_4), \(x) 8 - x),
+    pu = rowMeans(pick(pu_1:pu_4)),
+    peou = rowMeans(pick(peou_1:peou_4)),
+    trust = rowMeans(pick(trust_1:trust_5)),
+    bi = rowMeans(pick(bi_1:bi_4))
+  )
+fit_mod <- lm(bi ~ pu * experience, data = tam)
+johnson_neyman(fit_mod, pred = pu, modx = experience)
+```
+
+The interaction is b = 0.07 per year, 95% CI [0.01, 0.13], p = .019. From 0.41 years of experience on, the slope of `pu` is significantly positive, i.e. for everyone with at least one year; the second bound (−28.6) lies outside the data. Now the mediation:
+
+```{webr}
+model <- "
+  pu ~ a * peou
+  bi ~ b * pu + c * peou
+  indirect := a * b
+  total := c + a * b
+"
+fit_med <- sem(model, data = tam)
+model_parameters(fit_med)
+```
+
+The indirect effect via usefulness is 0.10 [0.05, 0.15] (delta method), the direct one 0.29 [0.18, 0.40]. A report needs a bootstrap CI. In the browser, 200 draws take about 20 seconds; for the report use 5000 locally:
+
+```{webr}
+set.seed(1)
+fit_boot <- sem(model, data = tam, se = "bootstrap", bootstrap = 200)
+parameterEstimates(fit_boot, boot.ci.type = "perc") |>
+  filter(op == ":=")
+```
+
+**How to report it:** Experience moderated the relationship between usefulness and intention to use, b = 0.07, 95% CI [0.01, 0.13], p = .019; according to the Johnson-Neyman technique it was significantly positive from 0.4 years of experience on. In a mediation model, the indirect effect of ease of use on intention via usefulness was b = 0.10, 95% CI [0.05, 0.16] (1000 bootstrap draws, percentile), the direct effect b = 0.29 [0.18, 0.40]. Because all measures were collected at the same time, the direction of the paths is a theoretical assumption.
+
+## Package comparison {#packages}
+
+| Task | Recommendation | Alternative |
+|---|---|---|
+| Interpret an interaction | **interactions** `johnson_neyman()`, `sim_slopes()`, `interact_plot()` | **modelbased** `estimate_slopes()` (also with a Johnson-Neyman range), `emmeans::emtrends()`, marginaleffects `slopes()` |
+| Mediation | **lavaan** with labels and `:=`, bootstrap CI | **mediation** `mediate()` (see below); PROCESS macro (SPSS, not R) |
+| Mediation with latent variables, several mediators | **lavaan** | piecewiseSEM; brms (multivariate, locally) |
+
+**Why lavaan instead of the `mediation` package?** lavaan grows with you: several mediators, latent variables and moderated mediation use the same syntax, and you know it from the lesson SEM. The `mediation` package is a good addition if mediator or outcome are not normally distributed (logistic models, `lmer()`) or if you want a sensitivity analysis for unobserved confounders (`medsens()`). For this example it gives the same result (indirect 0.097 [0.052, 0.152], 25% mediated):
+
+```r
+library(mediation)
+med <- mediate(
+  lm(pu ~ peou, data = tam),            # mediator model
+  lm(bi ~ pu + peou, data = tam),       # outcome model
+  treat = "peou", mediator = "pu", sims = 1000
+)
+summary(med)   # ACME = indirect, ADE = direct effect
+```
+
+## Exercises {#exercises}
+
+Three required exercises and two optional exercises. **Run and check** runs your code and checks it right away. Reveal hints one at a time (**Show Hint**), the solution only after that.
+
+{{< include /_generated/en/moderation-mediation-intermediate/exercises.qmd >}}
+
+## Knowledge check {#check}
+
+{{< include /_generated/en/moderation-mediation-intermediate/quiz.qmd >}}
+
+## Cheat sheet {#cheatsheet}
+
+```r
+# Moderation: interaction, whole range
+fit <- lm(y ~ x * m, data = d)
+johnson_neyman(fit, pred = x, modx = m)   # bounds + plot
+sim_slopes(fit, pred = x, modx = m)       # slopes at −1 SD, M, +1 SD
+interact_plot(fit, pred = x, modx = m)
+
+# Mediation with lavaan: labels and defined parameters
+model <- "
+  m ~ a * x
+  y ~ b * m + c * x
+  indirect := a * b
+  total := c + a * b
+"
+fit <- sem(model, data = d, se = "bootstrap", bootstrap = 5000)
+parameterEstimates(fit, boot.ci.type = "perc")
+```
+
+{{< include /_generated/en/moderation-mediation-intermediate/footer.qmd >}}

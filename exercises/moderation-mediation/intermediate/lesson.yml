@@ -3,7 +3,6 @@
 lesson: moderation-mediation-intermediate
 minutes: 55
 prerequisites: [regression-intermediate]
-langs: [de]
 packages: [dplyr, parameters, interactions, lavaan]
 data: [acceptance]
 goals:

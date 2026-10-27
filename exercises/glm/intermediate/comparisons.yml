@@ -58,7 +58,7 @@ explanation:
     ist plausibel, aber unsicher.“ Ein Mixed Model mit Zufallseffekten für
     Personen und Aufgaben (`glmer()`) ist der nächste Schritt.
   en: |
-    B − A: +10.4 percentage points, 95 % CI [−0.2, 21.0], p = .055; C − A:
+    B − A: +10.4 percentage points, 95% CI [−0.2, 21.0], p = .055; C − A:
     −6.7 [−21.7, 8.4], p = .385. Without clustering, the CI for B − A would be
     narrower ([0.1, 20.7], p = .049) and just "significant": the 12 tasks of
     one participant are not independent observations, and the model must know
@@ -66,7 +66,7 @@ explanation:
     success is predicted with A and with B (everything else as it is) and the
     difference is averaged. That puts results on the scale the product team
     understands. Report: "With prototype B, 10.4 percentage points more tasks
-    were solved than with A, 95 % CI [−0.2, 21.0] (cluster-robust by
+    were solved than with A, 95% CI [−0.2, 21.0] (cluster-robust by
     participant), p = .055; the effect is plausible but uncertain." A mixed
     model with random effects for participants and tasks (`glmer()`) is the
     next step.

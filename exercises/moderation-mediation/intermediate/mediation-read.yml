@@ -86,8 +86,8 @@ explanation:
     0.16] (1000 Bootstrap-Ziehungen); der direkte Effekt b = 0.29 [0.18,
     0.40].“
   en: |
-    Statements 1 and 3 are true. The indirect effect 0.10, 95 % CI [0.05,
-    0.16] (bootstrap percentile), excludes 0; it makes up 0.096 / 0.386 ≈ 25 %
+    Statements 1 and 3 are true. The indirect effect 0.10, 95% CI [0.05,
+    0.16] (bootstrap percentile), excludes 0; it makes up 0.096 / 0.386 ≈ 25%
     of the total effect. Statement 2 is false: a remaining direct effect only
     means that not the whole relationship runs through this mediator; the
     classification "full vs. partial mediation" depends heavily on sample size
@@ -97,7 +97,7 @@ explanation:
     well; a mediation model decomposes relationships but does not prove a
     causal direction. That needs experiments (e.g. manipulating ease of use)
     or longitudinal data. APA sentence: "The indirect effect of ease of use on
-    intention through usefulness was b = 0.10, 95 % CI [0.05, 0.16] (1000
+    intention through usefulness was b = 0.10, 95% CI [0.05, 0.16] (1000
     bootstrap draws); the direct effect b = 0.29 [0.18, 0.40]."
 misconception:
   de: "Ein signifikanter indirekter Effekt beweist eine kausale Wirkkette, und ein signifikanter direkter Effekt spricht gegen Mediation."

@@ -59,12 +59,12 @@ explanation:
     die Standardfehler unterschätzen die Unsicherheit, solange das Modell das
     nicht berücksichtigt (Lösung: cluster-robuste SE oder ein Mixed Model).
   en: |
-    OR for B versus A = 2.19, 95 % CI [1.00, 5.02], p = .054; for C 0.69
+    OR for B versus A = 2.19, 95% CI [1.00, 5.02], p = .054; for C 0.69
     [0.35, 1.36], p = .288; experts versus novices 1.99 [1.10, 3.67],
     p = .025. The odds of success (success : failure) are about twice as high
     with B as with A, but the CI reaches down to 1. The intercept 2.62 is the
-    odds for novices with A (about 72 % success). Odds ratios are not ratios
-    of probabilities: with high success rates (78 % with A), OR = 2.19 means
+    odds for novices with A (about 72% success). Odds ratios are not ratios
+    of probabilities: with high success rates (78% with A), OR = 2.19 means
     only about +10 percentage points; `avg_comparisons()` shows this (next
     exercise). The linear model on 0/1 can predict probabilities below 0 or
     above 1 and has unequal error variance. Pitfall: each participant works

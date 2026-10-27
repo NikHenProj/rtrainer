@@ -3,7 +3,6 @@
 lesson: power-intermediate
 minutes: 50
 prerequisites: [group-comparisons-beginner, regression-beginner]
-langs: [de]
 packages: [dplyr, pwr, Superpower, simr]
 data: [driving_sim]
 goals:

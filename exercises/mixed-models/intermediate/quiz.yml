@@ -35,21 +35,21 @@ questions:
     options:
       - text:
           de: "40 % der Varianz der Reaktionszeiten liegt zwischen Personen; zwei Durchgänge derselben Person korrelieren im Mittel zu 0.40."
-          en: "40 % of the variance in reaction times lies between participants; two trials of the same participant correlate at 0.40 on average."
+          en: "40% of the variance in reaction times lies between participants; two trials of the same participant correlate at 0.40 on average."
         correct: true
         explain:
           de: "Richtig. Je höher die ICC, desto weniger unabhängige Information steckt in weiteren Durchgängen derselben Person."
           en: "Right. The higher the ICC, the less independent information further trials of the same participant contain."
       - text:
           de: "Das Modell erklärt 40 % der Varianz."
-          en: "The model explains 40 % of the variance."
+          en: "The model explains 40% of the variance."
         correct: false
         explain:
           de: "Das Nullmodell hat keinen Prädiktor. Varianzaufklärung durch feste Effekte zeigt `r2()` (marginales R²)."
           en: "The null model has no predictor. Variance explained by fixed effects is shown by `r2()` (marginal R²)."
       - text:
           de: "Die Personen-SD ist 40 % der Residual-SD."
-          en: "The participant SD is 40 % of the residual SD."
+          en: "The participant SD is 40% of the residual SD."
         correct: false
         explain:
           de: "Die ICC ist ein Varianzanteil: Personenvarianz geteilt durch Personen- plus Residualvarianz, kein SD-Verhältnis."

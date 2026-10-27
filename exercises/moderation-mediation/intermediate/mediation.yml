@@ -79,7 +79,7 @@ explanation:
     Mit Querschnittsdaten zeigt das Modell eine mit der Theorie vereinbare
     Zerlegung, keinen Beleg für die kausale Richtung.
   en: |
-    a = 0.37, 95 % CI [0.27, 0.47]: one point more ease of use goes along with
+    a = 0.37, 95% CI [0.27, 0.47]: one point more ease of use goes along with
     0.37 points more usefulness. b = 0.26 [0.14, 0.37], direct effect c = 0.29
     [0.18, 0.40]. Indirect effect a × b = 0.10 [0.05, 0.15], total effect
     0.39 [0.28, 0.49]: about a quarter of the relationship runs through

@@ -1,0 +1,124 @@
+---
+title: "Categorical data and GLM"
+subtitle: "Intermediate · Logistic and Poisson regression, marginaleffects"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, parameters, performance, marginaleffects, sandwich]
+resources:
+  - ../data/usability.csv
+---
+
+{{< include /_generated/en/glm-intermediate/runtime.qmd >}}
+
+{{< include /_generated/en/glm-intermediate/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R runs directly in your browser. On the first visit it takes 20–40 seconds to load (status at the bottom right); after that it is faster.
+:::
+
+## Why? {#why}
+
+**Research question:** Do participants solve more tasks with prototype B, and do they make fewer errors along the way?
+
+In the usability test (`usability`), success per task is 0 or 1 (an abort after 180 s also counts as a failure), and errors are counts (0, 1, 2, …). Neither fits linear regression: it predicts success rates above 100% and negative error counts, and the spread depends on the mean. Generalised linear models (GLMs) keep the formula of `lm()` and choose a suitable distribution with a link function.
+
+## Concept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 200" role="img" aria-labelledby="fig-gli-title fig-gli-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-gli-title">Logit link: linear on the logit scale, S-curve on the probability scale</title>
+  <desc id="fig-gli-desc">On the left a straight line on the logit scale (log-odds from minus 3 to plus 3). An arrow labelled plogis leads to the right to an S-curve on the probability scale from 0 to 1. The same change in the logit shifts the probability a lot in the middle and only a little near the edges at 0 or 1.</desc>
+  <line x1="40" y1="170" x2="220" y2="170" class="rt-fig-axis" />
+  <line x1="40" y1="170" x2="40" y2="20" class="rt-fig-axis" />
+  <line x1="50" y1="160" x2="210" y2="30" class="rt-fig-a" />
+  <text x="130" y="190" text-anchor="middle" class="rt-fig-label">Log-odds: straight</text>
+  <line x1="240" y1="95" x2="300" y2="95" class="rt-fig-arrow" />
+  <text x="270" y="85" text-anchor="middle" class="rt-fig-code">plogis()</text>
+  <line x1="320" y1="170" x2="520" y2="170" class="rt-fig-axis" />
+  <line x1="320" y1="170" x2="320" y2="20" class="rt-fig-axis" />
+  <path d="M 330 163 C 390 160, 400 140, 420 100 S 450 32, 510 28" fill="none" class="rt-fig-a" />
+  <text x="312" y="34" text-anchor="end" class="rt-fig-label">1</text>
+  <text x="312" y="168" text-anchor="end" class="rt-fig-label">0</text>
+  <text x="420" y="190" text-anchor="middle" class="rt-fig-label">Probability: S-curve</text>
+  <text x="430" y="70" class="rt-fig-label rt-fig-muted">near 1: small</text>
+  <text x="430" y="86" class="rt-fig-label rt-fig-muted">gains</text>
+</svg>
+<figcaption>Logistic regression is linear on the logit scale. An odds ratio is therefore the same everywhere, but the difference in percentage points is not: at 78% success, the same odds ratio adds less than at 50%.</figcaption>
+</figure>
+```
+
+- **Logistic regression** `glm(y ~ x, family = binomial)`: models the log-odds of success. `model_parameters(fit, exponentiate = TRUE)` gives **odds ratios**; odds are success : failure (78% success = odds 3.6), not probabilities.
+- **On the probability scale** with marginaleffects: `avg_predictions(fit, by = "prototype")` gives the predicted success rate per prototype, `avg_comparisons(fit, variables = "prototype")` the difference in percentage points. Every product team understands that.
+- **Poisson regression** `glm(errors ~ x, family = poisson)`: models the logarithm of the expected count. `exp(b)` is a **rate ratio** (IRR): 0.41 means 59% fewer errors.
+- **Overdispersion:** Poisson assumes variance = mean. `performance::check_overdispersion()` checks this; if it is clearly > 1, use `family = quasipoisson` (same IRR, wider CIs) or a negative binomial model.
+- **Repeated measures:** each participant works on 12 tasks. A GLM over all tasks then needs standard errors clustered by participant (`vcov = ~participant` in marginaleffects or `model_parameters(fit, vcov = "vcovCL", vcov_args = list(cluster = d$participant))`) or a mixed model (`lme4::glmer()`, lesson Repeated measures and mixed models).
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## More: interactions, goodness of fit, rare events
+
+- **Interactions in GLMs** are defined on the logit scale. Whether an effect in percentage points differs between groups, you test directly: `avg_comparisons(fit, variables = "prototype", by = "expertise", hypothesis = "b2 - b1 = 0")`.
+- **Goodness of fit:** for logistic models, `performance::r2(fit)` gives Tjur's R² (difference in the mean prediction for successes and failures); `performance_hosmer()` and `binned_residuals()` check the fit.
+- **Separation:** if a group has only successes, coefficient and SE become huge ("fitted probabilities numerically 0 or 1"). Remedy: combine groups or use penalised models (`brglm2`, locally).
+- **Rare events:** for rates below 10%, the odds ratio and the risk ratio are similar; for common events they are not. When in doubt, report both.
+:::
+
+## Example {#example}
+
+Success by prototype, first as odds ratios:
+
+```{webr}
+fit <- glm(success ~ prototype, family = binomial, data = usability)
+model_parameters(fit, exponentiate = TRUE)
+```
+
+The odds of success are 2.16 times as high with B as with A, 95% CI [1.00, 4.93], p = .056; with C 0.71 times [0.36, 1.38]. The intercept 3.57 is the odds with A (78% success). What does that mean as a success rate, and how certain is it if you take into account that each participant worked on 12 tasks?
+
+```{webr}
+avg_predictions(fit, by = "prototype")
+avg_comparisons(fit, variables = "prototype", vcov = ~participant)
+```
+
+With A, 78% of the tasks are solved, with B 89%, with C 72%. B lies 10.4 percentage points above A, 95% CI [−0.6, 21.4], p = .064 (cluster-robust by participant); C 6.4 points below [−21.8, 9.0].
+
+**How to report it:** A logistic regression with standard errors clustered by participant showed a success rate 10.4 percentage points higher for prototype B than for A (89% vs. 78%), 95% CI [−0.6, 21.4], p = .064; OR = 2.16 [1.00, 4.93]. Prototype C did not differ detectably from A, −6.4 percentage points [−21.8, 9.0].
+
+## Package comparison {#packages}
+
+| Task | Recommendation | Alternative |
+|---|---|---|
+| Model | `glm()` with `family = binomial`, `poisson`, `quasipoisson` | negative binomial: `MASS::glm.nb()`, `glmmTMB(family = nbinom2)`; with random effects `lme4::glmer()`, glmmTMB |
+| Odds/rate ratios | **parameters** `model_parameters(fit, exponentiate = TRUE)` | `exp(coef(fit))`, `exp(confint(fit))`; `broom::tidy(exponentiate = TRUE)` |
+| Probabilities, percentage points | **marginaleffects** `avg_predictions()`, `avg_comparisons()` (cluster-robust with `vcov = ~id`) | **modelbased** `estimate_means()`, `estimate_contrasts()`; emmeans with `regrid = "response"`; ggeffects |
+| Diagnostics | **performance** `check_overdispersion()`, `check_zeroinflation()`, `r2()`, `binned_residuals()` | DHARMa (simulated residuals) |
+
+## Exercises {#exercises}
+
+Three required exercises and two optional exercises. **Run and check** runs your code and checks it right away. Reveal hints one at a time (**Show Hint**), the solution only after that.
+
+{{< include /_generated/en/glm-intermediate/exercises.qmd >}}
+
+## Knowledge check {#check}
+
+{{< include /_generated/en/glm-intermediate/quiz.qmd >}}
+
+## Cheat sheet {#cheatsheet}
+
+```r
+# Success 0/1: logistic regression, odds ratios
+fit <- glm(success ~ prototype + expertise, family = binomial, data = d)
+model_parameters(fit, exponentiate = TRUE)
+
+# On the probability scale (cluster-robust by participant)
+avg_predictions(fit, by = "prototype", vcov = ~participant)
+avg_comparisons(fit, variables = "prototype", vcov = ~participant)
+
+# Counts: Poisson, rate ratios, overdispersion
+fit_p <- glm(errors ~ prototype, family = poisson, data = d)
+model_parameters(fit_p, exponentiate = TRUE)
+check_overdispersion(fit_p)
+fit_q <- update(fit_p, family = quasipoisson)   # same IRR, wider CIs
+```
+
+{{< include /_generated/en/glm-intermediate/footer.qmd >}}

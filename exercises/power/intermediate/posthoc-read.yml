@@ -42,8 +42,8 @@ prompt:
 
     Which statements are true?
 
-    1. The observed power of 22 % shows that the study probably missed the true effect.
-    2. The sensitivity analysis shows: with 24 per group, the study had 80 % power only for effects from d ≈ 0.83.
+    1. The observed power of 22% shows that the study probably missed the true effect.
+    2. The sensitivity analysis shows: with 24 per group, the study had 80% power only for effects from d ≈ 0.83.
     3. Because p > .05 and power was low, it is proven that there is no effect.
     4. The follow-up study should be planned from a smallest effect of interest, not from the observed d = 0.35.
 
@@ -56,7 +56,7 @@ hints:
   - de: "Die beobachtete Power setzt das beobachtete d ein. Was hängt alles am beobachteten d?"
     en: "Observed power plugs in the observed d. What else depends on the observed d?"
   - de: "Bei gegebenem n ist die beobachtete Power nur eine Umrechnung des p-Werts: p > .05 heißt immer beobachtete Power < 50 %."
-    en: "For a given n, observed power is just a transformation of the p value: p > .05 always means observed power < 50 %."
+    en: "For a given n, observed power is just a transformation of the p value: p > .05 always means observed power < 50%."
   - de: "Sensitivität fragt nach den Effekten, die das Design finden konnte, unabhängig vom Ergebnis. Zwei Aussagen stimmen."
     en: "Sensitivity asks which effects the design could detect, independent of the result. Two statements are true."
 explanation:
@@ -75,11 +75,11 @@ explanation:
   en: |
     Statements 2 and 4 are true. Observed ("post hoc") power is a mere
     transformation of the p value: every non-significant result has an
-    observed power below 50 %. It says nothing new and nothing about the true
+    observed power below 50%. It says nothing new and nothing about the true
     effect (statement 1 false). Statement 3 is false: a non-significant result
-    does not prove absence; the 95 % CI for d ranges here from about −0.22 to
+    does not prove absence; the 95% CI for d ranges here from about −0.22 to
     0.92 and does not rule out large effects. "No relevant effect" requires an
-    equivalence test. Informative are the sensitivity (80 % power only from
+    equivalence test. Informative are the sensitivity (80% power only from
     d = 0.83, i.e. only for large effects) and the CI. For the follow-up
     study: set a smallest effect of interest and plan n from it; the observed
     d = 0.35 from 48 participants is too uncertain.
@@ -92,7 +92,7 @@ common_mistakes:
   - pattern: "^[\\s\\S]*?c\\(\\s*1\\b"
     message:
       de: "Aussage 1 stimmt nicht: Die beobachtete Power folgt direkt aus p; bei p > .05 ist sie immer unter 50 %."
-      en: "Statement 1 is false: observed power follows directly from p; with p > .05 it is always below 50 %."
+      en: "Statement 1 is false: observed power follows directly from p; with p > .05 it is always below 50%."
   - pattern: "^[\\s\\S]*?c\\([^)]*3[^)]*\\)\\s*$"
     message:
       de: "Aussage 3 stimmt nicht: Ein nicht signifikantes Ergebnis belegt keinen Nulleffekt; dafür braucht es einen Äquivalenztest."

@@ -29,10 +29,10 @@ prompt:
     smallest that matters for the product decision; the SD from earlier
     studies is 12 points.
 
-    1. How many participants does each group need for 90 % power (α = .05,
+    1. How many participants does each group need for 90% power (α = .05,
        two-sided)? Rounded up.
     2. The budget only covers 40 participants per group. From which d does
-       the study then have 80 % power? Rounded to 2 decimals.
+       the study then have 80% power? Rounded to 2 decimals.
 
     Return a named vector `c(n = ..., d_min = ...)`.
 starter: |
@@ -63,12 +63,12 @@ explanation:
     sind nach Auswahl („es sah vielversprechend aus“) meist zu groß; plane
     besser aus dem kleinsten Effekt, der praktisch zählt.
   en: |
-    n = 123 per group (d = 0.42, 90 % power), 246 participants in total. With
-    40 per group, the study has 80 % power only from d = 0.63, i.e. about 7.6
+    n = 123 per group (d = 0.42, 90% power), 246 participants in total. With
+    40 per group, the study has 80% power only from d = 0.63, i.e. about 7.6
     SUS points (0.63 × 12). Whether that is enough is a substantive question:
     if smaller differences do not matter for the product, the small study is
     justifiable; otherwise it is hardly worth it. Report the sensitivity in
-    the methods: "With n = 40 per group, the study had 80 % power for effects
+    the methods: "With n = 40 per group, the study had 80% power for effects
     from d = 0.63 (α = .05, two-sided)." Pitfall: taking the effect from a
     small pilot study. Pilot effects vary widely and, after selection ("it
     looked promising"), are usually too large; better plan from the smallest

@@ -1,0 +1,140 @@
+---
+title: "Power and sample size planning"
+subtitle: "Intermediate · pwr, Superpower, simulation with simr"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, pwr, Superpower, simr]
+resources:
+  - ../data/driving_sim.csv
+---
+
+{{< include /_generated/en/power-intermediate/runtime.qmd >}}
+
+{{< include /_generated/en/power-intermediate/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R runs directly in your browser. On the first visit it takes 20–40 seconds to load (status at the bottom right); after that it is faster.
+:::
+
+## Why? {#why}
+
+**Research question:** How many participants does the next simulator study need to reliably find a difference that matters for the design?
+
+Studies that are too small miss relevant effects, and if they do become significant, they overestimate the effect. Studies that are too large cost time and participants. A power analysis before the study makes the planning transparent and belongs in every preregistration and ethics application. After the study it is no longer a tool for explaining a result.
+
+## Concept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 190" role="img" aria-labelledby="fig-pwi-title fig-pwi-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-pwi-title">Four quantities of a power analysis</title>
+  <desc id="fig-pwi-desc">Four boxes in a circle: effect size, sample size, alpha and power. In the middle: fix three, compute the fourth. Below, three routes: a priori computes n, sensitivity computes the smallest detectable effect, simulation generates data from a model and counts significant results.</desc>
+  <rect x="40" y="20" width="130" height="34" rx="4" class="rt-fig-box-accent" />
+  <text x="105" y="42" text-anchor="middle" class="rt-fig-label">Effect (d, f)</text>
+  <rect x="390" y="20" width="130" height="34" rx="4" class="rt-fig-box-accent" />
+  <text x="455" y="42" text-anchor="middle" class="rt-fig-label">n</text>
+  <rect x="40" y="100" width="130" height="34" rx="4" class="rt-fig-box" />
+  <text x="105" y="122" text-anchor="middle" class="rt-fig-label">α (usually .05)</text>
+  <rect x="390" y="100" width="130" height="34" rx="4" class="rt-fig-box" />
+  <text x="455" y="122" text-anchor="middle" class="rt-fig-label">Power (1 − β)</text>
+  <text x="280" y="70" text-anchor="middle" class="rt-fig-label">fix three,</text>
+  <text x="280" y="88" text-anchor="middle" class="rt-fig-label">compute the fourth</text>
+  <text x="105" y="170" text-anchor="middle" class="rt-fig-code">a priori → n</text>
+  <text x="280" y="170" text-anchor="middle" class="rt-fig-code">sensitivity → d</text>
+  <text x="455" y="170" text-anchor="middle" class="rt-fig-code">simulation → power</text>
+</svg>
+<figcaption>Effect, sample size, α and power are linked. A priori, you fix effect, α and power and compute n; with a fixed sample you compute the smallest effect it reliably finds. For complex models, power is simulated.</figcaption>
+</figure>
+```
+
+- **Smallest effect size of interest (SESOI):** plan from the effect that matters in practice (e.g. 5 SUS points, 40 ms reaction time), not from a pilot effect; those are uncertain and usually too large.
+- **pwr** for standard tests: `pwr.t.test()` (independent, paired, `type =`), `pwr.r.test()`, `pwr.anova.test()`, `pwr.f2.test()` (regression). The quantity you leave out is computed.
+- **Repeated measures:** for paired tests, d is the difference divided by the SD of the differences (d_z). For several conditions, **Superpower** `ANOVA_design()` + `ANOVA_exact()` computes with means, SD and the correlation `r`; the correlation decides a lot.
+- **Mixed models:** no formula. **simr** takes a pilot model, sets the expected effect (`fixef(fit)["x"] <- ...`), extends the design (`extend()`) and simulates (`powerSim()`, `powerCurve()`).
+- **Sensitivity instead of "post hoc" power:** after the study, what counts is which effects the design could find (`pwr.t.test(n = ..., power = .8)`) and the CI of the effect. Power computed from the observed effect is just the p-value converted.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## More: equivalence, interactions, your own simulation
+
+- **Planning equivalence:** if you want to show that two prototypes are *equally good*, plan an equivalence test (TOST) with bounds ±SESOI; `TOSTER::power_t_TOST()`. This needs more participants than a difference test.
+- **Interactions** need clearly more participants than main effects; in Superpower `design = "2b*3w"` and the row of the interaction in `main_results`.
+- **Your own simulation** for any design: generate data with the assumed effect, fit the model, store the p-value, e.g. 1000 times with `replicate()` or `purrr::map()`; the share of p < .05 is the power. simr does exactly this for `lmer()` models.
+- **Several tests:** plan for the most important comparison, with a smaller α under Holm correction.
+:::
+
+## Example {#example}
+
+How many participants per group does a t-test need for a medium effect (d = 0.5) with 80% power, and which effect does a study with 20 per group reliably find?
+
+```{webr}
+pwr.t.test(d = 0.5, power = 0.8)
+pwr.t.test(n = 20, power = 0.8)
+```
+
+64 participants per group, i.e. 128 in total. With 20 per group, the study has 80% power only from d = 0.91, i.e. only for very large effects. Within participants it looks different:
+
+```{webr}
+pwr.t.test(n = 20, power = 0.8, type = "paired")
+```
+
+Paired, d_z = 0.66 is enough: the same 20 participants find much smaller differences if each sees all conditions.
+
+**How to report it (methods section):** The sample size was determined a priori with pwr (Champely, 2020). For the smallest difference of interest of 5 SUS points (SD = 12, d = 0.42), a two-sided t-test for independent groups with α = .05 and 90% power requires 123 participants per group.
+
+## Package comparison {#packages}
+
+| Task | Recommendation | Alternative |
+|---|---|---|
+| t-test, correlation, one-way ANOVA, regression | **pwr** `pwr.t.test()`, `pwr.r.test()`, `pwr.f2.test()` | G*Power (program outside R); `stats::power.t.test()` |
+| Repeated measures, mixed ANOVA, contrasts | **Superpower** `ANOVA_design()`, `ANOVA_exact()`, `plot_power()` | your own simulation with afex |
+| Mixed models | **simr** `powerSim()`, `extend()`, `powerCurve()` | your own simulation; mixedpower, faux (simulate data) |
+| Equivalence | TOSTER `power_t_TOST()` | – |
+
+::: {.callout-note appearance="simple"}
+## Run locally: power curve with simr
+
+In the browser, 50 simulations are a compromise. For real planning, run locally with 1000 runs over several sample sizes (takes a few minutes):
+
+```r
+library(simr)
+fit <- lmer(rt_ms ~ condition + trial_c + (1 + trial_c | participant), data = sim)
+fixef(fit)["trial_c"] <- -15
+fit100 <- extend(fit, along = "participant", n = 100)
+curve <- powerCurve(fit100, test = fixed("trial_c", "t"), along = "participant",
+                    breaks = c(30, 40, 50, 60, 80, 100), nsim = 1000)
+plot(curve)
+```
+:::
+
+## Exercises {#exercises}
+
+Three required exercises and two optional exercises. **Run and check** runs your code and checks it right away. Reveal hints one at a time (**Show Hint**), the solution only after that.
+
+{{< include /_generated/en/power-intermediate/exercises.qmd >}}
+
+## Knowledge check {#check}
+
+{{< include /_generated/en/power-intermediate/quiz.qmd >}}
+
+## Cheat sheet {#cheatsheet}
+
+```r
+# A priori: n from the smallest effect of interest
+pwr.t.test(d = 5 / 12, power = 0.9)                    # n per group
+pwr.t.test(d = 40 / 90, power = 0.9, type = "paired")  # d_z = diff. / SD of diffs.
+# Sensitivity: which effect at a fixed n?
+pwr.t.test(n = 40, power = 0.8)
+
+# Repeated measures with correlation
+design <- ANOVA_design(design = "3w", n = 20, mu = c(1000, 960, 940),
+                       sd = 140, r = 0.85, plot = FALSE)
+ANOVA_exact(design, verbose = FALSE)$main_results
+
+# Simulate a mixed model
+fixef(fit)["trial_c"] <- -15
+fit60 <- extend(fit, along = "participant", n = 60)
+powerSim(fit60, test = fixed("trial_c", "z"), nsim = 50)
+```
+
+{{< include /_generated/en/power-intermediate/footer.qmd >}}

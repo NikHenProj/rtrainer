@@ -78,7 +78,7 @@ explanation:
     t(39) statt t(423), weil die Steigung jetzt zwischen Personen variieren
     darf. Fallstrick: `ranef()` allein liefert nur die Abweichungen um 0.
   en: |
-    Fixed slope: −31 ms per trial, 95 % CI [−42, −20]; the model estimates
+    Fixed slope: −31 ms per trial, 95% CI [−42, −20]; the model estimates
     the slope SD between participants at 21 ms. The slopes from the 40
     separate `lm()` fits vary much more (SD 36 ms, from −105 to +61 ms) than
     the mixed model slopes (SD 12 ms, from −57 to +1 ms). Reason: from 12

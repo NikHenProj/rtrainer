@@ -3,7 +3,6 @@
 lesson: mixed-models-intermediate
 minutes: 60
 prerequisites: [group-comparisons-intermediate, regression-intermediate]
-langs: [de]
 packages: [dplyr, lme4, lmerTest, parameters, performance]
 data: [driving_sim, usability]
 goals:

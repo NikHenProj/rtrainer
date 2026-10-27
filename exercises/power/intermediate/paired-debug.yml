@@ -28,7 +28,7 @@ prompt:
 
     The code below gives 259 participants, far too many for the simulator.
     Repair it so that it returns the required number of participants for
-    90 % power (α = .05, two-sided), rounded up.
+    90% power (α = .05, two-sided), rounded up.
 starter: |
   res <- pwr.t.test(d = 40 / 140, power = 0.9)
   ceiling(res$n)

@@ -5,25 +5,25 @@ questions:
   - id: pw-i-q-definition
     prompt:
       de: "Eine Studie hat 80 % Power für d = 0.5. Was heißt das?"
-      en: "A study has 80 % power for d = 0.5. What does that mean?"
+      en: "A study has 80% power for d = 0.5. What does that mean?"
     options:
       - text:
           de: "Wenn der wahre Effekt d = 0.5 ist, wird der Test in 80 % solcher Studien signifikant."
-          en: "If the true effect is d = 0.5, the test becomes significant in 80 % of such studies."
+          en: "If the true effect is d = 0.5, the test becomes significant in 80% of such studies."
         correct: true
         explain:
           de: "Richtig. Power ist eine Eigenschaft des Designs für einen angenommenen Effekt, nicht des Ergebnisses."
           en: "Right. Power is a property of the design for an assumed effect, not of the result."
       - text:
           de: "Mit 80 % Wahrscheinlichkeit gibt es einen Effekt von d = 0.5."
-          en: "With 80 % probability there is an effect of d = 0.5."
+          en: "With 80% probability there is an effect of d = 0.5."
         correct: false
         explain:
           de: "Power setzt den Effekt voraus; über die Wahrscheinlichkeit des Effekts sagt sie nichts."
           en: "Power assumes the effect; it says nothing about the probability of the effect."
       - text:
           de: "Ein signifikantes Ergebnis ist zu 80 % richtig."
-          en: "A significant result is correct with 80 % probability."
+          en: "A significant result is correct with 80% probability."
         correct: false
         explain:
           de: "Wie oft ein signifikantes Ergebnis stimmt, hängt zusätzlich davon ab, wie plausibel der Effekt vorher war."
@@ -57,7 +57,7 @@ questions:
   - id: pw-i-q-correlation
     prompt:
       de: "In Superpower steigt bei gleichem Effekt die Power von 20 % (r = 0) auf 88 % (r = 0.85). Warum?"
-      en: "In Superpower, with the same effect, power rises from 20 % (r = 0) to 88 % (r = 0.85). Why?"
+      en: "In Superpower, with the same effect, power rises from 20% (r = 0) to 88% (r = 0.85). Why?"
     options:
       - text:
           de: "Je stärker die Messungen derselben Person korrelieren, desto kleiner ist die Streuung der Differenzen innerhalb der Person."
@@ -109,7 +109,7 @@ questions:
   - id: pw-i-q-nsim
     prompt:
       de: "`powerSim()` mit `nsim = 50` meldet 78 %, 95-%-KI [64, 88]. Was folgt daraus?"
-      en: "`powerSim()` with `nsim = 50` reports 78 %, 95 % CI [64, 88]. What follows?"
+      en: "`powerSim()` with `nsim = 50` reports 78%, 95% CI [64, 88]. What follows?"
     options:
       - text:
           de: "Die Schätzung ist wegen der wenigen Simulationen ungenau; für die Planung lokal mit z. B. 1000 Läufen wiederholen."
@@ -120,15 +120,15 @@ questions:
           en: "Right. The CI only describes the simulation uncertainty; with more runs it becomes narrower."
       - text:
           de: "Die wahre Power liegt mit 95 % Sicherheit zwischen 64 und 88 %, egal wie gut die Annahmen sind."
-          en: "The true power lies between 64 and 88 % with 95 % certainty, no matter how good the assumptions are."
+          en: "The true power lies between 64 and 88% with 95% certainty, no matter how good the assumptions are."
         correct: false
         explain:
           de: "Das KI gilt nur unter den Modellannahmen (Effekt, Varianzen). Sind sie falsch, ist auch die Power falsch."
           en: "The CI only holds under the model assumptions (effect, variances). If they are wrong, the power is wrong too."
       - text:
           de: "Die Studie ist zu klein, weil die untere Grenze unter 80 % liegt."
-          en: "The study is too small because the lower bound is below 80 %."
+          en: "The study is too small because the lower bound is below 80%."
         correct: false
         explain:
           de: "Die untere Grenze spiegelt hier vor allem die wenigen Läufe; erst eine genauere Simulation zeigt, ob 80 % erreicht werden."
-          en: "Here the lower bound mainly reflects the few runs; only a more precise simulation shows whether 80 % is reached."
+          en: "Here the lower bound mainly reflects the few runs; only a more precise simulation shows whether 80% is reached."

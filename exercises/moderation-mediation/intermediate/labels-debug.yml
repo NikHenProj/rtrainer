@@ -70,7 +70,7 @@ explanation:
   en: |
     lavaan does not assign labels on its own; `a` and `b` only exist once you
     write them into the regression lines (`pu ~ a * trust`). Result: a = 0.02,
-    95 % CI [−0.09, 0.13], b = 0.38 [0.27, 0.48], indirect effect 0.007
+    95% CI [−0.09, 0.13], b = 0.38 [0.27, 0.48], indirect effect 0.007
     [−0.03, 0.05]; the direct path from trust to intention is 0.27 [0.17,
     0.37]. So trust does not act through usefulness here but directly: a
     meaningful result, not an error. Pitfall:

@@ -72,7 +72,7 @@ explanation:
     Effekt bei 0, 3 oder 6 Jahren ist, zeigen einfache Steigungen
     (`modelbased::estimate_slopes()`).
   en: |
-    Interaction b = 0.07, 95 % CI [0.01, 0.13], p = .019: per year of
+    Interaction b = 0.07, 95% CI [0.01, 0.13], p = .019: per year of
     experience, the effect of usefulness gets 0.07 scale points stronger. At
     average experience (3 years), intention rises by 0.37 [0.26, 0.48] per
     point of usefulness; with the raw values the coefficient of `pu` was 0.16
@@ -81,7 +81,7 @@ explanation:
     meaning, and the collinearity with the product term disappears (VIF ~ 1
     instead of up to 15). Centring belongs in `mutate()`; in the formula you
     would need `I(pu - mean(pu))`. Report: "The association between usefulness
-    and intention was stronger for experienced drivers, b = 0.07, 95 % CI
+    and intention was stronger for experienced drivers, b = 0.07, 95% CI
     [0.01, 0.13], p = .019." Simple slopes (`modelbased::estimate_slopes()`)
     show how strong the effect is at 0, 3 or 6 years.
 misconception:
