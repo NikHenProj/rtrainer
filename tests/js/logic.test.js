@@ -123,3 +123,32 @@ test("lessonHref links to the same language or falls back to an existing page", 
   assert.equal(L.lessonHref({ lesson: "a-beginner", lesson_langs: ["de"] }, "de"), "a-beginner.html");
   assert.equal(L.lessonHref({ lesson: "a-beginner" }, "en"), "a-beginner.html");
 });
+
+test("a challenge (not required) does not block completion but enters review", () => {
+  const now = new Date(2026, 9, 26, 12);
+  // Required solved, challenge never touched: completed, challenge in box 1.
+  const data = progress({ exercises: { r1: { solved: true } }, quizzes: { x: { passed: true } } });
+  assert.equal(L.updateCompletion(data, "x", ["r1"], ["ch", "r1"], true, now), true);
+  assert.deepEqual(data.review.ch, { box: 1, due: "2026-10-27" });
+  // Challenge solved, required not: not completed.
+  const other = progress({ exercises: { ch: { solved: true }, r1: { solved: false } }, quizzes: { y: { passed: true } } });
+  assert.equal(L.updateCompletion(other, "y", ["r1"], ["ch", "r1"], true, now), false);
+  assert.equal(other.review.ch, undefined);
+  // Only the challenge attempted: the lesson counts as started.
+  assert.equal(L.lessonStatus(progress({ exercises: { ch: { solved: false } } }), "z", ["ch", "r1"]), "started");
+});
+
+test("nextLesson follows the path over beginner, intermediate and expert", () => {
+  const order = ["a-beginner", "project-beginner", "a-intermediate", "a-expert", "project-expert"];
+  const lessons = Object.fromEntries(order.map((id) => [id, { exercises: [`${id}-1`] }]));
+  const done = (...ids) => Object.fromEntries(ids.map((id) => [id, { completedAt: "t" }]));
+  let data = progress({ lessons: done("a-beginner", "project-beginner") });
+  assert.deepEqual(L.nextLesson(data, order, lessons), { id: "a-intermediate", kind: "next" });
+  data = progress({ lessons: done("a-beginner", "project-beginner", "a-intermediate") });
+  assert.deepEqual(L.nextLesson(data, order, lessons), { id: "a-expert", kind: "next" });
+  // A started expert lesson wins over an earlier, untouched one.
+  data = progress({ lessons: done("a-beginner"), exercises: { "a-expert-1": { solved: false } } });
+  assert.deepEqual(L.nextLesson(data, order, lessons), { id: "a-expert", kind: "resume" });
+  data = progress({ lessons: done(...order) });
+  assert.equal(L.nextLesson(data, order, lessons), null);
+});

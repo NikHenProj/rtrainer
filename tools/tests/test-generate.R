@@ -258,3 +258,86 @@ test_that("the recommended path runs level by level across all existing lessons"
   expect_match(plan, "data-lesson=\"toy-intermediate\"", fixed = TRUE)
   expect_match(plan, "rt-cell-planned", fixed = TRUE)
 })
+
+test_that("a challenge is rendered before #why, unnumbered and outside exercises.qmd", {
+  dir <- withr::local_tempdir()
+  challenge <- toy_exercise(id = "toy-b-challenge", order = 0, required = FALSE, challenge = TRUE,
+                            title = list(de = "Selbst versuchen", en = "Try first"))
+  make_course(dir, exercises = list(challenge, toy_exercise()))
+  page <- file.path(dir, "de", "toy-beginner.qmd")
+  write(c(
+    "{{< include /_generated/de/toy-beginner/challenge.qmd >}}", "",
+    "## Wozu? {#why}", "", "{{< include /_generated/de/toy-beginner/exercises.qmd >}}"
+  ), page, append = TRUE)
+  generate(dir, langs = "de")
+  gen <- file.path(dir, "_generated", "de", "toy-beginner")
+  box <- paste(readLines(file.path(gen, "challenge.qmd")), collapse = "\n")
+  expect_match(box, "::: {.rt-challenge}", fixed = TRUE)
+  expect_match(box, "Versuch es erst selbst", fixed = TRUE)
+  expect_match(box, "](#why){.rt-challenge-skip}", fixed = TRUE)
+  expect_match(box, "### Herausforderung: Selbst versuchen", fixed = TRUE)
+  expect_match(box, "data-required=\"false\" data-challenge=\"true\"", fixed = TRUE)
+  expect_match(box, "caption: \"Herausforderung\"", fixed = TRUE)
+  exercises <- paste(readLines(file.path(gen, "exercises.qmd")), collapse = "\n")
+  expect_no_match(exercises, "toy-b-challenge", fixed = TRUE)
+  expect_match(exercises, "### Übung 1: Mittelwert", fixed = TRUE) # numbering skips the challenge
+  expect_match(exercises, "data-challenge=\"false\"", fixed = TRUE)
+  plan <- paste(readLines(file.path(dir, "_generated", "de", "course-plan.qmd")), collapse = "\n")
+  info <- jsonlite::fromJSON(sub("(?s).*id=\"rt-course\">(.*?)</script>.*", "\\1", plan, perl = TRUE))
+  expect_equal(info$lessons$`toy-beginner`$required, "toy-b-mean")
+  expect_setequal(info$lessons$`toy-beginner`$exercises, c("toy-b-challenge", "toy-b-mean"))
+  cards <- jsonlite::read_json(file.path(dir, "assets", "review-cards.json"))$cards
+  expect_true(cards[["toy-b-challenge"]]$challenge)
+  expect_false(cards[["toy-b-mean"]]$challenge)
+})
+
+test_that("challenge validation: required, logical, at most one, include before #why", {
+  datasets <- list(toy = list(load = "toy <- 1"))
+  expect_match(validate_exercise(toy_exercise(challenge = TRUE), datasets), "must have `required: false`")
+  expect_match(validate_exercise(toy_exercise(challenge = "yes", required = FALSE), datasets), "`challenge` must be true or false")
+  expect_length(validate_exercise(toy_exercise(challenge = FALSE), datasets), 0)
+
+  dir <- withr::local_tempdir()
+  one <- toy_exercise(id = "toy-b-c1", required = FALSE, challenge = TRUE)
+  two <- toy_exercise(id = "toy-b-c2", required = FALSE, challenge = TRUE)
+  make_course(dir, exercises = list(one, two, toy_exercise()))
+  err <- tryCatch(generate(dir, langs = "de"), error = conditionMessage)
+  expect_match(err, "at most one exercise with `challenge: true` (found 2)", fixed = TRUE)
+  expect_match(err, "must include challenge.qmd before the section {#why}", fixed = TRUE)
+})
+
+test_that("a lesson without challenge gets an empty challenge.qmd and needs no include", {
+  dir <- withr::local_tempdir()
+  make_course(dir)
+  generate(dir, langs = "de")
+  expect_equal(readLines(file.path(dir, "_generated", "de", "toy-beginner", "challenge.qmd")), "")
+})
+
+test_that("course plan: expert column, project row and path over three levels", {
+  levels <- c("beginner", "intermediate", "expert")
+  curriculum <- list(
+    levels = lapply(levels, function(l) list(id = l, title = list(de = tools::toTitleCase(l), en = tools::toTitleCase(l)))),
+    topics = list(
+      list(slug = "toy", levels = as.list(levels), title = list(de = "Spielzeug", en = "Toy")),
+      list(slug = "late", levels = list("expert"), title = list(de = "Spät", en = "Late")),
+      list(slug = "project", kind = "project", levels = as.list(levels), title = list(de = "Mini-Projekt", en = "Mini project"))
+    )
+  )
+  lesson <- function(id) list(meta = list(lesson = id), exercises = list())
+  ids <- c("project-expert", "toy-expert", "project-beginner", "toy-intermediate", "toy-beginner", "late-expert")
+  lessons <- setNames(lapply(ids, lesson), ids)
+  plan <- render_course_plan(curriculum, lessons, "de")
+  json <- sub("(?s).*<script type=\"application/json\" id=\"rt-course\">(.*?)</script>.*", "\\1", plan, perl = TRUE)
+  expect_equal(
+    jsonlite::fromJSON(json)$order,
+    c("toy-beginner", "project-beginner", "toy-intermediate", "toy-expert", "late-expert", "project-expert")
+  )
+  expect_match(plan, "<th scope=\"col\" id=\"level-expert\">Expert</th>", fixed = TRUE)
+  expect_match(plan, "data-lesson=\"toy-expert\"", fixed = TRUE)
+  # Project row: beginner and expert written, intermediate planned.
+  project_row <- regmatches(plan, regexpr("<tr class=\"rt-plan-project\">.*?</tr>", plan, perl = TRUE))
+  expect_match(project_row, "data-lesson=\"project-beginner\".*rt-cell-planned.*data-lesson=\"project-expert\"")
+  # Expert-only topic: empty beginner and intermediate cells.
+  late_row <- regmatches(plan, regexpr("<tr><th scope=\"row\"><span class=\"rt-topic-no\">2</span> Spät</th>.*?</tr>", plan, perl = TRUE))
+  expect_equal(lengths(regmatches(late_row, gregexpr("rt-cell-none", late_row))), 2)
+})

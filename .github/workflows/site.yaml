@@ -78,6 +78,7 @@ jobs:
             any::modelsummary
             any::rempsyc
             any::flextable
+            any::posterior
             any::here
             any::jsonlite
             any::chromote

@@ -106,3 +106,46 @@ acceptance:
   load: |
     acceptance <- read.csv("data/acceptance.csv")
     acceptance <- tibble::as_tibble(acceptance)
+tam_markets:
+  file: tam_markets.csv
+  script: data-raw/tam_markets.R
+  description:
+    de: >-
+      Akzeptanzfragebogen wie `acceptance` (gleiche Items) in zwei Märkten
+      (market = de/us), je 300 Fahrerinnen und Fahrer. Nützlichkeit (pu_1–pu_5),
+      Bedienbarkeit (peou_1–peou_4, peou_3 umgepolt), Vertrauen (trust_1–trust_5,
+      trust_4 umgepolt), Nutzungsabsicht (bi_1–bi_4), alle ordinal 1–7; dazu Alter,
+      Geschlecht, Erfahrung. pu_3 ist zwischen den Märkten nicht skalar invariant,
+      peou_1 hat einen Deckeneffekt. Keine fehlenden Werte.
+    en: >-
+      Acceptance questionnaire as in `acceptance` (same items) in two markets
+      (market = de/us), 300 drivers each. Perceived usefulness (pu_1–pu_5), ease of
+      use (peou_1–peou_4, peou_3 reverse-keyed), trust (trust_1–trust_5, trust_4
+      reverse-keyed), behavioural intention (bi_1–bi_4), all ordinal 1–7; plus age,
+      gender, experience. pu_3 is not scalar invariant across markets, peou_1 has
+      a ceiling effect. No missing values.
+  load: |
+    tam_markets <- read.csv("data/tam_markets.csv")
+    tam_markets$market <- factor(tam_markets$market, levels = c("de", "us"))
+    tam_markets <- tibble::as_tibble(tam_markets)
+bayes_draws:
+  file: bayes_draws.csv
+  script: data-raw/bayes_draws.R
+  description:
+    de: >-
+      Vorab lokal mit brms gerechnete Ziehungen (4 Ketten × 500) zweier Modelle,
+      lange Form (model, chain, iteration, draw, parameter, value): `drive_rt`
+      (driving_sim, rt_ms ~ condition * trial_c + (1 | participant), trial_c =
+      trial − 2,5) und `usability_success` (usability, logistisch, success ~
+      prototype + (1 | participant) + (1 | task)). Parameter mit brms-Namen;
+      Prior-Ziehungen beginnen mit `prior_` (für Savage-Dickey).
+    en: >-
+      Draws precomputed locally with brms (4 chains × 500) of two models, long
+      form (model, chain, iteration, draw, parameter, value): `drive_rt`
+      (driving_sim, rt_ms ~ condition * trial_c + (1 | participant), trial_c =
+      trial − 2.5) and `usability_success` (usability, logistic, success ~
+      prototype + (1 | participant) + (1 | task)). Parameters use brms names;
+      prior draws start with `prior_` (for Savage-Dickey).
+  load: |
+    bayes_draws <- read.csv("data/bayes_draws.csv")
+    bayes_draws <- tibble::as_tibble(bayes_draws)

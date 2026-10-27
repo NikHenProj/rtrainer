@@ -62,7 +62,7 @@ Expert-Lektionen beginnen mit einer kurzen Herausforderung („Versuch es erst s
 
 ## Übungen (Single Source)
 Jede Übung eine YAML-Datei in `exercises/<slug>/<level>/<id>.yml`; ein R-Skript erzeugt daraus quarto-live-Blöcke für die Lektion **und** Karten für die Wiederholungsseite. Entwurf (wird im Prototyp finalisiert):
-`id, lesson, title{de,en}, kind (write|interpret|debug|complete|predict), required (bool), packages, data, setup, starter, solution, hints[{de,en}], explanation{de,en}, misconception{de,en}, check{type, …}, common_mistakes[{pattern, message{de,en}}]`.
+`id, lesson, title{de,en}, kind (write|interpret|debug|complete|predict), required (bool), packages, data, setup, starter, solution, hints[{de,en}], explanation{de,en}, misconception{de,en}, check{type, …}, common_mistakes[{pattern, message{de,en}}]`; Expert-Lektionen zusätzlich `challenge (bool)` (M10, siehe docs/M10-plan.md).
 - Gute Übung: echtes Werkzeug, realistische Daten, Ergebnis interpretieren. Arten: Code schreiben, Ausgabe deuten (`interpret`), zwischen Paketen übersetzen, Fehler finden (`debug`), Lücken (`complete`) bei neuen Themen.
 - Checks laufen im Browser als R-Code (quarto-live `check`), gemeinsame Hilfsfunktionen in `tools/checks.R` (value/object/output; später function/plot).
 - Alte 65 Aufgaben (Tag `v0-shiny`, `inst/exercises/`): gute einsortieren und anpassen, schwache streichen – Liste zur Freigabe durch Nick.

@@ -4,7 +4,7 @@
 #
 # Reads curriculum.yml, data/datasets.yml and exercises/<slug>/<level>/
 # (lesson.yml, quiz.yml, one YAML per exercise) and writes, per language,
-# _generated/<lang>/<lesson>/{runtime,header,exercises,quiz,footer}.qmd,
+# _generated/<lang>/<lesson>/{runtime,header,challenge,exercises,quiz,footer}.qmd,
 # _generated/<lang>/{course-plan,packages,glossary}.qmd and
 # assets/review-cards.json (cards for the review page).
 # Lesson pages (<lang>/<lesson>.qmd) include these files.
@@ -52,6 +52,10 @@ labels <- list(
     quiz_intro = "Bestanden ab %d %% richtigen Antworten. Du kannst beliebig oft neu antworten.",
     quiz_result = "Ergebnis",
     exercise_caption = "Übung %d",
+    challenge = "Herausforderung",
+    challenge_title = "Versuch es erst selbst",
+    challenge_intro = "Löse die Aufgabe, bevor du die Erklärung liest. Sie zählt nicht für „Abgeschlossen“, kommt aber in die Wiederholung.",
+    challenge_skip = "Überspringen, zur Erklärung",
     pkg_purpose = "Wofür",
     pkg_functions = "Kernfunktionen",
     pkg_pitfalls = "Stolperfallen",
@@ -97,6 +101,10 @@ labels <- list(
     quiz_intro = "Passed with at least %d %% correct answers. You can answer again as often as you like.",
     quiz_result = "Result",
     exercise_caption = "Exercise %d",
+    challenge = "Challenge",
+    challenge_title = "Try it yourself first",
+    challenge_intro = "Solve this before you read the explanation. It does not count towards completing the lesson, but it enters review.",
+    challenge_skip = "Skip to the explanation",
     pkg_purpose = "What for",
     pkg_functions = "Core functions",
     pkg_pitfalls = "Pitfalls",
@@ -164,6 +172,13 @@ validate_exercise <- function(ex, datasets = list(), lesson = NULL) {
   }
   if (!is.logical(ex$required) || length(ex$required) != 1) {
     add("`required` must be true or false")
+  }
+  if (!is.null(ex$challenge)) {
+    if (!is.logical(ex$challenge) || length(ex$challenge) != 1) {
+      add("`challenge` must be true or false")
+    } else if (ex$challenge && !isFALSE(ex$required)) {
+      add("a `challenge` must have `required: false` (it does not count for completion)")
+    }
   }
   for (field in c("title", "prompt", "explanation")) {
     add(check_bilingual(ex[[field]], field))
@@ -326,6 +341,10 @@ validate_course <- function(course, langs = c("de")) {
         ))
       }
     }
+    n_challenges <- sum(vapply(lesson$exercises, is_challenge, logical(1)))
+    if (n_challenges > 1) {
+      problems <- c(problems, sprintf("%s: at most one exercise with `challenge: true` (found %d)", lesson_id, n_challenges))
+    }
     if (!is.null(lesson$quiz)) {
       p <- validate_quiz(lesson$quiz)
       problems <- c(problems, if (length(p) > 0) paste0(lesson_id, "/quiz.yml: ", p))
@@ -337,6 +356,16 @@ validate_course <- function(course, langs = c("de")) {
         next
       }
       fm <- read_front_matter(page)
+      if (n_challenges > 0) {
+        page_lines <- readLines(page, warn = FALSE)
+        include <- grep(sprintf("_generated/%s/%s/challenge.qmd", lang, lesson_id), page_lines, fixed = TRUE)
+        why <- grep("{#why}", page_lines, fixed = TRUE)
+        if (length(include) == 0 || length(why) == 0 || include[1] > why[1]) {
+          problems <- c(problems, sprintf(
+            "%s: must include challenge.qmd before the section {#why}", rel(page)
+          ))
+        }
+      }
       if (!identical(fm$engine, "markdown")) {
         problems <- c(problems, sprintf(
           "%s: needs `engine: markdown` (otherwise Quarto tries Jupyter for {webr} blocks)", rel(page)
@@ -367,6 +396,14 @@ validate_course <- function(course, langs = c("de")) {
 # ---- Rendering helpers ------------------------------------------------------
 
 exercise_label <- function(id) gsub("-", "_", id)
+
+is_challenge <- function(ex) isTRUE(ex$challenge)
+
+# Numbers of the exercises in a lesson; the challenge has none (NA).
+exercise_numbers <- function(exercises) {
+  challenge <- vapply(exercises, is_challenge, logical(1))
+  replace(cumsum(!challenge), challenge, NA_integer_)
+}
 
 html_escape <- function(x) {
   x <- gsub("&", "&amp;", x, fixed = TRUE)
@@ -488,7 +525,11 @@ render_exercise <- function(ex, n, lang, datasets) {
   l <- labels[[lang]]
   label <- exercise_label(ex$id)
   n_hints <- length(ex$hints)
-  badge <- if (isTRUE(ex$required)) l$required else l$optional
+  challenge <- is_challenge(ex)
+  badge <- if (challenge) l$challenge else if (isTRUE(ex$required)) l$required else l$optional
+  badge_class <- if (challenge) "challenge" else if (isTRUE(ex$required)) "required" else "optional"
+  heading <- if (challenge) l$challenge else sprintf("%s %d", l$exercise, n)
+  caption <- if (challenge) l$challenge else sprintf(l$exercise_caption, n)
   hints <- vapply(seq_len(n_hints), function(i) {
     sprintf(
       "::: {.hint exercise=\"%s\"}\n**%s:** %s\n:::",
@@ -504,16 +545,13 @@ render_exercise <- function(ex, n, lang, datasets) {
 
   paste(c(
     sprintf(
-      "::: {#ex-%s .rt-exercise data-exercise=\"%s\" data-required=\"%s\" data-kind=\"%s\"}",
-      ex$id, ex$id, tolower(isTRUE(ex$required)), ex$kind
+      "::: {#ex-%s .rt-exercise data-exercise=\"%s\" data-required=\"%s\" data-challenge=\"%s\" data-kind=\"%s\"}",
+      ex$id, ex$id, tolower(isTRUE(ex$required)), tolower(challenge), ex$kind
     ),
     "",
-    sprintf("### %s %d: %s {.rt-exercise-title}", l$exercise, n, trimws(ex$title[[lang]])),
+    sprintf("### %s: %s {.rt-exercise-title}", heading, trimws(ex$title[[lang]])),
     "",
-    sprintf(
-      "[%s]{.rt-tag .rt-tag-%s} [%s]{.rt-tag}",
-      badge, if (isTRUE(ex$required)) "required" else "optional", l$kinds[[ex$kind]]
-    ),
+    sprintf("[%s]{.rt-tag .rt-tag-%s} [%s]{.rt-tag}", badge, badge_class, l$kinds[[ex$kind]]),
     "",
     trimws(ex$prompt[[lang]]),
     "",
@@ -521,7 +559,7 @@ render_exercise <- function(ex, n, lang, datasets) {
     "",
     fence("{webr}", ex$starter, c(
       sprintf("exercise: %s", label),
-      sprintf("caption: \"%s\"", sprintf(l$exercise_caption, n))
+      sprintf("caption: \"%s\"", caption)
     )),
     "",
     hints,
@@ -540,11 +578,35 @@ render_exercise <- function(ex, n, lang, datasets) {
   ), collapse = "\n")
 }
 
+# All exercises except the challenge, which has its own block (render_challenge).
 render_exercises <- function(lesson, lang, datasets) {
-  parts <- vapply(seq_along(lesson$exercises), function(i) {
-    render_exercise(lesson$exercises[[i]], i, lang, datasets)
+  numbers <- exercise_numbers(lesson$exercises)
+  keep <- which(!is.na(numbers))
+  parts <- vapply(keep, function(i) {
+    render_exercise(lesson$exercises[[i]], numbers[i], lang, datasets)
   }, character(1))
   paste(parts, collapse = "\n\n")
+}
+
+# Box "Try it yourself first" before the section #why, with a skip link.
+# Empty when the lesson has no challenge.
+render_challenge <- function(lesson, lang, datasets) {
+  ex <- Filter(is_challenge, lesson$exercises)
+  if (length(ex) == 0) {
+    return("")
+  }
+  l <- labels[[lang]]
+  paste(c(
+    "::: {.rt-challenge}",
+    "",
+    sprintf("[%s]{.rt-challenge-title} [%s &darr;](#why){.rt-challenge-skip}", l$challenge_title, l$challenge_skip),
+    "",
+    l$challenge_intro,
+    "",
+    render_exercise(ex[[1]], NA, lang, datasets),
+    "",
+    ":::"
+  ), collapse = "\n")
 }
 
 render_quiz <- function(quiz, lesson_id, lang) {
@@ -775,6 +837,7 @@ review_cards <- function(course, checks_file) {
         kind = ex$kind,
         kind_label = list(de = labels$de$kinds[[ex$kind]], en = labels$en$kinds[[ex$kind]]),
         required = isTRUE(ex$required),
+        challenge = is_challenge(ex),
         title = ex$title,
         prompt = bilingual_html(ex$prompt),
         packages = I(as.character(unlist(ex$packages))),
@@ -945,11 +1008,13 @@ generate <- function(root = ".", out = file.path(root, "_generated"), langs = c(
         write_file(render_runtime(lesson, course$datasets, file.path(root, "tools", "checks.R")), file.path(dir, "runtime.qmd")),
         write_file(render_header(lesson, course$curriculum, lessons, lang), file.path(dir, "header.qmd")),
         write_file(render_exercises(lesson, lang, course$datasets), file.path(dir, "exercises.qmd")),
+        write_file(render_challenge(lesson, lang, course$datasets), file.path(dir, "challenge.qmd")),
         # One file per exercise, for pages that place exercises between their
         # own sections (mini projects); numbering as in exercises.qmd.
         vapply(seq_along(lesson$exercises), function(i) {
           ex <- lesson$exercises[[i]]
-          write_file(render_exercise(ex, i, lang, course$datasets), file.path(dir, paste0("exercise-", ex$id, ".qmd")))
+          number <- exercise_numbers(lesson$exercises)[i]
+          write_file(render_exercise(ex, number, lang, course$datasets), file.path(dir, paste0("exercise-", ex$id, ".qmd")))
         }, character(1)),
         write_file(render_footer(lesson, course$curriculum, lessons, lang), file.path(dir, "footer.qmd"))
       )

@@ -455,6 +455,28 @@ table {
   color: var(--rt-accent);
 }
 
+// Expert lessons: challenge before the explanation, skippable.
+.rt-challenge {
+  margin: 1.5rem 0 2rem;
+  padding: 1rem 1.25rem 0.25rem;
+  border-left: 3px solid var(--rt-accent);
+  background: var(--rt-surface);
+
+  .rt-challenge-title {
+    margin-right: 0.75rem;
+    font-weight: 600;
+  }
+
+  .rt-exercise {
+    margin: 1rem 0 1rem;
+  }
+}
+
+.rt-tag-challenge {
+  border-color: var(--rt-text);
+  color: var(--rt-text);
+}
+
 // quarto-live feedback: colour plus symbol, never colour alone.
 .exercise-grade.alert-success::before { content: "✓ "; font-weight: 700; }
 .exercise-grade.alert-danger::before { content: "✗ "; font-weight: 700; }

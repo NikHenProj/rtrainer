@@ -11,6 +11,7 @@ Das YAML-Schema wird in Meilenstein 6 finalisiert; maßgeblich ist dann das Beis
 ## Schema (final seit M6; Lektion: lesson.yml, Wissenscheck: quiz.yml)
 `id, lesson (<slug>-<level>), order, title{de,en}, kind, required, packages, data, setup, prompt{de,en}, starter, solution, hints[{de,en}], explanation{de,en}, misconception{de,en}, check{type, …}, common_mistakes[{pattern, message{de,en}}]`.
 Jeder Text DE **und** EN; Code, Daten, Spaltennamen nur Englisch.
+Expert-Lektionen: optional `challenge: true` (höchstens eine pro Lektion, nur mit `required: false`). Der Generator schreibt sie in `_generated/<lang>/<lesson>/challenge.qmd` (Kasten „Versuch es erst selbst“ mit Überspringen-Link zu `#why`), nicht in `exercises.qmd`; die Seite bindet `challenge.qmd` vor `## Wozu? {#why}` ein (wird geprüft). Zählt nicht für „Abgeschlossen“, kommt in die Wiederholung.
 
 ## Was eine gute Übung ist
 - Echtes Werkzeug aus dem Paket-Standard (tidyverse + easystats, rstatix, afex, modelbased, psych, lavaan …), realistische Daten, Ergebnis **interpretieren** lassen. Keine Nachbauten von Basisfunktionen (eigene `sd()`, Schleifen statt Vektorisierung als Selbstzweck).
