@@ -4,7 +4,7 @@ subtitle: "Intermediate · Rangtests mit rstatix, getrimmte Mittel mit WRS2"
 body-classes: rt-lesson
 engine: markdown
 webr:
-  packages: [dplyr, rstatix, effectsize, WRS2]
+  packages: [dplyr, coin, rstatix, effectsize, WRS2]
 resources:
   - ../data/driving_sim.csv
   - ../data/survey.csv

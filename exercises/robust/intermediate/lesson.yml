@@ -4,7 +4,7 @@ lesson: robust-intermediate
 minutes: 50
 prerequisites: [group-comparisons-beginner]
 langs: [de]
-packages: [dplyr, rstatix, effectsize, WRS2]
+packages: [dplyr, coin, rstatix, effectsize, WRS2]
 data: [driving_sim, survey, usability]
 goals:
   de:

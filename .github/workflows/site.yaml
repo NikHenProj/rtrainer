@@ -65,6 +65,7 @@ jobs:
             any::afex
             any::emmeans
             any::rstatix
+            any::coin
             any::WRS2
             any::marginaleffects
             any::sandwich

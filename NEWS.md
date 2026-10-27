@@ -8,7 +8,8 @@
 - Decision: `regression-intermediate` uses `acceptance` (built-in usefulness × experience interaction); the moderation lesson (P5) goes deeper with Johnson-Neyman and the interactions package. Scale scores leave out the weak item `pu_5`, as concluded in the scales lesson.
 - Decision: GLMs on the 284 task rows use cluster-robust SEs by participant (`vcov = ~participant`, needs sandwich) instead of ignoring the repeated measures; mixed GLMs follow in the mixed-models lesson. The overdispersion exercise uses `quasipoisson` rather than `MASS::glm.nb()`, because attaching MASS would mask `dplyr::select()`.
 - Decision: no new check type. `lm`/`glm` results are compared as `model_parameters()` tables, `avg_comparisons()` and `anova()` as data frames; the browser compares user and solution with the same package versions (webR has marginaleffects 0.32, parameters 0.28, local 1.0/0.30).
-- CI: `rstatix`, `WRS2`, `marginaleffects`, `sandwich` added to `.github/workflows/site.yaml`. Smoke test section 11: load times of the three lessons; Yuen solution, centred interaction and cluster-robust comparisons (hint for missing `vcov`, solution) graded in webR.
+- Fix after the first CI run (107/108): `rstatix::wilcox_effsize()` needs coin, which was installed locally only (and would have failed in the browser too). coin is now listed in the lesson, the exercise and the workflow, attached before rstatix because coin exports `wilcox_test()`, `kruskal_test()` and `friedman_test()` of its own. The smoke test now grades `rb-i-mann-whitney` in webR.
+- CI: `rstatix`, `coin`, `WRS2`, `marginaleffects`, `sandwich` added to `.github/workflows/site.yaml`. Smoke test section 11: load times of the three lessons; Yuen solution, centred interaction and cluster-robust comparisons (hint for missing `vcov`, solution) graded in webR.
 
 ## Milestone 9, package P3: dataset acceptance; intermediate lessons scales, sem, group comparisons (DE) (accepted, merged into main)
 

@@ -6,7 +6,7 @@ title:
   en: Mann-Whitney U with an effect size
 kind: write
 required: true
-packages: [dplyr, rstatix]
+packages: [dplyr, coin, rstatix]
 data: [driving_sim]
 setup: |
   library(dplyr)

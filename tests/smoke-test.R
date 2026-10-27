@@ -380,7 +380,7 @@ step("group-comparisons-intermediate: afex ANOVA graded correct", !is.na(checked
 # (regression) and marginaleffects/sandwich (glm); a WRS2 result, an lm
 # interaction and cluster-robust marginal effects are graded in webR.
 loaded <- wait_lesson("/de/robust-intermediate.html", "rb-i-yuen")
-step("robust-intermediate: webR, rstatix, effectsize and WRS2 ready", !is.na(loaded), sprintf("%s s", loaded))
+step("robust-intermediate: webR, coin, rstatix, effectsize and WRS2 ready", !is.na(loaded), sprintf("%s s", loaded))
 run_exercise("rb-i-yuen", paste(
   "fit <- yuen(tlx_physical ~ interface, data = survey)",
   "round(c(diff = fit$diff, ci_low = fit$conf.int[1], ci_high = fit$conf.int[2], p = fit$p.value), 3)",
@@ -388,6 +388,19 @@ run_exercise("rb-i-yuen", paste(
 ))
 checked <- wait_for("!!document.querySelector('#ex-rb-i-yuen .exercise-grade.alert-success')", timeout = 90)
 step("robust-intermediate: Yuen test graded correct", !is.na(checked), sprintf("%s s", checked))
+# wilcox_effsize() needs coin; coin is attached before rstatix so that
+# rstatix's wilcox_test() is not masked by coin's.
+run_exercise("rb-i-mann-whitney", paste(
+  "per_person <- driving_sim |>",
+  "  filter(gender %in% c(\"female\", \"male\")) |>",
+  "  summarise(lane = mean(lane_dev, na.rm = TRUE), .by = c(participant, gender))",
+  "res <- per_person |> wilcox_test(lane ~ gender)",
+  "eff <- per_person |> wilcox_effsize(lane ~ gender)",
+  "round(c(W = res$statistic[[1]], p = res$p, r = eff$effsize[[1]]), 3)",
+  sep = "\n"
+))
+checked <- wait_for("!!document.querySelector('#ex-rb-i-mann-whitney .exercise-grade.alert-success')", timeout = 90)
+step("robust-intermediate: rstatix wilcox_effsize() (coin) graded correct", !is.na(checked), sprintf("%s s", checked))
 
 loaded <- wait_lesson("/de/regression-intermediate.html", "rg-i-interaction")
 step("regression-intermediate: webR, parameters, performance and modelbased ready", !is.na(loaded), sprintf("%s s", loaded))
