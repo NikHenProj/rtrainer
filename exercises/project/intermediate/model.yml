@@ -1,0 +1,105 @@
+id: pj-i-model
+lesson: project-intermediate
+order: 3
+title:
+  de: Mixed Model für die Bearbeitungszeit
+  en: Mixed model for task time
+kind: write
+required: true
+packages: [dplyr, lme4, lmerTest]
+data: [usability]
+setup: |
+  library(dplyr)
+  library(lmerTest)
+prompt:
+  de: |
+    Im Labortest (`usability`) hat jede Person die vier Aufgaben (`task`)
+    mit allen drei Prototypen bearbeitet, in ausbalancierter Reihenfolge
+    (`position` 1–3). Der Analyseplan legt fest:
+
+    - Bearbeitungszeit nur für **gelöste** Aufgaben (`success == 1`);
+      abgebrochene stehen mit 180 s in den Daten;
+    - Modell für `log(time_s)` mit `prototype` (A = Referenz) und `position`
+      (Lerneffekt) als festen Effekten;
+    - je ein Zufallsintercept für `participant` und `task` (gekreuzt).
+
+    Lege die gelösten Aufgaben als `solved` ab und rechne das Modell mit
+    `lmer()` (lmerTest ist geladen) als `fit`.
+  en: |
+    In the lab test (`usability`), each participant worked on the four
+    tasks (`task`) with all three prototypes, in counterbalanced order
+    (`position` 1–3). The analysis plan sets:
+
+    - task time only for **solved** tasks (`success == 1`); aborted ones are
+      recorded with 180 s;
+    - model for `log(time_s)` with `prototype` (A = reference) and
+      `position` (learning effect) as fixed effects;
+    - one random intercept each for `participant` and `task` (crossed).
+
+    Store the solved tasks as `solved` and fit the model with `lmer()`
+    (lmerTest is loaded) as `fit`.
+starter: |
+  fit <- lmer(log(time_s) ~ prototype + (1 | participant), data = usability)
+solution: |
+  solved <- usability |>
+    filter(success == 1)
+  fit <- lmer(
+    log(time_s) ~ prototype + position + (1 | participant) + (1 | task),
+    data = solved
+  )
+hints:
+  - de: "Drei Abweichungen vom Plan: welche Zeilen, welche festen Effekte, welche Zufallseffekte?"
+    en: "Three deviations from the plan: which rows, which fixed effects, which random effects?"
+  - de: "`filter(success == 1)` für die gelösten Aufgaben; `position` kommt mit `+` zu den festen Effekten; `task` bekommt einen eigenen Term `(1 | task)`."
+    en: "`filter(success == 1)` for the solved tasks; `position` joins the fixed effects with `+`; `task` gets its own term `(1 | task)`."
+  - de: "`lmer(log(time_s) ~ prototype + position + (1 | participant) + (1 | task), data = ______)`"
+    en: "`lmer(log(time_s) ~ prototype + position + (1 | participant) + (1 | task), data = ______)`"
+explanation:
+  de: |
+    226 von 284 Aufgaben wurden gelöst. Abgebrochene Aufgaben haben keine
+    echte Zeit, sondern die Obergrenze 180 s (zensiert); mit ihnen würde
+    ein Prototyp mit vielen Abbrüchen künstlich langsam wirken, obwohl das
+    Problem der Erfolg ist. Den Erfolg wertest du deshalb getrennt aus.
+    `position` nimmt den Lerneffekt auf: Pro Durchgang sinkt die Zeit um
+    etwa 10 % (Faktor 0,90). Wegen der ausbalancierten Reihenfolge verzerrt
+    er den Prototypvergleich nicht, macht ihn aber genauer. Die festen
+    Effekte auf der Originalskala (`model_parameters(fit, exponentiate =
+    TRUE, effects = "fixed")`): B 0,88 [0,80; 0,97], C 0,85 [0,77; 0,94] im
+    Verhältnis zu A. Fallstrick: Mit nur 4 Aufgaben ist die Varianz
+    zwischen Aufgaben unsicher geschätzt; das zeigt sich später in breiten
+    KIs der geschätzten Mittelwerte, kaum aber bei den Vergleichen innerhalb
+    von Person und Aufgabe.
+  en: |
+    226 of 284 tasks were solved. Aborted tasks have no real time but the
+    upper limit of 180 s (censored); with them, a prototype with many
+    aborts would look artificially slow although the problem is success.
+    So you analyse success separately. `position` captures the learning
+    effect: time drops by about 10 % per round (factor 0.90). Because the
+    order is counterbalanced, it does not bias the prototype comparison but
+    makes it more precise. The fixed effects on the original scale
+    (`model_parameters(fit, exponentiate = TRUE, effects = "fixed")`):
+    B 0.88 [0.80, 0.97], C 0.85 [0.77, 0.94] relative to A. Pitfall: with
+    only 4 tasks, the variance between tasks is estimated with uncertainty;
+    later this shows in wide CIs of the estimated means, but hardly in the
+    comparisons within participant and task.
+check:
+  type: object
+  name: fit
+  tolerance: 1.0e-4
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*success)[\\s\\S]*"
+    message:
+      de: "Abgebrochene Aufgaben stehen mit 180 s in den Daten (zensiert). Laut Plan gehen nur gelöste Aufgaben (`success == 1`) in das Zeitmodell."
+      en: "Aborted tasks are recorded with 180 s (censored). According to the plan, only solved tasks (`success == 1`) enter the time model."
+  - pattern: "participant\\s*/\\s*task|participant\\s*:\\s*task"
+    message:
+      de: "Person und Aufgabe sind gekreuzt, nicht geschachtelt: zwei Terme `(1 | participant) + (1 | task)`."
+      en: "Participant and task are crossed, not nested: two terms `(1 | participant) + (1 | task)`."
+  - pattern: "^(?![\\s\\S]*position)[\\s\\S]*"
+    message:
+      de: "Der Plan nimmt `position` als festen Effekt auf (Lerneffekt über die drei Durchgänge)."
+      en: "The plan includes `position` as a fixed effect (learning across the three rounds)."
+  - pattern: "\\blm\\(|aov\\("
+    message:
+      de: "`lm()`/`aov()` behandeln alle Aufgaben als unabhängig. Mit `lmer()` bekommen Person und Aufgabe Zufallseffekte."
+      en: "`lm()`/`aov()` treat all tasks as independent. With `lmer()`, participant and task get random effects."

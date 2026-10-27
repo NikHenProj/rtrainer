@@ -1,0 +1,114 @@
+id: pj-i-results
+lesson: project-intermediate
+order: 8
+title:
+  de: Ergebnisse deuten
+  en: Interpret the results
+kind: interpret
+required: true
+packages: []
+data: []
+setup: ""
+prompt:
+  de: |
+    Die Auswertung liefert:
+
+    | Ergebnis | Wert |
+    |---|---|
+    | Zeit (gelöste Aufgaben), B / A | 0,88 [0,79; 0,99], p = .020 |
+    | Zeit, C / A | 0,85 [0,75; 0,96], p = .006 |
+    | Zeit, C / B | 0,96 [0,85; 1,09], p = .47 |
+    | Erfolg A / B / C | 78,1 % / 88,5 % / 71,7 % |
+    | Erfolg, Odds Ratio C / B | 0,26, p = .006 |
+    | Remote-Befragung (aktuelle App, n = 76) | Zufriedenheit M = 3,20 (1–5) |
+
+    Zeitverhältnisse mit 95-%-KI, p nach Holm. Welche Sätze darfst du so
+    in den Bericht schreiben?
+
+    1. Mit B und C wurden gelöste Aufgaben schneller bearbeitet als mit A (B: 12 % kürzer, 95-%-KI [1 %; 21 %]; C: 15 % kürzer [4 %; 25 %]).
+    2. B und C sind gleich schnell (C / B = 0,96, p = .47).
+    3. Mit C wurden seltener Aufgaben gelöst als mit B (71,7 % vs. 88,5 %; OR = 0,26, p = .006).
+    4. Die mäßige Zufriedenheit in der Remote-Befragung zeigt, dass B die Nutzerinnen und Nutzer zufriedener macht als A.
+    5. Mit B dauert eine Aufgabe im Mittel 0,88 s kürzer als mit A.
+
+    Gib die Nummern der zulässigen Sätze aufsteigend als Vektor ein, z. B. `c(1, 2)`.
+  en: |
+    The analysis returns:
+
+    | Result | Value |
+    |---|---|
+    | Time (solved tasks), B / A | 0.88 [0.79, 0.99], p = .020 |
+    | Time, C / A | 0.85 [0.75, 0.96], p = .006 |
+    | Time, C / B | 0.96 [0.85, 1.09], p = .47 |
+    | Success A / B / C | 78.1 % / 88.5 % / 71.7 % |
+    | Success, odds ratio C / B | 0.26, p = .006 |
+    | Remote survey (current app, n = 76) | satisfaction M = 3.20 (1–5) |
+
+    Time ratios with 95 % CI, p Holm-corrected. Which sentences may you
+    write like this in the report?
+
+    1. With B and C, solved tasks were completed faster than with A (B: 12 % less time, 95 % CI [1 %, 21 %]; C: 15 % less [4 %, 25 %]).
+    2. B and C are equally fast (C / B = 0.96, p = .47).
+    3. With C, fewer tasks were solved than with B (71.7 % vs. 88.5 %; OR = 0.26, p = .006).
+    4. The moderate satisfaction in the remote survey shows that B makes users more satisfied than A.
+    5. With B, a task takes on average 0.88 s less than with A.
+
+    Type the numbers of the acceptable sentences in ascending order as a
+    vector, e.g. `c(1, 2)`.
+starter: |
+  # Nummern der zulässigen Sätze / numbers of the acceptable sentences
+solution: |
+  c(1, 3)
+hints:
+  - de: "Ein Verhältnis von 0,88 ist ein relativer Unterschied. In welcher Einheit ist es also zu lesen?"
+    en: "A ratio of 0.88 is a relative difference. In which unit should it be read, then?"
+  - de: "Ein nicht signifikanter Vergleich zeigt nicht, dass kein Unterschied besteht: Wie breit ist das KI von C / B?"
+    en: "A non-significant comparison does not show that there is no difference: how wide is the CI of C / B?"
+  - de: "Wer hat an der Remote-Befragung teilgenommen, und mit welcher Version der App?"
+    en: "Who took part in the remote survey, and with which version of the app?"
+explanation:
+  de: |
+    Zulässig sind 1 und 3. Satz 1 übersetzt die Verhältnisse in Prozent
+    (1 − 0,88 = 12 %; KI 1 − 0,99 bis 1 − 0,79). Satz 2 schließt aus
+    p = .47 auf Gleichheit; das KI reicht aber von 15 % schneller bis 9 %
+    langsamer. Besser: „B und C unterschieden sich in der Zeit kaum (C / B
+    = 0,96 [0,85; 1,09]).“ Satz 3 berichtet Anteile und Odds Ratio mit
+    Richtung. Satz 4 vermischt zwei Studien: Die Remote-Befragung bewertet
+    die aktuelle App mit anderen Personen; über die Prototypen sagt sie
+    nichts. Sie begründet, *warum* getestet wurde (Kommentare zu Filter und
+    Checkout), nicht, welcher Prototyp besser ist. Satz 5 liest das
+    Verhältnis als Sekunden; 0,88 heißt 12 % kürzer, bei rund 38 s also
+    etwa 4–5 s.
+  en: |
+    Sentences 1 and 3 are acceptable. Sentence 1 turns the ratios into
+    percentages (1 − 0.88 = 12 %; CI 1 − 0.99 to 1 − 0.79). Sentence 2
+    concludes equality from p = .47, but the CI ranges from 15 % faster to
+    9 % slower. Better: "B and C hardly differed in time (C / B = 0.96
+    [0.85, 1.09])." Sentence 3 reports proportions and the odds ratio with
+    direction. Sentence 4 mixes two studies: the remote survey rates the
+    current app with other people; it says nothing about the prototypes. It
+    explains *why* testing was done (comments on filter and checkout), not
+    which prototype is better. Sentence 5 reads the ratio as seconds; 0.88
+    means 12 % less, i.e. about 4–5 s at around 38 s.
+misconception:
+  de: "Ein Zeitverhältnis lässt sich wie eine Differenz in Sekunden lesen, und Ergebnisse aus einer Befragung gelten auch für die Prototypen im Labortest."
+  en: "A time ratio can be read like a difference in seconds, and results from a survey also apply to the prototypes in the lab test."
+check:
+  type: value
+common_mistakes:
+  - pattern: "\\b2\\b"
+    message:
+      de: "Satz 2 ist nicht zulässig: p = .47 belegt keine Gleichheit; das KI reicht von 15 % schneller bis 9 % langsamer."
+      en: "Sentence 2 is not acceptable: p = .47 does not show equality; the CI ranges from 15 % faster to 9 % slower."
+  - pattern: "\\b4\\b"
+    message:
+      de: "Satz 4 ist nicht zulässig: Die Remote-Befragung betrifft die aktuelle App und andere Personen, nicht die Prototypen."
+      en: "Sentence 4 is not acceptable: the remote survey concerns the current app and other people, not the prototypes."
+  - pattern: "\\b5\\b"
+    message:
+      de: "Satz 5 ist nicht zulässig: 0,88 ist ein Verhältnis (12 % kürzer), keine Differenz in Sekunden."
+      en: "Sentence 5 is not acceptable: 0.88 is a ratio (12 % less time), not a difference in seconds."
+  - pattern: "c\\(\\s*3\\s*,\\s*1\\s*\\)"
+    message:
+      de: "Die Auswahl stimmt, aber bitte aufsteigend: `c(1, 3)`."
+      en: "The selection is right, but please in ascending order: `c(1, 3)`."

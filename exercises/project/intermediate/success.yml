@@ -1,0 +1,92 @@
+id: pj-i-success
+lesson: project-intermediate
+order: 7
+title:
+  de: Erfolg als zweites Maß
+  en: Success as the second measure
+kind: write
+required: false
+packages: [lme4, parameters]
+data: [usability]
+setup: |
+  library(lme4)
+  library(parameters)
+prompt:
+  de: |
+    Die Zeit gilt nur für gelöste Aufgaben; ob eine Aufgabe überhaupt gelöst
+    wurde, wertest du getrennt aus. `success` ist 0/1, also brauchst du ein
+    logistisches gemischtes Modell.
+
+    Rechne mit `glmer()` das Modell `fit_success` für `success` mit
+    denselben festen und zufälligen Effekten wie das Zeitmodell
+    (`prototype`, `position`, `(1 | participant)`, `(1 | task)`), aber mit
+    **allen** Aufgaben aus `usability`.
+  en: |
+    The time applies only to solved tasks; whether a task was solved at all,
+    you analyse separately. `success` is 0/1, so you need a logistic mixed
+    model.
+
+    Fit the model `fit_success` for `success` with `glmer()`, with the same
+    fixed and random effects as the time model (`prototype`, `position`,
+    `(1 | participant)`, `(1 | task)`), but with **all** tasks from
+    `usability`.
+starter: |
+  fit_success <- lmer(
+    success ~ prototype + position + (1 | participant) + (1 | task),
+    data = usability
+  )
+solution: |
+  fit_success <- glmer(
+    success ~ prototype + position + (1 | participant) + (1 | task),
+    family = binomial,
+    data = usability
+  )
+hints:
+  - de: "`lmer()` nimmt eine normalverteilte Zielgröße an. Für 0/1 gibt es die Schwesterfunktion für verallgemeinerte Modelle."
+    en: "`lmer()` assumes a normally distributed outcome. For 0/1 there is the sister function for generalised models."
+  - de: "`glmer()` mit `family = binomial`, sonst gleiche Formel."
+    en: "`glmer()` with `family = binomial`, otherwise the same formula."
+explanation:
+  de: |
+    `model_parameters(fit_success, exponentiate = TRUE, effects = "fixed")`
+    zeigt Odds Ratios gegenüber A: B 2,37 [1,02; 5,50], C 0,63 [0,30;
+    1,29]. Mit B steigen die Chancen, eine Aufgabe zu lösen, gut auf das
+    Doppelte. Der deutlichste Vergleich ist B gegen C:
+    `emmeans(fit_success, ~ prototype, type = "response") |> pairs(reverse
+    = TRUE, adjust = "holm")` ergibt für C / B ein OR von 0,26 (p = .006,
+    Holm). Zusammen mit der Zeit: C ist bei gelösten Aufgaben so schnell
+    wie B, scheitert aber öfter. `position` spielt für den Erfolg keine
+    Rolle (OR 1,09). Ein `lmer()` auf 0/1 („lineares
+    Wahrscheinlichkeitsmodell“) kann Wahrscheinlichkeiten außerhalb von 0–1
+    vorhersagen und hat falsche Standardfehler; für den Bericht ist das
+    logistische Modell die Regel. Die Zahlen können in webR in der letzten
+    Stelle abweichen (Optimierer).
+  en: |
+    `model_parameters(fit_success, exponentiate = TRUE, effects = "fixed")`
+    shows odds ratios relative to A: B 2.37 [1.02, 5.50], C 0.63 [0.30,
+    1.29]. With B, the odds of solving a task more than double. The clearest
+    comparison is B versus C: `emmeans(fit_success, ~ prototype, type =
+    "response") |> pairs(reverse = TRUE, adjust = "holm")` gives an OR of
+    0.26 for C / B (p = .006, Holm). Together with time: C is as fast as B
+    on solved tasks but fails more often. `position` does not matter for
+    success (OR 1.09). An `lmer()` on 0/1 ("linear probability model") can
+    predict probabilities outside 0–1 and has wrong standard errors; for the
+    report, the logistic model is the rule. The numbers may differ in the
+    last digit in webR (optimiser).
+check:
+  type: object
+  name: fit_success
+  tolerance: 0.02
+common_mistakes:
+  - pattern: "\\blmer\\("
+    message:
+      de: "`lmer()` behandelt 0/1 wie eine stetige Zielgröße. Für Erfolg/Misserfolg: `glmer(..., family = binomial)`."
+      en: "`lmer()` treats 0/1 like a continuous outcome. For success/failure: `glmer(..., family = binomial)`."
+  - pattern: "^(?![\\s\\S]*binomial)[\\s\\S]*glmer"
+    message:
+      de: "Ohne `family = binomial` weiß `glmer()` nicht, dass `success` 0/1 ist."
+      en: "Without `family = binomial`, `glmer()` does not know that `success` is 0/1."
+  - pattern: "success\\s*==\\s*1"
+    message:
+      de: "Für das Erfolgsmodell brauchst du alle Aufgaben, auch die gescheiterten; sonst ist `success` immer 1."
+      en: "The success model needs all tasks, including the failed ones; otherwise `success` is always 1."

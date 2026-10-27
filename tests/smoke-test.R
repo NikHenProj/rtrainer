@@ -568,6 +568,47 @@ checked <- wait_for("!!document.querySelector('#ex-pg-i-nest-models .exercise-gr
 step("programming-intermediate: one model per participant graded correct", !is.na(checked),
      sprintf("%.1f s", as.numeric(difftime(Sys.time(), started, units = "secs"))))
 
+# 14. Intermediate P7: mini project linked in the course plan; load time with
+# readxl/janitor and lme4/lmerTest/emmeans; the Excel export is read in webR,
+# pairwise contrasts (hint without Holm, solution) and the figure are graded.
+goto("/de/index.html")
+Sys.sleep(1)
+project_row <- js("document.querySelector('tr.rt-plan-project a[href*=\"project-intermediate\"]')?.getAttribute('href') || ''")
+step("project-intermediate: linked in the course plan project row", grepl("project-intermediate", project_row), project_row)
+loaded <- wait_lesson("/de/project-intermediate.html", "pj-i-contrasts")
+step("project-intermediate: webR, readxl, lme4, lmerTest and emmeans ready", !is.na(loaded), sprintf("%s s", loaded))
+run_exercise("pj-i-import", paste(
+  "feedback_raw <- read_excel(raw_export_xlsx, sheet = \"Export\", skip = 3) |>",
+  "  clean_names() |>",
+  "  filter(!is.na(status))",
+  sep = "\n"
+))
+checked <- wait_for("!!document.querySelector('#ex-pj-i-import .exercise-grade.alert-success')", timeout = 90)
+step("project-intermediate: Excel export read and graded correct", !is.na(checked), sprintf("%s s", checked))
+contrasts_code <- function(adjust) paste(
+  "prototype_contrasts <- emmeans(fit, ~ prototype, lmer.df = \"satterthwaite\", type = \"response\") |>",
+  sprintf("  pairs(reverse = TRUE%s) |>", adjust),
+  "  summary(infer = TRUE) |>",
+  "  as.data.frame()",
+  sep = "\n"
+)
+run_exercise("pj-i-contrasts", contrasts_code(""))
+hinted <- wait_for("(document.querySelector('#ex-pj-i-contrasts .exercise-grade.alert-danger')?.textContent || '').includes('holm')", timeout = 120)
+step("project-intermediate: contrasts without Holm get the hint", !is.na(hinted))
+run_exercise("pj-i-contrasts", contrasts_code(", adjust = \"holm\""))
+checked <- wait_for("!!document.querySelector('#ex-pj-i-contrasts .exercise-grade.alert-success')", timeout = 120)
+step("project-intermediate: emmeans contrasts graded correct", !is.na(checked), sprintf("%s s", checked))
+run_exercise("pj-i-figure", paste(
+  "fig <- ggplot(prototype_contrasts, aes(x = ratio, y = contrast)) +",
+  "  geom_vline(xintercept = 1, linetype = \"dashed\") +",
+  "  geom_pointrange(aes(xmin = lower.CL, xmax = upper.CL)) +",
+  "  labs(x = \"Zeitverhältnis\", y = NULL)",
+  "fig",
+  sep = "\n"
+))
+checked <- wait_for("!!document.querySelector('#ex-pj-i-figure .exercise-grade.alert-success')", timeout = 120)
+step("project-intermediate: contrast figure graded correct", !is.na(checked), sprintf("%s s", checked))
+
 goto("/en/index.html")
 Sys.sleep(1)
 beginner <- c(

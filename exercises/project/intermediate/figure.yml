@@ -1,0 +1,107 @@
+id: pj-i-figure
+lesson: project-intermediate
+order: 5
+title:
+  de: Abbildung der Vergleiche
+  en: Figure of the comparisons
+kind: write
+required: true
+packages: [dplyr, lme4, lmerTest, emmeans, ggplot2]
+data: [usability]
+setup: |
+  library(dplyr)
+  library(lmerTest)
+  library(emmeans)
+  library(ggplot2)
+  solved <- usability |>
+    filter(success == 1)
+  fit <- lmer(
+    log(time_s) ~ prototype + position + (1 | participant) + (1 | task),
+    data = solved
+  )
+  prototype_contrasts <- emmeans(
+    fit, ~ prototype,
+    lmer.df = "satterthwaite", type = "response"
+  ) |>
+    pairs(reverse = TRUE, adjust = "holm") |>
+    summary(infer = TRUE) |>
+    as.data.frame()
+prompt:
+  de: |
+    `prototype_contrasts` enthält die drei Vergleiche aus Schritt 4 mit
+    `contrast`, `ratio`, `lower.CL` und `upper.CL`. Der Startcode zeigt sie
+    als Balken, die bei 0 beginnen. Für ein Verhältnis ist aber 1 der
+    Bezugspunkt („gleich schnell“).
+
+    Zeichne die Abbildung `fig` neu: je Vergleich ein Punkt mit KI
+    (`geom_pointrange()`), `ratio` auf der x-Achse, `contrast` auf der
+    y-Achse, dahinter eine gestrichelte senkrechte Linie bei 1
+    (`geom_vline()`, `linetype = "dashed"`). Beschrifte die x-Achse mit
+    `labs()`.
+  en: |
+    `prototype_contrasts` contains the three comparisons from step 4 with
+    `contrast`, `ratio`, `lower.CL` and `upper.CL`. The starter shows them as
+    bars starting at 0. For a ratio, however, 1 is the reference point
+    ("equally fast").
+
+    Draw the figure `fig` again: one point with CI per comparison
+    (`geom_pointrange()`), `ratio` on the x-axis, `contrast` on the y-axis,
+    behind it a dashed vertical line at 1 (`geom_vline()`,
+    `linetype = "dashed"`). Label the x-axis with `labs()`.
+starter: |
+  fig <- ggplot(prototype_contrasts, aes(x = contrast, y = ratio)) +
+    geom_col()
+  fig
+solution: |
+  fig <- ggplot(prototype_contrasts, aes(x = ratio, y = contrast)) +
+    geom_vline(xintercept = 1, linetype = "dashed") +
+    geom_pointrange(aes(xmin = lower.CL, xmax = upper.CL)) +
+    labs(x = "Zeitverhältnis mit 95-%-KI (< 1 = schneller)", y = NULL)
+  fig
+hints:
+  - de: "Zwei Ebenen: zuerst die Linie (sie liegt dann hinten), dann die Punkte mit KI."
+    en: "Two layers: first the line (so it lies behind), then the points with CI."
+  - de: "`geom_pointrange()` braucht für die waagrechte Spanne `xmin` und `xmax` in `aes()`; `geom_vline(xintercept = 1, linetype = \"dashed\")`."
+    en: "For a horizontal range, `geom_pointrange()` needs `xmin` and `xmax` in `aes()`; `geom_vline(xintercept = 1, linetype = \"dashed\")`."
+  - de: "`ggplot(prototype_contrasts, aes(x = ratio, y = contrast)) + geom_vline(______) + geom_pointrange(aes(xmin = ______, xmax = ______)) + labs(x = ______)`"
+    en: "`ggplot(prototype_contrasts, aes(x = ratio, y = contrast)) + geom_vline(______) + geom_pointrange(aes(xmin = ______, xmax = ______)) + labs(x = ______)`"
+explanation:
+  de: |
+    Die Abbildung zeigt genau das, was der Text berichtet: Schätzung,
+    Unsicherheit und den Bezugspunkt. B / A und C / A liegen mit ihrem
+    ganzen KI links der 1 (schneller als A), C / B schneidet die 1. Balken
+    ab 0 wären hier irreführend: Ein Verhältnis von 0,88 sähe fast gleich
+    aus wie 1,0, und die Unsicherheit fehlt. Warum nicht die geschätzten
+    Mittelwerte je Prototyp? Deren KIs enthalten die Varianz zwischen nur
+    vier Aufgaben (z. B. A: 39 s [20; 73]) und überlappen stark, obwohl die
+    Vergleiche innerhalb von Person und Aufgabe klar sind. Bei
+    Messwiederholung zeigt eine Abbildung der Vergleiche das Ergebnis
+    ehrlicher. Optional: `scale_x_log10()` macht 0,8 und 1,25 gleich weit
+    von 1 entfernt.
+  en: |
+    The figure shows exactly what the text reports: estimate, uncertainty
+    and the reference point. B / A and C / A lie with their whole CI left of
+    1 (faster than A), C / B crosses 1. Bars from 0 would be misleading here:
+    a ratio of 0.88 would look almost like 1.0, and the uncertainty is
+    missing. Why not the estimated means per prototype? Their CIs contain
+    the variance between only four tasks (e.g. A: 39 s [20, 73]) and overlap
+    a lot, although the comparisons within participant and task are clear.
+    With repeated measures, a figure of the comparisons shows the result
+    more honestly. Optional: `scale_x_log10()` puts 0.8 and 1.25 equally
+    far from 1.
+check:
+  type: plot
+  name: fig
+common_mistakes:
+  - pattern: "geom_(col|bar)"
+    message:
+      de: "Balken beginnen bei 0; für ein Verhältnis ist 1 der Bezugspunkt, und die KIs fehlen. Nimm `geom_pointrange()` und eine Linie bei 1."
+      en: "Bars start at 0; for a ratio, 1 is the reference point, and the CIs are missing. Use `geom_pointrange()` and a line at 1."
+  - pattern: "geom_hline"
+    message:
+      de: "Mit `ratio` auf der x-Achse ist die Linie bei 1 senkrecht: `geom_vline(xintercept = 1)`."
+      en: "With `ratio` on the x-axis, the line at 1 is vertical: `geom_vline(xintercept = 1)`."
+  - pattern: "ymin\\s*=\\s*lower"
+    message:
+      de: "Die Verhältnisse liegen auf der x-Achse; die Spanne gehört deshalb in `xmin`/`xmax`."
+      en: "The ratios are on the x-axis, so the range goes into `xmin`/`xmax`."

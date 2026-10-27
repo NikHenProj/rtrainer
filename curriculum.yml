@@ -32,4 +32,4 @@ topics:
   - {slug: reproducibility, levels: [intermediate, expert], title: {de: Reproduzierbar arbeiten, en: Reproducible workflows}}
   - {slug: programming, levels: [intermediate, expert], title: {de: R-Programmierung für Analysen, en: Programming for analysis}}
   # Mini project: one complete analysis per level, after the level's lessons.
-  - {slug: project, kind: project, levels: [beginner], title: {de: Mini-Projekt, en: Mini project}}
+  - {slug: project, kind: project, levels: [beginner, intermediate], title: {de: Mini-Projekt, en: Mini project}}

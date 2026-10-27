@@ -1,0 +1,20 @@
+# Lesson metadata; exercises are the other *.yml files in this folder
+# (sorted by `order`), the knowledge check is quiz.yml.
+# Mini project: remote feedback (raw_export_xlsx) as the starting point, then
+# the moderated lab test (usability) with a mixed model up to the report; the
+# page (de/project-intermediate.qmd) places each exercise in its step.
+lesson: project-intermediate
+minutes: 75
+prerequisites: [reporting-intermediate, mixed-models-intermediate]
+langs: [de]
+packages: [readxl, janitor, dplyr, lme4, lmerTest, emmeans, parameters, ggplot2]
+data: [raw_export_xlsx, usability]
+goals:
+  de:
+    - Einen unordentlichen Excel-Export nach festen Regeln einlesen und bereinigen
+    - Bearbeitungszeiten mit einem gemischten Modell (Person × Aufgabe) auswerten und Prototypen paarweise vergleichen
+    - Ergebnisse als Abbildung, Kennwertetabelle und Text berichten, mit Verhältnissen und KIs
+  en:
+    - Read and clean a messy Excel export following fixed rules
+    - Analyse task times with a mixed model (participant × task) and compare prototypes pairwise
+    - Report results as a figure, a table of key metrics and text, with ratios and CIs

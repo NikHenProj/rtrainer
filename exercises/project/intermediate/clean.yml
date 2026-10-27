@@ -1,0 +1,124 @@
+id: pj-i-clean
+lesson: project-intermediate
+order: 2
+title:
+  de: Bereinigen nach Analyseplan
+  en: Clean according to the analysis plan
+kind: debug
+required: true
+packages: [readxl, janitor, dplyr]
+data: [raw_export_xlsx]
+setup: |
+  library(readxl)
+  library(janitor)
+  library(dplyr)
+  feedback_raw <- read_excel(raw_export_xlsx, sheet = "Export", skip = 3) |>
+    clean_names() |>
+    filter(!is.na(status))
+  agree_levels <- c(
+    "Strongly disagree", "Disagree", "Neither agree nor disagree",
+    "Agree", "Strongly agree"
+  )
+prompt:
+  de: |
+    Der Analyseplan legt für die Remote-Befragung fest:
+
+    - auswerten nur echte (`status` nicht `"Survey Preview"`) und
+      abgeschlossene (`finished == "TRUE"`) Antworten, doppelt
+      abgeschickte Zeilen nur einmal;
+    - `q4_1` bis `q4_3` von Textstufen in 1–5 umwandeln (`agree_levels`
+      steht bereit), `q4_3` („The app was confusing.“) umpolen, Zufriedenheit
+      `satisfaction` = Mittel der drei Items;
+    - Weiterempfehlung `recommend` aus `q5_0_10`, der Code `-99` heißt
+      „keine Angabe“.
+
+    Der Startcode läuft, verletzt den Plan aber an drei Stellen. Korrigiere
+    ihn so, dass `feedback` 76 Zeilen mit `response_id`, `satisfaction` und
+    `recommend` enthält.
+  en: |
+    The analysis plan sets for the remote survey:
+
+    - analyse only real (`status` not `"Survey Preview"`) and finished
+      (`finished == "TRUE"`) responses, rows submitted twice only once;
+    - convert `q4_1` to `q4_3` from text labels to 1–5 (`agree_levels` is
+      ready), reverse `q4_3` ("The app was confusing."), satisfaction
+      `satisfaction` = mean of the three items;
+    - recommendation `recommend` from `q5_0_10`, the code `-99` means
+      "no answer".
+
+    The starter code runs but violates the plan in three places. Fix it so
+    that `feedback` contains 76 rows with `response_id`, `satisfaction` and
+    `recommend`.
+starter: |
+  feedback <- feedback_raw |>
+    filter(status != "Survey Preview") |>
+    mutate(
+      across(q4_1:q4_3, \(x) match(x, agree_levels)),
+      satisfaction = (q4_1 + q4_2 + q4_3) / 3,
+      recommend = q5_0_10
+    ) |>
+    select(response_id, satisfaction, recommend)
+solution: |
+  feedback <- feedback_raw |>
+    filter(status != "Survey Preview", finished == "TRUE") |>
+    distinct() |>
+    mutate(
+      across(q4_1:q4_3, \(x) match(x, agree_levels)),
+      q4_3 = 6 - q4_3,
+      satisfaction = (q4_1 + q4_2 + q4_3) / 3,
+      recommend = na_if(q5_0_10, -99)
+    ) |>
+    select(response_id, satisfaction, recommend)
+hints:
+  - de: "Geh den Plan Punkt für Punkt durch: Zeilen (welche fehlen im `filter()`, was ist mit Duplikaten?), Umpolen, Fehlwertcode."
+    en: "Go through the plan point by point: rows (what is missing in `filter()`, what about duplicates?), reversing, missing value code."
+  - de: "`distinct()` entfernt identische Zeilen; auf einer Skala 1–5 polt `6 - x` um; `na_if(x, -99)` macht aus dem Code ein `NA`."
+    en: "`distinct()` removes identical rows; on a 1–5 scale `6 - x` reverses; `na_if(x, -99)` turns the code into `NA`."
+  - de: "Fehlt noch: `finished == \"TRUE\"` im `filter()`, `distinct()`, `q4_3 = 6 - q4_3` vor `satisfaction`, `na_if()` für `recommend`."
+    en: "Still missing: `finished == \"TRUE\"` in `filter()`, `distinct()`, `q4_3 = 6 - q4_3` before `satisfaction`, `na_if()` for `recommend`."
+explanation:
+  de: |
+    Von 82 Zeilen bleiben 76: 2 Testantworten, 2 abgebrochene, 2 doppelt
+    abgeschickte (R_0031, R_0058) fallen weg; diese Zahlen gehören in den
+    Methodenteil. Die Reihenfolge zählt: `q4_3` muss *vor* dem Mittelwert
+    umgepolt werden, und zwar auf derselben Skala (1–5 → `6 - x`). Ohne
+    Umpolen zieht das negativ formulierte Item die Zufriedenheit zur Mitte.
+    `-99` als Zahl verfälscht jeden Mittelwert: Der Mittelwert von
+    `recommend` wäre 3,1 statt 7,1. Ergebnis: Zufriedenheit M = 3,20
+    (SD = 0,94) auf 1–5, Weiterempfehlung bei 73 Personen. `distinct()`
+    findet nur exakt gleiche Zeilen; unterscheidet sich ein Duplikat z. B.
+    im Zeitstempel, nimmst du `distinct(response_id, .keep_all = TRUE)`.
+  en: |
+    Of 82 rows, 76 remain: 2 test responses, 2 unfinished and 2 submitted
+    twice (R_0031, R_0058) are dropped; these numbers belong in the methods
+    section. The order matters: `q4_3` has to be reversed *before* the mean,
+    on the same scale (1–5 → `6 - x`). Without reversing, the negatively
+    worded item pulls satisfaction towards the middle. `-99` as a number
+    distorts every mean: the mean of `recommend` would be 3.1 instead of
+    7.1. Result: satisfaction M = 3.20 (SD = 0.94) on 1–5, recommendation
+    from 73 people. `distinct()` only finds exactly identical rows; if a
+    duplicate differs e.g. in its time stamp, use
+    `distinct(response_id, .keep_all = TRUE)`.
+misconception:
+  de: "Was der Export liefert, sind gültige Antworten; Codes wie -99 und negativ formulierte Items kann man direkt mitteln."
+  en: "Whatever the export contains are valid responses; codes such as -99 and negatively worded items can be averaged directly."
+check:
+  type: object
+  name: feedback
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*finished)[\\s\\S]*"
+    message:
+      de: "Zwei Antworten sind nicht abgeschlossen (`finished == \"FALSE\"`); laut Plan zählen nur abgeschlossene."
+      en: "Two responses are unfinished (`finished == \"FALSE\"`); according to the plan only finished ones count."
+  - pattern: "^(?![\\s\\S]*(distinct|duplicated))[\\s\\S]*"
+    message:
+      de: "R_0031 und R_0058 stehen doppelt in den Daten. `distinct()` behält jede Zeile nur einmal."
+      en: "R_0031 and R_0058 appear twice in the data. `distinct()` keeps each row only once."
+  - pattern: "q4_3\\s*=\\s*(5|8)\\s*-|q4_3\\s*=\\s*-\\s*q4_3"
+    message:
+      de: "Auf einer Skala 1–5 polt `6 - x` um (aus 1 wird 5, aus 5 wird 1)."
+      en: "On a 1–5 scale, `6 - x` reverses (1 becomes 5, 5 becomes 1)."
+  - pattern: "recommend\\s*=\\s*q5_0_10\\s*[,)\\n]"
+    message:
+      de: "`-99` ist ein Fehlwertcode, keine Bewertung. `na_if(q5_0_10, -99)` macht daraus `NA`."
+      en: "`-99` is a missing value code, not a rating. `na_if(q5_0_10, -99)` turns it into `NA`."

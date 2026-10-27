@@ -1,0 +1,270 @@
+---
+title: "Mini-Projekt: Welcher Prototyp ersetzt die App?"
+subtitle: "Intermediate · vom unordentlichen Export über ein Mixed Model bis zum Bericht"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [readxl, janitor, dplyr, lme4, lmerTest, emmeans, parameters, ggplot2]
+resources:
+  - ../data/raw_export.xlsx
+  - ../data/usability.csv
+---
+
+{{< include /_generated/de/project-intermediate/runtime.qmd >}}
+
+{{< include /_generated/de/project-intermediate/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R läuft hier direkt im Browser. Das Projekt lädt acht Pakete, darunter lme4 und emmeans; beim ersten Besuch dauert es bis zu einer Minute (Anzeige unten rechts), danach geht es schneller.
+:::
+
+## Auftrag {#brief}
+
+**Forschungsfrage:** Mit welchem von drei Prototypen (A, B, C) lösen Nutzerinnen und Nutzer die Kernaufgaben einer Shopping-App am schnellsten und zuverlässigsten?
+
+Zwei Datenquellen gehören zum Projekt:
+
+- **Remote-Befragung** zur aktuellen App (`data/raw_export.xlsx`): 78 Personen, Excel-Export eines Umfragetools mit Titelzeilen, Testantworten und Duplikaten. Sie beschreibt die Ausgangslage: Wie zufrieden sind die Nutzer, und woran hakt es?
+- **Moderierter Labortest** (`usability`): 24 Personen testen alle drei Prototypen in ausbalancierter Reihenfolge mit denselben vier Aufgaben (search, filter, compare, checkout). Er entscheidet die Frage.
+
+Du verbindest die Werkzeuge der Intermediate-Lektionen zu einer Kette: [Einlesen](import-intermediate.qmd) und [Bereinigen](cleaning-intermediate.qmd), [Mixed Models](mixed-models-intermediate.qmd), [Kontraste](group-comparisons-intermediate.qmd), [Abbildungen](visualisation-intermediate.qmd) und [Berichten](reporting-intermediate.qmd).
+
+**Analyseplan** (vor der Auswertung festgelegt):
+
+| Schritt | Entscheidung |
+|---|---|
+| 1 Einlesen | Blatt „Export“, Kopfzeile in Zeile 4, Summenzeile entfernen |
+| 2 Bereinigen | ohne Testantworten, nur abgeschlossene, Duplikate einmal; Zufriedenheit = Mittel aus 3 Items (1–5, `q4_3` umgepolt); `-99` = fehlend |
+| 3 Zeitmodell | nur gelöste Aufgaben; `log(time_s) ~ prototype + position + (1 \| participant) + (1 \| task)` |
+| 4 Vergleiche | alle Paare mit emmeans, Satterthwaite, als Zeitverhältnis, Holm; Erfolg als Nebenmaß (logistisch) |
+| 5 Abbildung | Vergleiche mit 95-%-KI, Bezugslinie bei 1 |
+| 6 Tabelle | Kennwerte je Prototyp: n, Erfolg, Zeit (Median), Fehler, SEQ |
+| 7 Text | Zeitverhältnisse in Prozent, Erfolg mit Odds Ratio, Befragung getrennt berichtet |
+
+**So arbeitest du:** Jeder Schritt hat eine Pflichtübung, die mit dem richtigen Ergebnis des vorigen beginnt. Am Ende steht das [Gesamtskript](#script).
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 600 150" role="img" aria-labelledby="fig-pji-title fig-pji-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-pji-title">Zwei Datenquellen, ein Bericht</title>
+  <desc id="fig-pji-desc">Oben: raw_export.xlsx wird zu feedback_raw, dann feedback. Unten: usability wird zu solved, dann fit, dann prototype_contrasts. Beide Ketten münden in den Bericht.</desc>
+  <rect x="5" y="10" width="110" height="44" rx="6" class="rt-fig-box" />
+  <rect x="140" y="10" width="110" height="44" rx="6" class="rt-fig-box" />
+  <rect x="275" y="10" width="110" height="44" rx="6" class="rt-fig-box" />
+  <rect x="5" y="90" width="110" height="44" rx="6" class="rt-fig-box" />
+  <rect x="140" y="90" width="110" height="44" rx="6" class="rt-fig-box" />
+  <rect x="275" y="90" width="110" height="44" rx="6" class="rt-fig-box" />
+  <rect x="410" y="90" width="80" height="44" rx="6" class="rt-fig-box" />
+  <rect x="515" y="50" width="80" height="44" rx="6" class="rt-fig-box-accent" />
+  <text x="60" y="37" text-anchor="middle" class="rt-fig-code">.xlsx</text>
+  <text x="195" y="37" text-anchor="middle" class="rt-fig-code">feedback_raw</text>
+  <text x="330" y="37" text-anchor="middle" class="rt-fig-code">feedback</text>
+  <text x="60" y="117" text-anchor="middle" class="rt-fig-code">usability</text>
+  <text x="195" y="117" text-anchor="middle" class="rt-fig-code">solved</text>
+  <text x="330" y="117" text-anchor="middle" class="rt-fig-code">fit</text>
+  <text x="450" y="117" text-anchor="middle" class="rt-fig-label">Vergleiche</text>
+  <text x="555" y="77" text-anchor="middle" class="rt-fig-label">Bericht</text>
+  <line x1="115" y1="32" x2="138" y2="32" class="rt-fig-arrow" />
+  <line x1="250" y1="32" x2="273" y2="32" class="rt-fig-arrow" />
+  <line x1="385" y1="32" x2="513" y2="62" class="rt-fig-arrow" />
+  <line x1="115" y1="112" x2="138" y2="112" class="rt-fig-arrow" />
+  <line x1="250" y1="112" x2="273" y2="112" class="rt-fig-arrow" />
+  <line x1="385" y1="112" x2="408" y2="112" class="rt-fig-arrow" />
+  <line x1="490" y1="108" x2="513" y2="84" class="rt-fig-arrow" />
+</svg>
+<figcaption>Die Befragung beschreibt die Ausgangslage, der Labortest beantwortet die Frage. Beide Ketten bleiben getrennt und treffen sich erst im Bericht.</figcaption>
+</figure>
+```
+
+## 1 Einlesen {#import}
+
+Exporte aus Umfragetools haben fast immer Titelzeilen, Summenzeilen und unhandliche Spaltennamen. Lies so ein, dass die Regel auch beim nächsten Export noch stimmt: Zeilen nach Inhalt filtern, nicht nach Nummer.
+
+{{< include /_generated/de/project-intermediate/exercise-pj-i-import.qmd >}}
+
+## 2 Bereinigen {#cleaning}
+
+Jede Regel aus dem Analyseplan wird zu genau einer Zeile Code. Zähle, wie viele Antworten jede Regel entfernt; die Zahlen gehören in den Methodenteil.
+
+{{< include /_generated/de/project-intermediate/exercise-pj-i-clean.qmd >}}
+
+## 3 Zeitmodell {#model}
+
+Jede Person liefert 12 Zeiten, jede Aufgabe 72: Die Messungen sind doppelt gruppiert. Das gemischte Modell trägt beidem Rechnung; `position` nimmt den Lerneffekt über die drei Durchgänge auf.
+
+{{< include /_generated/de/project-intermediate/exercise-pj-i-model.qmd >}}
+
+## 4 Vergleichen {#contrasts}
+
+Die Modellkoeffizienten vergleichen B und C nur mit A. Für die Entscheidung brauchst du alle drei Paare, auf der Originalskala und korrigiert für drei Tests. Der Erfolg ist das zweite Maß und folgt derselben Logik mit einem logistischen Modell.
+
+{{< include /_generated/de/project-intermediate/exercise-pj-i-contrasts.qmd >}}
+
+{{< include /_generated/de/project-intermediate/exercise-pj-i-success.qmd >}}
+
+## 5 Abbildung {#figure}
+
+Bei Messwiederholung zeigt die Abbildung am besten, was getestet wurde: die Vergleiche mit KI und dem Bezugspunkt „kein Unterschied“.
+
+{{< include /_generated/de/project-intermediate/exercise-pj-i-figure.qmd >}}
+
+## 6 Tabelle {#table}
+
+Die Kennwertetabelle beschreibt, was die Modelle schätzen, in den gewohnten Usability-Maßen. Sie nutzt dieselben Regeln wie die Modelle (Zeit nur für gelöste Aufgaben).
+
+{{< include /_generated/de/project-intermediate/exercise-pj-i-table.qmd >}}
+
+## 7 Text {#report}
+
+Der Ergebnistext übersetzt Verhältnisse in Prozent, nennt Richtung und Unsicherheit und hält die beiden Datenquellen auseinander.
+
+{{< include /_generated/de/project-intermediate/exercise-pj-i-results.qmd >}}
+
+## Gesamtskript {#script}
+
+Die ganze Analyse in einem Block. Ändere eine Regel (z. B. alle Aufgaben statt nur gelöster ins Zeitmodell oder `adjust = "none"`) und führe den Block neu aus: Alle Zahlen ändern sich mit.
+
+```{webr}
+# 1-2 Remote survey: import and cleaning
+agree_levels <- c(
+  "Strongly disagree", "Disagree", "Neither agree nor disagree",
+  "Agree", "Strongly agree"
+)
+feedback_raw <- read_excel(raw_export_xlsx, sheet = "Export", skip = 3) |>
+  clean_names() |>
+  filter(!is.na(status))
+feedback <- feedback_raw |>
+  filter(status != "Survey Preview", finished == "TRUE") |>
+  distinct() |>
+  mutate(
+    across(q4_1:q4_3, \(x) match(x, agree_levels)),
+    q4_3 = 6 - q4_3,
+    satisfaction = (q4_1 + q4_2 + q4_3) / 3,
+    recommend = na_if(q5_0_10, -99)
+  )
+feedback |>
+  summarise(
+    n = n(),
+    satisfaction_m = mean(satisfaction),
+    satisfaction_sd = sd(satisfaction),
+    nps = 100 * (mean(recommend >= 9, na.rm = TRUE) - mean(recommend <= 6, na.rm = TRUE))
+  )
+
+# 3 Lab test: time model on solved tasks
+solved <- usability |>
+  filter(success == 1)
+fit <- lmer(
+  log(time_s) ~ prototype + position + (1 | participant) + (1 | task),
+  data = solved
+)
+model_parameters(fit, exponentiate = TRUE, effects = "fixed")
+
+# 4 Pairwise comparisons (time ratios, Holm) and success
+prototype_contrasts <- emmeans(
+  fit, ~ prototype,
+  lmer.df = "satterthwaite", type = "response"
+) |>
+  pairs(reverse = TRUE, adjust = "holm") |>
+  summary(infer = TRUE) |>
+  as.data.frame()
+prototype_contrasts
+fit_success <- glmer(
+  success ~ prototype + position + (1 | participant) + (1 | task),
+  family = binomial,
+  data = usability
+)
+emmeans(fit_success, ~ prototype, type = "response") |>
+  pairs(reverse = TRUE, adjust = "holm")
+
+# 6 Key metrics per prototype
+usability |>
+  summarise(
+    n = n_distinct(participant),
+    success_pct = 100 * mean(success),
+    time_md = median(time_s[success == 1]),
+    errors_m = mean(errors),
+    seq_m = mean(seq, na.rm = TRUE),
+    .by = prototype
+  )
+
+# 5 Figure
+ggplot(prototype_contrasts, aes(x = ratio, y = contrast)) +
+  geom_vline(xintercept = 1, linetype = "dashed") +
+  geom_pointrange(aes(xmin = lower.CL, xmax = upper.CL)) +
+  labs(x = "Zeitverhältnis mit 95-%-KI (< 1 = schneller)", y = NULL)
+```
+
+**So berichtest du es:**
+
+> *Ausgangslage.* In der Remote-Befragung zur aktuellen App wurden von 82 exportierten Zeilen zwei Testantworten, zwei abgebrochene und zwei doppelt abgeschickte entfernt; ausgewertet wurden 76 Antworten. Die Zufriedenheit lag im mittleren Bereich (M = 3,20, SD = 0,94 auf 1–5), der Net Promoter Score bei −11 (73 Angaben). Freitexte nannten am häufigsten den Checkout (8 Nennungen), dazu kleine Schrift (6) und Abstürze (4).
+>
+> *Labortest.* 24 Personen bearbeiteten vier Aufgaben mit jedem Prototyp; eine Person brach vor Prototyp C ab. Von 284 Aufgaben wurden 226 gelöst. Gelöste Aufgaben dauerten mit B 12 % (95-%-KI [1 %; 21 %], p = .020) und mit C 15 % kürzer ([4 %; 25 %], p = .006) als mit A; B und C unterschieden sich kaum (C / B = 0,96 [0,85; 1,09], p = .47; gemischtes Modell für log. Zeit mit Zufallsintercepts für Person und Aufgabe, Holm-korrigiert). Mit B wurden die meisten Aufgaben gelöst (88,5 % vs. 78,1 % für A und 71,7 % für C; C / B: OR = 0,26, p = .006). B ist damit so schnell wie C und zuverlässiger als A und C.
+
+::: {.callout-note appearance="simple"}
+## Lokal ausführen
+
+Im Browser bleibt der Bericht auf der Seite; das Schreiben einer Word-Datei (officer) stürzt in webR ab. Lokal schreibst du ihn als Quarto-Dokument; jede Zahl im Text kommt aus R:
+
+````markdown
+---
+title: "Prototypvergleich Shopping-App"
+format: docx
+---
+
+```{r}
+#| include: false
+library(tidyverse)
+library(readxl)
+library(janitor)
+library(lmerTest)
+library(emmeans)
+library(rempsyc)
+# ... Gesamtskript, Kennwertetabelle als `kpi` ...
+pct <- \(ratio) round(100 * (1 - ratio))
+b_a <- filter(prototype_contrasts, contrast == "B / A")
+```
+
+Gelöste Aufgaben dauerten mit B `r pct(b_a$ratio)` % kürzer als mit A
+(95-%-KI [`r pct(b_a$upper.CL)` %; `r pct(b_a$lower.CL)` %]).
+
+```{r}
+#| label: tbl-kpi
+#| tbl-cap: "Usability-Kennwerte je Prototyp"
+nice_table(kpi)
+```
+````
+
+`nice_table()` gibt eine flextable zurück, die Quarto direkt nach Word schreibt. Ändern sich Daten oder Regeln, stimmt nach dem nächsten Rendern alles wieder.
+:::
+
+## Wissenscheck {#check}
+
+{{< include /_generated/de/project-intermediate/quiz.qmd >}}
+
+## Checkliste {#cheatsheet}
+
+```r
+# Export: Kopfzeile finden, Summenzeile nach Inhalt entfernen
+read_excel(path, sheet = "Export", skip = 3) |> clean_names() |> filter(!is.na(status))
+# Plan-Regeln: je Regel eine Zeile, Zahlen je Regel notieren
+filter(status != "Survey Preview", finished == "TRUE") |> distinct()
+mutate(item_r = 6 - item, recommend = na_if(q5_0_10, -99))
+
+# Zeit nur für gelöste Aufgaben, Person und Aufgabe gekreuzt
+fit <- lmer(log(time_s) ~ prototype + position + (1 | participant) + (1 | task), data = solved)
+emmeans(fit, ~ prototype, lmer.df = "satterthwaite", type = "response") |>
+  pairs(reverse = TRUE, adjust = "holm") |> summary(infer = TRUE)
+glmer(success ~ ..., family = binomial, data = usability)   # Erfolg getrennt
+
+ggplot(prototype_contrasts, aes(ratio, contrast)) + geom_vline(xintercept = 1) +
+  geom_pointrange(aes(xmin = lower.CL, xmax = upper.CL))
+```
+
+- Analyseplan vor der Auswertung: Ausschlüsse, zensierte Zeiten, Modell, Vergleiche, Korrektur.
+- Exporte nach Inhalt filtern, nicht nach Zeilennummer; Zeilenzahl gegen die Summenzeile prüfen.
+- Abgebrochene Aufgaben (Timeout) sind keine Zeiten: Zeit und Erfolg getrennt auswerten.
+- Log-Zeiten → Verhältnisse; im Text als „x % kürzer“ mit KI.
+- Bei Messwiederholung die Vergleiche zeigen, nicht nur Mittelwerte mit KI.
+- Datenquellen mit verschiedenen Personen und Maßen getrennt berichten.
+
+{{< include /_generated/de/project-intermediate/footer.qmd >}}

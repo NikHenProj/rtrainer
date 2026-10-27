@@ -1,0 +1,90 @@
+id: pj-i-import
+lesson: project-intermediate
+order: 1
+title:
+  de: Excel-Export einlesen
+  en: Read the Excel export
+kind: write
+required: true
+packages: [readxl, janitor, dplyr]
+data: [raw_export_xlsx]
+setup: |
+  library(readxl)
+  library(janitor)
+  library(dplyr)
+prompt:
+  de: |
+    Das Umfragetool hat die Remote-Befragung als Excel-Datei exportiert
+    (Pfad in `raw_export_xlsx`). Im Blatt „Export“ stehen über der Kopfzeile
+    zwei Titelzeilen und eine Leerzeile, unter den Daten eine Leerzeile und
+    die Summenzeile `Total responses: 82`.
+
+    Lies das Blatt in das Objekt `feedback_raw` ein: Kopfzeile richtig
+    erkennen, Spaltennamen mit janitor in `snake_case` bringen und die beiden
+    Zeilen unter den Daten entfernen (sie haben keinen `status`). Es bleiben
+    82 Zeilen und 14 Spalten.
+  en: |
+    The survey tool exported the remote survey as an Excel file (path in
+    `raw_export_xlsx`). In the sheet "Export" there are two title rows and an
+    empty row above the header, and below the data an empty row and the total
+    row `Total responses: 82`.
+
+    Read the sheet into the object `feedback_raw`: detect the header
+    correctly, convert the column names to `snake_case` with janitor and
+    remove the two rows below the data (they have no `status`). 82 rows and
+    14 columns remain.
+starter: |
+  feedback_raw <- read_excel(raw_export_xlsx, sheet = "Export")
+solution: |
+  feedback_raw <- read_excel(raw_export_xlsx, sheet = "Export", skip = 3) |>
+    clean_names() |>
+    filter(!is.na(status))
+hints:
+  - de: "Ohne Angabe nimmt `read_excel()` die erste Zeile als Kopfzeile, hier also den Titel. Wie viele Zeilen stehen davor?"
+    en: "Without further arguments, `read_excel()` takes the first row as header, here the title. How many rows come before it?"
+  - de: "`skip = 3` überspringt Titel und Leerzeile; `clean_names()` macht aus `Response ID` den Namen `response_id`. Die Summenzeile hat in `status` ein `NA`."
+    en: "`skip = 3` skips the titles and the empty row; `clean_names()` turns `Response ID` into `response_id`. The total row has `NA` in `status`."
+  - de: "`read_excel(..., skip = 3) |> clean_names() |> filter(______)`"
+    en: "`read_excel(..., skip = 3) |> clean_names() |> filter(______)`"
+explanation:
+  de: |
+    `skip = 3` lässt die beiden Titelzeilen und die Leerzeile aus; Zeile 4
+    wird zur Kopfzeile. `clean_names()` macht aus `Duration (in seconds)`
+    den Namen `duration_in_seconds` und aus `Q5 (0-10)` den Namen `q5_0_10`;
+    so lassen sich die Spalten ohne Backticks ansprechen. Die Summenzeile
+    filterst du über eine Spalte, die in echten Antworten nie fehlt
+    (`status`), nicht über die Zeilennummer: Kommt beim nächsten Export
+    eine Antwort dazu, stimmt `n_max = 82` nicht mehr. Fallstrick: Weil die
+    Summenzeile nur in der ersten Spalte steht, bleiben die Zahlenspalten
+    Zahlen, und die Zeile fällt leicht nicht auf. Prüfe deshalb die
+    Zeilenzahl gegen die Summenzeile: 82 = 82. Alternativ liest
+    `range = "A4:N86"` genau den Datenbereich, ist aber ebenso starr wie
+    `n_max`.
+  en: |
+    `skip = 3` leaves out the two title rows and the empty row; row 4
+    becomes the header. `clean_names()` turns `Duration (in seconds)` into
+    `duration_in_seconds` and `Q5 (0-10)` into `q5_0_10`, so you can refer
+    to the columns without backticks. Filter the total row by a column that
+    is never missing in real responses (`status`), not by row number: if a
+    response is added in the next export, `n_max = 82` no longer holds.
+    Pitfall: the total row only fills the first column, so it does not turn
+    numeric columns into text and is easy to miss. Check the number of rows
+    against the total row: 82 = 82. Alternatively, `range = "A4:N86"` reads
+    exactly the data range, but is as rigid as `n_max`.
+check:
+  type: object
+  name: feedback_raw
+  check_types: true
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*(skip|range))[\\s\\S]*read_excel"
+    message:
+      de: "Ohne `skip` (oder `range`) wird die Titelzeile zur Kopfzeile, und alle Spalten heißen `...2`, `...3` usw."
+      en: "Without `skip` (or `range`), the title row becomes the header and the columns are named `...2`, `...3` and so on."
+  - pattern: "^(?![\\s\\S]*clean_names)[\\s\\S]*read_excel"
+    message:
+      de: "Die Spaltennamen enthalten noch Leerzeichen und Klammern. `clean_names()` aus janitor macht `snake_case` daraus."
+      en: "The column names still contain spaces and brackets. `clean_names()` from janitor makes them `snake_case`."
+  - pattern: "slice\\(|n_max|head\\("
+    message:
+      de: "Feste Zeilenzahlen gehen beim nächsten Export kaputt. Filtere die Summenzeile inhaltlich, z. B. über fehlenden `status`."
+      en: "Fixed row counts break with the next export. Filter the total row by content, e.g. by a missing `status`."

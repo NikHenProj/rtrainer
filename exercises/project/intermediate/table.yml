@@ -1,0 +1,117 @@
+id: pj-i-table
+lesson: project-intermediate
+order: 6
+title:
+  de: Kennwertetabelle je Prototyp
+  en: Table of key metrics per prototype
+kind: write
+required: true
+packages: [dplyr]
+data: [usability]
+setup: |
+  library(dplyr)
+prompt:
+  de: |
+    Für den Bericht brauchst du eine Tabelle mit den üblichen
+    Usability-Kennwerten je `prototype`, aus allen Aufgaben in `usability`:
+
+    | Spalte | Inhalt |
+    |---|---|
+    | `n` | Zahl der **Personen**, die den Prototyp getestet haben |
+    | `success_pct` | Anteil gelöster Aufgaben in % |
+    | `time_md` | Median der Zeit (s), nur gelöste Aufgaben (wie im Modell) |
+    | `errors_m` | mittlere Fehlerzahl pro Aufgabe |
+    | `seq_m` | mittlere Einfachheit (SEQ, 1–7), fehlende Bewertungen auslassen |
+
+    Der Startcode liefert für `n`, `time_md` und `seq_m` falsche Werte.
+    Korrigiere ihn; nicht runden.
+  en: |
+    For the report you need a table with the usual usability metrics per
+    `prototype`, from all tasks in `usability`:
+
+    | Column | Content |
+    |---|---|
+    | `n` | number of **participants** who tested the prototype |
+    | `success_pct` | share of solved tasks in % |
+    | `time_md` | median time (s), solved tasks only (as in the model) |
+    | `errors_m` | mean number of errors per task |
+    | `seq_m` | mean ease rating (SEQ, 1–7), leaving out missing ratings |
+
+    The starter gives wrong values for `n`, `time_md` and `seq_m`. Fix it;
+    do not round.
+starter: |
+  kpi <- usability |>
+    summarise(
+      n = n(),
+      success_pct = 100 * mean(success),
+      time_md = median(time_s),
+      errors_m = mean(errors),
+      seq_m = mean(seq),
+      .by = prototype
+    )
+  kpi
+solution: |
+  kpi <- usability |>
+    summarise(
+      n = n_distinct(participant),
+      success_pct = 100 * mean(success),
+      time_md = median(time_s[success == 1]),
+      errors_m = mean(errors),
+      seq_m = mean(seq, na.rm = TRUE),
+      .by = prototype
+    )
+  kpi
+hints:
+  - de: "Jede Person hat pro Prototyp vier Zeilen (Aufgaben). Was zählt `n()`? Und welche Zeiten gehen ins Modell?"
+    en: "Each participant has four rows (tasks) per prototype. What does `n()` count? And which times go into the model?"
+  - de: "`n_distinct(participant)` zählt Personen; `time_s[success == 1]` wählt innerhalb von `summarise()` die gelösten Aufgaben; `mean()` braucht `na.rm = TRUE`."
+    en: "`n_distinct(participant)` counts participants; `time_s[success == 1]` selects the solved tasks inside `summarise()`; `mean()` needs `na.rm = TRUE`."
+  - de: "`n = n_distinct(______)`, `time_md = median(time_s[______])`, `seq_m = mean(seq, ______)`"
+    en: "`n = n_distinct(______)`, `time_md = median(time_s[______])`, `seq_m = mean(seq, ______)`"
+explanation:
+  de: |
+    | Prototyp | n | Erfolg % | Zeit Md (s) | Fehler M | SEQ M |
+    |---|---|---|---|---|---|
+    | A | 24 | 78,1 | 38,1 | 0,96 | 5,08 |
+    | B | 24 | 88,5 | 31,6 | 0,40 | 5,41 |
+    | C | 23 | 71,7 | 33,1 | 1,15 | 5,09 |
+
+    C hat 23 Personen, weil p07 die Sitzung vor C abgebrochen hat; das
+    gehört als Fußnote unter die Tabelle. Mit den Abbrüchen (180 s) läge
+    der Median für C bei 41,1 s statt 33,1 s: C wirkte langsamer als B,
+    obwohl gelöste Aufgaben gleich schnell gehen. Das Problem von C ist der
+    Erfolg, nicht die Zeit. Deshalb trennt der Plan beide Kennwerte.
+    Für schiefe Zeiten ist der Median die robuste Beschreibung; das Modell
+    rechnet auf der Log-Skala, was dazu passt. In den Bericht übernimmst du
+    die Tabelle z. B. mit `rempsyc::nice_table(kpi)`.
+  en: |
+    | Prototype | n | Success % | Time Md (s) | Errors M | SEQ M |
+    |---|---|---|---|---|---|
+    | A | 24 | 78.1 | 38.1 | 0.96 | 5.08 |
+    | B | 24 | 88.5 | 31.6 | 0.40 | 5.41 |
+    | C | 23 | 71.7 | 33.1 | 1.15 | 5.09 |
+
+    C has 23 participants because p07 aborted the session before C; this
+    belongs in a footnote below the table. With the aborts (180 s), the
+    median for C would be 41.1 s instead of 33.1 s: C would look slower than
+    B, although solved tasks take about as long. C's problem is success,
+    not time. That is why the plan separates the two metrics. For skewed
+    times, the median is the robust description; the model works on the log
+    scale, which fits. To put the table into a report, use e.g.
+    `rempsyc::nice_table(kpi)`.
+check:
+  type: value
+  tolerance: 1.0e-6
+common_mistakes:
+  - pattern: "\\bn\\s*=\\s*n\\(\\)"
+    message:
+      de: "`n()` zählt Zeilen, also Aufgaben (96 bzw. 92). Gefragt ist die Zahl der Personen: `n_distinct(participant)`."
+      en: "`n()` counts rows, i.e. tasks (96 or 92). The number of participants is asked for: `n_distinct(participant)`."
+  - pattern: "median\\(time_s\\)"
+    message:
+      de: "Abgebrochene Aufgaben stehen mit 180 s in den Daten; ihr Median ist keine Bearbeitungszeit. Nur gelöste: `time_s[success == 1]`."
+      en: "Aborted tasks are recorded with 180 s; their median is not a completion time. Solved only: `time_s[success == 1]`."
+  - pattern: "mean\\(seq\\)"
+    message:
+      de: "Drei SEQ-Bewertungen fehlen; ohne `na.rm = TRUE` wird der Mittelwert `NA`."
+      en: "Three SEQ ratings are missing; without `na.rm = TRUE` the mean becomes `NA`."

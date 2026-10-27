@@ -1,0 +1,134 @@
+# Knowledge check: passed at >= `pass` share of correctly answered questions.
+lesson: project-intermediate
+pass: 0.8
+questions:
+  - id: pj-i-q-timeout
+    prompt:
+      de: "Abgebrochene Aufgaben stehen mit 180 s in den Daten. Wie gehst du im Zeitmodell damit um?"
+      en: "Aborted tasks are recorded with 180 s. How do you handle them in the time model?"
+    options:
+      - text:
+          de: "Nur gelöste Aufgaben ins Zeitmodell; Erfolg getrennt auswerten und beides berichten."
+          en: "Only solved tasks in the time model; analyse success separately and report both."
+        correct: true
+        explain:
+          de: "180 s ist keine gemessene Zeit, sondern die Obergrenze (zensiert). Getrennt ausgewertet zeigt sich, dass C bei gelösten Aufgaben schnell ist, aber öfter scheitert."
+          en: "180 s is not a measured time but the upper limit (censored). Analysed separately, C turns out fast on solved tasks but fails more often."
+      - text:
+          de: "Alle Aufgaben ins Zeitmodell, die 180 s sind ja gemessen."
+          en: "All tasks in the time model; the 180 s were measured after all."
+        correct: false
+        explain:
+          de: "Die echte Zeit wäre länger gewesen. Ein Prototyp mit vielen Abbrüchen wirkt dann langsam, obwohl sein Problem der Erfolg ist (C: Median 41 statt 33 s)."
+          en: "The real time would have been longer. A prototype with many aborts then looks slow although its problem is success (C: median 41 instead of 33 s)."
+      - text:
+          de: "Die 180 s durch den Mittelwert der gelösten Aufgaben ersetzen."
+          en: "Replace the 180 s by the mean of the solved tasks."
+        correct: false
+        explain:
+          de: "Das erfindet Zeiten, die sicher zu kurz sind, und verkleinert die Streuung künstlich."
+          en: "That invents times that are certainly too short and shrinks the spread artificially."
+  - id: pj-i-q-crossed
+    prompt:
+      de: "Warum bekommt `task` im Zeitmodell einen eigenen Zufallsintercept `(1 | task)`?"
+      en: "Why does `task` get its own random intercept `(1 | task)` in the time model?"
+    options:
+      - text:
+          de: "Alle Personen bearbeiten dieselben Aufgaben; manche Aufgaben dauern für alle länger. Person und Aufgabe sind gekreuzt."
+          en: "All participants work on the same tasks; some tasks take longer for everyone. Participant and task are crossed."
+        correct: true
+        explain:
+          de: "Ohne den Term landet die Aufgabenvarianz im Residuum, und die Messungen derselben Aufgabe gelten fälschlich als unabhängig."
+          en: "Without the term, the task variance ends up in the residual, and measurements of the same task are wrongly treated as independent."
+      - text:
+          de: "Weil jede Aufgabe zu genau einer Person gehört (geschachtelt)."
+          en: "Because each task belongs to exactly one participant (nested)."
+        correct: false
+        explain:
+          de: "Das wäre `(1 | participant/task)`. Hier heißt „search“ für alle Personen dieselbe Aufgabe."
+          en: "That would be `(1 | participant/task)`. Here \"search\" is the same task for every participant."
+      - text:
+          de: "Damit der Prototypeffekt signifikant wird."
+          en: "So that the prototype effect becomes significant."
+        correct: false
+        explain:
+          de: "Die Zufallsstruktur folgt dem Design und steht im Analyseplan, nicht dem Ergebnis."
+          en: "The random structure follows the design and is set in the analysis plan, not by the result."
+  - id: pj-i-q-ratio
+    prompt:
+      de: "Das Modell rechnet mit `log(time_s)`. Wie liest du B / A = 0,88 [0,79; 0,99]?"
+      en: "The model uses `log(time_s)`. How do you read B / A = 0.88 [0.79, 0.99]?"
+    options:
+      - text:
+          de: "Mit B dauern gelöste Aufgaben 12 % kürzer als mit A, plausibel zwischen 1 % und 21 %."
+          en: "With B, solved tasks take 12 % less time than with A, plausibly between 1 % and 21 %."
+        correct: true
+        explain:
+          de: "Auf der Log-Skala werden Differenzen zu Verhältnissen; 1 heißt gleich schnell."
+          en: "On the log scale, differences become ratios; 1 means equally fast."
+      - text:
+          de: "Mit B dauern Aufgaben 0,88 s kürzer."
+          en: "With B, tasks take 0.88 s less."
+        correct: false
+        explain:
+          de: "0,88 ist ein Faktor, keine Differenz. In Sekunden hängt der Unterschied von der Aufgabe ab (12 % von 85 s sind mehr als von 35 s)."
+          en: "0.88 is a factor, not a difference. In seconds, the difference depends on the task (12 % of 85 s is more than of 35 s)."
+      - text:
+          de: "B ist um 0,88 Standardabweichungen schneller."
+          en: "B is 0.88 standard deviations faster."
+        correct: false
+        explain:
+          de: "Das wäre eine standardisierte Effektgröße wie d. Das Verhältnis ist unstandardisiert und direkt in Prozent lesbar."
+          en: "That would be a standardised effect size such as d. The ratio is unstandardised and can be read directly in percent."
+  - id: pj-i-q-figure
+    prompt:
+      de: "Die KIs der geschätzten Mittelwerte je Prototyp überlappen stark (A: 39 s [20; 73]), die Vergleiche B / A und C / A sind aber klar. Wie passt das?"
+      en: "The CIs of the estimated means per prototype overlap a lot (A: 39 s [20, 73]), but the comparisons B / A and C / A are clear. How does that fit?"
+    options:
+      - text:
+          de: "Die Mittelwert-KIs enthalten die Varianz zwischen Aufgaben und Personen; im Vergleich innerhalb von Person und Aufgabe fällt sie weg."
+          en: "The CIs of the means contain the variance between tasks and participants; in the comparison within participant and task it cancels out."
+        correct: true
+        explain:
+          de: "Deshalb zeigt die Projektabbildung die Vergleiche mit KI und nicht die Mittelwerte. Überlappende KIs von Mittelwerten sind bei Messwiederholung kein Test."
+          en: "That is why the project figure shows the comparisons with CI, not the means. Overlapping CIs of means are no test with repeated measures."
+      - text:
+          de: "Einer der beiden Werte muss falsch sein."
+          en: "One of the two values must be wrong."
+        correct: false
+        explain:
+          de: "Beide stimmen; sie beantworten verschiedene Fragen (Wie lang dauert eine neue Aufgabe? Wie viel schneller ist B?)."
+          en: "Both are right; they answer different questions (How long does a new task take? How much faster is B?)."
+      - text:
+          de: "Überlappende KIs bedeuten, dass sich die Prototypen nicht unterscheiden."
+          en: "Overlapping CIs mean that the prototypes do not differ."
+        correct: false
+        explain:
+          de: "Schon bei unabhängigen Gruppen ist das zu streng; bei Messwiederholung sagt die Überlappung über den Vergleich fast nichts."
+          en: "Even for independent groups this is too strict; with repeated measures, the overlap says almost nothing about the comparison."
+  - id: pj-i-q-sources
+    prompt:
+      de: "Welche Rolle hat die Remote-Befragung (aktuelle App, n = 76) im Bericht?"
+      en: "What role does the remote survey (current app, n = 76) play in the report?"
+    options:
+      - text:
+          de: "Sie beschreibt die Ausgangslage und begründet die Testaufgaben (Kommentare zu Filter und Checkout); über die Prototypen sagt sie nichts."
+          en: "It describes the starting point and justifies the test tasks (comments on filter and checkout); it says nothing about the prototypes."
+        correct: true
+        explain:
+          de: "Andere Personen, andere Version, anderes Maß. Beides in einem Bericht ist gut, aber getrennt berichtet."
+          en: "Other people, another version, another measure. Both in one report is fine, but reported separately."
+      - text:
+          de: "Sie ist eine Kontrollgruppe für den Labortest."
+          en: "It is a control group for the lab test."
+        correct: false
+        explain:
+          de: "Dafür müssten die Personen zufällig zugeteilt und mit denselben Aufgaben und Maßen gemessen worden sein."
+          en: "For that, people would have to be randomly assigned and measured with the same tasks and measures."
+      - text:
+          de: "Man sollte ihre Zufriedenheit mit dem SEQ des Labortests in einem Modell zusammenführen."
+          en: "Its satisfaction should be combined with the SEQ of the lab test in one model."
+        correct: false
+        explain:
+          de: "Unterschiedliche Skalen (1–5 vs. 1–7), Fragen und Stichproben; die Antworten lassen sich keiner Person im Labortest zuordnen."
+          en: "Different scales (1–5 vs. 1–7), questions and samples; the responses cannot be linked to any participant in the lab test."
