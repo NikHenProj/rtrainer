@@ -1,6 +1,6 @@
 # STATUS
 
-Stand (2026-10-27): **M9 Paket P8 (EN: Intermediate P1–P3, 9 Lektionen) abgenommen und in `main`.** Davor: **M9 Paket P7 (DE: project-intermediate) abgenommen und in `main`.** Davor: **M9 Paket P6 (DE: reporting-, reproducibility-, programming-intermediate) abgenommen und in `main`.** Davor: **M9 Paket P5 (DE: mixed-models-, moderation-mediation-, power-intermediate) abgenommen und in `main`.** **M6 bis M8 Teil 5 und M9 Paket P1 (DE: import-, cleaning-, reshaping-intermediate) abgenommen und in `main` und M9 Paket P2 (DE: missing-, visualisation-, descriptives-intermediate) abgenommen und in `main`; M9 Paket P3 (DE: scales-, sem-, group-comparisons-intermediate) und Datensatz `acceptance` abgenommen und in `main`; M9 Paket P4 (DE: robust-, regression-, glm-intermediate) abgenommen und in `main`** (alle 10 Beginner-Lektionen und Mini-Projekt Beginner, DE + EN). **Online seit 2026-10-26:** https://nikhenproj.github.io/rtrainer/ (Pages-Quelle GitHub Actions, letzter CI-Lauf 40533051262 grün). M9-Plan abgenommen (inkl. Datensatz `acceptance`): `docs/M9-plan.md`. Entscheidungen: NEWS.md.
+Stand (2026-10-27): **M9 Paket P8 (EN: Intermediate P1–P3, 9 Lektionen) abgenommen und in `main`.** Davor: **M9 Paket P7 (DE: project-intermediate) abgenommen und in `main`.** Davor: **M9 Paket P6 (DE: reporting-, reproducibility-, programming-intermediate) abgenommen und in `main`.** Davor: **M9 Paket P5 (DE: mixed-models-, moderation-mediation-, power-intermediate) abgenommen und in `main`.** **M6 bis M8 Teil 5 und M9 Paket P1 (DE: import-, cleaning-, reshaping-intermediate) abgenommen und in `main` und M9 Paket P2 (DE: missing-, visualisation-, descriptives-intermediate) abgenommen und in `main`; M9 Paket P3 (DE: scales-, sem-, group-comparisons-intermediate) und Datensatz `acceptance` abgenommen und in `main`; M9 Paket P4 (DE: robust-, regression-, glm-intermediate) abgenommen und in `main`** (alle 10 Beginner-Lektionen und Mini-Projekt Beginner, DE + EN). **Online seit 2026-10-26:** https://nikhenproj.github.io/rtrainer/ (Pages-Quelle GitHub Actions, letzter CI-Lauf 40568702740 grün). M9-Plan abgenommen (inkl. Datensatz `acceptance`): `docs/M9-plan.md`. Entscheidungen: NEWS.md.
 
 ## Was steht
 - **Gerüst (M6):** Quarto-Website mit quarto-live/webR, Theme hell/dunkel (IBM Plex Sans, JetBrains Mono, Indigo), Kopfzeile Kursplan · Wiederholen (n fällig) · Pakete · Glossar · DE/EN · Hell/Dunkel · Suche.
@@ -24,6 +24,10 @@ Stand (2026-10-27): **M9 Paket P8 (EN: Intermediate P1–P3, 9 Lektionen) abgeno
 - **Triage** `docs/legacy-triage.md`: 54 behalten (18 im Beginner-Pfad), 11 streichen, freigegeben. Migriert: 41 (markiert): alle Beginner-Aufgaben der Triage, P1 (10, 13, 18, 23, 24, 26), P2 (5, 14, 15, 48, 52), P3 (30, 31, 36, 37, 38), P4 (35), P5 (40–43, 45, 46; 44 bleibt für mixed-models-expert) und P6 (53, 54, 19, 21, 25, 28, 29; 4 als `rr-i-lockfile`, 20 als Wissenscheck-Frage). Stand: 50 von 54 (offen: 22, 27, 39, 44 für Expert).
 - Alt: `legacy/exercises/` (65 Aufgaben), `legacy/driving_sim_v0.*`.
 
+## Online (2026-10-27, M9 P8)
+- Gepusht (ce3a2ad, 7f7efd9). CI-Lauf 40568702740 grün (build 11,9 min, deploy ok): 144/144, `[ FAIL 0 | WARN 16 | SKIP 0 | PASS 243 ]`, Node 12/0, Rauchtest 0 failure(s); alle 9 „en:“-Schritte ok, inkl. Intermediate-Links im EN-Kursplan und EN-Seite group-comparisons-intermediate mit Übung und Zurück/Weiter.
+- Ladezeit im CI-Rauchtest: project-intermediate 21,2 s.
+
 ## Geprüft (2026-10-27, M9 P8)
 EN-Texte der 9 Lektionen (Übungen + Wissenscheck) per Skript geprüft (fehlendes `en`, Umlaute, deutsche Anführungszeichen, Dezimalkomma, deutsche Wörter, „N %“): nichts fehlt, 4 Prozentangaben auf „14%“ vereinheitlicht. In glm/mixed-models/power-Texten steht noch „80 %“ (bei deren Übersetzung korrigieren).
 Über Verifier-Subagent (echte Ausgabe, gekürzt):
@@ -31,7 +35,7 @@ EN-Texte der 9 Lektionen (Übungen + Wissenscheck) per Skript geprüft (fehlende
 - `testthat::test_dir("tools/tests")`: FAIL 0 | WARN 16 | SKIP 0 | PASS 243; `node --test tests/js`: 12 pass, 0 fail
 - `quarto render`: Exit 0, [59/59], keine Warnungen; alle 9 `_site/en/*-intermediate.html` vorhanden, keine `en/robust-intermediate.html`; `_site/de/sem-intermediate.html` enthält `rt-pager`
 - `Rscript tests/smoke-test.R`: erster Lauf 1 failure (eigener Testfehler: EN-Projektzeile auf der falschen Seite geprüft, Schritte umsortiert), zweiter Lauf 0 failure(s); neu: „en: intermediate P1-P3 lessons linked in course plan“, „en: German-only robust-intermediate not linked“, „en: intermediate page in English with exercise and pager“ ok; project-intermediate bereit nach 25,3 s
-- Nicht geprüft: EN-Seiten nicht manuell durchgeklickt (SVG-Beschriftungen auf Überlänge, Wissenscheck, Beispielblöcke nicht in webR ausgeführt; Code ist identisch zu DE); EN-Übungen nicht im Browser bewertet (gleiche IDs/Checks wie DE); EN-Texte nur per Skript, nicht vollständig gelesen; nicht gepusht, CI nicht gelaufen.
+- Nicht geprüft: EN-Seiten nicht manuell durchgeklickt (SVG-Beschriftungen auf Überlänge, Wissenscheck, Beispielblöcke nicht in webR ausgeführt; Code ist identisch zu DE); EN-Übungen nicht im Browser bewertet (gleiche IDs/Checks wie DE); EN-Texte nur per Skript, nicht vollständig gelesen. CI siehe oben.
 
 ## Online (2026-10-27, M9 P7)
 - Gepusht (852d386, 8753f65). CI-Lauf 40533051262 grün (build 11,4 min, deploy ok): 144/144, `[ FAIL 0 | WARN 16 | SKIP 0 | PASS 243 ]`, Node 12/0, Rauchtest 0 failure(s).
