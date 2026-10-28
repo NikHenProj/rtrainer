@@ -1,6 +1,6 @@
 # STATUS
 
-Stand (2026-10-28): **M10 P2 (DE: scales-, sem-, group-comparisons-expert) fertig, lokal verifiziert und committet, nicht gepusht; wartet auf Push (nach Rückfrage), CI und Abnahme.** Davor: **M10 P1 (DE: reshaping-, missing-, visualisation-expert) fertig und gepusht (e4492fc), CI grün; wartet auf Abnahme.** Davor: **M10 P0 (Werkzeug + Daten für Expert) fertig und gepusht (72149bd), CI grün.** Davor: **M10-Plan (Expert-Stufe) abgenommen: `docs/M10-plan.md`.** **M9 komplett:** Paket P9b (EN: reporting-, reproducibility-, programming- und project-intermediate) abgenommen und in `main`.** Davor: **M9 Paket P9a (EN: Intermediate P4–P5, 6 Lektionen) abgenommen und in `main`.** Davor: **M9 Paket P8 (EN: Intermediate P1–P3, 9 Lektionen) abgenommen und in `main`.** Davor: **M9 Paket P7 (DE: project-intermediate) abgenommen und in `main`.** Davor: **M9 Paket P6 (DE: reporting-, reproducibility-, programming-intermediate) abgenommen und in `main`.** Davor: **M9 Paket P5 (DE: mixed-models-, moderation-mediation-, power-intermediate) abgenommen und in `main`.** **M6 bis M8 Teil 5 und M9 Paket P1 (DE: import-, cleaning-, reshaping-intermediate) abgenommen und in `main` und M9 Paket P2 (DE: missing-, visualisation-, descriptives-intermediate) abgenommen und in `main`; M9 Paket P3 (DE: scales-, sem-, group-comparisons-intermediate) und Datensatz `acceptance` abgenommen und in `main`; M9 Paket P4 (DE: robust-, regression-, glm-intermediate) abgenommen und in `main`** (alle 10 Beginner-Lektionen und Mini-Projekt Beginner, DE + EN). **Online seit 2026-10-26:** https://nikhenproj.github.io/rtrainer/ (Pages-Quelle GitHub Actions, letzter CI-Lauf 40582158643 grün). M9-Plan abgenommen (inkl. Datensatz `acceptance`): `docs/M9-plan.md`. Entscheidungen: NEWS.md.
+Stand (2026-10-28): **M10 P2 (DE: scales-, sem-, group-comparisons-expert) fertig und gepusht (f6091de), CI grün; wartet auf Abnahme.** Davor: **M10 P1 (DE: reshaping-, missing-, visualisation-expert) fertig und gepusht (e4492fc), CI grün; wartet auf Abnahme.** Davor: **M10 P0 (Werkzeug + Daten für Expert) fertig und gepusht (72149bd), CI grün.** Davor: **M10-Plan (Expert-Stufe) abgenommen: `docs/M10-plan.md`.** **M9 komplett:** Paket P9b (EN: reporting-, reproducibility-, programming- und project-intermediate) abgenommen und in `main`.** Davor: **M9 Paket P9a (EN: Intermediate P4–P5, 6 Lektionen) abgenommen und in `main`.** Davor: **M9 Paket P8 (EN: Intermediate P1–P3, 9 Lektionen) abgenommen und in `main`.** Davor: **M9 Paket P7 (DE: project-intermediate) abgenommen und in `main`.** Davor: **M9 Paket P6 (DE: reporting-, reproducibility-, programming-intermediate) abgenommen und in `main`.** Davor: **M9 Paket P5 (DE: mixed-models-, moderation-mediation-, power-intermediate) abgenommen und in `main`.** **M6 bis M8 Teil 5 und M9 Paket P1 (DE: import-, cleaning-, reshaping-intermediate) abgenommen und in `main` und M9 Paket P2 (DE: missing-, visualisation-, descriptives-intermediate) abgenommen und in `main`; M9 Paket P3 (DE: scales-, sem-, group-comparisons-intermediate) und Datensatz `acceptance` abgenommen und in `main`; M9 Paket P4 (DE: robust-, regression-, glm-intermediate) abgenommen und in `main`** (alle 10 Beginner-Lektionen und Mini-Projekt Beginner, DE + EN). **Online seit 2026-10-26:** https://nikhenproj.github.io/rtrainer/ (Pages-Quelle GitHub Actions, letzter CI-Lauf 40582158643 grün). M9-Plan abgenommen (inkl. Datensatz `acceptance`): `docs/M9-plan.md`. Entscheidungen: NEWS.md.
 
 ## Was steht
 - **Gerüst (M6):** Quarto-Website mit quarto-live/webR, Theme hell/dunkel (IBM Plex Sans, JetBrains Mono, Indigo), Kopfzeile Kursplan · Wiederholen (n fällig) · Pakete · Glossar · DE/EN · Hell/Dunkel · Suche.
@@ -28,6 +28,10 @@ Stand (2026-10-28): **M10 P2 (DE: scales-, sem-, group-comparisons-expert) ferti
 - **Triage** `docs/legacy-triage.md`: 54 behalten (18 im Beginner-Pfad), 11 streichen, freigegeben. Migriert: 41 (markiert): alle Beginner-Aufgaben der Triage, P1 (10, 13, 18, 23, 24, 26), P2 (5, 14, 15, 48, 52), P3 (30, 31, 36, 37, 38), P4 (35), P5 (40–43, 45, 46; 44 bleibt für mixed-models-expert) und P6 (53, 54, 19, 21, 25, 28, 29; 4 als `rr-i-lockfile`, 20 als Wissenscheck-Frage). Stand: 50 von 54 (offen: 22, 27, 39, 44 für Expert).
 - Alt: `legacy/exercises/` (65 Aufgaben), `legacy/driving_sim_v0.*`.
 
+## Online (2026-10-28, M10 P2)
+- Gepusht (f6091de). CI-Lauf 40619510509 grün (build 16,8 min, deploy ok): 176/176, `[ FAIL 0 | WARN 2 | SKIP 0 | PASS 303 ]`, Node 14/0, Rauchtest 0 failure(s).
+- Ladezeiten im CI-Rauchtest: scales-expert 16,1 s, sem-expert 10,6 s, group-comparisons-expert 19,7 s.
+
 ## Geprüft (2026-10-28, M10 P2)
 Inhalt: 3 DE-Expert-Lektionen (15 Übungen, davon 3 Herausforderungen), Rauchtest Abschnitt 16, CI-Paketliste (EFAtools, TOSTER). Details: NEWS.md.
 Vorab in webR gemessen (headless): EFAtools 3,2 s, lavaan 3,0 s, semTools 1,0 s, TOSTER 3,3 s, afex + emmeans 10,6 s. mirt lädt nicht (SimDesign braucht `qs2`, nicht im webR-Index) → „Lokal ausführen“ + Deutungsübung. `psych::polychoric()` in webR unbrauchbar (ohne `mc.cores = 1` „unable to fork“, sonst 18 s); `lavCor()` 0,9 s.
@@ -36,7 +40,7 @@ Vorab in webR gemessen (headless): EFAtools 3,2 s, lavaan 3,0 s, semTools 1,0 s,
 - `testthat::test_dir("tools/tests")`: FAIL 0 | WARN 2 | SKIP 0 | PASS 303; `node --test tests/js`: 14 pass, 0 fail
 - `quarto render`: Exit 0, 75 Seiten, keine Warnungen; `_site/en/` ohne `*-expert.html`
 - `Rscript tests/smoke-test.R`: 0 failure(s); scales-expert bereit nach 16,7 s (EFA bewertet 1,5 s), sem-expert 11,2 s (Herausforderung: Kasten vor #why, Hinweis, bewertet 4,6 s), group-comparisons-expert 20,8 s (TOST bewertet 0,5 s)
-- Nicht geprüft: Seiten nicht optisch durchgesehen (SVGs, dunkles Theme); nur eine Übung pro Seite im Browser bewertet, übrige nur im lokalen Selbsttest; Beispielblöcke nur lokal in R ausgeführt; CI-Lauf steht aus (neue Pakete).
+- Nicht geprüft: Seiten nicht optisch durchgesehen (SVGs, dunkles Theme); nur eine Übung pro Seite im Browser bewertet, übrige nur im lokalen Selbsttest; Beispielblöcke nur lokal in R ausgeführt; CI-Lauf siehe oben.
 
 ## Online (2026-10-28, M10 P1)
 - Gepusht (e4492fc). CI-Lauf 40613664371 grün (build 13,6 min, deploy ok): 161/161, `[ FAIL 0 | WARN 22 | SKIP 0 | PASS 303 ]`, Node 14/0, Rauchtest 0 failure(s).
@@ -210,7 +214,7 @@ Vorab Ladezeit in webR (headless, eine Messung): lme4/lmerTest/performance/param
 - Kursplan: „nicht vorgesehen“-Zellen werden vom Screenreader einzeln vorgelesen (19×); ggf. kürzen.
 
 ## Als Nächstes
-1. Push nach Rückfrage, CI-Lauf prüfen (EFAtools, TOSTER neu); M10 P0–P2 abnehmen lassen.
+1. M10 P0–P2 abnehmen lassen (P2 online, CI 40619510509 grün).
 2. M10 P3 (DE): robust-, regression-, glm-expert (Bootstrap BCa mit boot, Permutationstests mit coin, `lmrob()`, WRS2 mehrfaktoriell; Splines, cluster-robuste SE mit sandwich/clubSandwich, Kreuzvalidierung; ordinal `clm()`/`clmm()`, multinomial nnet, `glm.nb()`/pscl). Vorher Ladezeit von boot, coin, robustbase, clubSandwich, ordinal, nnet, MASS, pscl in webR messen; MASS maskiert `dplyr::select()` (Reihenfolge in `webr: packages` prüfen oder `MASS::` nutzen). Lehre aus P2: auch Funktionen mit `parallel::mclapply()` (psych) prüfen.
 
 ## Umgebung
