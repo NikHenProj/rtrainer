@@ -1,0 +1,88 @@
+id: gl-e-clm
+lesson: glm-expert
+order: 0
+title:
+  de: Eine Ratingskala ordinal modellieren
+  en: Modelling a rating scale as ordinal
+kind: write
+required: false
+challenge: true
+packages: [dplyr]
+data: [usability]
+setup: |
+  library(dplyr)
+  ease <- usability |>
+    filter(!is.na(seq)) |>
+    mutate(seq_o = factor(seq, levels = 1:7, ordered = TRUE))
+prompt:
+  de: |
+    Die Einfachheit jeder Aufgabe wurde mit der Single Ease Question (`seq`,
+    1–7) bewertet. Ein lineares Modell behandelt die Abstände zwischen 1, 2, …,
+    7 als gleich und kann Werte über 7 vorhersagen. Ein kumulatives Logit-Modell
+    nutzt nur die Reihenfolge.
+
+    `ease` enthält `seq_o` als geordneten Faktor. Schätze mit `clm()` aus ordinal
+    das Modell `seq_o ~ prototype + expertise` und gib die Odds Ratios der drei
+    Effekte als benannten Vektor zurück:
+    `exp(coef(fit))[c("prototypeB", "prototypeC", "expertiseexpert")]`.
+  en: |
+    The ease of each task was rated with the Single Ease Question (`seq`, 1–7).
+    A linear model treats the distances between 1, 2, …, 7 as equal and can
+    predict values above 7. A cumulative logit model only uses the order.
+
+    `ease` holds `seq_o` as an ordered factor. Fit the model
+    `seq_o ~ prototype + expertise` with `clm()` from ordinal and return the odds
+    ratios of the three effects as a named vector:
+    `exp(coef(fit))[c("prototypeB", "prototypeC", "expertiseexpert")]`.
+starter: |
+  fit <- lm(seq ~ prototype + expertise, data = ease)
+  coef(fit)
+solution: |
+  fit <- ordinal::clm(seq_o ~ prototype + expertise, data = ease)
+  exp(coef(fit))[c("prototypeB", "prototypeC", "expertiseexpert")]
+hints:
+  - de: "`clm()` braucht ein geordnetes Ergebnis: `seq_o`, nicht die Zahl `seq`."
+    en: "`clm()` needs an ordered outcome: `seq_o`, not the number `seq`."
+  - de: "`coef(fit)` enthält zuerst sechs Schwellen (`1|2`, …, `6|7`), dann die Effekte; wähle die Effekte per Namen."
+    en: "`coef(fit)` first contains six thresholds (`1|2`, …, `6|7`), then the effects; select the effects by name."
+  - de: "`fit <- clm(seq_o ~ prototype + expertise, data = ease)`, dann `exp(coef(fit))[c(...)]`."
+    en: "`fit <- clm(seq_o ~ prototype + expertise, data = ease)`, then `exp(coef(fit))[c(...)]`."
+explanation:
+  de: |
+    Expertinnen und Experten haben 2,32-fache Odds, eine Aufgabe in eine höhere
+    Kategorie einzustufen (gleich für jede Schwelle: ≥ 2 vs. 1, …, 7 vs. ≤ 6);
+    Prototyp B 1,52-fach, C 1,01-fach gegenüber A. Das ist die
+    Proportional-Odds-Annahme: ein Effekt für alle Schwellen. Prüfen kannst du
+    sie mit `nominal_test(fit)` (hier unauffällig, p = .86 und .53). Die sechs
+    Schwellen sind die Grenzen auf der latenten Skala; sie müssen nicht
+    gleichabständig sein, und genau das unterscheidet das Modell von `lm()`.
+    Fallstrick: Mehrere Bewertungen je Person sind abhängig; die
+    Standardfehler hier sind zu klein (nächste Übung: `clmm()`). Für
+    Wahrscheinlichkeiten je Kategorie: `predict(fit, newdata, type = "prob")`
+    oder `marginaleffects::avg_predictions()`.
+  en: |
+    Experts have 2.32 times the odds of rating a task in a higher category (the
+    same for every threshold: ≥ 2 vs. 1, …, 7 vs. ≤ 6); prototype B 1.52 times,
+    C 1.01 times compared with A. That is the proportional odds assumption: one
+    effect for all thresholds. You can check it with `nominal_test(fit)`
+    (unremarkable here, p = .86 and .53). The six thresholds are the cut points
+    on the latent scale; they need not be equally spaced, and that is exactly
+    what distinguishes the model from `lm()`. Pitfall: several ratings per person
+    are dependent; the standard errors here are too small (next exercise:
+    `clmm()`). For probabilities per category: `predict(fit, newdata, type =
+    "prob")` or `marginaleffects::avg_predictions()`.
+misconception:
+  de: "Eine 7-stufige Ratingskala ist praktisch metrisch; ein lineares Modell ist immer gleichwertig."
+  en: "A 7-point rating scale is practically metric; a linear model is always equivalent."
+check:
+  type: value
+  tolerance: 1.0e-4
+common_mistakes:
+  - pattern: "clm\\(\\s*seq\\s*~"
+    message:
+      de: "`seq` ist eine Zahl; `clm()` braucht den geordneten Faktor `seq_o`."
+      en: "`seq` is a number; `clm()` needs the ordered factor `seq_o`."
+  - pattern: "polr\\("
+    message:
+      de: "`MASS::polr()` schätzt dasselbe Modell, gefragt ist aber `clm()` (kann auch Zufallseffekte und Nominaleffekte)."
+      en: "`MASS::polr()` fits the same model, but the task asks for `clm()` (which also handles random and nominal effects)."

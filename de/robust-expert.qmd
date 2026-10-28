@@ -1,0 +1,156 @@
+---
+title: "Nichtparametrisch und robust"
+subtitle: "Expert · Bootstrap (BCa), Permutationstests, robuste Regression, getrimmte Mittel im gemischten Design"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, tidyr, boot, coin, robustbase, WRS2, parameters]
+resources:
+  - ../data/survey.csv
+  - ../data/usability.csv
+  - ../data/driving_sim.csv
+---
+
+{{< include /_generated/de/robust-expert/runtime.qmd >}}
+
+{{< include /_generated/de/robust-expert/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R läuft hier direkt im Browser. Beim ersten Besuch lädt es 20–40 Sekunden (Anzeige unten rechts), danach geht es schneller.
+:::
+
+{{< include /_generated/de/robust-expert/challenge.qmd >}}
+
+## Wozu? {#why}
+
+**Forschungsfrage:** Wie sicher ist der Unterschied in der Frustration zwischen Sprach- und Touchbedienung, wenn die Werte schief und gestuft sind, und wie stark hängen die Effekte im Usability-Test an wenigen sehr langen Bearbeitungszeiten?
+
+In der Intermediate-Lektion hast du Rangtests und getrimmte Mittelwerte für einfache Vergleiche genutzt. Für Expert-Fragen brauchst du Werkzeuge, die zu *deiner* Kennzahl und *deinem* Design passen: ein Konfidenzintervall für eine beliebige Statistik (Bootstrap), einen Test, der genau das Design permutiert (coin), eine Regression, die sich nicht von Extremwerten ziehen lässt (`lmrob()`), und robuste Tests für gemischte Designs (WRS2).
+
+## Konzept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 170" role="img" aria-labelledby="fig-rbe-title fig-rbe-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-rbe-title">Ablauf eines Bootstrap-Intervalls</title>
+  <desc id="fig-rbe-desc">Links die Originaldaten. Pfeil zu boot, das mit Zurücklegen viele Stichproben zieht, dargestellt als drei gestapelte Kästen, geschichtet nach Gruppe. In jeder Stichprobe rechnet die Statistikfunktion mit dem Index i die Kennzahl. Pfeil zur Verteilung der Kennzahl. Pfeil zu boot.ci, das daraus das BCa-Intervall bildet. Darunter der Hinweis: Die Funktion muss die Stichprobe aus i bilden; Personen ziehen, wenn eine Person mehrere Zeilen hat.</desc>
+  <rect x="10" y="40" width="90" height="60" class="rt-fig-box" />
+  <text x="20" y="66" class="rt-fig-code">Daten</text>
+  <text x="20" y="86" class="rt-fig-code">n Zeilen</text>
+  <line x1="100" y1="70" x2="135" y2="70" class="rt-fig-arrow" />
+  <rect x="140" y="30" width="100" height="56" class="rt-fig-box" />
+  <rect x="148" y="38" width="100" height="56" class="rt-fig-box" />
+  <rect x="156" y="46" width="100" height="56" class="rt-fig-box-accent" />
+  <text x="166" y="70" class="rt-fig-code">boot()</text>
+  <text x="166" y="90" class="rt-fig-code">f(data, i)</text>
+  <line x1="256" y1="70" x2="291" y2="70" class="rt-fig-arrow" />
+  <rect x="296" y="40" width="110" height="60" class="rt-fig-box" />
+  <text x="306" y="66" class="rt-fig-code">R Werte</text>
+  <text x="306" y="86" class="rt-fig-code">der Kennzahl</text>
+  <line x1="406" y1="70" x2="441" y2="70" class="rt-fig-arrow" />
+  <rect x="446" y="40" width="104" height="60" class="rt-fig-box-accent" />
+  <text x="456" y="66" class="rt-fig-code">boot.ci()</text>
+  <text x="456" y="86" class="rt-fig-code">BCa</text>
+  <text x="140" y="130" class="rt-fig-label">Statistikfunktion rechnet auf data[i, ], strata = Gruppe</text>
+  <text x="140" y="155" class="rt-fig-label rt-fig-muted">Mehrere Zeilen je Person: Personen ziehen, nicht Zeilen</text>
+</svg>
+<figcaption>Stichproben mit Zurücklegen ziehen, die Kennzahl in jeder berechnen, aus ihrer Verteilung das Intervall bilden.</figcaption>
+</figure>
+```
+
+- **Bootstrap mit boot:** Du schreibst eine Funktion `f(data, i)`, die die Kennzahl aus `data[i, ]` berechnet; `boot(data, f, R = 1999, strata = group)` ruft sie mit neuen Indizes auf. `boot.ci(b, type = "bca")` liefert das BCa-Intervall: Es korrigiert Verzerrung und Schiefe der Bootstrap-Verteilung und ist dem Perzentil-Intervall meist vorzuziehen. Voraussetzung: eine glatte Kennzahl (getrimmtes Mittel ja, Median stark gestufter Daten nein) und mindestens etwa 1000 Stichproben.
+- **Permutationstests mit coin:** Unter H0 sind die Bezeichnungen austauschbar; der Test vergleicht die beobachtete Statistik mit ihrer Verteilung über viele Vertauschungen. `oneway_test(y ~ group, distribution = approximate(nresample = 9999))` für Mittelwerte, `wilcox_test()` für Ränge, `independence_test()` allgemein. Bei Messwiederholung nur innerhalb der Person vertauschen: `y ~ condition | participant`.
+- **Robuste Regression:** `robustbase::lmrob()` (MM-Schätzer) hat einen hohen Bruchpunkt und ist bei normalverteilten Fehlern fast so effizient wie OLS. Die Robustheitsgewichte (`weights(fit, type = "robustness")`) zeigen, welche Beobachtungen heruntergewichtet wurden. Niedriges Gewicht heißt „passt schlecht zum Großteil“, nicht „falsch gemessen“.
+- **Getrimmte Mittel im Design:** WRS2 bietet `t2way()` (zwei Zwischen-Faktoren), `bwtrim()` (zwischen × innerhalb) und `wwtrim()` (zwei Innerhalb-Faktoren). Die Tests kommen ohne Normalverteilung, gleiche Varianzen und Sphärizität aus; dafür sinken die Freiheitsgrade.
+
+## Beispiel {#example}
+
+Unterschied der 20 %-getrimmten Mittel der Frustration mit Bootstrap-Verteilung und zwei Intervallen. Zum Vergleich der Yuen-Test aus WRS2, der dieselbe Kennzahl analytisch schätzt:
+
+```{webr}
+frust <- survey |>
+  filter(!is.na(tlx_frustration))
+trim_diff <- function(data, i) {
+  d <- data[i, ]
+  mean(d$tlx_frustration[d$interface == "voice"], trim = 0.2) -
+    mean(d$tlx_frustration[d$interface == "touch"], trim = 0.2)
+}
+set.seed(2026)
+b <- boot(frust, trim_diff, R = 1999, strata = frust$interface)
+b
+boot.ci(b, type = c("perc", "bca"))
+yuen(tlx_frustration ~ interface, data = frust)
+```
+
+Robuste gegen OLS-Regression der Bearbeitungszeit, danach die Gewichte nach Erfolg der Aufgabe:
+
+```{webr}
+fit_ls <- lm(time_s ~ prototype + task + expertise, data = usability)
+set.seed(2026)
+fit_mm <- lmrob(time_s ~ prototype + task + expertise, data = usability)
+tibble(term = names(coef(fit_ls)), ls = coef(fit_ls), mm = coef(fit_mm))
+usability |>
+  mutate(weight = weights(fit_mm, type = "robustness")) |>
+  summarise(n = n(), mean_weight = mean(weight), below_half = sum(weight < 0.5), .by = success)
+```
+
+Gemischtes Design robust: Reaktionszeit nach Erfahrung (zwischen) und Warnform (innerhalb), auf Personenmitteln:
+
+```{webr}
+rt_means <- driving_sim |>
+  summarise(rt = mean(rt_ms, na.rm = TRUE), .by = c(participant, experience, condition))
+bwtrim(rt ~ experience * condition, id = participant, data = rt_means)
+```
+
+**So berichtest du es:** Die Frustration war mit Sprachbedienung höher (Δ der 20 %-getrimmten Mittel = 8,8 Punkte; BCa-Bootstrap-95 %-KI [1,8; 15,7]; 1999 Stichproben, geschichtet nach Bedienform). In einer robusten Regression (MM-Schätzer) waren Expertinnen und Experten 14,8 s schneller (OLS: 25,3 s); der Unterschied geht darauf zurück, dass gescheiterte Aufgaben stark heruntergewichtet wurden (mittleres Gewicht 0,41 vs. 0,93). Ein Test mit getrimmten Mitteln bestätigte die Effekte von Erfahrung (*F̃*(1; 21,8) = 12,1, *p* = .002) und Warnform (*F̃*(2; 19,4) = 105,5, *p* < .001) ohne Interaktion (*p* = .30).
+
+## Paketvergleich {#packages}
+
+| Aufgabe | Empfehlung | Alternative |
+|---|---|---|
+| Bootstrap-Intervalle | **boot** `boot()` + `boot.ci(type = "bca")`, voll flexibel | `parameters::bootstrap_parameters()` (für Modelle), **rsample** `bootstraps()` + `int_bca()` (tidy, mit Cluster-Gruppen), `TOSTER::boot_t_TOST()` |
+| Permutationstests | **coin** (`oneway_test()`, `wilcox_test()`, `independence_test()`, Blöcke nach dem senkrechten Strich) | **lmPerm**, **permuco** (Permutation für lineare Modelle mit Messwiederholung), eigene Schleife nur zum Lernen |
+| Robuste Regression | **robustbase** `lmrob()` (MM) | `MASS::rlm()` (M, kein hoher Bruchpunkt), **robustlmm** `rlmer()` für Mixed Models, `sandwich` nur für robuste SE |
+| Getrimmte Mittel, Designs | **WRS2** `yuen()`, `t2way()`, `bwtrim()`, `wwtrim()`, Post-hoc `sppba()` usw. | `rstatix` (Rangtests), `afex` mit Rangtransformation (ART: **ARTool**) |
+
+## Übungen {#exercises}
+
+Drei Pflichtübungen und eine Zusatzübung. **Ausführen und prüfen** startet deinen Code und prüft ihn sofort. Hinweise deckst du einzeln auf (**Hinweis zeigen**), die Lösung erst danach.
+
+{{< include /_generated/de/robust-expert/exercises.qmd >}}
+
+## Wissenscheck {#check}
+
+{{< include /_generated/de/robust-expert/quiz.qmd >}}
+
+## Spickzettel {#cheatsheet}
+
+```r
+# Bootstrap mit BCa (Funktion rechnet auf data[i, ])
+f <- function(data, i) {
+  d <- data[i, ]
+  mean(d$y[d$group == "b"], trim = 0.2) - mean(d$y[d$group == "a"], trim = 0.2)
+}
+set.seed(2026)
+b <- boot::boot(d, f, R = 1999, strata = d$group)
+boot::boot.ci(b, type = c("perc", "bca"))
+
+# Permutationstest, bei Messwiederholung geschichtet
+set.seed(2026)
+coin::oneway_test(y ~ condition | participant, data = d,
+                  distribution = coin::approximate(nresample = 9999))
+
+# Robuste Regression und Gewichte
+set.seed(2026)
+fit <- robustbase::lmrob(y ~ x1 + x2, data = d)
+weights(fit, type = "robustness")
+
+# Getrimmte Mittel im gemischten Design
+WRS2::bwtrim(y ~ between * within, id = participant, data = person_means)
+```
+
+- Bootstrap-SE von 0: Die Statistikfunktion nutzt `i` nicht.
+- Permutieren, was unter H0 austauschbar ist: bei Messwiederholung nur innerhalb der Person.
+- Robuste Gewichte zeigen, wessen Verhalten die Schätzung beschreibt; heruntergewichtete Werte nicht einfach löschen.
+
+{{< include /_generated/de/robust-expert/footer.qmd >}}

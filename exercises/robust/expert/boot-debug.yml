@@ -1,0 +1,88 @@
+id: rb-e-boot-debug
+lesson: robust-expert
+order: 2
+title:
+  de: Bootstrap ohne Streuung
+  en: Bootstrap without variation
+kind: debug
+required: true
+packages: [dplyr, boot]
+data: [usability]
+setup: |
+  library(dplyr)
+  library(boot)
+  checkout_b <- usability |>
+    filter(task == "checkout", prototype == "B")
+prompt:
+  de: |
+    Ein Kollege will für die Bezahlaufgabe mit Prototyp B (24 Personen, eine
+    Zeile je Person) ein Bootstrap-Intervall für den Median der Zeit. Sein Code
+    bricht mit „All values of t are equal“ ab. Finde und behebe den Fehler.
+
+    Gib das Perzentil-Intervall als Vektor zurück (`ci$percent[4:5]`). Seed,
+    R und Intervalltyp bleiben wie im Code.
+  en: |
+    A colleague wants a bootstrap interval for the median time of the checkout
+    task with prototype B (24 people, one row each). The code stops with "All
+    values of t are equal". Find and fix the bug.
+
+    Return the percentile interval as a vector (`ci$percent[4:5]`). Keep the
+    seed, R and interval type as in the code.
+starter: |
+  med_time <- function(data, i) {
+    median(data$time_s)
+  }
+  set.seed(2026)
+  b <- boot(checkout_b, med_time, R = 1999)
+  ci <- boot.ci(b, type = "perc")
+  ci$percent[4:5]
+solution: |
+  med_time <- function(data, i) {
+    median(data$time_s[i])
+  }
+  set.seed(2026)
+  b <- boot(checkout_b, med_time, R = 1999)
+  ci <- boot.ci(b, type = "perc")
+  ci$percent[4:5]
+hints:
+  - de: "Sieh dir `b` an: Wie groß ist der Standardfehler (`std. error`)?"
+    en: "Look at `b`: how large is the standard error (`std. error`)?"
+  - de: "`boot()` ruft die Funktion 1999-mal mit einem neuen Indexvektor `i` auf. Wird `i` verwendet?"
+    en: "`boot()` calls the function 1999 times with a new index vector `i`. Is `i` used?"
+  - de: "Indexiere die Zeit mit den gezogenen Zeilen: `data$time_s[i]`."
+    en: "Index the time with the drawn rows: `data$time_s[i]`."
+explanation:
+  de: |
+    Die Funktion ignorierte `i` und rechnete 1999-mal den Median der
+    Originaldaten (66,1 s); ohne Streuung gibt es kein Intervall. Richtig:
+    `median(data$time_s[i])`, 95 %-Perzentil-KI [49,7; 95,1] s. Das breite,
+    asymmetrische Intervall zeigt, wie unsicher ein Median aus 24 Werten ist.
+    Merkregel: Die Statistikfunktion muss die Stichprobe *aus `i`* bilden
+    (`data[i, ]` bei mehreren Spalten). Ein Bootstrap-SE von 0 ist immer ein
+    Programmierfehler. Achte auch darauf, was eine Zeile ist: Hier ist es eine
+    Person. Mit allen drei Prototypen pro Person müsstest du Personen ziehen
+    (Cluster-Bootstrap), nicht Zeilen.
+  en: |
+    The function ignored `i` and computed the median of the original data
+    (66.1 s) 1999 times; without variation there is no interval. Correct:
+    `median(data$time_s[i])`, 95% percentile CI [49.7, 95.1] s. The wide,
+    asymmetric interval shows how uncertain a median of 24 values is. Rule of
+    thumb: the statistic function must build the sample *from `i`* (`data[i, ]`
+    for several columns). A bootstrap SE of 0 is always a programming error. Also
+    mind what a row is: here it is one person. With all three prototypes per
+    person you would have to resample people (cluster bootstrap), not rows.
+misconception:
+  de: "`boot()` zieht die Stichproben selbst und übergibt der Funktion fertige Daten; der Index `i` ist nur formal nötig."
+  en: "`boot()` draws the resamples itself and passes ready-made data to the function; the index `i` is only formally required."
+check:
+  type: value
+  tolerance: 1.0e-6
+common_mistakes:
+  - pattern: "median\\(data\\$time_s\\)"
+    message:
+      de: "`median(data$time_s)` ignoriert `i`; jede Bootstrap-Stichprobe liefert dann denselben Wert."
+      en: "`median(data$time_s)` ignores `i`; every bootstrap sample then gives the same value."
+  - pattern: "sample\\("
+    message:
+      de: "Selbst ziehen ist nicht nötig: `boot()` erzeugt die Indizes und übergibt sie als `i`."
+      en: "No need to resample yourself: `boot()` creates the indices and passes them as `i`."

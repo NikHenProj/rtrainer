@@ -1,0 +1,89 @@
+id: gl-e-clmm
+lesson: glm-expert
+order: 1
+title:
+  de: Ordinales Mixed Model mit `clmm()`
+  en: Ordinal mixed model with `clmm()`
+kind: write
+required: true
+packages: [dplyr]
+data: [usability]
+setup: |
+  library(dplyr)
+  ease <- usability |>
+    filter(!is.na(seq)) |>
+    mutate(seq_o = factor(seq, levels = 1:7, ordered = TRUE))
+prompt:
+  de: |
+    Jede Person hat bis zu 12 Aufgaben bewertet. Manche bewerten grundsätzlich
+    großzügiger als andere; ohne Zufallseffekt gelten die Bewertungen als
+    unabhängig.
+
+    Schätze mit `clmm()` das Modell `seq_o ~ prototype + expertise` mit einem
+    Zufallsintercept je Person (`(1 | participant)`). Gib ein Tibble mit den
+    Spalten `term`, `or` (Odds Ratio) und `se` (Standardfehler auf der
+    Logit-Skala) für `prototypeB`, `prototypeC` und `expertiseexpert` zurück.
+    Die Werte stehen in `coef(summary(fit))` (Spalten 1 und 2).
+  en: |
+    Each person rated up to 12 tasks. Some people are generally more lenient
+    than others; without a random effect the ratings count as independent.
+
+    Fit the model `seq_o ~ prototype + expertise` with `clmm()` and a random
+    intercept per person (`(1 | participant)`). Return a tibble with the columns
+    `term`, `or` (odds ratio) and `se` (standard error on the logit scale) for
+    `prototypeB`, `prototypeC` and `expertiseexpert`. The values are in
+    `coef(summary(fit))` (columns 1 and 2).
+starter: |
+  fit <- ordinal::clm(seq_o ~ prototype + expertise, data = ease)
+  coef(summary(fit))
+solution: |
+  fit <- ordinal::clmm(seq_o ~ prototype + expertise + (1 | participant), data = ease)
+  tab <- coef(summary(fit))
+  terms <- c("prototypeB", "prototypeC", "expertiseexpert")
+  tibble(term = terms, or = exp(tab[terms, 1]), se = tab[terms, 2])
+hints:
+  - de: "Die Syntax für Zufallseffekte ist wie bei lme4: `+ (1 | participant)`."
+    en: "The random-effects syntax is as in lme4: `+ (1 | participant)`."
+  - de: "`coef(summary(fit))` ist eine Matrix mit Zeilennamen; `tab[terms, 1]` sind die Schätzungen, `tab[terms, 2]` die SE."
+    en: "`coef(summary(fit))` is a matrix with row names; `tab[terms, 1]` are the estimates, `tab[terms, 2]` the SEs."
+  - de: "Odds Ratios: `exp()` der Schätzung; den SE lässt du auf der Logit-Skala."
+    en: "Odds ratios: `exp()` of the estimate; leave the SE on the logit scale."
+explanation:
+  de: |
+    Expertise: OR = 2,43, SE 0,278 (ohne Zufallseffekt 2,32, SE 0,220);
+    Prototyp B: OR = 1,52, SE 0,264; C: 0,99. Die Personen-SD auf der latenten
+    Skala ist 0,40. Wie bei cluster-robusten Fehlern wächst vor allem der SE des
+    Zwischen-Personen-Effekts (Expertise), die Innerhalb-Effekte ändern sich
+    kaum. Anders als bei `lm()` ändert sich auch die Schätzung leicht: Logit-
+    Mixed-Models schätzen personenspezifische (bedingte) Effekte, die bei
+    Personenunterschieden etwas größer sind als die populationsgemittelten aus
+    `clm()`. Formulierung: „Expertinnen und Experten bewerteten Aufgaben
+    einfacher (OR = 2,43, 95 %-KI [1,41; 4,19]; kumulatives Logit-Modell mit
+    Zufallsintercept je Person).“ In webR liefert `model_parameters()` für
+    `clmm` keine Tabelle (braucht lme4); nimm `coef(summary(fit))`.
+  en: |
+    Expertise: OR = 2.43, SE 0.278 (without random effect 2.32, SE 0.220);
+    prototype B: OR = 1.52, SE 0.264; C: 0.99. The person SD on the latent scale
+    is 0.40. As with cluster-robust errors, mainly the SE of the between-person
+    effect (expertise) grows; the within effects hardly change. Unlike `lm()`,
+    the estimate also changes slightly: logit mixed models estimate
+    person-specific (conditional) effects, which are somewhat larger than the
+    population-averaged ones from `clm()` when people differ. Wording: "Experts
+    rated tasks as easier (OR = 2.43, 95% CI [1.41, 4.19]; cumulative logit
+    model with a random intercept per person)." In webR `model_parameters()`
+    gives no table for `clmm` (it needs lme4); use `coef(summary(fit))`.
+misconception:
+  de: "Ein Zufallsintercept ändert in einem Logit-Modell nur die Standardfehler, nie die Schätzungen."
+  en: "In a logit model a random intercept only changes the standard errors, never the estimates."
+check:
+  type: value
+  tolerance: 1.0e-3
+common_mistakes:
+  - pattern: "clm\\("
+    message:
+      de: "`clm()` hat keine Zufallseffekte; nimm `clmm()` mit `(1 | participant)`."
+      en: "`clm()` has no random effects; use `clmm()` with `(1 | participant)`."
+  - pattern: "se\\s*=\\s*exp\\("
+    message:
+      de: "Der SE gehört zur Logit-Skala; `exp()` des SE ergibt keinen sinnvollen Wert."
+      en: "The SE belongs to the logit scale; `exp()` of the SE gives no meaningful value."

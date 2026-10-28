@@ -1,0 +1,19 @@
+# Lesson metadata; exercises are the other *.yml files in this folder
+# (sorted by `order`), the knowledge check is quiz.yml.
+lesson: regression-expert
+minutes: 60
+prerequisites: [regression-intermediate]
+langs: [de]
+packages: [dplyr, tidyr, sandwich, lmtest, clubSandwich, performance, parameters, ggplot2]
+data: [driving_sim, usability, acceptance]
+goals:
+  de:
+    - Cluster-robuste Standardfehler mit sandwich und parameters berechnen und erklären, warum sie je nach Prädiktor wachsen oder schrumpfen
+    - Bei wenigen Clustern CR2 mit Satterthwaite-Freiheitsgraden (clubSandwich) verwenden
+    - Einen nichtlinearen Zusammenhang mit natürlichen Splines modellieren und gegen das lineare Modell testen
+    - Modelle mit Kreuzvalidierung (performance) nach Vorhersagegüte vergleichen
+  en:
+    - Compute cluster-robust standard errors with sandwich and parameters and explain why they grow or shrink depending on the predictor
+    - Use CR2 with Satterthwaite degrees of freedom (clubSandwich) when there are few clusters
+    - Model a nonlinear relationship with natural splines and test it against the linear model
+    - Compare models by predictive accuracy with cross-validation (performance)

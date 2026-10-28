@@ -1,0 +1,101 @@
+id: gl-e-counts
+lesson: glm-expert
+order: 2
+title:
+  de: Überdispersion oder fehlender Prädiktor?
+  en: Overdispersion or a missing predictor?
+kind: write
+required: true
+packages: [dplyr, MASS]
+data: [usability]
+setup: |
+  library(dplyr)
+prompt:
+  de: |
+    Fehler je Aufgabe (`errors`): 149 von 284 Aufgaben ohne Fehler. Ein
+    Poisson-Modell `errors ~ prototype + expertise` zeigt Überdispersion
+    (Verhältnis 1,57) und sagt 131 statt 149 Nullen vorher. Reflex: negativ-
+    binomial oder zero-inflated. Aber gescheiterte Aufgaben haben mehr Fehler.
+
+    Schätze drei Modelle und vergleiche ihr AIC:
+
+    - `p0`: Poisson, `errors ~ prototype + expertise`
+    - `n0`: negativ-binomial (`MASS::glm.nb()`), gleiche Formel
+    - `p1`: Poisson mit zusätzlich `success`
+
+    Gib ein Tibble mit den Spalten `model` (`"poisson"`, `"negbin"`,
+    `"poisson_success"`) und `aic` zurück.
+  en: |
+    Errors per task (`errors`): 149 of 284 tasks without errors. A Poisson model
+    `errors ~ prototype + expertise` shows overdispersion (ratio 1.57) and
+    predicts 131 instead of 149 zeros. Reflex: negative binomial or
+    zero-inflated. But failed tasks have more errors.
+
+    Fit three models and compare their AIC:
+
+    - `p0`: Poisson, `errors ~ prototype + expertise`
+    - `n0`: negative binomial (`MASS::glm.nb()`), same formula
+    - `p1`: Poisson with `success` added
+
+    Return a tibble with the columns `model` (`"poisson"`, `"negbin"`,
+    `"poisson_success"`) and `aic`.
+starter: |
+  p0 <- glm(errors ~ prototype + expertise, family = poisson, data = usability)
+  n0 <- MASS::glm.nb(errors ~ prototype + expertise, data = usability)
+  tibble(model = c("poisson", "negbin"), aic = c(AIC(p0), AIC(n0)))
+solution: |
+  p0 <- glm(errors ~ prototype + expertise, family = poisson, data = usability)
+  n0 <- MASS::glm.nb(errors ~ prototype + expertise, data = usability)
+  p1 <- glm(errors ~ prototype + expertise + success, family = poisson, data = usability)
+  tibble(
+    model = c("poisson", "negbin", "poisson_success"),
+    aic = c(AIC(p0), AIC(n0), AIC(p1))
+  )
+hints:
+  - de: "`MASS::glm.nb()` mit `MASS::` aufrufen: `library(MASS)` nach dplyr überdeckt `select()`."
+    en: "Call `MASS::glm.nb()` with `MASS::`: `library(MASS)` after dplyr masks `select()`."
+  - de: "`p1` ist `p0` mit `+ success` in der Formel, weiterhin `family = poisson`."
+    en: "`p1` is `p0` with `+ success` in the formula, still `family = poisson`."
+  - de: "`tibble(model = c(...), aic = c(AIC(p0), AIC(n0), AIC(p1)))`."
+    en: "`tibble(model = c(...), aic = c(AIC(p0), AIC(n0), AIC(p1)))`."
+explanation:
+  de: |
+    AIC: Poisson 718,6, negativ-binomial 698,0, Poisson mit Erfolg 638,5. Das
+    NB-Modell ist besser als das einfache Poisson-Modell, aber das Poisson-Modell
+    mit dem fehlenden Prädiktor schlägt beide deutlich. Danach ist die
+    Dispersion unauffällig, und die Nullen passen (145 vorhergesagt, 149
+    beobachtet; `performance::check_zeroinflation(p1)`). NB (AIC 638,8) oder
+    zero-inflated (640,0) bringen dann nichts mehr. Überdispersion und
+    „überschüssige“ Nullen sind oft Zeichen eines fehlenden Prädiktors, nicht
+    eines falschen Verteilungsmodells. Aber Vorsicht bei der Deutung: `success`
+    liegt kausal *nach* dem Prototyp. Mit `success` im Modell schätzt du den
+    Prototypeffekt bei gleichem Erfolg (direkter Effekt); für den Gesamteffekt
+    auf Fehler bleibt `n0` das passende Modell (B: IRR 0,41). Die Wahl folgt der
+    Frage, nicht dem AIC.
+  en: |
+    AIC: Poisson 718.6, negative binomial 698.0, Poisson with success 638.5.
+    The NB model beats the plain Poisson model, but the Poisson model with the
+    missing predictor clearly beats both. Afterwards the dispersion is
+    unremarkable and the zeros fit (145 predicted, 149 observed;
+    `performance::check_zeroinflation(p1)`). NB (AIC 638.8) or zero-inflated
+    (640.0) then add nothing. Overdispersion and "excess" zeros are often signs
+    of a missing predictor, not of a wrong distribution. But careful with the
+    interpretation: `success` lies causally *after* the prototype. With
+    `success` in the model you estimate the prototype effect at equal success
+    (direct effect); for the total effect on errors `n0` remains the right model
+    (B: IRR 0.41). The choice follows the question, not the AIC.
+misconception:
+  de: "Bei Überdispersion oder vielen Nullen braucht man immer ein negativ-binomiales oder zero-inflated Modell."
+  en: "With overdispersion or many zeros you always need a negative binomial or zero-inflated model."
+check:
+  type: value
+  tolerance: 1.0e-4
+common_mistakes:
+  - pattern: "quasipoisson"
+    message:
+      de: "Quasi-Poisson hat kein AIC; gefragt sind Poisson, NB und Poisson mit Erfolg."
+      en: "Quasi-Poisson has no AIC; the task asks for Poisson, NB and Poisson with success."
+  - pattern: "library\\(MASS\\)"
+    message:
+      de: "`library(MASS)` überdeckt `dplyr::select()`; nutze `MASS::glm.nb()`."
+      en: "`library(MASS)` masks `dplyr::select()`; use `MASS::glm.nb()`."

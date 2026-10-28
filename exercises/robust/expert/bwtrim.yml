@@ -1,0 +1,98 @@
+id: rb-e-bwtrim
+lesson: robust-expert
+order: 4
+title:
+  de: Gemischtes Design mit getrimmten Mittelwerten
+  en: Mixed design with trimmed means
+kind: write
+required: false
+packages: [dplyr, WRS2]
+data: [driving_sim]
+setup: |
+  library(dplyr)
+  library(WRS2)
+  rt_means <- driving_sim |>
+    summarise(rt = mean(rt_ms, na.rm = TRUE), .by = c(participant, experience, condition))
+prompt:
+  de: |
+    `rt_means` enthält je Person und Warnform die mittlere Reaktionszeit (40
+    Personen × 3 Warnformen; `experience` zwischen, `condition` innerhalb). In
+    der Intermediate-Lektion hast du dafür eine gemischte ANOVA gerechnet.
+
+    Rechne dieselbe Analyse robust mit 20 %-getrimmten Mittelwerten:
+    `bwtrim()` aus WRS2 mit der Formel `rt ~ experience * condition` und
+    `id = participant`.
+
+    Gib das Ergebnis als Tibble mit den Spalten `effect`, `value`, `df1`, `df2`
+    und `p` zurück (Zeilen in der Reihenfolge experience, condition,
+    Interaktion). Die Werte stehen im Ergebnis unter `$Qa`, `$A.df`, `$A.p.value`
+    (Faktor A), `$Qb`, … (B) und `$Qab`, … (Interaktion).
+  en: |
+    `rt_means` holds each person's mean reaction time per warning modality (40
+    people × 3 modalities; `experience` between, `condition` within). In the
+    intermediate lesson you ran a mixed ANOVA on it.
+
+    Run the same analysis robustly with 20% trimmed means: `bwtrim()` from WRS2
+    with the formula `rt ~ experience * condition` and `id = participant`.
+
+    Return the result as a tibble with the columns `effect`, `value`, `df1`,
+    `df2` and `p` (rows in the order experience, condition, interaction). The
+    values are in the result under `$Qa`, `$A.df`, `$A.p.value` (factor A),
+    `$Qb`, … (B) and `$Qab`, … (interaction).
+starter: |
+  fit <- bwtrim(rt ~ experience * condition, id = participant, data = rt_means)
+  fit
+solution: |
+  fit <- bwtrim(rt ~ experience * condition, id = participant, data = rt_means)
+  tibble(
+    effect = c("experience", "condition", "experience:condition"),
+    value = c(fit$Qa, fit$Qb, fit$Qab),
+    df1 = c(fit$A.df[1], fit$B.df[1], fit$AB.df[1]),
+    df2 = c(fit$A.df[2], fit$B.df[2], fit$AB.df[2]),
+    p = c(fit$A.p.value, fit$B.p.value, fit$AB.p.value)
+  )
+hints:
+  - de: "Sieh dir `str(fit)` an: Für jeden Effekt gibt es Teststatistik, Freiheitsgrade (Vektor aus zwei Werten) und p."
+    en: "Look at `str(fit)`: each effect has a test statistic, degrees of freedom (a vector of two values) and p."
+  - de: "`fit$A.df[1]` ist df1, `fit$A.df[2]` df2; dasselbe für `B.df` und `AB.df`."
+    en: "`fit$A.df[1]` is df1, `fit$A.df[2]` is df2; the same for `B.df` and `AB.df`."
+  - de: "Baue das Tibble mit `c()` je Spalte in der Reihenfolge A, B, AB."
+    en: "Build the tibble with `c()` per column in the order A, B, AB."
+explanation:
+  de: |
+    Erfahrung: F̃(1; 21,8) = 12,14, p = .002; Warnform: F̃(2; 19,4) = 105,5,
+    p < .001; Interaktion: F̃(2; 19,4) = 1,30, p = .30. Das Muster gleicht der
+    klassischen ANOVA, die Schlussfolgerung hängt also nicht an Ausreißern oder
+    Schiefe der Personenmittel. Die Nenner-Freiheitsgrade sind viel kleiner als
+    bei der ANOVA, weil getrimmt wird (von 20 Personen je Gruppe gehen 12 voll
+    ein) und Welch-artig ohne Annahme gleicher Varianzen und Sphärizität
+    gerechnet wird. `bwtrim()` liefert nur Tests; Effekte mit KI berichtest du
+    mit Post-hoc-Funktionen (`sppba()`, `sppbb()`, `sppbi()` für Bootstrap-
+    Vergleiche) oder deskriptiv mit getrimmten Mittelwerten. Die Daten müssen
+    lang sein, mit einer Zeile je Person und Stufe des Innerhalb-Faktors.
+  en: |
+    Experience: F̃(1, 21.8) = 12.14, p = .002; warning modality: F̃(2, 19.4) =
+    105.5, p < .001; interaction: F̃(2, 19.4) = 1.30, p = .30. The pattern
+    matches the classical ANOVA, so the conclusion does not depend on outliers
+    or skewness of the person means. The denominator degrees of freedom are much
+    smaller than in the ANOVA because of trimming (12 of the 20 people per group
+    enter fully) and because it is computed Welch-style without assuming equal
+    variances or sphericity. `bwtrim()` only gives tests; report effects with CIs
+    using the post-hoc functions (`sppba()`, `sppbb()`, `sppbi()` for bootstrap
+    comparisons) or descriptively with trimmed means. The data must be long, with
+    one row per person and level of the within factor.
+misconception:
+  de: "Robuste Verfahren gibt es nur für einfache Zwei-Gruppen-Vergleiche; bei Messwiederholung bleibt nur die klassische ANOVA."
+  en: "Robust methods exist only for simple two-group comparisons; with repeated measures only the classical ANOVA remains."
+check:
+  type: value
+  tolerance: 1.0e-4
+common_mistakes:
+  - pattern: "t2way\\("
+    message:
+      de: "`t2way()` behandelt beide Faktoren als zwischen Personen; `condition` ist aber eine Messwiederholung: `bwtrim()`."
+      en: "`t2way()` treats both factors as between-person; `condition` is a repeated measure, though: `bwtrim()`."
+  - pattern: "data\\s*=\\s*driving_sim"
+    message:
+      de: "Nimm die Personenmittel `rt_means`; `bwtrim()` erwartet eine Zeile je Person und Warnform."
+      en: "Use the person means `rt_means`; `bwtrim()` expects one row per person and modality."

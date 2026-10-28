@@ -1,0 +1,90 @@
+id: rg-e-cluster
+lesson: regression-expert
+order: 0
+title:
+  de: Cluster-robuste Standardfehler für Messwiederholung
+  en: Cluster-robust standard errors for repeated measures
+kind: write
+required: false
+challenge: true
+packages: [dplyr, parameters, sandwich]
+data: [driving_sim]
+setup: |
+  library(dplyr)
+  library(parameters)
+  library(sandwich)
+  fit <- lm(rt_ms ~ condition * experience, data = driving_sim)
+prompt:
+  de: |
+    `fit` ist ein lineares Modell der Reaktionszeit auf allen 468 Durchgängen
+    (40 Personen × 12 Durchgänge, ohne fehlende Werte). Die Standardfehler von
+    `lm()` behandeln jeden Durchgang als unabhängig.
+
+    Berechne die Parametertabelle mit cluster-robusten Standardfehlern nach
+    Person: `model_parameters()` mit `vcov = "vcovCL"` und
+    `vcov_args = list(cluster = ~participant)`.
+
+    Gib die Tabelle als Tibble zurück (`as_tibble()`).
+  en: |
+    `fit` is a linear model of reaction time on all 468 trials (40 people × 12
+    trials, without missing values). The standard errors of `lm()` treat every
+    trial as independent.
+
+    Compute the parameter table with cluster-robust standard errors by person:
+    `model_parameters()` with `vcov = "vcovCL"` and
+    `vcov_args = list(cluster = ~participant)`.
+
+    Return the table as a tibble (`as_tibble()`).
+starter: |
+  model_parameters(fit) |>
+    as_tibble()
+solution: |
+  model_parameters(fit, vcov = "vcovCL", vcov_args = list(cluster = ~participant)) |>
+    as_tibble()
+hints:
+  - de: "`model_parameters()` nimmt die Kovarianzmatrix über das Argument `vcov`; `\"vcovCL\"` ist die Cluster-Variante aus sandwich."
+    en: "`model_parameters()` takes the covariance matrix via the argument `vcov`; `\"vcovCL\"` is the cluster variant from sandwich."
+  - de: "Weitere Argumente für sandwich gehen als Liste in `vcov_args`; das Cluster als Formel `~participant`."
+    en: "Further arguments for sandwich go into `vcov_args` as a list; the cluster as a formula `~participant`."
+  - de: "`model_parameters(fit, vcov = \"vcovCL\", vcov_args = list(cluster = ~participant)) |> as_tibble()`."
+    en: "`model_parameters(fit, vcov = \"vcovCL\", vcov_args = list(cluster = ~participant)) |> as_tibble()`."
+explanation:
+  de: |
+    Die Koeffizienten bleiben gleich, nur die Standardfehler ändern sich, und
+    zwar in beide Richtungen. Erfahrung (zwischen Personen): SE 24,6 → 38,9 ms.
+    Den Gruppenunterschied tragen nur 40 Personen, nicht 468 Durchgänge; die
+    naive SE war viel zu klein. Warnform (innerhalb): SE 24,8 → 18,4 ms
+    (auditiv) und 24,7 → 15,8 ms (haptisch). Hier vergleicht jede Person mit
+    sich selbst, Personenunterschiede fallen heraus. Das ist dasselbe Muster wie
+    bei der ANOVA mit Messwiederholung. Fallstrick: Die Tabelle rechnet t und KI
+    weiter mit 462 Freiheitsgraden; bei 40 Clustern ist das optimistisch (siehe
+    CR2 mit Satterthwaite in der nächsten Übung). Cluster-robuste Fehler
+    korrigieren die Unsicherheit, nicht die Schätzung; ein Mixed Model schätzt
+    zusätzlich effizienter und zeigt die Varianz zwischen Personen.
+  en: |
+    The coefficients stay the same, only the standard errors change, and in both
+    directions. Experience (between people): SE 24.6 → 38.9 ms. Only 40 people
+    carry the group difference, not 468 trials; the naive SE was far too small.
+    Warning modality (within): SE 24.8 → 18.4 ms (auditory) and 24.7 → 15.8 ms
+    (haptic). Here each person is compared with themselves, so person
+    differences drop out. This is the same pattern as in the repeated-measures
+    ANOVA. Pitfall: the table still computes t and CI with 462 degrees of
+    freedom; with 40 clusters that is optimistic (see CR2 with Satterthwaite in
+    the next exercise). Cluster-robust errors correct the uncertainty, not the
+    estimate; a mixed model additionally estimates more efficiently and shows
+    the variance between people.
+misconception:
+  de: "Cluster-robuste Standardfehler sind immer größer als die naiven."
+  en: "Cluster-robust standard errors are always larger than the naive ones."
+check:
+  type: value
+  tolerance: 1.0e-4
+common_mistakes:
+  - pattern: "vcov\\s*=\\s*\"HC"
+    message:
+      de: "HC-Fehler korrigieren nur ungleiche Varianzen, nicht die Abhängigkeit innerhalb einer Person; nimm `\"vcovCL\"` mit Cluster."
+      en: "HC errors only correct unequal variances, not the dependence within a person; use `\"vcovCL\"` with a cluster."
+  - pattern: "cluster\\s*=\\s*~\\s*trial"
+    message:
+      de: "Die Durchgänge sind in Personen geschachtelt; das Cluster ist `participant`."
+      en: "Trials are nested in people; the cluster is `participant`."

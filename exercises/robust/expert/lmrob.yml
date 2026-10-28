@@ -1,0 +1,93 @@
+id: rb-e-lmrob
+lesson: robust-expert
+order: 3
+title:
+  de: Robuste Regression neben der OLS-Schätzung
+  en: Robust regression next to the OLS estimate
+kind: write
+required: true
+packages: [dplyr, robustbase]
+data: [usability]
+setup: |
+  library(dplyr)
+  library(robustbase)
+prompt:
+  de: |
+    Bearbeitungszeiten (`time_s`) im Usability-Test sind rechtsschief, einige
+    Aufgaben dauern bis zum Abbruch bei 180 s. Wie stark hängen die Schätzungen
+    an diesen langen Zeiten?
+
+    Schätze `time_s ~ prototype + task + expertise` einmal mit `lm()` (`fit_ls`)
+    und einmal mit `lmrob()` aus robustbase (`fit_mm`, MM-Schätzer). Setze vor
+    `lmrob()` `set.seed(2026)` (die Startwerte nutzen Zufallsstichproben).
+
+    Gib ein Tibble mit den Spalten `term`, `ls` und `mm` zurück (Namen und
+    Werte von `coef()` beider Modelle).
+  en: |
+    Task times (`time_s`) in the usability test are right-skewed, and some tasks
+    last until the timeout at 180 s. How much do the estimates depend on these
+    long times?
+
+    Fit `time_s ~ prototype + task + expertise` once with `lm()` (`fit_ls`) and
+    once with `lmrob()` from robustbase (`fit_mm`, MM estimator). Call
+    `set.seed(2026)` before `lmrob()` (the starting values use random
+    subsamples).
+
+    Return a tibble with the columns `term`, `ls` and `mm` (names and values of
+    `coef()` of both models).
+starter: |
+  fit_ls <- lm(time_s ~ prototype + task + expertise, data = usability)
+  tibble(term = names(coef(fit_ls)), ls = coef(fit_ls))
+solution: |
+  fit_ls <- lm(time_s ~ prototype + task + expertise, data = usability)
+  set.seed(2026)
+  fit_mm <- lmrob(time_s ~ prototype + task + expertise, data = usability)
+  tibble(term = names(coef(fit_ls)), ls = coef(fit_ls), mm = coef(fit_mm))
+hints:
+  - de: "`lmrob()` hat dieselbe Formel-Schnittstelle wie `lm()`."
+    en: "`lmrob()` has the same formula interface as `lm()`."
+  - de: "`set.seed(2026)` direkt vor `lmrob()`, sonst können die Startwerte minimal abweichen."
+    en: "`set.seed(2026)` right before `lmrob()`, otherwise the starting values can differ slightly."
+  - de: "`tibble(term = names(coef(fit_ls)), ls = coef(fit_ls), mm = coef(fit_mm))`."
+    en: "`tibble(term = names(coef(fit_ls)), ls = coef(fit_ls), mm = coef(fit_mm))`."
+explanation:
+  de: |
+    Alle Effekte schrumpfen deutlich: Expertise −25,3 s (OLS) vs. −14,8 s (MM),
+    Prototyp B −10,7 vs. −7,3 s, Bezahlaufgabe +48,7 vs. +33,6 s. Der Grund
+    steht in den Robustheitsgewichten (`weights(fit_mm, type = "robustness")`):
+    Gelöste Aufgaben haben im Mittel Gewicht 0,93, gescheiterte 0,41; 34 von 58
+    gescheiterten Aufgaben liegen unter 0,5. Der MM-Schätzer beschreibt also den
+    typischen Ablauf einer gelösten Aufgabe; OLS mischt die langen Fehlversuche
+    ein. Welche Frage du beantworten willst, ist eine inhaltliche Entscheidung,
+    keine statistische. Fallstrick 1: `lmrob()` behandelt die 180-s-Abbrüche
+    nicht als zensiert, es gewichtet sie nur herunter (für Zensierung:
+    Überlebenszeitmodelle). Fallstrick 2: Die Zeilen sind nach Person gruppiert;
+    für Standardfehler bräuchtest du cluster-robuste Fehler oder ein robustes
+    Mixed Model (robustlmm). Die Punktschätzungen hier dienen dem Vergleich.
+  en: |
+    All effects shrink clearly: expertise −25.3 s (OLS) vs. −14.8 s (MM),
+    prototype B −10.7 vs. −7.3 s, checkout task +48.7 vs. +33.6 s. The reason is
+    in the robustness weights (`weights(fit_mm, type = "robustness")`): solved
+    tasks have a mean weight of 0.93, failed ones 0.41; 34 of 58 failed tasks are
+    below 0.5. The MM estimator therefore describes the typical course of a
+    solved task; OLS mixes in the long failed attempts. Which question you want
+    to answer is a substantive decision, not a statistical one. Pitfall 1:
+    `lmrob()` does not treat the 180 s timeouts as censored, it only downweights
+    them (for censoring: survival models). Pitfall 2: rows are grouped by person;
+    for standard errors you would need cluster-robust errors or a robust mixed
+    model (robustlmm). The point estimates here serve the comparison.
+misconception:
+  de: "Robuste Regression liefert „die richtigen“ Effekte, und niedrig gewichtete Beobachtungen sind Messfehler, die man löschen sollte."
+  en: "Robust regression yields \"the correct\" effects, and observations with low weight are measurement errors that should be deleted."
+check:
+  type: value
+  tolerance: 1.0e-4
+common_mistakes:
+  - pattern: "rlm\\("
+    message:
+      de: "`MASS::rlm()` ist ein M-Schätzer ohne hohen Bruchpunkt; gefragt ist `lmrob()` (MM)."
+      en: "`MASS::rlm()` is an M estimator without a high breakdown point; the task asks for `lmrob()` (MM)."
+  - pattern: "filter\\(\\s*time_s\\s*<"
+    message:
+      de: "Lange Zeiten vorher auszuschließen ist genau die willkürliche Entscheidung, die eine robuste Schätzung ersetzt."
+      en: "Excluding long times beforehand is exactly the arbitrary decision a robust estimate replaces."

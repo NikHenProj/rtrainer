@@ -1,0 +1,104 @@
+id: rb-e-bca
+lesson: robust-expert
+order: 0
+title:
+  de: BCa-Intervall für einen Unterschied getrimmter Mittelwerte
+  en: BCa interval for a difference in trimmed means
+kind: write
+required: false
+challenge: true
+packages: [dplyr, boot]
+data: [survey]
+setup: |
+  library(dplyr)
+  library(boot)
+  frust <- survey |>
+    filter(!is.na(tlx_frustration))
+prompt:
+  de: |
+    Frustration (`tlx_frustration`, 0–100) ist schief und in 5er-Schritten
+    gestuft. Du willst den Unterschied der 20 %-getrimmten Mittelwerte
+    (voice − touch) mit einem Bootstrap-Konfidenzintervall berichten.
+
+    `frust` enthält die 154 Befragten mit Antwort. Schreib eine Statistikfunktion
+    `trim_diff(data, i)`, ziehe mit `boot()` 1999 Stichproben **geschichtet nach
+    `interface`** (`strata`), nachdem du `set.seed(2026)` gesetzt hast, und
+    berechne mit `boot.ci()` das BCa-Intervall (`type = "bca"`).
+
+    Gib die beiden Grenzen als Vektor zurück (`ci$bca[4:5]`).
+  en: |
+    Frustration (`tlx_frustration`, 0–100) is skewed and comes in steps of 5.
+    You want to report the difference in 20% trimmed means (voice − touch) with
+    a bootstrap confidence interval.
+
+    `frust` holds the 154 respondents who answered. Write a statistic function
+    `trim_diff(data, i)`, draw 1999 resamples with `boot()` **stratified by
+    `interface`** (`strata`) after calling `set.seed(2026)`, and compute the BCa
+    interval with `boot.ci()` (`type = "bca"`).
+
+    Return both limits as a vector (`ci$bca[4:5]`).
+starter: |
+  set.seed(2026)
+  # trim_diff <- function(data, i) { ... }
+solution: |
+  trim_diff <- function(data, i) {
+    d <- data[i, ]
+    mean(d$tlx_frustration[d$interface == "voice"], trim = 0.2) -
+      mean(d$tlx_frustration[d$interface == "touch"], trim = 0.2)
+  }
+  set.seed(2026)
+  b <- boot(frust, trim_diff, R = 1999, strata = frust$interface)
+  ci <- boot.ci(b, type = "bca")
+  ci$bca[4:5]
+hints:
+  - de: "Die Funktion bekommt die Daten und einen Indexvektor `i`. Rechne alles auf `data[i, ]`, sonst ist jede Bootstrap-Stichprobe gleich."
+    en: "The function receives the data and an index vector `i`. Compute everything on `data[i, ]`, otherwise every bootstrap sample is the same."
+  - de: "`mean(x, trim = 0.2)` getrennt für voice und touch, dann die Differenz. `strata = frust$interface` hält die Gruppengrößen (79/75) in jeder Stichprobe fest."
+    en: "`mean(x, trim = 0.2)` separately for voice and touch, then the difference. `strata = frust$interface` keeps the group sizes (79/75) fixed in every resample."
+  - de: "`b <- boot(frust, trim_diff, R = 1999, strata = frust$interface)`, dann `boot.ci(b, type = \"bca\")$bca[4:5]`."
+    en: "`b <- boot(frust, trim_diff, R = 1999, strata = frust$interface)`, then `boot.ci(b, type = \"bca\")$bca[4:5]`."
+explanation:
+  de: |
+    Ergebnis: Δ = 8,8 Punkte (getrimmte Mittel), BCa-95 %-KI [1,8; 15,7]. Mit
+    Sprachbedienung war die Frustration also höher; das Intervall schließt 0
+    knapp aus. `WRS2::yuen()` liefert mit [1,6; 15,9] fast dasselbe, weil beide
+    dieselbe Kennzahl schätzen. Warum BCa? Das Perzentil-Intervall übernimmt
+    Schiefe und Verzerrung der Bootstrap-Verteilung ungeprüft; BCa korrigiert
+    beides (Bias-Korrektur z0 und Beschleunigung a aus dem Jackknife). Fallstrick:
+    Für den Median wäre BCa hier instabil („extreme order statistics used as
+    endpoints“), weil die Werte in 5er-Schritten gestuft sind und der Median nur
+    wenige Werte annehmen kann; getrimmte Mittel sind glatter. `strata` gehört
+    dazu, weil das Design die Gruppengrößen festlegt. Formulierung: „Die
+    Frustration war mit Sprachbedienung höher (Δ getrimmte Mittel = 8,8;
+    BCa-Bootstrap-95 %-KI [1,8; 15,7]; 1999 Stichproben, geschichtet nach
+    Bedienform).“ Die Grenzen schwanken mit dem Seed in der ersten
+    Nachkommastelle; berichte R und Seed.
+  en: |
+    Result: Δ = 8.8 points (trimmed means), BCa 95% CI [1.8, 15.7]. Frustration
+    was therefore higher with voice input; the interval narrowly excludes 0.
+    `WRS2::yuen()` gives almost the same, [1.6, 15.9], because both estimate the
+    same quantity. Why BCa? The percentile interval adopts skewness and bias of
+    the bootstrap distribution unchecked; BCa corrects both (bias correction z0
+    and acceleration a from the jackknife). Pitfall: for the median, BCa would be
+    unstable here ("extreme order statistics used as endpoints") because the
+    values come in steps of 5 and the median can take only a few values; trimmed
+    means are smoother. `strata` belongs in because the design fixes the group
+    sizes. Wording: "Frustration was higher with voice input (Δ trimmed means =
+    8.8; BCa bootstrap 95% CI [1.8, 15.7]; 1999 resamples, stratified by input
+    mode)." The limits vary with the seed in the first decimal; report R and the
+    seed.
+misconception:
+  de: "Das Perzentil-Intervall ist immer gut genug, und für jede Kennzahl (auch den Median gestufter Daten) funktioniert der Bootstrap gleich gut."
+  en: "The percentile interval is always good enough, and the bootstrap works equally well for every statistic (including the median of coarse data)."
+check:
+  type: value
+  tolerance: 1.0e-6
+common_mistakes:
+  - pattern: "type\\s*=\\s*\"perc\""
+    message:
+      de: "Gefragt ist das BCa-Intervall (`type = \"bca\"`); das Perzentil-Intervall korrigiert Verzerrung und Schiefe nicht."
+      en: "The task asks for the BCa interval (`type = \"bca\"`); the percentile interval does not correct bias and skewness."
+  - pattern: "median\\("
+    message:
+      de: "Gefragt ist der 20 %-getrimmte Mittelwert (`mean(x, trim = 0.2)`); der Median gestufter Daten macht BCa instabil."
+      en: "The task asks for the 20% trimmed mean (`mean(x, trim = 0.2)`); the median of coarse data makes BCa unstable."

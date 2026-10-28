@@ -1,0 +1,19 @@
+# Lesson metadata; exercises are the other *.yml files in this folder
+# (sorted by `order`), the knowledge check is quiz.yml.
+lesson: glm-expert
+minutes: 60
+prerequisites: [glm-intermediate]
+langs: [de]
+packages: [MASS, ordinal, nnet, pscl, performance, parameters, dplyr, tidyr]
+data: [usability]
+goals:
+  de:
+    - Eine Ratingskala als ordinales Ergebnis mit `clm()` modellieren, mit Messwiederholung als `clmm()`
+    - Überdispersion und überschüssige Nullen erkennen und prüfen, ob ein fehlender Prädiktor dahintersteckt
+    - Negativ-binomiale und Hurdle-Modelle (MASS, pscl) schätzen und ihre beiden Teile richtig deuten
+    - Zwischen ordinalem und multinomialem Modell (nnet) begründet wählen
+  en:
+    - Model a rating scale as an ordinal outcome with `clm()`, with repeated measures as `clmm()`
+    - Detect overdispersion and excess zeros and check whether a missing predictor is behind them
+    - Fit negative binomial and hurdle models (MASS, pscl) and interpret their two parts correctly
+    - Choose between an ordinal and a multinomial model (nnet) on good grounds

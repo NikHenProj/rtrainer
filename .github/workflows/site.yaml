@@ -89,6 +89,14 @@ jobs:
             any::colorspace
             any::EFAtools
             any::TOSTER
+            any::boot
+            any::robustbase
+            any::lmtest
+            any::clubSandwich
+            any::ordinal
+            any::nnet
+            any::MASS
+            any::pscl
             any::here
             any::jsonlite
             any::chromote

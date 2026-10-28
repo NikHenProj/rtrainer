@@ -1,0 +1,107 @@
+id: rb-e-permutation
+lesson: robust-expert
+order: 1
+title:
+  de: Permutationstest mit Messwiederholung
+  en: Permutation test with repeated measures
+kind: write
+required: true
+packages: [dplyr, coin]
+data: [usability]
+setup: |
+  library(dplyr)
+  library(coin)
+  ease_ab <- usability |>
+    filter(prototype %in% c("A", "B")) |>
+    summarise(seq = mean(seq, na.rm = TRUE), .by = c(participant, prototype)) |>
+    mutate(
+      prototype = droplevels(prototype),
+      participant = factor(participant)
+    )
+prompt:
+  de: |
+    Ist Prototyp B einfacher zu bedienen als A? `ease_ab` enthält je Person den
+    mittleren SEQ-Wert (1–7) für A und B (24 Personen, je zwei Zeilen). Ein
+    t-Test setzt Normalverteilung der Differenzen voraus; ein Permutationstest
+    braucht nur, dass die Bezeichnungen A/B **innerhalb einer Person**
+    austauschbar sind.
+
+    Rechne mit coin `oneway_test()` einen Permutationstest von `seq` nach
+    `prototype`, **geschichtet nach Person** (`| participant` in der Formel), mit
+    `distribution = approximate(nresample = 9999)`. Setze vorher
+    `set.seed(2026)`.
+
+    Gib den p-Wert als Zahl zurück (`as.numeric(pvalue(test))`).
+  en: |
+    Is prototype B easier to use than A? `ease_ab` holds each person's mean SEQ
+    rating (1–7) for A and B (24 people, two rows each). A t-test assumes
+    normally distributed differences; a permutation test only needs the labels
+    A/B to be exchangeable **within a person**.
+
+    Use coin `oneway_test()` to run a permutation test of `seq` by `prototype`,
+    **stratified by person** (`| participant` in the formula), with
+    `distribution = approximate(nresample = 9999)`. Call `set.seed(2026)` first.
+
+    Return the p value as a number (`as.numeric(pvalue(test))`).
+starter: |
+  set.seed(2026)
+  test <- oneway_test(seq ~ prototype, data = ease_ab)
+  as.numeric(pvalue(test))
+solution: |
+  set.seed(2026)
+  test <- oneway_test(
+    seq ~ prototype | participant,
+    data = ease_ab,
+    distribution = approximate(nresample = 9999)
+  )
+  as.numeric(pvalue(test))
+hints:
+  - de: "Ohne Schichtung werden A- und B-Werte über alle Personen gemischt, als wären es 48 unabhängige Personen."
+    en: "Without stratification, A and B values are shuffled across all people as if there were 48 independent people."
+  - de: "In coin schreibt man den Block hinter einen senkrechten Strich: `seq ~ prototype | participant`."
+    en: "In coin the block goes after a vertical bar: `seq ~ prototype | participant`."
+  - de: "Dazu `distribution = approximate(nresample = 9999)`; ohne das rechnet coin die asymptotische Näherung."
+    en: "Add `distribution = approximate(nresample = 9999)`; without it coin uses the asymptotic approximation."
+explanation:
+  de: |
+    p = .187 (Monte-Carlo-Näherung mit 9999 Permutationen; coin gibt mit
+    `pvalue()` auch ein 99 %-Intervall für p aus). Im Mittel bewerteten die
+    Personen B um 0,30 Punkte einfacher (5,41 vs. 5,10); gepaarter t-Test
+    p = .16, 95 %-KI [−0,13; 0,73]. Der Unterschied ist mit 24 Personen nicht
+    belegt. Warum geschichtet? Permutiert wird nur, was unter H0 austauschbar
+    ist: die beiden Werte einer Person. Das ist der Permutations-Gegenpart zum
+    gepaarten Test. Ungeschichtet (p = .24) mischt man Personenunterschiede in
+    den Fehler, der Test wird konservativ und ist für dieses Design falsch.
+    Fallstrick: Ein Permutationstest prüft „keine Verteilungsunterschiede“, nicht
+    nur gleiche Mittelwerte; mit einer anderen Teststatistik (z. B.
+    `wilcoxsign_test()`) prüfst du etwas anderes. Formulierung: „B wurde im
+    Mittel um 0,30 Punkte einfacher bewertet als A (geschichteter
+    Permutationstest, 9999 Permutationen, p = .19).“
+  en: |
+    p = .187 (Monte Carlo approximation with 9999 permutations; coin's `pvalue()`
+    also prints a 99% interval for p). On average people rated B 0.30 points
+    easier (5.41 vs. 5.10); paired t-test p = .16, 95% CI [−0.13, 0.73]. The
+    difference is not supported with 24 people. Why stratified? You only permute
+    what is exchangeable under H0: the two values of one person. That is the
+    permutation counterpart of the paired test. Unstratified (p = .24), person
+    differences end up in the error, the test becomes conservative and is wrong
+    for this design. Pitfall: a permutation test checks "no difference in
+    distributions", not only equal means; with a different test statistic (e.g.
+    `wilcoxsign_test()`) you test something else. Wording: "B was rated on
+    average 0.30 points easier than A (stratified permutation test, 9999
+    permutations, p = .19)."
+misconception:
+  de: "Ein Permutationstest hat keine Voraussetzungen, man kann die Bezeichnungen immer über alle Beobachtungen mischen."
+  en: "A permutation test has no assumptions; you can always shuffle the labels across all observations."
+check:
+  type: value
+  tolerance: 1.0e-6
+common_mistakes:
+  - pattern: "seq\\s*~\\s*prototype\\s*,"
+    message:
+      de: "Ohne `| participant` permutierst du über Personen hinweg; die Messwiederholung fehlt."
+      en: "Without `| participant` you permute across people; the repeated measures are ignored."
+  - pattern: "t\\.test|wilcox\\.test"
+    message:
+      de: "Gefragt ist der Permutationstest aus coin (`oneway_test()`), nicht ein klassischer Test."
+      en: "The task asks for the permutation test from coin (`oneway_test()`), not a classical test."

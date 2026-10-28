@@ -1,0 +1,134 @@
+# Knowledge check: passed at >= `pass` share of correctly answered questions.
+lesson: regression-expert
+pass: 0.8
+questions:
+  - id: rg-e-q-cluster
+    prompt:
+      de: "Bei welchem Prädiktor wird der cluster-robuste Standardfehler (Cluster = Person) typischerweise größer als der naive?"
+      en: "For which predictor does the cluster-robust standard error (cluster = person) typically become larger than the naive one?"
+    options:
+      - text:
+          de: "Bei einem Merkmal, das zwischen Personen variiert, z. B. Erfahrungsgruppe."
+          en: "For a characteristic that varies between people, e.g. experience group."
+        correct: true
+        explain:
+          de: "Richtig. Die effektive Stichprobe für diesen Effekt sind die Personen, nicht die Durchgänge."
+          en: "Right. The effective sample for this effect is the people, not the trials."
+      - text:
+          de: "Bei einer Bedingung, die jede Person mehrfach durchläuft."
+          en: "For a condition that every person goes through several times."
+        correct: false
+        explain:
+          de: "Dort sinkt der SE oft, weil Personenunterschiede herausfallen."
+          en: "There the SE often shrinks because person differences drop out."
+      - text:
+          de: "Bei allen Prädiktoren gleich stark."
+          en: "Equally for all predictors."
+        correct: false
+        explain:
+          de: "Die Richtung hängt davon ab, auf welcher Ebene der Prädiktor variiert."
+          en: "The direction depends on the level at which the predictor varies."
+  - id: rg-e-q-cr2
+    prompt:
+      de: "Du hast 24 Personen. Warum CR2 mit Satterthwaite-Freiheitsgraden statt `vcovCL()` mit den Residual-df?"
+      en: "You have 24 people. Why CR2 with Satterthwaite degrees of freedom instead of `vcovCL()` with the residual df?"
+    options:
+      - text:
+          de: "Weil der übliche Sandwich-Schätzer bei wenigen Clustern zu kleine SE liefert und die Residual-df die Information stark überschätzen."
+          en: "Because the usual sandwich estimator gives too small SEs with few clusters and the residual df heavily overstate the information."
+        correct: true
+        explain:
+          de: "Genau. Mit 24 Clustern liegen die df eher bei 20 als bei 219."
+          en: "Exactly. With 24 clusters the df are closer to 20 than to 219."
+      - text:
+          de: "Weil CR2 die Koeffizienten unverzerrt schätzt, `vcovCL()` nicht."
+          en: "Because CR2 estimates the coefficients without bias, `vcovCL()` does not."
+        correct: false
+        explain:
+          de: "Beide ändern nur die Kovarianzmatrix; die Koeffizienten bleiben die von `lm()`."
+          en: "Both only change the covariance matrix; the coefficients remain those of `lm()`."
+      - text:
+          de: "Weil `vcovCL()` keine Cluster-Variable annimmt."
+          en: "Because `vcovCL()` does not accept a cluster variable."
+        correct: false
+        explain:
+          de: "Doch, über `cluster = ~participant`."
+          en: "It does, via `cluster = ~participant`."
+  - id: rg-e-q-spline
+    prompt:
+      de: "Warum sind natürliche Splines (`ns()`) für einen Alterseffekt meist besser als ein Polynom 3. Grades?"
+      en: "Why are natural splines (`ns()`) usually better than a third-degree polynomial for an age effect?"
+    options:
+      - text:
+          de: "Sie sind an den Rändern linear und schlagen bei sehr jungen oder alten Personen nicht aus."
+          en: "They are linear at the edges and do not swing out for very young or old people."
+        correct: true
+        explain:
+          de: "Richtig. Polynome werden an den Rändern von wenigen Punkten bestimmt."
+          en: "Right. Polynomials are driven by a few points at the edges."
+      - text:
+          de: "Ihre Koeffizienten sind direkt als Steigungen je Altersbereich deutbar."
+          en: "Their coefficients can be interpreted directly as slopes per age range."
+        correct: false
+        explain:
+          de: "Nein, Basis-Koeffizienten sind nicht einzeln deutbar; zeige die Kurve mit `estimate_relation()`."
+          en: "No, basis coefficients cannot be interpreted one by one; show the curve with `estimate_relation()`."
+      - text:
+          de: "Sie verbessern das Modell immer signifikant."
+          en: "They always improve the model significantly."
+        correct: false
+        explain:
+          de: "In `acceptance` verbessert der Spline nichts (p = .47); prüfen statt annehmen."
+          en: "In `acceptance` the spline improves nothing (p = .47); check instead of assuming."
+  - id: rg-e-q-cv
+    prompt:
+      de: "Das Spline-Modell hat das höhere R² im Datensatz, aber den höheren Kreuzvalidierungs-RMSE. Was sagt das?"
+      en: "The spline model has the higher R² in the dataset but the higher cross-validated RMSE. What does that say?"
+    options:
+      - text:
+          de: "Die zusätzliche Flexibilität passt Rauschen an; für neue Personen sagt das einfachere Modell mindestens genauso gut vorher."
+          en: "The extra flexibility fits noise; for new people the simpler model predicts at least as well."
+        correct: true
+        explain:
+          de: "Genau. In-Sample-R² steigt mit jedem zusätzlichen Parameter."
+          en: "Exactly. In-sample R² rises with every additional parameter."
+      - text:
+          de: "Die Kreuzvalidierung ist fehlerhaft, weil sie dem R² widerspricht."
+          en: "The cross-validation is faulty because it contradicts R²."
+        correct: false
+        explain:
+          de: "Beide messen Verschiedenes: Passung im Datensatz vs. Vorhersage auf ungesehenen Daten."
+          en: "They measure different things: fit in the dataset vs. prediction on unseen data."
+      - text:
+          de: "Man sollte die Folds so lange neu ziehen, bis der Spline gewinnt."
+          en: "You should redraw the folds until the spline wins."
+        correct: false
+        explain:
+          de: "Das wäre Seed-Hacking; Folds werden einmal festgelegt und für alle Modelle gleich gehalten."
+          en: "That would be seed hacking; folds are fixed once and kept identical for all models."
+  - id: rg-e-q-cvgroups
+    prompt:
+      de: "Du kreuzvalidierst ein Modell auf `driving_sim` (12 Durchgänge je Person). Wie teilst du die Folds auf?"
+      en: "You cross-validate a model on `driving_sim` (12 trials per person). How do you split the folds?"
+    options:
+      - text:
+          de: "Nach Person: Alle Durchgänge einer Person landen im selben Fold."
+          en: "By person: all trials of one person go into the same fold."
+        correct: true
+        explain:
+          de: "Richtig. Sonst kennt das Modell die Person aus dem Training und die Vorhersage wirkt zu gut."
+          en: "Right. Otherwise the model knows the person from training and prediction looks too good."
+      - text:
+          de: "Zufällig nach Zeilen, das ist am einfachsten."
+          en: "Randomly by row, that is simplest."
+        correct: false
+        explain:
+          de: "Dann liegen Durchgänge derselben Person in Training und Test; der Fehler wird unterschätzt."
+          en: "Then trials of the same person are in both training and test; the error is underestimated."
+      - text:
+          de: "Nach Durchgangsnummer: Durchgang 1–6 Training, 7–12 Test."
+          en: "By trial number: trials 1–6 training, 7–12 test."
+        correct: false
+        explain:
+          de: "Das beantwortet eine andere Frage (Vorhersage späterer Durchgänge derselben Personen)."
+          en: "That answers a different question (predicting later trials of the same people)."

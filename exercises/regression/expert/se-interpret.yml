@@ -1,0 +1,108 @@
+id: rg-e-se-interpret
+lesson: regression-expert
+order: 3
+title:
+  de: Naive und cluster-robuste Standardfehler deuten
+  en: Interpreting naive and cluster-robust standard errors
+kind: interpret
+required: true
+packages: []
+data: []
+setup: ""
+prompt:
+  de: |
+    Reaktionszeit im Fahrsimulator, `lm(rt_ms ~ condition * experience)` auf
+    allen 468 Durchgängen von 40 Personen. Standardfehler naiv und
+    cluster-robust nach Person (CR1):
+
+    ```
+                                      b     SE naiv   SE Cluster
+    (Intercept)                    1210.8     17.4       32.4
+    conditionauditory              -165.8     24.8       18.4
+    conditionhaptic                -214.4     24.7       15.8
+    experienceexperienced          -155.1     24.6       38.9
+    auditory:experienced             11.4     34.9       24.9
+    haptic:experienced              -32.5     34.9       23.3
+    ```
+
+    Welche Aussagen stimmen?
+
+    1. Der SE der Erfahrung wächst, weil der Gruppenunterschied nur auf 40 unabhängigen Personen beruht.
+    2. Die SE der Warnformen sinken, weil jede Person alle Warnformen erlebt und stabile Personenunterschiede herausfallen.
+    3. Weil die Koeffizienten gleich bleiben, ändert die Cluster-Korrektur nichts an der Schlussfolgerung.
+    4. Mit cluster-robusten Fehlern braucht man kein Mixed Model mehr, weil beide dieselben Schätzungen liefern.
+
+    Gib die Nummern der richtigen Aussagen aufsteigend als Vektor ein, z. B. `c(1, 2)`.
+  en: |
+    Reaction time in the driving simulator, `lm(rt_ms ~ condition * experience)`
+    on all 468 trials of 40 people. Standard errors naive and cluster-robust by
+    person (CR1):
+
+    ```
+                                      b     SE naive  SE cluster
+    (Intercept)                    1210.8     17.4       32.4
+    conditionauditory              -165.8     24.8       18.4
+    conditionhaptic                -214.4     24.7       15.8
+    experienceexperienced          -155.1     24.6       38.9
+    auditory:experienced             11.4     34.9       24.9
+    haptic:experienced              -32.5     34.9       23.3
+    ```
+
+    Which statements are true?
+
+    1. The SE of experience grows because the group difference rests on only 40 independent people.
+    2. The SEs of the warning modalities shrink because each person experiences all modalities and stable person differences drop out.
+    3. Because the coefficients stay the same, the cluster correction does not change the conclusion.
+    4. With cluster-robust errors you no longer need a mixed model because both give the same estimates.
+
+    Type the numbers of the true statements in ascending order as a vector,
+    e.g. `c(1, 2)`.
+starter: |
+  # Nummern der richtigen Aussagen als Vektor / numbers of the true statements as a vector
+solution: |
+  c(1, 2)
+hints:
+  - de: "Unterscheide Prädiktoren, die zwischen Personen variieren (Erfahrung), von solchen, die innerhalb jeder Person variieren (Warnform)."
+    en: "Distinguish predictors that vary between people (experience) from those that vary within each person (modality)."
+  - de: "Schlussfolgerungen hängen an SE, KI und p, nicht nur an b. Wie ändert sich das KI der Erfahrung?"
+    en: "Conclusions depend on SE, CI and p, not only on b. How does the CI for experience change?"
+  - de: "Schätzt ein Mixed Model dieselben Koeffizienten wie `lm()`, wenn Daten fehlen oder das Design unbalanciert ist?"
+    en: "Does a mixed model estimate the same coefficients as `lm()` when data are missing or the design is unbalanced?"
+explanation:
+  de: |
+    Richtig sind 1 und 2. Für Zwischen-Personen-Effekte zählen Personen, nicht
+    Durchgänge; die naive SE war um den Faktor 1,6 zu klein (Design-Effekt). Für
+    Innerhalb-Effekte vergleicht jede Person mit sich selbst, deshalb wird der
+    Test schärfer, wie bei der ANOVA mit Messwiederholung. Aussage 3 ist falsch:
+    Hier bleibt die Erfahrung zwar signifikant, aber das KI wird 60 % breiter,
+    und bei kleineren Effekten kippt der Schluss. Aussage 4 ist falsch: Ein Mixed
+    Model gewichtet Personen mit vielen und wenigen gültigen Durchgängen
+    unterschiedlich (andere Schätzungen bei fehlenden Werten), schätzt die
+    Varianz zwischen Personen und erlaubt zufällige Steigungen. Cluster-robuste
+    Fehler sind eine schnelle, annahmearme Korrektur der Unsicherheit, kein
+    Ersatz für ein Modell der Abhängigkeit.
+  en: |
+    Statements 1 and 2 are true. For between-person effects, people count, not
+    trials; the naive SE was too small by a factor of 1.6 (design effect). For
+    within effects each person is compared with themselves, so the test becomes
+    sharper, as in the repeated-measures ANOVA. Statement 3 is false: here
+    experience stays significant, but the CI becomes 60% wider, and with smaller
+    effects the conclusion flips. Statement 4 is false: a mixed model weights
+    people with many and few valid trials differently (different estimates with
+    missing values), estimates the variance between people and allows random
+    slopes. Cluster-robust errors are a quick correction of the uncertainty with
+    few assumptions, not a replacement for a model of the dependence.
+misconception:
+  de: "Cluster-robuste Fehler machen Tests immer konservativer und sind gleichwertig zu einem Mixed Model."
+  en: "Cluster-robust errors always make tests more conservative and are equivalent to a mixed model."
+check:
+  type: value
+common_mistakes:
+  - pattern: "\\b3\\b"
+    message:
+      de: "Aussage 3 stimmt nicht: Schlüsse beruhen auf SE und KI; das KI der Erfahrung wird deutlich breiter."
+      en: "Statement 3 is false: conclusions rest on SE and CI; the CI for experience becomes clearly wider."
+  - pattern: "\\b4\\b"
+    message:
+      de: "Aussage 4 stimmt nicht: Ein Mixed Model schätzt anders gewichtet und modelliert die Varianz zwischen Personen."
+      en: "Statement 4 is false: a mixed model estimates with different weights and models the variance between people."

@@ -1,0 +1,134 @@
+# Knowledge check: passed at >= `pass` share of correctly answered questions.
+lesson: glm-expert
+pass: 0.8
+questions:
+  - id: gl-e-q-po
+    prompt:
+      de: "Was besagt die Proportional-Odds-Annahme eines kumulativen Logit-Modells (`clm()`)?"
+      en: "What does the proportional odds assumption of a cumulative logit model (`clm()`) state?"
+    options:
+      - text:
+          de: "Jeder Prädiktor hat an allen Schwellen (≥ 2 vs. 1, …, 7 vs. ≤ 6) dasselbe Odds Ratio."
+          en: "Each predictor has the same odds ratio at all thresholds (≥ 2 vs. 1, …, 7 vs. ≤ 6)."
+        correct: true
+        explain:
+          de: "Richtig. Prüfen mit `nominal_test()`; bei Verletzung einzelne Prädiktoren mit `nominal = ~ x` schätzen."
+          en: "Right. Check with `nominal_test()`; if violated, estimate single predictors with `nominal = ~ x`."
+      - text:
+          de: "Die Abstände zwischen den Kategorien sind gleich groß."
+          en: "The distances between the categories are equal."
+        correct: false
+        explain:
+          de: "Gerade das nimmt `clm()` nicht an; die Schwellen werden frei geschätzt."
+          en: "That is exactly what `clm()` does not assume; the thresholds are estimated freely."
+      - text:
+          de: "Alle Kategorien kommen gleich häufig vor."
+          en: "All categories occur equally often."
+        correct: false
+        explain:
+          de: "Die Häufigkeiten bestimmen die Schwellen, nicht die Annahme."
+          en: "The frequencies determine the thresholds, not the assumption."
+  - id: gl-e-q-clmm
+    prompt:
+      de: "Warum ändert sich in einem Logit-Mixed-Model mit Zufallsintercept auch die Schätzung, nicht nur der SE?"
+      en: "Why does the estimate change in a logit mixed model with a random intercept, not only the SE?"
+    options:
+      - text:
+          de: "Es schätzt personenspezifische (bedingte) Effekte; die sind bei Personenunterschieden größer als populationsgemittelte."
+          en: "It estimates person-specific (conditional) effects; with person differences these are larger than population-averaged ones."
+        correct: true
+        explain:
+          de: "Genau. Bei linearen Modellen fallen beide zusammen, bei nichtlinearen Links nicht."
+          en: "Exactly. In linear models both coincide, with nonlinear links they do not."
+      - text:
+          de: "Weil `clmm()` weniger Daten verwendet."
+          en: "Because `clmm()` uses fewer data."
+        correct: false
+        explain:
+          de: "Beide Modelle nutzen dieselben Beobachtungen."
+          en: "Both models use the same observations."
+      - text:
+          de: "Das ist ein Schätzfehler; die Werte müssten identisch sein."
+          en: "That is an estimation error; the values should be identical."
+        correct: false
+        explain:
+          de: "Die Abweichung ist erwartbar und folgt aus der Nichtlinearität des Logit-Links."
+          en: "The difference is expected and follows from the nonlinearity of the logit link."
+  - id: gl-e-q-overdisp
+    prompt:
+      de: "Ein Poisson-Modell zeigt Überdispersion und zu wenige vorhergesagte Nullen. Was prüfst du zuerst?"
+      en: "A Poisson model shows overdispersion and too few predicted zeros. What do you check first?"
+    options:
+      - text:
+          de: "Ob ein wichtiger Prädiktor fehlt, der die Heterogenität erklärt."
+          en: "Whether an important predictor is missing that explains the heterogeneity."
+        correct: true
+        explain:
+          de: "Richtig. In `usability` verschwinden beide Probleme, sobald `success` im Modell ist."
+          en: "Right. In `usability` both problems vanish as soon as `success` is in the model."
+      - text:
+          de: "Gar nichts, sondern direkt ein zero-inflated negativ-binomiales Modell."
+          en: "Nothing, go straight to a zero-inflated negative binomial model."
+        correct: false
+        explain:
+          de: "Das flickt das Symptom; der fehlende Prädiktor bleibt unentdeckt."
+          en: "That patches the symptom; the missing predictor stays undetected."
+      - text:
+          de: "Ob man die Fehler besser logarithmiert und `lm()` rechnet."
+          en: "Whether it is better to log the errors and run `lm()`."
+        correct: false
+        explain:
+          de: "`log(0)` ist nicht definiert, und Zählungen gehören in ein Zählmodell."
+          en: "`log(0)` is undefined, and counts belong in a count model."
+  - id: gl-e-q-hurdle
+    prompt:
+      de: "Was unterscheidet ein Hurdle- von einem zero-inflated Modell?"
+      en: "What distinguishes a hurdle model from a zero-inflated model?"
+    options:
+      - text:
+          de: "Im Hurdle-Modell entstehen alle Nullen im Hürdenteil; im zero-inflated Modell gibt es zusätzlich Nullen aus dem Zählteil."
+          en: "In the hurdle model all zeros arise in the hurdle part; in the zero-inflated model there are additional zeros from the count part."
+        correct: true
+        explain:
+          de: "Genau. Hurdle: „Gibt es überhaupt Fehler, und wie viele dann?“ Zero-inflated: zwei Gruppen, eine davon macht nie Fehler."
+          en: "Exactly. Hurdle: \"Are there any errors at all, and how many then?\" Zero-inflated: two groups, one of which never makes errors."
+      - text:
+          de: "Nur das zero-inflated Modell kann negativ-binomial sein."
+          en: "Only the zero-inflated model can be negative binomial."
+        correct: false
+        explain:
+          de: "Beide gibt es mit Poisson- und NB-Zählteil (`dist = \"negbin\"`)."
+          en: "Both exist with a Poisson and an NB count part (`dist = \"negbin\"`)."
+      - text:
+          de: "Es gibt keinen Unterschied, nur verschiedene Paketnamen."
+          en: "There is no difference, only different package names."
+        correct: false
+        explain:
+          de: "Beide stehen in pscl (`hurdle()`, `zeroinfl()`) und beschreiben verschiedene Prozesse."
+          en: "Both are in pscl (`hurdle()`, `zeroinfl()`) and describe different processes."
+  - id: gl-e-q-mass
+    prompt:
+      de: "Nach `library(dplyr)` und `library(MASS)` meldet `select(usability, errors)` „unused argument“. Warum?"
+      en: "After `library(dplyr)` and `library(MASS)`, `select(usability, errors)` reports \"unused argument\". Why?"
+    options:
+      - text:
+          de: "MASS wurde zuletzt geladen und überdeckt `dplyr::select()` mit `MASS::select()`."
+          en: "MASS was loaded last and masks `dplyr::select()` with `MASS::select()`."
+        correct: true
+        explain:
+          de: "Richtig. Lösung: MASS-Funktionen mit `MASS::glm.nb()` aufrufen oder MASS vor dplyr laden."
+          en: "Right. Fix: call MASS functions as `MASS::glm.nb()` or load MASS before dplyr."
+      - text:
+          de: "Die Spalte `errors` gibt es nicht."
+          en: "The column `errors` does not exist."
+        correct: false
+        explain:
+          de: "Dann käme „Column `errors` doesn't exist“, nicht „unused argument“."
+          en: "Then you would get \"Column `errors` doesn't exist\", not \"unused argument\"."
+      - text:
+          de: "dplyr verträgt sich nicht mit Zählmodellen."
+          en: "dplyr does not work with count models."
+        correct: false
+        explain:
+          de: "Es geht nur um gleichnamige Funktionen in zwei Paketen."
+          en: "It is only about functions with the same name in two packages."

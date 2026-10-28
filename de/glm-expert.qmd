@@ -1,0 +1,143 @@
+---
+title: "Kategoriale Daten und GLM"
+subtitle: "Expert · Ordinale Regression (clm, clmm), Zählmodelle mit Überdispersion und Nullen, multinomial"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [MASS, ordinal, nnet, pscl, performance, parameters, dplyr, tidyr]
+resources:
+  - ../data/usability.csv
+---
+
+{{< include /_generated/de/glm-expert/runtime.qmd >}}
+
+{{< include /_generated/de/glm-expert/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R läuft hier direkt im Browser. Beim ersten Besuch lädt es 20–40 Sekunden (Anzeige unten rechts), danach geht es schneller.
+:::
+
+{{< include /_generated/de/glm-expert/challenge.qmd >}}
+
+## Wozu? {#why}
+
+**Forschungsfrage:** Bewerten Expertinnen und Experten die Aufgaben einfacher, wenn man die 1–7-Skala als das behandelt, was sie ist: geordnet, aber nicht metrisch? Und verhindert Prototyp B Fehler, oder sorgt er nur dafür, dass weniger Fehler aufeinander folgen?
+
+In der Intermediate-Lektion hast du logistische und Poisson-Modelle gerechnet und Überdispersion mit quasipoisson behandelt. Ratingskalen, Zählungen mit vielen Nullen und Kategorien ohne Reihenfolge brauchen eigene Modelle. Wichtiger als das Modell ist aber die Diagnose: Viele Nullen und Überdispersion haben oft eine inhaltliche Ursache.
+
+## Konzept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 170" role="img" aria-labelledby="fig-gle-title fig-gle-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-gle-title">Kumulatives Logit-Modell mit Schwellen</title>
+  <desc id="fig-gle-desc">Eine waagerechte latente Achse mit sechs senkrechten Schwellen, die die Achse in sieben Abschnitte für die Antworten 1 bis 7 teilen; die Abstände der Schwellen sind ungleich. Darüber zwei Glockenkurven: eine für Novizen, eine nach rechts verschoben für Experten. Die Verschiebung ist der Effekt der Expertise, gleich für alle Schwellen.</desc>
+  <line x1="20" y1="130" x2="540" y2="130" class="rt-fig-axis" />
+  <line x1="70" y1="40" x2="70" y2="140" class="rt-fig-arrow" stroke-dasharray="4 4" />
+  <line x1="150" y1="40" x2="150" y2="140" class="rt-fig-arrow" stroke-dasharray="4 4" />
+  <line x1="190" y1="40" x2="190" y2="140" class="rt-fig-arrow" stroke-dasharray="4 4" />
+  <line x1="240" y1="40" x2="240" y2="140" class="rt-fig-arrow" stroke-dasharray="4 4" />
+  <line x1="320" y1="40" x2="320" y2="140" class="rt-fig-arrow" stroke-dasharray="4 4" />
+  <line x1="430" y1="40" x2="430" y2="140" class="rt-fig-arrow" stroke-dasharray="4 4" />
+  <text x="40" y="158" class="rt-fig-label">1</text>
+  <text x="106" y="158" class="rt-fig-label">2</text>
+  <text x="166" y="158" class="rt-fig-label">3</text>
+  <text x="211" y="158" class="rt-fig-label">4</text>
+  <text x="276" y="158" class="rt-fig-label">5</text>
+  <text x="371" y="158" class="rt-fig-label">6</text>
+  <text x="481" y="158" class="rt-fig-label">7</text>
+  <path d="M 140 130 C 220 130, 230 50, 280 50 S 340 130, 420 130" class="rt-fig-a" fill="none" />
+  <path d="M 200 130 C 280 130, 290 50, 340 50 S 400 130, 480 130" class="rt-fig-b" fill="none" />
+  <text x="230" y="40" class="rt-fig-label">novice</text>
+  <text x="350" y="40" class="rt-fig-label">expert</text>
+</svg>
+<figcaption>Eine latente Einfachheit, sechs frei geschätzte Schwellen; ein Prädiktor verschiebt die Verteilung für alle Schwellen gleich.</figcaption>
+</figure>
+```
+
+- **Ordinal:** `ordinal::clm(y ~ x)` schätzt Schwellen und einen Effekt je Prädiktor (Proportional Odds); `exp(coef)` sind kumulative Odds Ratios. Annahme prüfen mit `nominal_test()`. Messwiederholung: `clmm(y ~ x + (1 | participant))`. Das Ergebnis muss ein geordneter Faktor sein.
+- **Überdispersion und Nullen:** Erst den fehlenden Prädiktor suchen (`performance::check_overdispersion()`, `check_zeroinflation()`), dann das Verteilungsmodell wechseln. Negativ-binomial: `MASS::glm.nb()`. Zwei Prozesse: `pscl::hurdle()` (Hürde „mindestens eins?“ + Zählung der positiven Werte) oder `pscl::zeroinfl()` (Mischung aus „immer null“ und Zählprozess).
+- **Hurdle deuten:** Der Hürdenteil modelliert in pscl die Wahrscheinlichkeit einer *positiven* Zählung, auch wenn parameters den Block „Zero-Inflation“ nennt. Richtung mit den Rohdaten prüfen.
+- **Multinomial:** `nnet::multinom(y ~ x)` schätzt je Kategorie gegenüber der Referenz eigene Effekte; sinnvoll für Kategorien ohne Reihenfolge. Für geordnete Kategorien meist zu viele Parameter.
+- **MASS und dplyr:** `library(MASS)` nach dplyr überdeckt `select()`. Auf dieser Seite lädt MASS zuerst; im eigenen Skript `MASS::glm.nb()` schreiben.
+
+## Beispiel {#example}
+
+Ordinales Modell ohne und mit Zufallsintercept, dazu der Test der Proportional-Odds-Annahme:
+
+```{webr}
+ease <- usability |>
+  filter(!is.na(seq)) |>
+  mutate(seq_o = factor(seq, levels = 1:7, ordered = TRUE))
+fit_clm <- clm(seq_o ~ prototype + expertise, data = ease)
+fit_clmm <- clmm(seq_o ~ prototype + expertise + (1 | participant), data = ease)
+exp(coef(fit_clm))[c("prototypeB", "prototypeC", "expertiseexpert")]
+coef(summary(fit_clmm))
+nominal_test(fit_clm)
+```
+
+Zählmodelle: Diagnose am einfachen Poisson-Modell, dann der fehlende Prädiktor, zuletzt das Hurdle-Modell:
+
+```{webr}
+p0 <- glm(errors ~ prototype + expertise, family = poisson, data = usability)
+check_overdispersion(p0)
+check_zeroinflation(p0)
+n0 <- MASS::glm.nb(errors ~ prototype + expertise, data = usability)
+p1 <- glm(errors ~ prototype + expertise + success, family = poisson, data = usability)
+check_zeroinflation(p1)
+AIC(p0, n0, p1)
+fit_h <- hurdle(errors ~ prototype + expertise + success, data = usability, dist = "poisson")
+model_parameters(fit_h, exponentiate = TRUE)
+usability |>
+  summarise(any_error = mean(errors > 0), .by = prototype)
+```
+
+**So berichtest du es:** Expertinnen und Experten bewerteten Aufgaben einfacher (kumulatives Logit-Modell mit Zufallsintercept je Person, OR = 2,43, 95 %-KI [1,41; 4,19]); die Proportional-Odds-Annahme war unauffällig. Prototyp B senkte die Fehlerrate (negativ-binomial, IRR = 0,41, 95 %-KI [0,27; 0,63]). Ein Hurdle-Modell zeigte, dass B vor allem verhinderte, dass überhaupt Fehler auftraten (OR = 0,29 [0,16; 0,56]), die Zahl der Fehler danach aber nicht klar senkte (IRR = 0,82 [0,44; 1,51]).
+
+## Paketvergleich {#packages}
+
+| Aufgabe | Empfehlung | Alternative |
+|---|---|---|
+| Ordinale Regression | **ordinal** `clm()`, `clmm()`, `nominal_test()` | `MASS::polr()` (ohne Zufallseffekte), **brms** `family = cumulative()` (lokal) |
+| Überdispersion | **MASS** `glm.nb()`, Diagnose mit **performance** | `quasipoisson` (ohne AIC), **glmmTMB** `nbinom2` mit Zufallseffekten (lädt in webR nicht, lokal) |
+| Nullen | **pscl** `hurdle()`, `zeroinfl()` | **glmmTMB** `ziformula`, **countreg** (lokal) |
+| Multinomial | **nnet** `multinom()` | **mclogit**, **brms** `categorical()` (lokal) |
+| Vorhergesagte Wahrscheinlichkeiten | **marginaleffects** `avg_predictions()` | `predict(type = "prob")`, **emmeans** mit `mode = "prob"` |
+
+## Übungen {#exercises}
+
+Drei Pflichtübungen und eine Zusatzübung. **Ausführen und prüfen** startet deinen Code und prüft ihn sofort. Hinweise deckst du einzeln auf (**Hinweis zeigen**), die Lösung erst danach.
+
+{{< include /_generated/de/glm-expert/exercises.qmd >}}
+
+## Wissenscheck {#check}
+
+{{< include /_generated/de/glm-expert/quiz.qmd >}}
+
+## Spickzettel {#cheatsheet}
+
+```r
+# Ordinal (Ergebnis als geordneter Faktor)
+d <- mutate(d, y_o = factor(y, levels = 1:7, ordered = TRUE))
+fit <- ordinal::clm(y_o ~ x1 + x2, data = d)
+exp(coef(fit))                     # Schwellen zuerst, dann Effekte
+ordinal::nominal_test(fit)         # Proportional Odds prüfen
+ordinal::clmm(y_o ~ x1 + (1 | participant), data = d)
+
+# Zählungen: erst diagnostizieren, dann Verteilung wechseln
+p <- glm(count ~ x, family = poisson, data = d)
+performance::check_overdispersion(p)
+performance::check_zeroinflation(p)
+MASS::glm.nb(count ~ x, data = d)
+pscl::hurdle(count ~ x, data = d, dist = "negbin")   # Hürde = P(count > 0)
+
+# Kategorien ohne Reihenfolge
+nnet::multinom(choice ~ x, data = d, trace = FALSE)
+```
+
+- Ratingskalen ordinal modellieren; Proportional Odds prüfen.
+- Viele Nullen oder Überdispersion: zuerst nach einem fehlenden Prädiktor suchen.
+- Hurdle: Hürdenteil = Wahrscheinlichkeit einer positiven Zählung, Zählteil = wie viele, wenn überhaupt.
+- `MASS::` statt `library(MASS)`, sonst ist `dplyr::select()` überdeckt.
+
+{{< include /_generated/de/glm-expert/footer.qmd >}}

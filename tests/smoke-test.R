@@ -746,6 +746,69 @@ run_exercise("gc-e-tost", paste(
 checked <- wait_for("!!document.querySelector('#ex-gc-e-tost .exercise-grade.alert-success')", timeout = 90)
 step("group-comparisons-expert: TOSTER equivalence test graded correct", !is.na(checked), sprintf("%s s", checked))
 
+# 17. Expert P3: linked in the course plan; robust-expert challenge (BCa
+# bootstrap, wrong interval type gets the hint) before #why; CR2 with
+# clubSandwich and an ordinal mixed model (clmm) graded; load times with
+# boot/coin/robustbase/WRS2, sandwich/clubSandwich and MASS/ordinal/pscl.
+goto("/de/index.html")
+Sys.sleep(1)
+expert_p3 <- c("robust", "regression", "glm")
+unlinked <- js(sprintf(
+  "[%s].filter(slug => !document.querySelector(`a[href*=\"${slug}-expert\"]`)).join(', ')",
+  paste0("'", expert_p3, "'", collapse = ", ")
+))
+step("expert: P3 lessons linked in the German course plan", identical(unlinked, ""), unlinked)
+
+loaded <- wait_lesson("/de/robust-expert.html", "rb-e-bca")
+step("robust-expert: webR, boot, coin, robustbase and WRS2 ready", !is.na(loaded), sprintf("%s s", loaded))
+before_why <- js("(() => {
+  const box = document.querySelector('.rt-challenge');
+  const why = document.getElementById('why');
+  return !!box && !!why && !!(box.compareDocumentPosition(why) & Node.DOCUMENT_POSITION_FOLLOWING) &&
+    !!box.querySelector('#ex-rb-e-bca');
+})()")
+step("robust-expert: challenge box with the exercise stands before #why", before_why)
+bca_code <- function(type) paste(
+  "trim_diff <- function(data, i) {",
+  "  d <- data[i, ]",
+  "  mean(d$tlx_frustration[d$interface == \"voice\"], trim = 0.2) -",
+  "    mean(d$tlx_frustration[d$interface == \"touch\"], trim = 0.2)",
+  "}",
+  "set.seed(2026)",
+  "b <- boot(frust, trim_diff, R = 1999, strata = frust$interface)",
+  sprintf("ci <- boot.ci(b, type = \"%s\")", type),
+  sprintf("ci$%s[4:5]", if (type == "perc") "percent" else type),
+  sep = "\n"
+)
+run_exercise("rb-e-bca", bca_code("perc"))
+hinted <- wait_for("(document.querySelector('#ex-rb-e-bca .exercise-grade.alert-danger')?.textContent || '').includes('BCa')", timeout = 90)
+step("robust-expert: percentile interval in the challenge gets the hint", !is.na(hinted))
+run_exercise("rb-e-bca", bca_code("bca"))
+checked <- wait_for("!!document.querySelector('#ex-rb-e-bca .exercise-grade.alert-success')", timeout = 90)
+step("robust-expert: challenge (BCa bootstrap) graded correct", !is.na(checked), sprintf("%s s", checked))
+
+loaded <- wait_lesson("/de/regression-expert.html", "rg-e-cr2")
+step("regression-expert: webR, sandwich, clubSandwich and performance ready", !is.na(loaded), sprintf("%s s", loaded))
+run_exercise("rg-e-cr2", paste(
+  "ct <- coef_test(fit, vcov = \"CR2\", cluster = solved$participant)",
+  "tibble(term = ct$Coef, estimate = ct$beta, se = ct$SE, df = ct$df_Satt, p = ct$p_Satt)",
+  sep = "\n"
+))
+checked <- wait_for("!!document.querySelector('#ex-rg-e-cr2 .exercise-grade.alert-success')", timeout = 90)
+step("regression-expert: CR2 with Satterthwaite df graded correct", !is.na(checked), sprintf("%s s", checked))
+
+loaded <- wait_lesson("/de/glm-expert.html", "gl-e-clmm")
+step("glm-expert: webR, MASS, ordinal, nnet and pscl ready", !is.na(loaded), sprintf("%s s", loaded))
+run_exercise("gl-e-clmm", paste(
+  "fit <- clmm(seq_o ~ prototype + expertise + (1 | participant), data = ease)",
+  "tab <- coef(summary(fit))",
+  "terms <- c(\"prototypeB\", \"prototypeC\", \"expertiseexpert\")",
+  "tibble(term = terms, or = exp(tab[terms, 1]), se = tab[terms, 2])",
+  sep = "\n"
+))
+checked <- wait_for("!!document.querySelector('#ex-gl-e-clmm .exercise-grade.alert-success')", timeout = 120)
+step("glm-expert: ordinal mixed model (clmm) graded correct", !is.na(checked), sprintf("%s s", checked))
+
 goto("/en/index.html")
 Sys.sleep(1)
 beginner <- c(

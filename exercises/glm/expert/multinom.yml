@@ -1,0 +1,95 @@
+id: gl-e-multinom
+lesson: glm-expert
+order: 4
+title:
+  de: Ordinal oder multinomial?
+  en: Ordinal or multinomial?
+kind: write
+required: false
+packages: [dplyr]
+data: [usability]
+setup: |
+  library(dplyr)
+  ease3 <- usability |>
+    filter(!is.na(seq)) |>
+    mutate(ease = cut(seq, c(0, 4, 5, 7), labels = c("low", "mid", "high")))
+prompt:
+  de: |
+    `ease3$ease` fasst die SEQ-Bewertung in drei Kategorien zusammen (low 1–4,
+    mid 5, high 6–7). Ein multinomiales Modell schätzt für jede Kategorie
+    gegenüber `low` eigene Effekte und ignoriert die Reihenfolge; das ordinale
+    Modell schätzt einen Effekt für alle Schwellen.
+
+    Schätze beide Modelle mit `ease ~ prototype + expertise`:
+    `nnet::multinom(..., trace = FALSE)` (`fit_mn`) und
+    `clm(ordered(ease) ~ ...)` (`fit_or`). Gib ein Tibble mit den Spalten
+    `model` (`"multinomial"`, `"ordinal"`), `k` (Zahl der Parameter, aus
+    `attr(logLik(fit), "df")`) und `aic` zurück.
+  en: |
+    `ease3$ease` groups the SEQ rating into three categories (low 1–4, mid 5,
+    high 6–7). A multinomial model estimates separate effects for each category
+    against `low` and ignores the order; the ordinal model estimates one effect
+    for all thresholds.
+
+    Fit both models with `ease ~ prototype + expertise`:
+    `nnet::multinom(..., trace = FALSE)` (`fit_mn`) and
+    `clm(ordered(ease) ~ ...)` (`fit_or`). Return a tibble with the columns
+    `model` (`"multinomial"`, `"ordinal"`), `k` (number of parameters, from
+    `attr(logLik(fit), "df")`) and `aic`.
+starter: |
+  fit_mn <- nnet::multinom(ease ~ prototype + expertise, data = ease3)
+  AIC(fit_mn)
+solution: |
+  fit_mn <- nnet::multinom(ease ~ prototype + expertise, data = ease3, trace = FALSE)
+  fit_or <- ordinal::clm(ordered(ease) ~ prototype + expertise, data = ease3)
+  tibble(
+    model = c("multinomial", "ordinal"),
+    k = c(attr(logLik(fit_mn), "df"), attr(logLik(fit_or), "df")),
+    aic = c(AIC(fit_mn), AIC(fit_or))
+  )
+hints:
+  - de: "`multinom()` braucht einen (ungeordneten) Faktor, `clm()` einen geordneten: `ordered(ease)`."
+    en: "`multinom()` needs an (unordered) factor, `clm()` an ordered one: `ordered(ease)`."
+  - de: "`trace = FALSE` unterdrückt die Iterationsausgabe von nnet."
+    en: "`trace = FALSE` suppresses nnet's iteration output."
+  - de: "`attr(logLik(fit_mn), \"df\")` liefert 8 bzw. 5 Parameter; `AIC()` funktioniert für beide."
+    en: "`attr(logLik(fit_mn), \"df\")` gives 8 and 5 parameters; `AIC()` works for both."
+explanation:
+  de: |
+    Multinomial: 8 Parameter, AIC 585,5; ordinal: 5 Parameter, AIC 582,6. Das
+    sparsamere ordinale Modell passt besser. Im multinomialen Modell sieht man
+    warum: Expertise erhöht die Odds für mid (2,89) und high (3,77) gegenüber
+    low gleichsinnig, genau das Muster, das das ordinale Modell mit einem
+    einzigen OR (2,43) beschreibt. Multinomial lohnt sich bei echten
+    Kategorien ohne Reihenfolge (z. B. gewählte Bedienform: touch, voice,
+    gesture) oder wenn sich Effekte über die Schwellen klar unterscheiden
+    (`nominal_test()` signifikant). Dann kannst du in `clm()` auch einzelne
+    Prädiktoren nominal schätzen (`nominal = ~ expertise`). Achtung: Die
+    Zusammenfassung in drei Kategorien kostet Information; für die Analyse ist
+    die volle 7er-Skala besser, hier dient sie dem Vergleich.
+  en: |
+    Multinomial: 8 parameters, AIC 585.5; ordinal: 5 parameters, AIC 582.6. The
+    more parsimonious ordinal model fits better. The multinomial model shows
+    why: expertise raises the odds for mid (2.89) and high (3.77) versus low in
+    the same direction, exactly the pattern the ordinal model describes with a
+    single OR (2.43). Multinomial pays off for genuine categories without order
+    (e.g. chosen input mode: touch, voice, gesture) or when effects clearly
+    differ across thresholds (`nominal_test()` significant). Then you can also
+    estimate single predictors as nominal in `clm()` (`nominal = ~ expertise`).
+    Note: grouping into three categories loses information; for the analysis the
+    full 7-point scale is better, here it serves the comparison.
+misconception:
+  de: "Das multinomiale Modell ist immer die sichere Wahl, weil es weniger Annahmen macht."
+  en: "The multinomial model is always the safe choice because it makes fewer assumptions."
+check:
+  type: value
+  tolerance: 1.0e-3
+common_mistakes:
+  - pattern: "clm\\(\\s*ease\\s*~"
+    message:
+      de: "`ease` ist ungeordnet; `clm()` braucht `ordered(ease)`."
+      en: "`ease` is unordered; `clm()` needs `ordered(ease)`."
+  - pattern: "BIC\\("
+    message:
+      de: "Gefragt ist das AIC (`AIC()`), nicht das BIC."
+      en: "The task asks for the AIC (`AIC()`), not the BIC."

@@ -1,0 +1,94 @@
+id: rg-e-cv
+lesson: regression-expert
+order: 4
+title:
+  de: Kreuzvalidierung statt In-Sample-R²
+  en: Cross-validation instead of in-sample R²
+kind: write
+required: false
+packages: [dplyr, performance]
+data: [acceptance]
+setup: |
+  library(dplyr)
+  library(performance)
+  acc <- acceptance |>
+    mutate(
+      bi = rowMeans(across(bi_1:bi_4)),
+      pu = rowMeans(across(pu_1:pu_5))
+    )
+  fit_lin <- lm(bi ~ pu + age, data = acc)
+  fit_spl <- lm(bi ~ pu + splines::ns(age, df = 3), data = acc)
+prompt:
+  de: |
+    Das Spline-Modell hat ein etwas höheres R² als das lineare (immer, weil es
+    das lineare enthält). Sagt es neue Personen auch besser vorher?
+
+    Rechne für beide Modelle eine 10-fache Kreuzvalidierung mit
+    `performance_cv(model, method = "k_fold", k = 10)`. Setze **vor jedem
+    Aufruf** `set.seed(2026)`, damit beide dieselben Folds bekommen.
+
+    Gib ein Tibble mit einer Zeile je Modell zurück: Spalte `model` (`"linear"`,
+    `"spline"`) und die Spalten `MSE`, `RMSE` und `R2` aus `performance_cv()`.
+  en: |
+    The spline model has a slightly higher R² than the linear one (always,
+    because it contains the linear one). Does it also predict new people better?
+
+    Run a 10-fold cross-validation for both models with
+    `performance_cv(model, method = "k_fold", k = 10)`. Call `set.seed(2026)`
+    **before each call** so both get the same folds.
+
+    Return a tibble with one row per model: column `model` (`"linear"`,
+    `"spline"`) and the columns `MSE`, `RMSE` and `R2` from `performance_cv()`.
+starter: |
+  set.seed(2026)
+  performance_cv(fit_lin, method = "k_fold", k = 10)
+solution: |
+  set.seed(2026)
+  cv_lin <- performance_cv(fit_lin, method = "k_fold", k = 10)
+  set.seed(2026)
+  cv_spl <- performance_cv(fit_spl, method = "k_fold", k = 10)
+  bind_rows(linear = as_tibble(cv_lin), spline = as_tibble(cv_spl), .id = "model")
+hints:
+  - de: "Ohne denselben Seed vor beiden Aufrufen vergleichst du Modelle auf verschiedenen Aufteilungen; der Unterschied ist dann teils Zufall."
+    en: "Without the same seed before both calls you compare models on different splits; part of the difference is then chance."
+  - de: "Speichere beide Ergebnisse (`cv_lin`, `cv_spl`) und wandle sie mit `as_tibble()` um."
+    en: "Store both results (`cv_lin`, `cv_spl`) and convert them with `as_tibble()`."
+  - de: "`bind_rows(linear = ..., spline = ..., .id = \"model\")` setzt die Namen als Spalte `model`."
+    en: "`bind_rows(linear = ..., spline = ..., .id = \"model\")` turns the names into the column `model`."
+explanation:
+  de: |
+    Linear: RMSE 1,283, R² = .135; Spline: RMSE 1,290, R² = .125. Im Datensatz
+    selbst hat der Spline das höhere R² (.149 vs. .145), auf ungesehenen Daten
+    sagt er schlechter vorher. Die zusätzliche Flexibilität passt Rauschen an
+    (Overfitting). Kreuzvalidierung beantwortet „Wie gut sage ich neue Personen
+    vorher?“, der F-Test aus der vorigen Übung „Gibt es Evidenz für
+    Nichtlinearität?“. Beide sprechen hier für das lineare Modell. Fallstricke:
+    Folds immer gleich halten (Seed) und bei gruppierten Daten ganze Personen in
+    einen Fold legen, sonst lernt das Modell die Person im Training kennen.
+    Unterschiede in der dritten Nachkommastelle des RMSE sind klein; berichte
+    sie als „kein Gewinn“, nicht als klaren Verlust.
+  en: |
+    Linear: RMSE 1.283, R² = .135; spline: RMSE 1.290, R² = .125. In the dataset
+    itself the spline has the higher R² (.149 vs. .145), on unseen data it
+    predicts worse. The extra flexibility fits noise (overfitting).
+    Cross-validation answers "How well do I predict new people?", the F test from
+    the previous exercise "Is there evidence for nonlinearity?". Both favour the
+    linear model here. Pitfalls: keep the folds identical (seed) and, with
+    grouped data, put whole people into one fold, otherwise the model gets to
+    know the person during training. Differences in the third decimal of RMSE are
+    small; report them as "no gain", not as a clear loss.
+misconception:
+  de: "Das Modell mit dem höheren R² im Datensatz sagt auch neue Daten besser vorher."
+  en: "The model with the higher R² in the dataset also predicts new data better."
+check:
+  type: value
+  tolerance: 1.0e-6
+common_mistakes:
+  - pattern: "method\\s*=\\s*\"holdout\""
+    message:
+      de: "Gefragt ist `method = \"k_fold\"` mit `k = 10`; ein einzelner Holdout schwankt stark."
+      en: "The task asks for `method = \"k_fold\"` with `k = 10`; a single holdout varies a lot."
+  - pattern: "r2\\("
+    message:
+      de: "`r2()` misst die Passung im Datensatz; gefragt ist die Vorhersage auf ungesehenen Folds."
+      en: "`r2()` measures the fit in the dataset; the task asks for prediction on unseen folds."

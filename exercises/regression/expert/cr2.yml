@@ -1,0 +1,90 @@
+id: rg-e-cr2
+lesson: regression-expert
+order: 1
+title:
+  de: Wenige Cluster mit CR2 und Satterthwaite
+  en: Few clusters with CR2 and Satterthwaite
+kind: write
+required: true
+packages: [dplyr, clubSandwich]
+data: [usability]
+setup: |
+  library(dplyr)
+  library(clubSandwich)
+  solved <- usability |>
+    filter(success == 1)
+  fit <- lm(log(time_s) ~ prototype + task + expertise, data = solved)
+prompt:
+  de: |
+    `fit` modelliert die logarithmierte Zeit der gelösten Aufgaben (226
+    Aufgaben von nur 24 Personen). Bei so wenigen Clustern sind die üblichen
+    cluster-robusten Fehler (CR1/HC1) zu klein und die Freiheitsgrade zu groß.
+
+    Rechne mit clubSandwich `coef_test()` die Tests mit `vcov = "CR2"` und
+    `cluster = solved$participant`. Gib ein Tibble mit den Spalten `term`,
+    `estimate`, `se`, `df` und `p` zurück (aus den Spalten `Coef`, `beta`, `SE`,
+    `df_Satt` und `p_Satt` des Ergebnisses).
+  en: |
+    `fit` models the log time of solved tasks (226 tasks from only 24 people).
+    With so few clusters, the usual cluster-robust errors (CR1/HC1) are too
+    small and the degrees of freedom too large.
+
+    Use clubSandwich `coef_test()` with `vcov = "CR2"` and
+    `cluster = solved$participant`. Return a tibble with the columns `term`,
+    `estimate`, `se`, `df` and `p` (from the columns `Coef`, `beta`, `SE`,
+    `df_Satt` and `p_Satt` of the result).
+starter: |
+  ct <- coef_test(fit, vcov = "CR1", cluster = solved$participant)
+  ct
+solution: |
+  ct <- coef_test(fit, vcov = "CR2", cluster = solved$participant)
+  tibble(term = ct$Coef, estimate = ct$beta, se = ct$SE, df = ct$df_Satt, p = ct$p_Satt)
+hints:
+  - de: "`coef_test(fit, vcov = \"CR2\", cluster = ...)` rechnet standardmäßig Satterthwaite-Freiheitsgrade (`test = \"Satterthwaite\"`)."
+    en: "`coef_test(fit, vcov = \"CR2\", cluster = ...)` uses Satterthwaite degrees of freedom by default (`test = \"Satterthwaite\"`)."
+  - de: "Das Cluster ist ein Vektor in der Länge der Modelldaten: `solved$participant`."
+    en: "The cluster is a vector with the length of the model data: `solved$participant`."
+  - de: "`tibble(term = ct$Coef, estimate = ct$beta, se = ct$SE, df = ct$df_Satt, p = ct$p_Satt)`."
+    en: "`tibble(term = ct$Coef, estimate = ct$beta, se = ct$SE, df = ct$df_Satt, p = ct$p_Satt)`."
+explanation:
+  de: |
+    Die Satterthwaite-Freiheitsgrade liegen bei 20–22 statt 219: Die Information
+    steckt in 24 Personen, nicht in 226 Aufgaben. Prototyp B: b = −0,123
+    (Zeitverhältnis exp(b) = 0,88, also 12 % schneller), SE 0,063, t(21,8) =
+    −1,96, p = .063. Naiv war p = .032, mit HC1-Cluster-Fehlern und großen df
+    p = .054. Je nach Verfahren „kippt“ die Signifikanz; das KI ist ehrlicher:
+    B ist irgendwo zwischen etwa 22 % schneller und gleich schnell. Expertise
+    (zwischen Personen): SE 0,048 → 0,089. CR2 korrigiert die Verzerrung des
+    Sandwich-Schätzers bei kleinen Clusterzahlen (Bell & McCaffrey), Satterthwaite
+    passt die df an. Faustregel: unter etwa 40–50 Clustern CR2 + Satterthwaite;
+    für Tests mehrerer Koeffizienten `Wald_test()`. Formulierung: „Gelöste
+    Aufgaben dauerten mit B tendenziell kürzer (Zeitverhältnis 0,88; CR2-SE nach
+    Person, t(21,8) = −1,96, p = .063).“
+  en: |
+    The Satterthwaite degrees of freedom are 20–22 instead of 219: the
+    information lies in 24 people, not in 226 tasks. Prototype B: b = −0.123
+    (time ratio exp(b) = 0.88, i.e. 12% faster), SE 0.063, t(21.8) = −1.96,
+    p = .063. Naively p was .032, with HC1 cluster errors and large df p = .054.
+    Depending on the method, significance "flips"; the CI is more honest: B is
+    somewhere between about 22% faster and equally fast. Expertise (between
+    people): SE 0.048 → 0.089. CR2 corrects the bias of the sandwich estimator
+    with few clusters (Bell & McCaffrey), Satterthwaite adjusts the df. Rule of
+    thumb: below about 40–50 clusters use CR2 + Satterthwaite; for tests of
+    several coefficients `Wald_test()`. Wording: "Solved tasks tended to be
+    shorter with B (time ratio 0.88; CR2 SE by person, t(21.8) = −1.96,
+    p = .063)."
+misconception:
+  de: "Mit cluster-robusten Fehlern ist die Abhängigkeit vollständig erledigt, egal wie wenige Cluster es gibt."
+  en: "Cluster-robust errors fully take care of the dependence, no matter how few clusters there are."
+check:
+  type: value
+  tolerance: 1.0e-4
+common_mistakes:
+  - pattern: "vcov\\s*=\\s*\"CR1\""
+    message:
+      de: "CR1 ist bei 24 Clustern zu liberal; gefragt ist `\"CR2\"`."
+      en: "CR1 is too liberal with 24 clusters; the task asks for `\"CR2\"`."
+  - pattern: "cluster\\s*=\\s*usability\\$participant"
+    message:
+      de: "Das Modell nutzt nur die gelösten Aufgaben; das Cluster muss aus `solved` kommen, sonst stimmt die Länge nicht."
+      en: "The model only uses the solved tasks; the cluster must come from `solved`, otherwise the length does not match."

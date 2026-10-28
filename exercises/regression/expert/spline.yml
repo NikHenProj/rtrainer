@@ -1,0 +1,93 @@
+id: rg-e-spline
+lesson: regression-expert
+order: 2
+title:
+  de: Ist der Alterseffekt linear?
+  en: Is the age effect linear?
+kind: write
+required: true
+packages: [dplyr]
+data: [acceptance]
+setup: |
+  library(dplyr)
+  acc <- acceptance |>
+    mutate(
+      bi = rowMeans(across(bi_1:bi_4)),
+      pu = rowMeans(across(pu_1:pu_5))
+    )
+  fit_lin <- lm(bi ~ pu + age, data = acc)
+prompt:
+  de: |
+    `fit_lin` sagt die Nutzungsabsicht (`bi`) aus der Nützlichkeit (`pu`) und
+    dem Alter vorher (b_age = −0,018 je Jahr). Eine Gutachterin vermutet, dass
+    die Absicht erst ab etwa 50 Jahren sinkt.
+
+    Ersetze `age` durch einen natürlichen Spline mit drei Freiheitsgraden
+    (`splines::ns(age, df = 3)`) und speichere das Modell als `fit_spl`. Teste
+    mit `anova(fit_lin, fit_spl)`, ob der Spline die Passung verbessert.
+
+    Gib die ANOVA-Tabelle als Tibble zurück (`as_tibble()`).
+  en: |
+    `fit_lin` predicts behavioural intention (`bi`) from perceived usefulness
+    (`pu`) and age (b_age = −0.018 per year). A reviewer suspects that intention
+    only drops from about 50 years on.
+
+    Replace `age` with a natural spline with three degrees of freedom
+    (`splines::ns(age, df = 3)`) and store the model as `fit_spl`. Test with
+    `anova(fit_lin, fit_spl)` whether the spline improves the fit.
+
+    Return the ANOVA table as a tibble (`as_tibble()`).
+starter: |
+  fit_spl <- lm(bi ~ pu + poly(age, 3), data = acc)
+  anova(fit_lin, fit_spl) |>
+    as_tibble()
+solution: |
+  fit_spl <- lm(bi ~ pu + splines::ns(age, df = 3), data = acc)
+  anova(fit_lin, fit_spl) |>
+    as_tibble()
+hints:
+  - de: "`splines` gehört zu Base R, muss aber geladen oder mit `splines::` angesprochen werden."
+    en: "`splines` is part of base R but has to be loaded or called with `splines::`."
+  - de: "Das lineare Modell ist im Spline-Modell geschachtelt (ein Spline mit df = 3 kann eine Gerade darstellen), daher passt der F-Test mit `anova()`."
+    en: "The linear model is nested in the spline model (a spline with df = 3 can represent a straight line), so the F test with `anova()` fits."
+  - de: "`fit_spl <- lm(bi ~ pu + splines::ns(age, df = 3), data = acc)`."
+    en: "`fit_spl <- lm(bi ~ pu + splines::ns(age, df = 3), data = acc)`."
+explanation:
+  de: |
+    F(2; 295) = 0,76, p = .47: Die zwei zusätzlichen Freiheitsgrade des Splines
+    verbessern die Passung nicht; AIC 1005,5 (linear) vs. 1008,0 (Spline). Die
+    Daten sprechen also für einen linearen Rückgang (−0,18 Punkte je Jahrzehnt).
+    Das ist ein ehrliches Ergebnis: Vorher prüfen statt Nichtlinearität einfach
+    anzunehmen oder Alter in Gruppen zu teilen (das verschenkt Information und
+    erzeugt Sprünge an willkürlichen Grenzen). Natürliche Splines (`ns()`) sind
+    an den Rändern linear und dadurch stabiler als Polynome, die bei extremen
+    Altern ausschlagen. Für die Darstellung nimm
+    `modelbased::estimate_relation(fit_spl, by = "age")`; Koeffizienten von
+    Spline-Basen sind nicht einzeln deutbar. Für flexiblere Formen mit
+    automatischer Glättung: `mgcv::gam(bi ~ pu + s(age))`.
+  en: |
+    F(2, 295) = 0.76, p = .47: the spline's two additional degrees of freedom do
+    not improve the fit; AIC 1005.5 (linear) vs. 1008.0 (spline). The data
+    therefore favour a linear decline (−0.18 points per decade). That is an
+    honest result: check first instead of simply assuming nonlinearity or
+    splitting age into groups (which wastes information and creates jumps at
+    arbitrary cut points). Natural splines (`ns()`) are linear at the edges and
+    therefore more stable than polynomials, which swing out at extreme ages. For
+    display use `modelbased::estimate_relation(fit_spl, by = "age")`;
+    coefficients of spline bases cannot be interpreted one by one. For more
+    flexible shapes with automatic smoothing: `mgcv::gam(bi ~ pu + s(age))`.
+misconception:
+  de: "Ein flexibleres Modell ist immer besser, und ein Spline-Koeffizient ist die Steigung in einem Altersbereich."
+  en: "A more flexible model is always better, and a spline coefficient is the slope in an age range."
+check:
+  type: value
+  tolerance: 1.0e-6
+common_mistakes:
+  - pattern: "poly\\("
+    message:
+      de: "Gefragt ist ein natürlicher Spline (`splines::ns()`); Polynome schlagen an den Rändern aus."
+      en: "The task asks for a natural spline (`splines::ns()`); polynomials swing out at the edges."
+  - pattern: "cut\\(\\s*age"
+    message:
+      de: "Alter in Gruppen zu schneiden verschenkt Information; nimm einen Spline."
+      en: "Cutting age into groups wastes information; use a spline."

@@ -1,0 +1,19 @@
+# Lesson metadata; exercises are the other *.yml files in this folder
+# (sorted by `order`), the knowledge check is quiz.yml.
+lesson: robust-expert
+minutes: 60
+prerequisites: [robust-intermediate]
+langs: [de]
+packages: [dplyr, tidyr, boot, coin, robustbase, WRS2, parameters]
+data: [survey, usability, driving_sim]
+goals:
+  de:
+    - Ein BCa-Bootstrap-Konfidenzintervall mit boot für eine beliebige Kennzahl rechnen, auch geschichtet nach Gruppe
+    - Einen Permutationstest mit coin passend zum Design rechnen (geschichtet bei Messwiederholung)
+    - Eine robuste Regression mit `lmrob()` schätzen, mit `lm()` vergleichen und die Gewichte deuten
+    - Ein gemischtes Design mit getrimmten Mittelwerten (WRS2 `bwtrim()`) auswerten
+  en:
+    - Compute a BCa bootstrap confidence interval with boot for any statistic, also stratified by group
+    - Run a permutation test with coin that matches the design (stratified for repeated measures)
+    - Fit a robust regression with `lmrob()`, compare it with `lm()` and interpret the weights
+    - Analyse a mixed design with trimmed means (WRS2 `bwtrim()`)

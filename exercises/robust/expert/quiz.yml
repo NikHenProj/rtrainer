@@ -1,0 +1,134 @@
+# Knowledge check: passed at >= `pass` share of correctly answered questions.
+lesson: robust-expert
+pass: 0.8
+questions:
+  - id: rb-e-q-bca
+    prompt:
+      de: "Was korrigiert ein BCa-Intervall gegenüber dem einfachen Perzentil-Intervall?"
+      en: "What does a BCa interval correct compared with the simple percentile interval?"
+    options:
+      - text:
+          de: "Verzerrung (Bias) und Schiefe der Bootstrap-Verteilung, über die Bias-Korrektur und die Beschleunigung."
+          en: "Bias and skewness of the bootstrap distribution, via the bias correction and the acceleration."
+        correct: true
+        explain:
+          de: "Richtig. Dafür braucht BCa genug Stichproben (≥ 1000) und eine glatte Kennzahl."
+          en: "Right. For that BCa needs enough resamples (≥ 1000) and a smooth statistic."
+      - text:
+          de: "Die Abhängigkeit von Beobachtungen innerhalb einer Person."
+          en: "The dependence of observations within a person."
+        correct: false
+        explain:
+          de: "Abhängigkeit löst man über das Ziehen (ganze Personen ziehen), nicht über den Intervalltyp."
+          en: "Dependence is handled by how you resample (resample whole people), not by the interval type."
+      - text:
+          de: "Die zu kleine Zahl an Bootstrap-Stichproben."
+          en: "Too small a number of bootstrap resamples."
+        correct: false
+        explain:
+          de: "Im Gegenteil: BCa braucht eher mehr Stichproben als das Perzentil-Intervall."
+          en: "On the contrary: BCa needs more resamples rather than fewer than the percentile interval."
+  - id: rb-e-q-strata
+    prompt:
+      de: "Du vergleichst zwei Prototypen, jede Person hat beide getestet. Was permutiert ein korrekter Permutationstest?"
+      en: "You compare two prototypes and every person tested both. What does a correct permutation test permute?"
+    options:
+      - text:
+          de: "Die Bezeichnungen A/B innerhalb jeder Person (geschichtet nach Person)."
+          en: "The labels A/B within each person (stratified by person)."
+        correct: true
+        explain:
+          de: "Genau. Nur das ist unter H0 austauschbar; in coin `y ~ prototype | participant`."
+          en: "Exactly. Only that is exchangeable under H0; in coin `y ~ prototype | participant`."
+      - text:
+          de: "Alle Werte über alle Personen hinweg."
+          en: "All values across all people."
+        correct: false
+        explain:
+          de: "Das behandelt die Messwiederholung wie unabhängige Gruppen; der Test wird konservativ."
+          en: "That treats the repeated measures like independent groups; the test becomes conservative."
+      - text:
+          de: "Die Personen-IDs."
+          en: "The person IDs."
+        correct: false
+        explain:
+          de: "Personen-IDs zu vertauschen ändert nichts am Vergleich A gegen B."
+          en: "Swapping person IDs changes nothing about the comparison A vs. B."
+  - id: rb-e-q-weights
+    prompt:
+      de: "Nach `lmrob()` haben 34 von 58 gescheiterten Aufgaben ein Robustheitsgewicht unter 0,5. Was folgt daraus?"
+      en: "After `lmrob()`, 34 of 58 failed tasks have a robustness weight below 0.5. What follows?"
+    options:
+      - text:
+          de: "Die robuste Schätzung beschreibt vor allem gelöste Aufgaben; ob das die Forschungsfrage trifft, ist inhaltlich zu entscheiden."
+          en: "The robust estimate mainly describes solved tasks; whether that fits the research question is a substantive decision."
+        correct: true
+        explain:
+          de: "Richtig. Gewichte zeigen, wessen Verhalten die Schätzung beschreibt."
+          en: "Right. Weights show whose behaviour the estimate describes."
+      - text:
+          de: "Die gescheiterten Aufgaben sind Messfehler und sollten gelöscht werden."
+          en: "The failed tasks are measurement errors and should be deleted."
+        correct: false
+        explain:
+          de: "Niedriges Gewicht heißt nur „passt schlecht zum Großteil“, nicht „falsch gemessen“."
+          en: "A low weight only means \"fits the bulk poorly\", not \"measured wrongly\"."
+      - text:
+          de: "`lmrob()` hat die Abbrüche bei 180 s korrekt als zensiert behandelt."
+          en: "`lmrob()` has correctly treated the timeouts at 180 s as censored."
+        correct: false
+        explain:
+          de: "Zensierung kennt `lmrob()` nicht; dafür braucht es Überlebenszeitmodelle."
+          en: "`lmrob()` knows nothing about censoring; that needs survival models."
+  - id: rb-e-q-mm
+    prompt:
+      de: "Warum ist der MM-Schätzer (`lmrob()`) dem M-Schätzer (`MASS::rlm()`) meist vorzuziehen?"
+      en: "Why is the MM estimator (`lmrob()`) usually preferable to the M estimator (`MASS::rlm()`)?"
+    options:
+      - text:
+          de: "Er kombiniert einen hohen Bruchpunkt (robust auch gegen Hebelpunkte) mit hoher Effizienz bei normalverteilten Fehlern."
+          en: "It combines a high breakdown point (robust also against leverage points) with high efficiency under normal errors."
+        correct: true
+        explain:
+          de: "Genau. Der M-Schätzer schützt nur gegen Ausreißer in y, nicht gegen extreme x-Werte."
+          en: "Exactly. The M estimator only protects against outliers in y, not against extreme x values."
+      - text:
+          de: "Er ist exakt, während `rlm()` nur eine Näherung ist."
+          en: "It is exact, while `rlm()` is only an approximation."
+        correct: false
+        explain:
+          de: "Beide sind iterative Schätzer; `lmrob()` nutzt sogar zufällige Startwerte (daher der Seed)."
+          en: "Both are iterative estimators; `lmrob()` even uses random starting values (hence the seed)."
+      - text:
+          de: "Er braucht keine Annahmen über die Fehler."
+          en: "It needs no assumptions about the errors."
+        correct: false
+        explain:
+          de: "Auch robuste Regression setzt unabhängige Fehler voraus und schützt nicht vor einem falschen Modell."
+          en: "Robust regression also assumes independent errors and does not protect against a wrong model."
+  - id: rb-e-q-bwtrim
+    prompt:
+      de: "`bwtrim()` liefert für Erfahrung F̃(1; 21,8), die klassische ANOVA F(1; 38). Woher kommt der Unterschied der Nenner-Freiheitsgrade?"
+      en: "`bwtrim()` gives F̃(1, 21.8) for experience, the classical ANOVA F(1, 38). Where does the difference in denominator degrees of freedom come from?"
+    options:
+      - text:
+          de: "Vom Trimmen (nur die mittleren 60 % jeder Gruppe gehen voll ein) und der Welch-artigen Korrektur ohne Annahme gleicher Varianzen."
+          en: "From trimming (only the middle 60% of each group enter fully) and the Welch-style correction without assuming equal variances."
+        correct: true
+        explain:
+          de: "Richtig. Der Preis der Robustheit sind weniger effektive Freiheitsgrade."
+          en: "Right. The price of robustness is fewer effective degrees of freedom."
+      - text:
+          de: "Von fehlenden Werten in `rt_ms`."
+          en: "From missing values in `rt_ms`."
+        correct: false
+        explain:
+          de: "Die Personenmittel sind vollständig; alle 40 Personen gehen ein."
+          en: "The person means are complete; all 40 people are included."
+      - text:
+          de: "Davon, dass `bwtrim()` die Messwiederholung ignoriert."
+          en: "From `bwtrim()` ignoring the repeated measures."
+        correct: false
+        explain:
+          de: "Im Gegenteil, `bwtrim()` ist genau für gemischte Designs gebaut (`id = participant`)."
+          en: "On the contrary, `bwtrim()` is built precisely for mixed designs (`id = participant`)."

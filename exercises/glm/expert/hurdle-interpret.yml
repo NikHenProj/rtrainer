@@ -1,0 +1,124 @@
+id: gl-e-hurdle-interpret
+lesson: glm-expert
+order: 3
+title:
+  de: Die zwei Teile eines Hurdle-Modells deuten
+  en: Interpreting the two parts of a hurdle model
+kind: interpret
+required: true
+packages: []
+data: []
+setup: ""
+prompt:
+  de: |
+    `pscl::hurdle(errors ~ prototype + expertise + success, data = usability,
+    dist = "poisson")`, ausgegeben mit `model_parameters(exponentiate = TRUE)`:
+
+    ```
+    # Fixed Effects (Zählteil)
+    Parameter          |  IRR |       95% CI |      p
+    (Intercept)        | 1.84 | [1.29, 2.63] | < .001
+    prototype [B]      | 0.82 | [0.44, 1.51] |  0.519
+    prototype [C]      | 1.24 | [0.84, 1.83] |  0.276
+    expertise [expert] | 1.24 | [0.85, 1.79] |  0.260
+    success            | 0.30 | [0.20, 0.44] | < .001
+
+    # Zero-Inflation (Hürdenteil)
+    Parameter          | Odds Ratio |        95% CI |      p
+    (Intercept)        |       6.82 | [3.00, 15.49] | < .001
+    prototype [B]      |       0.29 | [0.16,  0.56] | < .001
+    prototype [C]      |       0.95 | [0.52,  1.77] |  0.882
+    expertise [expert] |       0.94 | [0.56,  1.59] |  0.830
+    success            |       0.15 | [0.07,  0.31] | < .001
+    ```
+
+    Welche Aussagen stimmen?
+
+    1. Mit Prototyp B ist die Chance, überhaupt einen Fehler zu machen, deutlich geringer als mit A.
+    2. Wenn Fehler auftreten, macht man mit B deutlich weniger davon.
+    3. Der zweite Block beschreibt, wie wahrscheinlich eine Null ist; OR 0,29 heißt also: Mit B sind Nullen seltener.
+    4. Gelöste Aufgaben haben in beiden Teilen weniger Fehler: seltener überhaupt welche und, wenn ja, weniger.
+
+    Gib die Nummern der richtigen Aussagen aufsteigend als Vektor ein, z. B. `c(1, 2)`.
+  en: |
+    `pscl::hurdle(errors ~ prototype + expertise + success, data = usability,
+    dist = "poisson")`, printed with `model_parameters(exponentiate = TRUE)`:
+
+    ```
+    # Fixed Effects (count part)
+    Parameter          |  IRR |       95% CI |      p
+    (Intercept)        | 1.84 | [1.29, 2.63] | < .001
+    prototype [B]      | 0.82 | [0.44, 1.51] |  0.519
+    prototype [C]      | 1.24 | [0.84, 1.83] |  0.276
+    expertise [expert] | 1.24 | [0.85, 1.79] |  0.260
+    success            | 0.30 | [0.20, 0.44] | < .001
+
+    # Zero-Inflation (hurdle part)
+    Parameter          | Odds Ratio |        95% CI |      p
+    (Intercept)        |       6.82 | [3.00, 15.49] | < .001
+    prototype [B]      |       0.29 | [0.16,  0.56] | < .001
+    prototype [C]      |       0.95 | [0.52,  1.77] |  0.882
+    expertise [expert] |       0.94 | [0.56,  1.59] |  0.830
+    success            |       0.15 | [0.07,  0.31] | < .001
+    ```
+
+    Which statements are true?
+
+    1. With prototype B the chance of making any error at all is clearly lower than with A.
+    2. When errors occur, people make clearly fewer of them with B.
+    3. The second block describes how likely a zero is; OR 0.29 therefore means: zeros are rarer with B.
+    4. Solved tasks have fewer errors in both parts: less often any at all and, if so, fewer.
+
+    Type the numbers of the true statements in ascending order as a vector,
+    e.g. `c(1, 2)`.
+starter: |
+  # Nummern der richtigen Aussagen als Vektor / numbers of the true statements as a vector
+solution: |
+  c(1, 4)
+hints:
+  - de: "Ein Hurdle-Modell hat zwei Prozesse: Wird die Hürde „mindestens ein Fehler“ genommen? Und wie viele sind es, wenn ja (positive Zählung)?"
+    en: "A hurdle model has two processes: is the hurdle \"at least one error\" crossed? And how many are there if so (positive counts)?"
+  - de: "In pscl modelliert der Hürdenteil die Wahrscheinlichkeit einer *positiven* Zählung, auch wenn parameters den Block „Zero-Inflation“ nennt."
+    en: "In pscl the hurdle part models the probability of a *positive* count, even though parameters labels the block \"Zero-Inflation\"."
+  - de: "Ein KI von 0,44 bis 1,51 schließt 1 ein. Was heißt das für Aussage 2?"
+    en: "A CI from 0.44 to 1.51 includes 1. What does that mean for statement 2?"
+explanation:
+  de: |
+    Richtig sind 1 und 4. Der Hürdenteil sagt die Wahrscheinlichkeit voraus,
+    dass *mindestens ein* Fehler auftritt: Mit B sind die Odds dafür 0,29-mal so
+    groß wie mit A, Nullen also häufiger (Aussage 3 dreht die Richtung um; die
+    Beschriftung „Zero-Inflation“ in parameters ist für Hurdle-Modelle
+    irreführend; die Rohdaten bestätigen die Richtung: Fehler bei 27 % der
+    Aufgaben mit B, 57 % mit A). Im Zählteil (nur Aufgaben mit Fehlern) ist B unklar (IRR 0,82,
+    KI [0,44; 1,51]), Aussage 2 stimmt daher nicht. Erfolg wirkt in beiden
+    Teilen (OR 0,15, IRR 0,30). Inhaltlich: B verhindert den Einstieg in Fehler,
+    reduziert aber nicht die Fehlerketten, wenn sie einmal begonnen haben. Ein
+    AIC-Vergleich (Hurdle 644 vs. Poisson 638) spricht hier zwar für das
+    einfachere Modell; das Hurdle-Modell lohnt sich, wenn die zwei Prozesse
+    selbst die Forschungsfrage sind.
+  en: |
+    Statements 1 and 4 are true. The hurdle part predicts the probability that
+    *at least one* error occurs: with B the odds of that are 0.29 times those
+    with A, so zeros are more common (statement 3 reverses the direction; the
+    label "Zero-Inflation" in parameters is misleading for hurdle models; the raw
+    data confirm the direction: errors in 27% of tasks with B, 57% with A). In the
+    count part (only tasks with errors) B is unclear (IRR 0.82, CI [0.44,
+    1.51]), so statement 2 is false. Success acts in both parts (OR 0.15, IRR
+    0.30). Substantively: B prevents getting into errors but does not reduce the
+    chains of errors once they have started. An AIC comparison (hurdle 644 vs.
+    Poisson 638) does favour the simpler model here; the hurdle model pays off
+    when the two processes themselves are the research question.
+misconception:
+  de: "Der zweite Block eines Hurdle-Modells beschreibt immer die Wahrscheinlichkeit einer Null, wie beim zero-inflated Modell."
+  en: "The second block of a hurdle model always describes the probability of a zero, as in the zero-inflated model."
+check:
+  type: value
+common_mistakes:
+  - pattern: "\\b2\\b"
+    message:
+      de: "Aussage 2 stimmt nicht: Das KI des Zählteils für B (0,44 bis 1,51) schließt 1 ein."
+      en: "Statement 2 is false: the count-part CI for B (0.44 to 1.51) includes 1."
+  - pattern: "\\b3\\b"
+    message:
+      de: "Aussage 3 stimmt nicht: Der Hürdenteil in pscl modelliert die Wahrscheinlichkeit einer positiven Zählung."
+      en: "Statement 3 is false: in pscl the hurdle part models the probability of a positive count."
