@@ -1,0 +1,19 @@
+# Lesson metadata; exercises are the other *.yml files in this folder
+# (sorted by `order`), the knowledge check is quiz.yml.
+lesson: moderation-mediation-expert
+minutes: 60
+prerequisites: [moderation-mediation-intermediate]
+langs: [de]
+packages: [dplyr, tidyr, lavaan, lme4, lmerTest, parameters, interactions]
+data: [acceptance, driving_sim]
+goals:
+  de:
+    - Eine moderierte Mediation in lavaan formulieren und den Index der moderierten Mediation berechnen
+    - Bedingte indirekte Effekte an inhaltlich sinnvollen Werten des Moderators berichten
+    - Eine Cross-Level-Interaktion im Mixed Model schätzen und Prädiktoren auf Personenebene zentrieren
+    - Haupteffekte in Modellen mit Interaktion als bedingte Effekte deuten
+  en:
+    - Specify a moderated mediation in lavaan and compute the index of moderated mediation
+    - Report conditional indirect effects at substantively meaningful values of the moderator
+    - Fit a cross-level interaction in a mixed model and centre person-level predictors
+    - Interpret main effects in models with an interaction as conditional effects

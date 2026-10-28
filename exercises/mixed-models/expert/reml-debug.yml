@@ -1,0 +1,79 @@
+id: mm-e-reml-debug
+lesson: mixed-models-expert
+order: 1
+title:
+  de: Likelihood-Ratio-Test für feste Effekte reparieren
+  en: Fixing a likelihood ratio test for fixed effects
+kind: debug
+required: true
+packages: [lme4]
+data: [driving_sim]
+setup: |
+  library(lme4)
+prompt:
+  de: |
+    Der Code soll per Likelihood-Ratio-Test prüfen, ob `condition` die
+    Reaktionszeit erklärt (Nullmodell ohne `condition`, beide mit
+    Zufallsintercept je Person). Er läuft, aber die Teststatistik ist falsch.
+
+    Repariere ihn. Der letzte Ausdruck soll weiterhin `c(chisq = ..., df = 2)`
+    sein.
+  en: |
+    The code is meant to test with a likelihood ratio test whether `condition`
+    explains reaction time (null model without `condition`, both with a random
+    intercept per person). It runs, but the test statistic is wrong.
+
+    Fix it. The last expression should still be `c(chisq = ..., df = 2)`.
+starter: |
+  m0 <- lmer(rt_ms ~ 1 + (1 | participant), data = driving_sim)
+  m1 <- lmer(rt_ms ~ condition + (1 | participant), data = driving_sim)
+  chisq <- as.numeric(2 * (logLik(m1) - logLik(m0)))
+  c(chisq = chisq, df = 2)
+solution: |
+  m0 <- lmer(rt_ms ~ 1 + (1 | participant), data = driving_sim, REML = FALSE)
+  m1 <- lmer(rt_ms ~ condition + (1 | participant), data = driving_sim, REML = FALSE)
+  chisq <- as.numeric(2 * (logLik(m1) - logLik(m0)))
+  c(chisq = chisq, df = 2)
+hints:
+  - de: "Wie schätzt `lmer()` standardmäßig, und wovon hängt dieses Kriterium ab?"
+    en: "How does `lmer()` estimate by default, and what does that criterion depend on?"
+  - de: "Die REML-Likelihood hängt von der Matrix der festen Effekte ab. Modelle mit verschiedenen festen Effekten sind so nicht vergleichbar."
+    en: "The REML likelihood depends on the fixed-effects matrix. Models with different fixed effects cannot be compared that way."
+  - de: "Beide Modelle mit `REML = FALSE` schätzen (oder `anova(m0, m1)`, das automatisch mit ML neu schätzt)."
+    en: "Fit both models with `REML = FALSE` (or use `anova(m0, m1)`, which refits with ML automatically)."
+explanation:
+  de: |
+    REML maximiert die Likelihood der Residuen nach Herausrechnen der festen
+    Effekte. Ändert sich die Matrix der festen Effekte, ändert sich die
+    Likelihood selbst; die Differenz ist kein LRT (hier 250,8 statt 237,1). Mit
+    ML ergibt sich χ²(2) = 237,1, starke Evidenz für Unterschiede zwischen den
+    Warnformen. Die Effektgröße steht aber in den Koeffizienten (haptisch −231
+    ms gegenüber visuell), nicht im χ². `anova(m0, m1)` schätzt automatisch mit
+    ML neu. Die Regel: feste Effekte vergleichen → ML; Zufallsstrukturen bei
+    gleichen festen Effekten vergleichen → REML (`refit = FALSE`). Das
+    endgültige Modell berichtest du mit REML-Schätzungen.
+  en: |
+    REML maximises the likelihood of the residuals after removing the fixed
+    effects. If the fixed-effects matrix changes, the likelihood itself
+    changes; the difference is not an LRT (here 250.8 instead of 237.1). With
+    ML you get χ²(2) = 237.1, strong evidence for differences between warning
+    modalities. The effect size, though, is in the coefficients (haptic −231 ms
+    versus visual), not in χ². `anova(m0, m1)` refits with ML automatically. The
+    rule: comparing fixed effects → ML; comparing random structures with the
+    same fixed effects → REML (`refit = FALSE`). Report the final model with
+    REML estimates.
+misconception:
+  de: "REML-Likelihoods lassen sich wie jede Likelihood zwischen beliebigen Modellen vergleichen."
+  en: "REML likelihoods can be compared between any models like any likelihood."
+check:
+  type: value
+  tolerance: 1.0e-4
+common_mistakes:
+  - pattern: "refit\\s*=\\s*(FALSE|F)\\b"
+    message:
+      de: "`refit = FALSE` vergleicht die REML-Fits; das ist nur bei gleichen festen Effekten zulässig."
+      en: "`refit = FALSE` compares the REML fits; that is only valid with the same fixed effects."
+  - pattern: "^(?![\\s\\S]*m0\\s*<-[^\\n]*REML\\s*=\\s*(FALSE|F))[\\s\\S]*m1\\s*<-[^\\n]*REML\\s*=\\s*(FALSE|F)|^(?![\\s\\S]*m1\\s*<-[^\\n]*REML\\s*=\\s*(FALSE|F))[\\s\\S]*m0\\s*<-[^\\n]*REML\\s*=\\s*(FALSE|F)"
+    message:
+      de: "Nur eines der Modelle ist mit ML geschätzt; beide müssen dasselbe Kriterium verwenden."
+      en: "Only one of the models is fitted with ML; both must use the same criterion."

@@ -1,0 +1,134 @@
+# Knowledge check: passed at >= `pass` share of correctly answered questions.
+lesson: moderation-mediation-expert
+pass: 0.8
+questions:
+  - id: mo-e-q-index
+    prompt:
+      de: "W moderiert den b-Pfad (b1 + b3 · W). Was ist der Index der moderierten Mediation?"
+      en: "W moderates the b path (b1 + b3 · W). What is the index of moderated mediation?"
+    options:
+      - text:
+          de: "a · b3: die Änderung des indirekten Effekts je Einheit W."
+          en: "a · b3: the change in the indirect effect per unit of W."
+        correct: true
+        explain:
+          de: "Richtig. Sein KI ist der Test der moderierten Mediation."
+          en: "Right. Its CI is the test of moderated mediation."
+      - text:
+          de: "b3 allein."
+          en: "b3 alone."
+        correct: false
+        explain:
+          de: "b3 ist die Moderation des b-Pfads, nicht des indirekten Effekts."
+          en: "b3 is the moderation of the b path, not of the indirect effect."
+      - text:
+          de: "a · b1."
+          en: "a · b1."
+        correct: false
+        explain:
+          de: "Das ist der indirekte Effekt bei W = 0."
+          en: "That is the indirect effect at W = 0."
+  - id: mo-e-q-scale
+    prompt:
+      de: "Erfahrung ist im Modell um 3 Jahre zentriert. Welchen W-Wert setzt du für den indirekten Effekt bei 5 Jahren ein?"
+      en: "Experience is centred at 3 years in the model. Which W value do you use for the indirect effect at 5 years?"
+    options:
+      - text:
+          de: "2"
+          en: "2"
+        correct: true
+        explain:
+          de: "Genau: 5 − 3. Bedingte Effekte gelten auf der Skala des Moderators im Modell."
+          en: "Exactly: 5 − 3. Conditional effects apply on the moderator's scale in the model."
+      - text:
+          de: "5"
+          en: "5"
+        correct: false
+        explain:
+          de: "Das wäre der Effekt bei 8 Jahren."
+          en: "That would be the effect at 8 years."
+      - text:
+          de: "1, weil man immer ±1 SD nimmt."
+          en: "1, because you always use ±1 SD."
+        correct: false
+        explain:
+          de: "±1 SD ist nur eine Konvention, und hier ist die SD 1,8 Jahre."
+          en: "±1 SD is only a convention, and here the SD is 1.8 years."
+  - id: mo-e-q-boot
+    prompt:
+      de: "Warum Bootstrap-KI für indirekte Effekte?"
+      en: "Why bootstrap CIs for indirect effects?"
+    options:
+      - text:
+          de: "Produkte von Koeffizienten sind schief verteilt; symmetrische Delta-KI treffen die Unsicherheit schlechter."
+          en: "Products of coefficients are skewed; symmetric delta CIs capture the uncertainty less well."
+        correct: true
+        explain:
+          de: "Richtig. Alternativ Monte-Carlo-KI (`semTools::monteCarloCI()`)."
+          en: "Right. Alternatively Monte Carlo CIs (`semTools::monteCarloCI()`)."
+      - text:
+          de: "Weil lavaan ohne Bootstrap keine Standardfehler liefert."
+          en: "Because lavaan gives no standard errors without the bootstrap."
+        correct: false
+        explain:
+          de: "lavaan liefert Delta-Methoden-SE, nur sind sie für Produkte ungenau."
+          en: "lavaan gives delta-method SEs, they are just inaccurate for products."
+      - text:
+          de: "Weil Bootstrap immer engere KI liefert."
+          en: "Because the bootstrap always gives narrower CIs."
+        correct: false
+        explain:
+          de: "Nicht enger, sondern asymmetrisch und passender."
+          en: "Not narrower, but asymmetric and more fitting."
+  - id: mo-e-q-crosslevel
+    prompt:
+      de: "Warum braucht eine Cross-Level-Interaktion (Durchgang × Alter) eine Zufallssteigung für den Durchgang?"
+      en: "Why does a cross-level interaction (trial × age) need a random slope for trial?"
+    options:
+      - text:
+          de: "Ohne sie gibt es keine Streuung der Lernraten im Modell; die Interaktion wird gegen zu kleinen Fehler getestet."
+          en: "Without it there is no variation of learning rates in the model; the interaction is tested against too small an error."
+        correct: true
+        explain:
+          de: "Genau. Das macht den Test zu liberal."
+          en: "Exactly. That makes the test too liberal."
+      - text:
+          de: "Weil `lmer()` sonst nicht konvergiert."
+          en: "Because `lmer()` otherwise does not converge."
+        correct: false
+        explain:
+          de: "Mit weniger Parametern konvergiert es eher besser."
+          en: "With fewer parameters it tends to converge better."
+      - text:
+          de: "Weil das Alter sonst nicht zentriert ist."
+          en: "Because age is otherwise not centred."
+        correct: false
+        explain:
+          de: "Zentrieren und Zufallssteigung sind zwei getrennte Fragen."
+          en: "Centring and random slopes are two separate questions."
+  - id: mo-e-q-main
+    prompt:
+      de: "Im Modell `rt ~ trial_c * age` (Alter unzentriert) ist der Koeffizient von `trial_c` …"
+      en: "In the model `rt ~ trial_c * age` (age uncentred), the coefficient of `trial_c` is …"
+    options:
+      - text:
+          de: "… die Lernrate bei Alter 0, eine Extrapolation außerhalb der Daten."
+          en: "… the learning rate at age 0, an extrapolation outside the data."
+        correct: true
+        explain:
+          de: "Richtig. Zentriert wäre es die Lernrate beim mittleren Alter."
+          en: "Right. Centred, it would be the learning rate at mean age."
+      - text:
+          de: "… die mittlere Lernrate über alle Personen."
+          en: "… the mean learning rate across all people."
+        correct: false
+        explain:
+          de: "Das gilt nur, wenn das Alter zentriert ist."
+          en: "That only holds if age is centred."
+      - text:
+          de: "… bedeutungslos, solange die Interaktion im Modell ist."
+          en: "… meaningless as long as the interaction is in the model."
+        correct: false
+        explain:
+          de: "Er ist ein bedingter Effekt; mit sinnvollem Nullpunkt ist er gut deutbar."
+          en: "It is a conditional effect; with a meaningful zero point it is easy to interpret."

@@ -1,0 +1,108 @@
+id: mo-e-imm-interpret
+lesson: moderation-mediation-expert
+order: 3
+title:
+  de: Eine moderierte Mediation richtig berichten
+  en: Reporting a moderated mediation correctly
+kind: interpret
+required: true
+packages: []
+data: []
+setup: ""
+prompt:
+  de: |
+    Ergebnis der moderierten Mediation (Bedienbarkeit → Nützlichkeit →
+    Absicht, Erfahrung moderiert den b-Pfad, Delta-Methode):
+
+    ```
+    label     est     se     ci.lower  ci.upper   p
+    a        0.326  0.046     0.237     0.416   <.001
+    b1       0.255  0.063     0.132     0.378   <.001
+    b3       0.074  0.032     0.012     0.135    .020
+    c        0.286  0.055     0.178     0.394   <.001
+    imm      0.024  0.011     0.003     0.045    .027
+    ind_1    0.035  0.029    -0.022     0.093    .231
+    ind_3    0.083  0.024     0.037     0.129   <.001
+    ind_5    0.131  0.034     0.064     0.198   <.001
+    ```
+
+    Welche Aussagen stimmen?
+
+    1. Der indirekte Effekt wird mit jedem Jahr Erfahrung um etwa 0,024 Punkte größer, und das KI des Index schließt 0 aus.
+    2. Bei Fahrerinnen und Fahrern mit 1 Jahr Erfahrung gibt es keinen indirekten Effekt.
+    3. Dass `ind_1` nicht und `ind_5` signifikant ist, ist der eigentliche Beleg für die Moderation.
+    4. Für die Veröffentlichung sollten die KI der indirekten Effekte per Bootstrap berechnet werden, weil Produkte von Koeffizienten schief verteilt sind.
+
+    Gib die Nummern der richtigen Aussagen aufsteigend als Vektor ein, z. B. `c(1, 2)`.
+  en: |
+    Result of the moderated mediation (ease of use → usefulness → intention,
+    experience moderates the b path, delta method):
+
+    ```
+    label     est     se     ci.lower  ci.upper   p
+    a        0.326  0.046     0.237     0.416   <.001
+    b1       0.255  0.063     0.132     0.378   <.001
+    b3       0.074  0.032     0.012     0.135    .020
+    c        0.286  0.055     0.178     0.394   <.001
+    imm      0.024  0.011     0.003     0.045    .027
+    ind_1    0.035  0.029    -0.022     0.093    .231
+    ind_3    0.083  0.024     0.037     0.129   <.001
+    ind_5    0.131  0.034     0.064     0.198   <.001
+    ```
+
+    Which statements are true?
+
+    1. The indirect effect grows by about 0.024 points with each year of experience, and the CI of the index excludes 0.
+    2. For drivers with 1 year of experience there is no indirect effect.
+    3. That `ind_1` is not significant and `ind_5` is, is the actual evidence for moderation.
+    4. For publication, the CIs of the indirect effects should be computed by bootstrap because products of coefficients are skewed.
+
+    Type the numbers of the true statements in ascending order as a vector,
+    e.g. `c(1, 2)`.
+starter: |
+  # Nummern der richtigen Aussagen als Vektor / numbers of the true statements as a vector
+solution: |
+  c(1, 4)
+hints:
+  - de: "Welcher Parameter testet direkt, ob sich der indirekte Effekt mit der Erfahrung ändert?"
+    en: "Which parameter directly tests whether the indirect effect changes with experience?"
+  - de: "Ein KI von −0,022 bis 0,093: Schließt es Null aus, schließt es einen bedeutsamen Effekt aus?"
+    en: "A CI from −0.022 to 0.093: does it rule out zero, does it rule out a meaningful effect?"
+  - de: "Wie ist ein Produkt zweier normalverteilter Schätzer verteilt?"
+    en: "How is the product of two normally distributed estimators distributed?"
+explanation:
+  de: |
+    Richtig sind 1 und 4. Der Index (a · b3) ist der Test der moderierten
+    Mediation: 0,024 je Jahr, KI [0,003; 0,045]. Aussage 2 ist falsch, weil ein
+    KI bis 0,093 einen Effekt nicht ausschließt; „nicht signifikant“ heißt
+    nicht „kein Effekt“. Aussage 3 ist der Fehlschluss „Unterschied der
+    Signifikanzen statt signifikanter Unterschied“ (Gelman & Stern, 2006); ein
+    Effekt knapp über und einer knapp unter .05 können praktisch gleich sein.
+    Aussage 4 stimmt: Die Delta-Methode setzt symmetrische Verteilungen voraus,
+    Produkte sind aber schief; Bootstrap-Perzentil-KI (`se = "bootstrap"`,
+    1000–5000 Stichproben, lokal) sind Standard. Bei kleinen a- oder b-Pfaden
+    ist der Unterschied am größten.
+  en: |
+    Statements 1 and 4 are true. The index (a · b3) is the test of moderated
+    mediation: 0.024 per year, CI [0.003, 0.045]. Statement 2 is false because
+    a CI up to 0.093 does not rule out an effect; "not significant" does not
+    mean "no effect". Statement 3 is the fallacy "difference in significance
+    instead of a significant difference" (Gelman & Stern, 2006); one effect just
+    above and one just below .05 can be practically equal. Statement 4 is true:
+    the delta method assumes symmetric distributions, but products are skewed;
+    bootstrap percentile CIs (`se = "bootstrap"`, 1000–5000 resamples, locally)
+    are standard. The difference is largest with small a or b paths.
+misconception:
+  de: "Ob eine Mediation moderiert ist, erkennt man daran, in welchen Gruppen der indirekte Effekt signifikant ist."
+  en: "Whether a mediation is moderated is seen from the groups in which the indirect effect is significant."
+check:
+  type: value
+common_mistakes:
+  - pattern: "\\b2\\b"
+    message:
+      de: "Aussage 2 stimmt nicht: Das KI von `ind_1` reicht bis 0,093; ein Effekt ist nicht ausgeschlossen."
+      en: "Statement 2 is false: the CI of `ind_1` reaches 0.093; an effect is not ruled out."
+  - pattern: "\\b3\\b"
+    message:
+      de: "Aussage 3 stimmt nicht: Der Beleg für Moderation ist der Index, nicht der Vergleich zweier Signifikanzen."
+      en: "Statement 3 is false: the evidence for moderation is the index, not the comparison of two significance results."

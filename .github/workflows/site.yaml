@@ -97,6 +97,8 @@ jobs:
             any::nnet
             any::MASS
             any::pscl
+            any::faux
+            any::DHARMa
             any::here
             any::jsonlite
             any::chromote

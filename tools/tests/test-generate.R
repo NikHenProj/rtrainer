@@ -341,3 +341,25 @@ test_that("course plan: expert column, project row and path over three levels", 
   late_row <- regmatches(plan, regexpr("<tr><th scope=\"row\"><span class=\"rt-topic-no\">2</span> Spät</th>.*?</tr>", plan, perl = TRUE))
   expect_equal(lengths(regmatches(late_row, gregexpr("rt-cell-none", late_row))), 2)
 })
+
+test_that("timelimit is passed to the setup, exercise and solution blocks", {
+  dir <- withr::local_tempdir()
+  make_course(dir, exercises = list(toy_exercise(timelimit = 120)))
+  generate(dir, langs = "de")
+  blocks <- paste(readLines(file.path(dir, "_generated", "de", "toy-beginner", "exercises.qmd")), collapse = "\n")
+  expect_equal(lengths(regmatches(blocks, gregexpr("#| timelimit: 120", blocks, fixed = TRUE))), 3)
+  expect_no_match(sub("(?s).*check: true", "", blocks, perl = TRUE), "timelimit", fixed = TRUE)
+})
+
+test_that("timelimit validation: above 30 seconds, a single number, optional", {
+  datasets <- list(toy = list(load = "toy <- 1"))
+  expect_length(validate_exercise(toy_exercise(timelimit = 90), datasets), 0)
+  expect_match(validate_exercise(toy_exercise(timelimit = 20), datasets), "`timelimit` must be", all = FALSE)
+  expect_match(validate_exercise(toy_exercise(timelimit = "long"), datasets), "`timelimit` must be", all = FALSE)
+
+  dir <- withr::local_tempdir()
+  make_course(dir)
+  generate(dir, langs = "de")
+  blocks <- readLines(file.path(dir, "_generated", "de", "toy-beginner", "exercises.qmd"))
+  expect_false(any(grepl("timelimit", blocks, fixed = TRUE)))
+})

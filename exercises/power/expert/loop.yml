@@ -1,0 +1,111 @@
+id: pw-e-loop
+lesson: power-expert
+order: 1
+title:
+  de: Power durch eine eigene Simulationsschleife
+  en: Power from your own simulation loop
+kind: write
+timelimit: 120
+required: true
+packages: [dplyr, faux, lmerTest]
+data: []
+setup: |
+  library(dplyr)
+  library(faux)
+  library(lmerTest)
+  sim_data <- function(n_part, n_task, effect = -0.105) {
+    add_random(participant = n_part, task = n_task) |>
+      add_within("participant", prototype = c("A", "B")) |>
+      add_ranef("participant", u0 = 0.23, u1 = 0.20) |>
+      add_ranef("task", w0 = 0.42) |>
+      add_ranef(e = 0.31) |>
+      mutate(log_time = 3.6 + u0 + w0 + (prototype == "B") * (effect + u1) + e)
+  }
+prompt:
+  de: |
+    `sim_data(n_part, n_task, effect)` erzeugt einen Datensatz wie in der
+    Herausforderung. Power heißt: Anteil simulierter Studien, in denen der
+    Prototyp-Effekt signifikant wird.
+
+    1. Schreib `sim_p(n_part, n_task)`: Datensatz simulieren, mit
+       `lmer(log_time ~ prototype + (1 + prototype | participant) + (1 | task))`
+       schätzen (lmerTest, also mit p-Werten) und den p-Wert von `prototypeB`
+       zurückgeben (`coef(summary(fit))["prototypeB", "Pr(>|t|)"]`).
+    2. Setze `set.seed(2026)` und wiederhole `sim_p(30, 8)` 20-mal mit
+       `replicate()`.
+
+    Gib die geschätzte Power (Anteil p < .05) zurück.
+  en: |
+    `sim_data(n_part, n_task, effect)` creates a dataset as in the challenge.
+    Power means: the share of simulated studies in which the prototype effect
+    becomes significant.
+
+    1. Write `sim_p(n_part, n_task)`: simulate a dataset, fit it with
+       `lmer(log_time ~ prototype + (1 + prototype | participant) + (1 | task))`
+       (lmerTest, so with p values) and return the p value of `prototypeB`
+       (`coef(summary(fit))["prototypeB", "Pr(>|t|)"]`).
+    2. Call `set.seed(2026)` and repeat `sim_p(30, 8)` 20 times with
+       `replicate()`.
+
+    Return the estimated power (share of p < .05).
+starter: |
+  sim_p <- function(n_part, n_task) {
+    d <- sim_data(n_part, n_task)
+    # fit <- lmer(...)
+  }
+  set.seed(2026)
+solution: |
+  sim_p <- function(n_part, n_task) {
+    d <- sim_data(n_part, n_task)
+    fit <- suppressMessages(
+      lmer(log_time ~ prototype + (1 + prototype | participant) + (1 | task), data = d)
+    )
+    coef(summary(fit))["prototypeB", "Pr(>|t|)"]
+  }
+  set.seed(2026)
+  p <- replicate(20, sim_p(30, 8))
+  mean(p < .05)
+hints:
+  - de: "Die Funktion endet mit dem p-Wert; `coef(summary(fit))` ist eine Matrix mit Zeilen- und Spaltennamen."
+    en: "The function ends with the p value; `coef(summary(fit))` is a matrix with row and column names."
+  - de: "`replicate(20, sim_p(30, 8))` liefert einen Vektor mit 20 p-Werten."
+    en: "`replicate(20, sim_p(30, 8))` returns a vector of 20 p values."
+  - de: "`mean(p < .05)` ist der Anteil signifikanter Ergebnisse."
+    en: "`mean(p < .05)` is the share of significant results."
+explanation:
+  de: |
+    Geschätzte Power 0,55 (11 von 20). Mit 20 Wiederholungen ist das nur eine
+    grobe Schätzung: Der Monte-Carlo-Fehler ist √(0,55 · 0,45 / 20) ≈ 0,11.
+    Für die Planung lokal 1000 Wiederholungen je Stichprobengröße rechnen (SE
+    ≈ 0,015) und eine Power-Kurve über mehrere n zeichnen; im Browser dauert
+    jede Schätzung etwa eine halbe Sekunde. Mit 200 Wiederholungen ergab sich
+    für 30 × 8 knapp 0,6, für 40 × 8 0,73 und für 60 × 8 0,87. Die eigene
+    Schleife hat gegenüber `simr::powerSim()` Vorteile: Jede Annahme
+    (Zufallsstruktur, Effekt, Verteilung, Ausfälle) steht im Code, und das
+    Analysemodell ist genau das geplante. Konvergenzwarnungen in einzelnen
+    Simulationen zählen und berichten, nicht stillschweigend übergehen.
+  en: |
+    Estimated power 0.55 (11 of 20). With 20 repetitions this is only a rough
+    estimate: the Monte Carlo error is √(0.55 · 0.45 / 20) ≈ 0.11. For planning,
+    run 1000 repetitions per sample size locally (SE ≈ 0.015) and draw a power
+    curve across several n; in the browser each estimate takes about half a
+    second. With 200 repetitions, 30 × 8 gave just under 0.6, 40 × 8 0.73 and
+    60 × 8 0.87. Your own loop has advantages over `simr::powerSim()`: every
+    assumption (random structure, effect, distribution, dropouts) is in the
+    code, and the analysis model is exactly the planned one. Count and report
+    convergence warnings in individual simulations instead of silently passing
+    over them.
+misconception:
+  de: "Eine Power-Simulation mit wenigen Wiederholungen liefert eine genaue Power."
+  en: "A power simulation with few repetitions gives a precise power."
+check:
+  type: value
+common_mistakes:
+  - pattern: "\\(\\s*1\\s*\\|\\s*participant\\s*\\)"
+    message:
+      de: "Das Analysemodell braucht die Zufallssteigung `(1 + prototype | participant)`, wie die simulierten Daten."
+      en: "The analysis model needs the random slope `(1 + prototype | participant)`, like the simulated data."
+  - pattern: "for\\s*\\("
+    message:
+      de: "Eine `for`-Schleife geht auch, aber dann muss die Reihenfolge der Zufallszahlen gleich bleiben; `replicate(20, ...)` ist hier einfacher."
+      en: "A `for` loop also works, but the order of random numbers must stay the same; `replicate(20, ...)` is simpler here."

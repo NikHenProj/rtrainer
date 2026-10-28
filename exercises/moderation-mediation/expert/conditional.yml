@@ -1,0 +1,114 @@
+id: mo-e-conditional
+lesson: moderation-mediation-expert
+order: 1
+title:
+  de: Bedingte indirekte Effekte an sinnvollen Werten
+  en: Conditional indirect effects at meaningful values
+kind: write
+required: true
+packages: [dplyr, lavaan]
+data: [acceptance]
+setup: |
+  library(dplyr)
+  library(lavaan)
+  acc <- acceptance |>
+    mutate(
+      peou_3 = 8 - peou_3,
+      peou = rowMeans(across(peou_1:peou_4)),
+      pu = rowMeans(across(pu_1:pu_5)),
+      bi = rowMeans(across(bi_1:bi_4)),
+      exp_c = experience - 3,
+      pu_exp = pu * exp_c
+    )
+prompt:
+  de: |
+    Der Index sagt, *dass* sich der indirekte Effekt mit der Erfahrung ändert.
+    Für den Bericht brauchst du ihn an konkreten Werten: 1, 3 und 5 Jahre
+    Erfahrung (etwa Mittelwert ± 1 SD; `exp_c` ist um 3 Jahre zentriert).
+
+    Ergänze das Modell aus der Herausforderung um drei definierte Parameter
+    `ind_1`, `ind_3` und `ind_5` (indirekter Effekt a · (b1 + b3 · W) mit dem
+    passenden Wert von `exp_c`). Gib für diese drei Zeilen ein Tibble mit den
+    Spalten `label`, `est`, `ci.lower` und `ci.upper` zurück.
+  en: |
+    The index says *that* the indirect effect changes with experience. For the
+    report you need it at concrete values: 1, 3 and 5 years of experience
+    (about mean ± 1 SD; `exp_c` is centred at 3 years).
+
+    Extend the model from the challenge with three defined parameters `ind_1`,
+    `ind_3` and `ind_5` (indirect effect a · (b1 + b3 · W) with the matching
+    value of `exp_c`). For these three rows, return a tibble with the columns
+    `label`, `est`, `ci.lower` and `ci.upper`.
+starter: |
+  model <- "
+    pu ~ a * peou
+    bi ~ b1 * pu + b3 * pu_exp + exp_c + c * peou
+    ind_1 := a * (b1 + b3 * 1)
+    ind_3 := a * (b1 + b3 * 3)
+    ind_5 := a * (b1 + b3 * 5)
+  "
+  fit <- sem(model, data = acc)
+  parameterEstimates(fit) |>
+    filter(op == ":=") |>
+    select(label, est, ci.lower, ci.upper) |>
+    as_tibble()
+solution: |
+  model <- "
+    pu ~ a * peou
+    bi ~ b1 * pu + b3 * pu_exp + exp_c + c * peou
+    ind_1 := a * (b1 + b3 * -2)
+    ind_3 := a * b1
+    ind_5 := a * (b1 + b3 * 2)
+  "
+  fit <- sem(model, data = acc)
+  parameterEstimates(fit) |>
+    filter(op == ":=") |>
+    select(label, est, ci.lower, ci.upper) |>
+    as_tibble()
+hints:
+  - de: "W ist der Wert des *zentrierten* Moderators `exp_c`, nicht die Erfahrung in Jahren."
+    en: "W is the value of the *centred* moderator `exp_c`, not experience in years."
+  - de: "1 Jahr heißt `exp_c = 1 - 3 = -2`, 3 Jahre heißt `exp_c = 0`, 5 Jahre `exp_c = 2`."
+    en: "1 year means `exp_c = 1 - 3 = -2`, 3 years means `exp_c = 0`, 5 years `exp_c = 2`."
+  - de: "`ind_1 := a * (b1 + b3 * -2)`, `ind_3 := a * b1`, `ind_5 := a * (b1 + b3 * 2)`."
+    en: "`ind_1 := a * (b1 + b3 * -2)`, `ind_3 := a * b1`, `ind_5 := a * (b1 + b3 * 2)`."
+explanation:
+  de: |
+    1 Jahr: 0,035 [−0,022; 0,093]; 3 Jahre: 0,083 [0,037; 0,129]; 5 Jahre:
+    0,131 [0,064; 0,198]. Der Startercode setzte die Jahre direkt ein; weil
+    `exp_c` zentriert ist, hätte er die Effekte bei 4, 6 und 8 Jahren geliefert.
+    Merkregel: Bedingte Effekte immer in der Skala des Moderators im Modell
+    angeben. Werte wie ±1 SD sind Konvention, inhaltliche Werte (Neuling,
+    typisch, erfahren) sind besser zu deuten. Dass der Effekt bei 1 Jahr nicht
+    signifikant ist, heißt nicht, dass er dort null ist; der Vergleich der
+    Effekte steckt im Index (vorige Übung). Formulierung: „Der indirekte Effekt
+    der Bedienbarkeit über die Nützlichkeit stieg mit der Erfahrung (1 Jahr:
+    0,04, 95 %-KI [−0,02; 0,09]; 5 Jahre: 0,13 [0,06; 0,20]; Index 0,024
+    [0,003; 0,045]).“
+  en: |
+    1 year: 0.035 [−0.022, 0.093]; 3 years: 0.083 [0.037, 0.129]; 5 years:
+    0.131 [0.064, 0.198]. The starter code plugged in the years directly;
+    because `exp_c` is centred, it would have given the effects at 4, 6 and 8
+    years. Rule: always state conditional effects on the moderator's scale in
+    the model. Values like ±1 SD are a convention; substantive values (novice,
+    typical, experienced) are easier to interpret. That the effect at 1 year is
+    not significant does not mean it is zero there; the comparison of the
+    effects is in the index (previous exercise). Wording: "The indirect effect
+    of ease of use via usefulness increased with experience (1 year: 0.04, 95%
+    CI [−0.02, 0.09]; 5 years: 0.13 [0.06, 0.20]; index 0.024 [0.003,
+    0.045])."
+misconception:
+  de: "Bei einem zentrierten Moderator setzt man für bedingte Effekte die Originalwerte ein."
+  en: "With a centred moderator you plug the original values into conditional effects."
+check:
+  type: value
+  tolerance: 1.0e-4
+common_mistakes:
+  - pattern: "b3\\s*\\*\\s*5\\b"
+    message:
+      de: "`exp_c` ist um 3 Jahre zentriert: 5 Jahre entsprechen `exp_c = 2`."
+      en: "`exp_c` is centred at 3 years: 5 years correspond to `exp_c = 2`."
+  - pattern: "sd\\("
+    message:
+      de: "Gefragt sind die konkreten Werte 1, 3 und 5 Jahre, nicht ±1 SD."
+      en: "The task asks for the concrete values 1, 3 and 5 years, not ±1 SD."

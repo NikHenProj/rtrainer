@@ -1,6 +1,6 @@
 # Triage der 65 alten Aufgaben (freigegeben)
 
-Stand 2026-10-26. Quelle: `legacy/exercises/` (Tag `v0-shiny`). Migriert: 50 von 54 (markiert).
+Stand 2026-10-26. Quelle: `legacy/exercises/` (Tag `v0-shiny`). Migriert: 52 von 54 (markiert).
 
 **Freigegeben von Nick am 2026-10-26: 54 behalten, 11 streichen.** 18 der behaltenen gehören in den Beginner-Pfad (M8), markiert mit **B**.
 
@@ -53,12 +53,12 @@ Stand 2026-10-26. Quelle: `legacy/exercises/` (Tag `v0-shiny`). Migriert: 50 von
 | 36 | 06-stats/padjust-predict | predict | group-comparisons-intermediate | Unverändert (Holm). | **Migriert (M9 P3, `gc-i-holm-predict`, Zusatzübung).**
 | 37 | 06-stats/paired-debug | debug | group-comparisons-intermediate | Gepaarter Vergleich; ergänzt `gc-b-pseudoreplication` (dort: Durchgänge als unabhängig gezählt). | **Migriert (M9 P3, `gc-i-paired-debug`).**
 | 38 | 06-stats/tukey | complete | group-comparisons-intermediate | `emmeans`/`modelbased::estimate_contrasts()` statt `TukeyHSD()`. | **Migriert (M9 P3, `gc-i-contrasts`: `emmeans()` + `pairs(adjust = "holm")` an der gemischten ANOVA).**
-| 39 | 07-mixed/allfit-singular | write | mixed-models-expert | Unverändert. |
+| 39 | 07-mixed/allfit-singular | write | mixed-models-expert | Unverändert. | **Migriert (M10 P4, angepasst als Herausforderung `mm-e-maximal`: `allFit()` stürzt bei der Bewertung in webR ab, daher Ergebnis im Prompt, gefragt sind `rePCA()` + REML-LRT; `allFit()` im Kasten „Lokal ausführen“).**
 | 40 | 07-mixed/condition-trial | complete | mixed-models-intermediate | Unverändert (lmerTest). | **Migriert (M9 P5, `mm-i-condition-trial`, zusammen mit 42).**
 | 41 | 07-mixed/icc | write | mixed-models-intermediate | `performance::icc()` statt Handrechnung aus `VarCorr()`; Schwerpunkt Deuten. | **Migriert (M9 P5, `mm-i-crossed-icc`: `icc(by_group = TRUE)` an gekreuzten Effekten Person × Aufgabe in `usability`; ICC des Nullmodells im Beispiel und Wissenscheck).**
 | 42 | 07-mixed/random-intercept | write | mixed-models-intermediate | Unverändert. | **Migriert (M9 P5, in `mm-i-condition-trial` aufgegangen; Vergleich mit `lm()` im Beispiel).**
 | 43 | 07-mixed/random-slope | complete | mixed-models-intermediate | Unverändert. | **Migriert (M9 P5, `mm-i-random-slope`: `rt_ms` statt `lane_dev`, `lm()` pro Person mit `summarise()` + `pick()`).**
-| 44 | 07-mixed/reml-debug | debug | mixed-models-expert | Unverändert. |
+| 44 | 07-mixed/reml-debug | debug | mixed-models-expert | Unverändert. | **Migriert (M10 P4, `mm-e-reml-debug`).**
 | 45 | 07-mixed/residuals-debug | debug | mixed-models-intermediate | `performance::check_model()` als Ausblick. | **Migriert (M9 P5, `mm-i-residuals-debug`, Zusatzübung).**
 | 46 | 07-mixed/structure-predict | predict | mixed-models-intermediate | Zahlen an die neuen Daten anpassen (480 Zeilen, 9 fehlende `lane_dev`). | **Migriert (M9 P5, `mm-i-structure-predict`, Zusatzübung; Modell für `rt_ms` mit `trial_c`).**
 | 47 | 08-ggplot2/aes-inherit | write | visualisation-beginner **B** | Braucht Check-Typ `plot`. | **Migriert (M8.2b).**

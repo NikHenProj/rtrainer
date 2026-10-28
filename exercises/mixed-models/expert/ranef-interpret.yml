@@ -1,0 +1,129 @@
+id: mm-e-ranef-interpret
+lesson: mixed-models-expert
+order: 3
+title:
+  de: Eine überparametrisierte Zufallsstruktur erkennen
+  en: Recognising an overparameterised random structure
+kind: interpret
+required: true
+packages: []
+data: []
+setup: ""
+prompt:
+  de: |
+    Das maximale Modell aus der Herausforderung,
+    `rt_ms ~ condition * trial_c + (1 + condition + trial_c | participant)`:
+
+    ```
+    Random effects:
+     Groups      Name              Std.Dev. Corr
+     participant (Intercept)       134.6
+                 conditionauditory  27.8    -0.48
+                 conditionhaptic    14.7    -0.03 -0.27
+                 trial_c            21.4     0.02 -0.80 -0.12
+     Residual                      108.4
+
+    summary(rePCA(fit_max)):
+                             [,1]   [,2]   [,3]    [,4]
+    Standard deviation     1.2484 0.2908 0.1496 0.0001
+    Proportion of Variance 0.9358 0.0508 0.0134 0.0000
+
+    allFit(): 7 Optimierer, feste Effekte identisch (Spannweite 0,0 ms),
+    4 davon melden "boundary (singular) fit".
+    REML-LRT gegen (1 | participant): χ²(9) = 6.6, p = .68
+    ```
+
+    Welche Aussagen stimmen?
+
+    1. Die Daten tragen höchstens drei der vier Dimensionen der Zufallsstruktur; das Modell ist überparametrisiert.
+    2. Weil `isSingular(fit_max)` beim Standard-Optimierer `FALSE` ergibt, ist die Struktur unproblematisch.
+    3. Die festen Effekte sind trotz der Meldungen verlässlich, weil alle Optimierer dieselben Werte finden.
+    4. Die Korrelation −0,80 zwischen auditiv und Durchgang ist ein inhaltlicher Befund, den man berichten sollte.
+
+    Gib die Nummern der richtigen Aussagen aufsteigend als Vektor ein, z. B. `c(1, 2)`.
+  en: |
+    The maximal model from the challenge,
+    `rt_ms ~ condition * trial_c + (1 + condition + trial_c | participant)`:
+
+    ```
+    Random effects:
+     Groups      Name              Std.Dev. Corr
+     participant (Intercept)       134.6
+                 conditionauditory  27.8    -0.48
+                 conditionhaptic    14.7    -0.03 -0.27
+                 trial_c            21.4     0.02 -0.80 -0.12
+     Residual                      108.4
+
+    summary(rePCA(fit_max)):
+                             [,1]   [,2]   [,3]    [,4]
+    Standard deviation     1.2484 0.2908 0.1496 0.0001
+    Proportion of Variance 0.9358 0.0508 0.0134 0.0000
+
+    allFit(): 7 optimizers, fixed effects identical (range 0.0 ms),
+    4 of them report "boundary (singular) fit".
+    REML LRT against (1 | participant): χ²(9) = 6.6, p = .68
+    ```
+
+    Which statements are true?
+
+    1. The data support at most three of the four dimensions of the random structure; the model is overparameterised.
+    2. Because `isSingular(fit_max)` returns `FALSE` with the default optimizer, the structure is unproblematic.
+    3. The fixed effects are reliable despite the messages because all optimizers find the same values.
+    4. The correlation of −0.80 between auditory and trial is a substantive finding that should be reported.
+
+    Type the numbers of the true statements in ascending order as a vector,
+    e.g. `c(1, 2)`.
+starter: |
+  # Nummern der richtigen Aussagen als Vektor / numbers of the true statements as a vector
+solution: |
+  c(1, 3)
+hints:
+  - de: "`rePCA()` zerlegt die Kovarianzmatrix der Zufallseffekte. Was heißt eine Komponente mit SD 0,0001?"
+    en: "`rePCA()` decomposes the covariance matrix of the random effects. What does a component with SD 0.0001 mean?"
+  - de: "`isSingular()` prüft gegen eine Toleranz; knapp darüber heißt nicht „gut geschätzt“. Was sagen die anderen Optimierer?"
+    en: "`isSingular()` checks against a tolerance; just above it does not mean \"well estimated\". What do the other optimizers say?"
+  - de: "Wie genau lässt sich eine Korrelation zweier kleiner Slope-SDs mit 40 Personen schätzen?"
+    en: "How precisely can a correlation between two small slope SDs be estimated with 40 people?"
+explanation:
+  de: |
+    Richtig sind 1 und 3. Die vierte Hauptkomponente hat Varianz ≈ 0: Eine
+    Richtung der 4×4-Kovarianzmatrix ist nicht identifiziert, die Struktur ist
+    am Rand. `isSingular()` nutzt eine Toleranz (1e−4); dass ein Optimierer knapp
+    darüber landet und andere darunter, zeigt genau diese Grenzlage (Aussage 2
+    falsch). Die festen Effekte hängen davon praktisch nicht ab (Aussage 3).
+    Korrelationen kleiner Slopes sind mit 40 Personen extrem unsicher und
+    landen oft nahe ±1; sie als Befund zu berichten wäre Überinterpretation
+    (Aussage 4 falsch). Nächste Schritte: Korrelationen streichen
+    (`(1 + condition + trial_c || participant)`, bei Faktoren mit
+    `afex::lmer_alt()` oder eigenen Dummies), dann die kleinste Slope prüfen;
+    der LRT χ²(9) = 6,6 stützt hier sogar das Intercept-Modell. Bei Fragen zu
+    *innerhalb*-Effekten lohnt es sich aber, deren Slope zu behalten, wenn die
+    Daten sie tragen, weil sonst die SE zu klein werden.
+  en: |
+    Statements 1 and 3 are true. The fourth principal component has variance
+    ≈ 0: one direction of the 4×4 covariance matrix is not identified, the
+    structure is on the boundary. `isSingular()` uses a tolerance (1e−4); that
+    one optimizer lands just above and others below shows exactly this boundary
+    position (statement 2 false). The fixed effects hardly depend on it
+    (statement 3). Correlations of small slopes are extremely uncertain with 40
+    people and often end up near ±1; reporting them as a finding would be
+    overinterpretation (statement 4 false). Next steps: drop correlations
+    (`(1 + condition + trial_c || participant)`, with factors via
+    `afex::lmer_alt()` or your own dummies), then check the smallest slope; the
+    LRT χ²(9) = 6.6 here even supports the intercept model. For questions about
+    *within* effects it is worth keeping their slope if the data support it,
+    because otherwise the SEs become too small.
+misconception:
+  de: "Wenn `isSingular()` FALSE meldet, ist die Zufallsstruktur gut geschätzt, und jede Zufallskorrelation ist ein Befund."
+  en: "If `isSingular()` reports FALSE, the random structure is well estimated, and every random correlation is a finding."
+check:
+  type: value
+common_mistakes:
+  - pattern: "\\b2\\b"
+    message:
+      de: "Aussage 2 stimmt nicht: `rePCA()` und die anderen Optimierer zeigen die Grenzlage trotz `isSingular() = FALSE`."
+      en: "Statement 2 is false: `rePCA()` and the other optimizers show the boundary position despite `isSingular() = FALSE`."
+  - pattern: "\\b4\\b"
+    message:
+      de: "Aussage 4 stimmt nicht: Korrelationen kleiner Slopes sind mit 40 Personen kaum schätzbar."
+      en: "Statement 4 is false: correlations of small slopes can hardly be estimated with 40 people."

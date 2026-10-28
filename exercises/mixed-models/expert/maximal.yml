@@ -1,0 +1,111 @@
+id: mm-e-maximal
+lesson: mixed-models-expert
+order: 0
+title:
+  de: Trägt das maximale Modell seine Zufallsstruktur?
+  en: Does the maximal model support its random structure?
+kind: write
+required: false
+challenge: true
+packages: [dplyr, lme4]
+data: [driving_sim]
+setup: |
+  library(dplyr)
+  library(lme4)
+  sim <- driving_sim |>
+    mutate(trial_c = trial - 2.5)
+  fit_max <- suppressMessages(lmer(
+    rt_ms ~ condition * trial_c + (1 + condition + trial_c | participant),
+    data = sim
+  ))
+prompt:
+  de: |
+    `fit_max` hat die maximale Zufallsstruktur: Intercept, Warnform und
+    Durchgang variieren je Person, mit allen Korrelationen (10 Varianz- und
+    Korrelationsparameter für 40 Personen). Je nach Optimierer meldet lme4
+    `boundary (singular) fit`. Lokal mit `allFit()` geprüft: Alle 7 Optimierer
+    finden dieselben festen Effekte (Spannweite 0,0 ms), am Optimierer liegt es
+    also nicht. Tragen die Daten die Struktur?
+
+    1. Zähle mit `summary(rePCA(fit_max))` die Hauptkomponenten der
+       Zufallseffekte je Person, die mehr als 1 % der Varianz erklären
+       (Zeile `"Proportion of Variance"` der Matrix `$participant$importance`).
+    2. Vergleiche `fit_max` per Likelihood-Ratio-Test mit dem Modell mit nur
+       einem Zufallsintercept je Person (gleiche festen Effekte), mit REML.
+
+    Gib `c(dims = ..., chisq = ..., df = ...)` zurück.
+  en: |
+    `fit_max` has the maximal random structure: intercept, warning modality
+    and trial vary per person, with all correlations (10 variance and
+    correlation parameters for 40 people). Depending on the optimizer, lme4
+    reports `boundary (singular) fit`. Checked locally with `allFit()`: all 7
+    optimizers find the same fixed effects (range 0.0 ms), so it is not the
+    optimizer. Do the data support the structure?
+
+    1. Use `summary(rePCA(fit_max))` to count the principal components of the
+       random effects per person that explain more than 1% of the variance (row
+       `"Proportion of Variance"` of the matrix `$participant$importance`).
+    2. Compare `fit_max` with a likelihood ratio test against the model with
+       only a random intercept per person (same fixed effects), using REML.
+
+    Return `c(dims = ..., chisq = ..., df = ...)`.
+starter: |
+  isSingular(fit_max)
+  # pca <- summary(rePCA(fit_max))
+solution: |
+  pca <- summary(rePCA(fit_max))$participant$importance
+  dims <- sum(pca["Proportion of Variance", ] > 0.01)
+  fit_ri <- lmer(rt_ms ~ condition * trial_c + (1 | participant), data = sim)
+  lrt <- anova(fit_ri, fit_max, refit = FALSE)
+  c(dims = dims, chisq = lrt$Chisq[2], df = lrt$Df[2])
+hints:
+  - de: "`summary(rePCA(fit_max))$participant$importance` ist eine Matrix mit einer Spalte je Hauptkomponente; zähle in der Zeile `\"Proportion of Variance\"` die Werte über 0,01."
+    en: "`summary(rePCA(fit_max))$participant$importance` is a matrix with one column per principal component; count the values above 0.01 in the row `\"Proportion of Variance\"`."
+  - de: "Das reduzierte Modell hat dieselben festen Effekte (`condition * trial_c`) und `(1 | participant)`."
+    en: "The reduced model has the same fixed effects (`condition * trial_c`) and `(1 | participant)`."
+  - de: "Zufallsstrukturen bei gleichen festen Effekten vergleicht man mit REML: `anova(fit_ri, fit_max, refit = FALSE)`, dann `Chisq[2]` und `Df[2]`."
+    en: "Random structures with the same fixed effects are compared with REML: `anova(fit_ri, fit_max, refit = FALSE)`, then `Chisq[2]` and `Df[2]`."
+explanation:
+  de: |
+    Nur 3 von 4 Dimensionen tragen Varianz (93,6 %, 5,1 %, 1,3 %, 0,0 %): Eine
+    Richtung der 4×4-Kovarianzmatrix ist nicht identifiziert, die Struktur liegt
+    am Rand. Die Slope-SDs sind klein (15–28 ms bei Residual-SD 108 ms). Der
+    REML-Vergleich ergibt χ²(9) = 6,6, p = .68: Das einfachere Modell ist
+    gerechtfertigt (an der Grenze des Parameterraums ist der LRT sogar
+    konservativ). Ohne `refit = FALSE` schätzt `anova()` beide Modelle mit ML
+    neu (χ² = 6,3); für Zufallsstrukturen bei gleichen festen Effekten ist REML
+    vorzuziehen. Vorgehen: maximal starten (Barr et al.), bei Meldungen erst
+    `allFit()` (lokal; im Browser bricht es bei der Bewertung ab), dann
+    `rePCA()`, dann Korrelationen streichen (`||`), dann Slopes mit Varianz ≈ 0.
+    Warnungen über `control` stummzuschalten löst nichts.
+  en: |
+    Only 3 of 4 dimensions carry variance (93.6%, 5.1%, 1.3%, 0.0%): one
+    direction of the 4×4 covariance matrix is not identified, the structure is
+    on the boundary. The slope SDs are small (15–28 ms with a residual SD of
+    108 ms). The REML comparison gives χ²(9) = 6.6, p = .68: the simpler model
+    is justified (on the boundary of the parameter space the LRT is even
+    conservative). Without `refit = FALSE`, `anova()` refits both models with ML
+    (χ² = 6.3); for random structures with the same fixed effects REML is
+    preferable. Procedure: start maximal (Barr et al.), with messages first
+    `allFit()` (locally; in the browser it breaks during grading), then
+    `rePCA()`, then drop correlations (`||`), then slopes with variance ≈ 0.
+    Silencing warnings via `control` solves nothing.
+misconception:
+  de: "Eine Singularitäts- oder Konvergenzmeldung heißt, dass der Optimierer versagt hat; ein anderer Optimierer behebt das."
+  en: "A singularity or convergence message means the optimizer failed; another optimizer fixes it."
+check:
+  type: value
+  tolerance: 1.0e-2
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*refit\\s*=\\s*(FALSE|F)\\b)[\\s\\S]*anova\\s*\\("
+    message:
+      de: "`anova()` schätzt beide Modelle ohne `refit = FALSE` mit ML neu. Beim Vergleich von Zufallsstrukturen mit gleichen festen Effekten bleibt man bei REML."
+      en: "Without `refit = FALSE`, `anova()` refits both models with ML. When comparing random structures with the same fixed effects, stay with REML."
+  - pattern: "Standard deviation"
+    message:
+      de: "Gefragt ist der Anteil der Varianz (`\"Proportion of Variance\"`), nicht die Standardabweichung der Komponenten."
+      en: "The task asks for the share of variance (`\"Proportion of Variance\"`), not the standard deviation of the components."
+  - pattern: "rt_ms\\s*~\\s*condition\\s*\\+\\s*trial_c\\s*\\+\\s*\\(\\s*1\\s*\\|"
+    message:
+      de: "Das reduzierte Modell braucht dieselben festen Effekte wie `fit_max`, inklusive Interaktion (`condition * trial_c`)."
+      en: "The reduced model needs the same fixed effects as `fit_max`, including the interaction (`condition * trial_c`)."

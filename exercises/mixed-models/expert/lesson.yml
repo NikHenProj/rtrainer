@@ -1,0 +1,19 @@
+# Lesson metadata; exercises are the other *.yml files in this folder
+# (sorted by `order`), the knowledge check is quiz.yml.
+lesson: mixed-models-expert
+minutes: 60
+prerequisites: [mixed-models-intermediate]
+langs: [de]
+packages: [dplyr, tidyr, lme4, lmerTest, parameters, performance, DHARMa]
+data: [driving_sim, usability]
+goals:
+  de:
+    - Konvergenz- und Singularitätsmeldungen mit `rePCA()` und (lokal) `allFit()` prüfen und die Zufallsstruktur begründet vereinfachen
+    - REML und ML beim Modellvergleich richtig einsetzen (feste Effekte vs. Zufallsstruktur)
+    - Ein GLMM mit gekreuzten Zufallseffekten mit `glmer()` schätzen und als Odds Ratios berichten
+    - Residuen eines GLMM mit DHARMa auf Überdispersion und Nullen prüfen
+  en:
+    - Check convergence and singularity messages with `rePCA()` and (locally) `allFit()` and simplify the random structure on good grounds
+    - Use REML and ML correctly in model comparisons (fixed effects vs. random structure)
+    - Fit a GLMM with crossed random effects with `glmer()` and report odds ratios
+    - Check GLMM residuals for overdispersion and zeros with DHARMa

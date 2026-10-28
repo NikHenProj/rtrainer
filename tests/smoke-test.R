@@ -809,6 +809,81 @@ run_exercise("gl-e-clmm", paste(
 checked <- wait_for("!!document.querySelector('#ex-gl-e-clmm .exercise-grade.alert-success')", timeout = 120)
 step("glm-expert: ordinal mixed model (clmm) graded correct", !is.na(checked), sprintf("%s s", checked))
 
+# 18. Expert P4: linked in the course plan; mixed-models-expert challenge
+# (rePCA + REML LRT, ML comparison gets the REML hint) before #why; moderated
+# mediation in lavaan and a power loop with faux + lmerTest graded; load times
+# with lme4/DHARMa, lavaan/interactions and faux/lmerTest.
+goto("/de/index.html")
+Sys.sleep(1)
+expert_p4 <- c("mixed-models", "moderation-mediation", "power")
+unlinked <- js(sprintf(
+  "[%s].filter(slug => !document.querySelector(`a[href*=\"${slug}-expert\"]`)).join(', ')",
+  paste0("'", expert_p4, "'", collapse = ", ")
+))
+step("expert: P4 lessons linked in the German course plan", identical(unlinked, ""), unlinked)
+
+loaded <- wait_lesson("/de/mixed-models-expert.html", "mm-e-maximal")
+step("mixed-models-expert: webR, lme4 and DHARMa ready", !is.na(loaded), sprintf("%s s", loaded))
+before_why <- js("(() => {
+  const box = document.querySelector('.rt-challenge');
+  const why = document.getElementById('why');
+  return !!box && !!why && !!(box.compareDocumentPosition(why) & Node.DOCUMENT_POSITION_FOLLOWING) &&
+    !!box.querySelector('#ex-mm-e-maximal');
+})()")
+step("mixed-models-expert: challenge box with the exercise stands before #why", before_why)
+maximal_code <- function(refit) paste(
+  "pca <- summary(rePCA(fit_max))$participant$importance",
+  "dims <- sum(pca[\"Proportion of Variance\", ] > 0.01)",
+  "fit_ri <- lmer(rt_ms ~ condition * trial_c + (1 | participant), data = sim)",
+  sprintf("lrt <- anova(fit_ri, fit_max%s)", refit),
+  "c(dims = dims, chisq = lrt$Chisq[2], df = lrt$Df[2])",
+  sep = "\n"
+)
+run_exercise("mm-e-maximal", maximal_code(""))
+hinted <- wait_for("(document.querySelector('#ex-mm-e-maximal .exercise-grade.alert-danger')?.textContent || '').includes('REML')", timeout = 120)
+step("mixed-models-expert: ML comparison in the challenge gets the REML hint", !is.na(hinted))
+run_exercise("mm-e-maximal", maximal_code(", refit = FALSE"))
+checked <- wait_for("!!document.querySelector('#ex-mm-e-maximal .exercise-grade.alert-success')", timeout = 120)
+step("mixed-models-expert: challenge (rePCA + REML LRT) graded correct", !is.na(checked), sprintf("%s s", checked))
+
+loaded <- wait_lesson("/de/moderation-mediation-expert.html", "mo-e-conditional")
+step("moderation-mediation-expert: webR, lavaan, lme4 and interactions ready", !is.na(loaded), sprintf("%s s", loaded))
+run_exercise("mo-e-conditional", paste(
+  "model <- \"",
+  "  pu ~ a * peou",
+  "  bi ~ b1 * pu + b3 * pu_exp + exp_c + c * peou",
+  "  ind_1 := a * (b1 + b3 * -2)",
+  "  ind_3 := a * b1",
+  "  ind_5 := a * (b1 + b3 * 2)",
+  "\"",
+  "fit <- sem(model, data = acc)",
+  "parameterEstimates(fit) |>",
+  "  filter(op == \":=\") |>",
+  "  select(label, est, ci.lower, ci.upper) |>",
+  "  as_tibble()",
+  sep = "\n"
+))
+checked <- wait_for("!!document.querySelector('#ex-mo-e-conditional .exercise-grade.alert-success')", timeout = 90)
+step("moderation-mediation-expert: conditional indirect effects graded correct", !is.na(checked), sprintf("%s s", checked))
+
+loaded <- wait_lesson("/de/power-expert.html", "pw-e-loop")
+step("power-expert: webR, faux, lme4 and lmerTest ready", !is.na(loaded), sprintf("%s s", loaded))
+run_exercise("pw-e-loop", paste(
+  "sim_p <- function(n_part, n_task) {",
+  "  d <- sim_data(n_part, n_task)",
+  "  fit <- suppressMessages(",
+  "    lmer(log_time ~ prototype + (1 + prototype | participant) + (1 | task), data = d)",
+  "  )",
+  "  coef(summary(fit))[\"prototypeB\", \"Pr(>|t|)\"]",
+  "}",
+  "set.seed(2026)",
+  "p <- replicate(20, sim_p(30, 8))",
+  "mean(p < .05)",
+  sep = "\n"
+))
+checked <- wait_for("!!document.querySelector('#ex-pw-e-loop .exercise-grade.alert-success')", timeout = 180)
+step("power-expert: simulation loop (20 x lmer) graded correct", !is.na(checked), sprintf("%s s", checked))
+
 goto("/en/index.html")
 Sys.sleep(1)
 beginner <- c(

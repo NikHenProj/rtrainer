@@ -1,0 +1,85 @@
+id: mo-e-centering-debug
+lesson: moderation-mediation-expert
+order: 4
+title:
+  de: Haupteffekt bei 0 Jahren
+  en: Main effect at age 0
+kind: debug
+required: false
+packages: [dplyr, lme4]
+data: [driving_sim]
+setup: |
+  library(dplyr)
+  library(lme4)
+  sim <- driving_sim |>
+    mutate(trial_c = trial - 2.5)
+prompt:
+  de: |
+    Eine Kollegin berichtet: „Bei durchschnittlichem Alter verbessert sich die
+    Reaktionszeit nur um 9 ms je Durchgang.“ Ihr Code steht unten. In der
+    vorigen Übung kam bei durchschnittlichem Alter etwas ganz anderes heraus.
+
+    Finde den Fehler und gib den Koeffizienten von `trial_c` zurück, der
+    tatsächlich die Lernrate bei durchschnittlichem Alter ist
+    (`fixef(fit)["trial_c"]`).
+  en: |
+    A colleague reports: "At average age, reaction time improves by only 9 ms
+    per trial." Her code is below. In the previous exercise, something quite
+    different came out at average age.
+
+    Find the bug and return the coefficient of `trial_c` that really is the
+    learning rate at average age (`fixef(fit)["trial_c"]`).
+starter: |
+  fit <- lmer(rt_ms ~ trial_c * age + condition + (1 + trial_c | participant), data = sim)
+  fixef(fit)["trial_c"]
+solution: |
+  sim <- sim |>
+    mutate(age_c = age - mean(age, na.rm = TRUE))
+  fit <- lmer(rt_ms ~ trial_c * age_c + condition + (1 + trial_c | participant), data = sim)
+  fixef(fit)["trial_c"]
+hints:
+  - de: "In einem Modell mit Interaktion ist der Koeffizient von `trial_c` die Steigung, wenn der andere Prädiktor 0 ist. Was heißt `age = 0`?"
+    en: "In a model with an interaction, the coefficient of `trial_c` is the slope when the other predictor is 0. What does `age = 0` mean?"
+  - de: "Zentriere das Alter am Mittelwert, dann ist 0 das durchschnittliche Alter."
+    en: "Centre age at the mean; then 0 is the average age."
+  - de: "`mutate(age_c = age - mean(age, na.rm = TRUE))` und `age_c` in die Formel."
+    en: "`mutate(age_c = age - mean(age, na.rm = TRUE))` and `age_c` in the formula."
+explanation:
+  de: |
+    Mit unzentriertem Alter ist `trial_c` = −9,0 ms die Lernrate für
+    *Neugeborene* (Alter 0), eine Extrapolation weit außerhalb der Daten (20–68
+    Jahre). Zentriert ergibt sich −30,5 ms je Durchgang bei 42 Jahren. Die
+    Interaktion selbst (−0,51) und die Modellpassung sind in beiden Fällen
+    identisch; nur die Bedeutung der Haupteffekte ändert sich. Regel: In
+    Modellen mit Interaktionen sind „Haupteffekte“ bedingte Effekte beim Wert 0
+    des anderen Prädiktors; zentriere kontinuierliche Moderatoren an einem
+    sinnvollen Wert. Bei Messwiederholung trennt man zusätzlich Innerhalb- und
+    Zwischen-Anteile (Personenmittel zentrieren), wenn ein Prädiktor auf beiden
+    Ebenen variiert. Das Alter hier variiert nur zwischen Personen; weil jede
+    Person 12 Zeilen hat, ist der Zeilenmittelwert gleich dem Personenmittel.
+  en: |
+    With uncentred age, `trial_c` = −9.0 ms is the learning rate for
+    *newborns* (age 0), an extrapolation far outside the data (20–68 years).
+    Centred, it is −30.5 ms per trial at 42 years. The interaction itself
+    (−0.51) and the model fit are identical in both cases; only the meaning of
+    the main effects changes. Rule: in models with interactions, "main effects"
+    are conditional effects at the value 0 of the other predictor; centre
+    continuous moderators at a meaningful value. With repeated measures you
+    additionally separate within and between parts (person-mean centring) when
+    a predictor varies at both levels. Age here varies only between people;
+    because everyone has 12 rows, the row mean equals the person mean.
+misconception:
+  de: "Der Haupteffekt in einem Modell mit Interaktion ist der durchschnittliche Effekt über alle Werte des Moderators."
+  en: "The main effect in a model with an interaction is the average effect across all values of the moderator."
+check:
+  type: value
+  tolerance: 1.0e-3
+common_mistakes:
+  - pattern: "scale\\(\\s*age\\s*\\)"
+    message:
+      de: "`scale()` standardisiert zusätzlich; dann ändert sich die Einheit der Interaktion. Zentrieren reicht: `age - mean(age, na.rm = TRUE)`."
+      en: "`scale()` also standardises; then the unit of the interaction changes. Centring is enough: `age - mean(age, na.rm = TRUE)`."
+  - pattern: "mean\\(\\s*age\\s*\\)"
+    message:
+      de: "Das Alter hat einen fehlenden Wert (p17); ohne `na.rm = TRUE` wird der Mittelwert `NA`."
+      en: "Age has a missing value (p17); without `na.rm = TRUE` the mean becomes `NA`."

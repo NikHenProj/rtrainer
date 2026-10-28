@@ -1,0 +1,108 @@
+id: pw-e-people-tasks
+lesson: power-expert
+order: 4
+title:
+  de: Mehr Personen oder mehr Aufgaben?
+  en: More people or more tasks?
+kind: write
+timelimit: 120
+required: false
+packages: [dplyr, faux, lmerTest]
+data: []
+setup: |
+  library(dplyr)
+  library(faux)
+  library(lmerTest)
+  sim_data <- function(n_part, n_task, effect = -0.105) {
+    add_random(participant = n_part, task = n_task) |>
+      add_within("participant", prototype = c("A", "B")) |>
+      add_ranef("participant", u0 = 0.23, u1 = 0.20) |>
+      add_ranef("task", w0 = 0.42) |>
+      add_ranef(e = 0.31) |>
+      mutate(log_time = 3.6 + u0 + w0 + (prototype == "B") * (effect + u1) + e)
+  }
+prompt:
+  de: |
+    Das Budget erlaubt 320 Personen-Aufgaben-Kombinationen (je mit A und B):
+    20 Personen × 16 Aufgaben oder 40 Personen × 8 Aufgaben. Welches Design
+    schätzt den Prototyp-Effekt genauer?
+
+    Schreib `se_design(n_part, n_task)`, die 5 Datensätze simuliert, je
+    `lmer(log_time ~ prototype + (1 + prototype | participant) + (1 | task))`
+    schätzt und den mittleren Standardfehler von `prototypeB` zurückgibt.
+    Setze `set.seed(2026)` und gib `c(p20_t16 = se_design(20, 16),
+    p40_t8 = se_design(40, 8))` zurück (in dieser Reihenfolge).
+  en: |
+    The budget allows 320 person-task combinations (each with A and B): 20
+    people × 16 tasks or 40 people × 8 tasks. Which design estimates the
+    prototype effect more precisely?
+
+    Write `se_design(n_part, n_task)`, which simulates 5 datasets, fits
+    `lmer(log_time ~ prototype + (1 + prototype | participant) + (1 | task))`
+    to each and returns the mean standard error of `prototypeB`. Call
+    `set.seed(2026)` and return `c(p20_t16 = se_design(20, 16),
+    p40_t8 = se_design(40, 8))` (in this order).
+starter: |
+  se_design <- function(n_part, n_task) {
+    # 5 Datensätze simulieren und schätzen / simulate and fit 5 datasets
+  }
+  set.seed(2026)
+solution: |
+  se_design <- function(n_part, n_task) {
+    se <- replicate(5, {
+      fit <- suppressMessages(lmer(
+        log_time ~ prototype + (1 + prototype | participant) + (1 | task),
+        data = sim_data(n_part, n_task)
+      ))
+      coef(summary(fit))["prototypeB", "Std. Error"]
+    })
+    mean(se)
+  }
+  set.seed(2026)
+  c(p20_t16 = se_design(20, 16), p40_t8 = se_design(40, 8))
+hints:
+  - de: "`replicate(5, { ... })` mit Simulation, Modell und SE im Block."
+    en: "`replicate(5, { ... })` with simulation, model and SE in the block."
+  - de: "Der SE steht in `coef(summary(fit))[\"prototypeB\", \"Std. Error\"]`."
+    en: "The SE is in `coef(summary(fit))[\"prototypeB\", \"Std. Error\"]`."
+  - de: "Beide Designs nach einem einzigen `set.seed(2026)` aufrufen, erst 20 × 16, dann 40 × 8."
+    en: "Call both designs after a single `set.seed(2026)`, first 20 × 16, then 40 × 8."
+explanation:
+  de: |
+    Mittlerer SE 0,052 (20 × 16) gegenüber 0,044 (40 × 8): Bei gleicher Zahl
+    an Beobachtungen schätzen mehr Personen den Effekt genauer. Grund ist die
+    Zufallssteigung je Person: Jede Person hat ihren eigenen Effekt, und den
+    Mittelwert dieser Effekte schätzt man über Personen, nicht über Aufgaben.
+    Mehr Aufgaben je Person verringern nur das Rauschen *innerhalb* einer
+    Person. Hätte der Effekt auch zwischen Aufgaben gestreut (Steigung je
+    Aufgabe), wären auch mehr Aufgaben wichtig, weil man auf neue Aufgaben
+    verallgemeinern will. Mit nur 5 Wiederholungen je Design ist der Vergleich
+    grob; die Richtung entspricht der Theorie (Westfall, Kenny & Judd, 2014).
+    Für die Planung: Kosten je Person und je Aufgabe gegen den SE-Gewinn
+    abwägen.
+  en: |
+    Mean SE 0.052 (20 × 16) versus 0.044 (40 × 8): with the same number of
+    observations, more people estimate the effect more precisely. The reason
+    is the random slope per person: each person has their own effect, and the
+    mean of these effects is estimated across people, not across tasks. More
+    tasks per person only reduce the noise *within* a person. If the effect
+    also varied between tasks (slope per task), more tasks would matter as well
+    because you want to generalise to new tasks. With only 5 repetitions per
+    design the comparison is rough; the direction matches the theory (Westfall,
+    Kenny & Judd, 2014). For planning: weigh the cost per person and per task
+    against the gain in SE.
+misconception:
+  de: "Nur die Gesamtzahl der Beobachtungen bestimmt die Genauigkeit; wie sie auf Personen und Aufgaben verteilt sind, ist egal."
+  en: "Only the total number of observations determines precision; how they are spread over people and tasks does not matter."
+check:
+  type: value
+  tolerance: 1.0e-4
+common_mistakes:
+  - pattern: "\\(\\s*1\\s*\\|\\s*participant\\s*\\)"
+    message:
+      de: "Ohne Zufallssteigung verschwindet der Vorteil von mehr Personen; nimm `(1 + prototype | participant)`."
+      en: "Without a random slope the advantage of more people disappears; use `(1 + prototype | participant)`."
+  - pattern: "set\\.seed\\([^)]*\\)[\\s\\S]*set\\.seed\\("
+    message:
+      de: "Nur ein `set.seed(2026)` vor beiden Designs, sonst stimmen die Zufallszahlen nicht."
+      en: "Only one `set.seed(2026)` before both designs, otherwise the random numbers do not match."

@@ -1,0 +1,155 @@
+---
+title: "Power und Stichprobenplanung"
+subtitle: "Expert · Simulation gekreuzter Designs mit faux, eigene Power-Schleife, kleinster interessierender Effekt"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, tidyr, purrr, faux, lme4, lmerTest]
+resources:
+  - ../data/usability.csv
+---
+
+{{< include /_generated/de/power-expert/runtime.qmd >}}
+
+{{< include /_generated/de/power-expert/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R läuft hier direkt im Browser. Beim ersten Besuch lädt es 20–40 Sekunden (Anzeige unten rechts), danach geht es schneller.
+:::
+
+{{< include /_generated/de/power-expert/challenge.qmd >}}
+
+## Wozu? {#why}
+
+**Forschungsfrage:** Wie viele Personen braucht eine Folgestudie, um zu zeigen, dass Prototyp B Aufgaben mindestens 10 % schneller lösen lässt als A, wenn jede Person mehrere Aufgaben mit beiden Prototypen bearbeitet?
+
+In der Intermediate-Lektion hast du Power mit pwr und Superpower berechnet und `simr` für ein vorhandenes Modell genutzt. Für gekreuzte Designs (Personen × Aufgaben) mit Zufallssteigungen gibt es keine Formel. Du simulierst Daten, die so aussehen wie die geplante Studie, schätzt das geplante Modell und zählst, wie oft der Effekt gefunden wird. Die wichtigsten Entscheidungen sind dabei inhaltlich: welcher Effekt zählt, welche Streuungen realistisch sind.
+
+## Konzept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 170" role="img" aria-labelledby="fig-pwe-title fig-pwe-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-pwe-title">Ablauf einer Power-Simulation</title>
+  <desc id="fig-pwe-desc">Vier Kästen von links nach rechts. Erstens Parameter aus Pilot und kleinstem interessierenden Effekt. Zweitens Daten simulieren mit faux: Personen und Aufgaben gekreuzt, Zufallseffekte je Einheit. Drittens das geplante Modell schätzen und den p-Wert speichern, dargestellt als gestapelte Kästen für viele Wiederholungen. Viertens Power als Anteil der p-Werte unter .05, für mehrere Stichprobengrößen als Kurve. Darunter der Hinweis: Simulation und Analyse brauchen dieselbe Zufallsstruktur.</desc>
+  <rect x="10" y="40" width="110" height="60" class="rt-fig-box" />
+  <text x="20" y="66" class="rt-fig-code">Pilot-SDs</text>
+  <text x="20" y="86" class="rt-fig-code">+ SESOI</text>
+  <line x1="120" y1="70" x2="140" y2="70" class="rt-fig-arrow" />
+  <rect x="140" y="40" width="120" height="60" class="rt-fig-box" />
+  <text x="150" y="66" class="rt-fig-code">faux:</text>
+  <text x="150" y="86" class="rt-fig-code">sim_data()</text>
+  <line x1="260" y1="70" x2="280" y2="70" class="rt-fig-arrow" />
+  <rect x="280" y="30" width="120" height="56" class="rt-fig-box" />
+  <rect x="288" y="38" width="120" height="56" class="rt-fig-box" />
+  <rect x="296" y="46" width="120" height="56" class="rt-fig-box-accent" />
+  <text x="306" y="70" class="rt-fig-code">lmer() → p</text>
+  <text x="306" y="90" class="rt-fig-code">× 1000</text>
+  <line x1="416" y1="70" x2="436" y2="70" class="rt-fig-arrow" />
+  <rect x="436" y="40" width="114" height="60" class="rt-fig-box-accent" />
+  <text x="446" y="66" class="rt-fig-code">mean(p &lt; .05)</text>
+  <text x="446" y="86" class="rt-fig-code">je n → Kurve</text>
+  <text x="10" y="135" class="rt-fig-label">Simulation und Analyse: dieselbe Zufallsstruktur (auch Steigungen)</text>
+  <text x="10" y="158" class="rt-fig-label rt-fig-muted">Im Browser 20 Wiederholungen, für die Planung lokal 1000</text>
+</svg>
+<figcaption>Daten wie in der geplanten Studie simulieren, das geplante Modell schätzen, Treffer zählen.</figcaption>
+</figure>
+```
+
+- **Parameter:** Streuungen (Person, Personen-Steigung, Aufgabe, Rest) aus einer Pilotstudie oder Literatur; den Effekt als **kleinsten interessierenden Effekt (SESOI)** festlegen, z. B. 10 % schneller (log-Effekt log(0,9) = −0,105). Pilot-Effekte sind unsicher und im Mittel überschätzt.
+- **Simulieren mit faux:** `add_random(participant = n, task = k)` erzeugt gekreuzte Einheiten, `add_within()` die Bedingungen, `add_ranef("participant", u0 = …, u1 = …)` zieht Zufallseffekte je Einheit, `add_ranef(e = …)` je Zeile.
+- **Eigene Schleife:** Funktion `sim_p()` (simulieren → schätzen → p), mit `replicate()` wiederholen, Power = `mean(p < .05)`. Monte-Carlo-Fehler √(p(1 − p)/n_sim): 20 Wiederholungen ±0,11, 1000 Wiederholungen ±0,015.
+- **Zufallssteigungen:** Streut der Effekt zwischen Personen, muss die Simulation das enthalten und die Analyse es schätzen. Sonst wird die Power überschätzt. Bei Steigung je Person bringen mehr Personen mehr als mehr Aufgaben.
+- **Sequentielle Designs (Ausblick):** Zwischenauswertungen mit vorab festgelegter Alpha-Aufteilung (Pocock, O'Brien-Fleming; Paket rpact) sparen im Mittel Personen. Ohne Plan ist „weitertesten, bis p < .05“ optionales Stoppen.
+
+## Beispiel {#example}
+
+Pilotmodell für die Streuungen, eine simulierte Studie und eine kleine Power-Kurve (20 Wiederholungen je n, dauert etwa 30 Sekunden):
+
+```{webr}
+pilot <- usability |>
+  filter(success == 1, prototype != "C") |>
+  droplevels()
+fit_pilot <- lmer(log(time_s) ~ prototype + (1 + prototype | participant) + (1 | task), data = pilot)
+VarCorr(fit_pilot)
+fixef(fit_pilot)
+
+sim_data <- function(n_part, n_task, effect = -0.105) {
+  add_random(participant = n_part, task = n_task) |>
+    add_within("participant", prototype = c("A", "B")) |>
+    add_ranef("participant", u0 = 0.23, u1 = 0.20) |>
+    add_ranef("task", w0 = 0.42) |>
+    add_ranef(e = 0.31) |>
+    mutate(log_time = 3.6 + u0 + w0 + (prototype == "B") * (effect + u1) + e)
+}
+sim_p <- function(n_part, n_task) {
+  fit <- suppressMessages(
+    lmer(log_time ~ prototype + (1 + prototype | participant) + (1 | task), data = sim_data(n_part, n_task))
+  )
+  coef(summary(fit))["prototypeB", "Pr(>|t|)"]
+}
+set.seed(2026)
+tibble(n_part = c(20, 40)) |>
+  mutate(power = map_dbl(n_part, \(n) mean(replicate(20, sim_p(n, 8)) < .05)))
+```
+
+**So berichtest du es:** Die Stichprobe wurde per Simulation geplant (R-Skript im Anhang). Grundlage waren die Streuungen aus einer Pilotstudie mit 24 Personen (Person 0,23, Personen-Steigung 0,20, Aufgabe 0,42, Rest 0,31 auf der log-Skala) und ein kleinster interessierender Effekt von 10 % kürzerer Bearbeitungszeit (nicht der Pilot-Effekt von 11 %, 95 %-KI [−22 %; +1 %]). Mit 8 Aufgaben je Person und einem Modell mit Zufallssteigung je Person ergab sich eine Power von 73 % bei 40 und 87 % bei 60 Personen (je 200 Wiederholungen, α = .05, zweiseitig); geplant werden 60 Personen.
+
+## Paketvergleich {#packages}
+
+| Aufgabe | Empfehlung | Alternative |
+|---|---|---|
+| Daten simulieren | **faux** `add_random()`, `add_within()`, `add_ranef()` | eigene Funktionen mit `rnorm()` und `expand_grid()`, `simstudy` |
+| Power-Schleife | eigene Schleife (`replicate()`, `purrr::map_dbl()`) mit **lme4**/**lmerTest** | **simr** `powerSim()`, `powerCurve()` (für ein vorhandenes Modell), **mixedpower** |
+| Viele Bedingungen | lokal parallel mit **future**/**furrr** | **SimDesign** (strukturierte Simulationsstudien, lokal) |
+| Sequentielle Designs | **rpact** (lokal) | **gsDesign** |
+
+## Lokal ausführen: Power-Kurve mit 1000 Wiederholungen
+
+```r
+library(furrr)
+plan(multisession)
+grid <- tidyr::expand_grid(n_part = seq(20, 70, by = 10), rep = 1:1000)
+res <- grid |>
+  mutate(p = future_map_dbl(n_part, \(n) sim_p(n, 8), .options = furrr_options(seed = 2026)))
+res |> summarise(power = mean(p < .05), .by = n_part)
+```
+
+## Übungen {#exercises}
+
+Drei Pflichtübungen und eine Zusatzübung. **Ausführen und prüfen** startet deinen Code und prüft ihn sofort. Hinweise deckst du einzeln auf (**Hinweis zeigen**), die Lösung erst danach. Die Simulationsübungen rechnen einige Sekunden.
+
+{{< include /_generated/de/power-expert/exercises.qmd >}}
+
+## Wissenscheck {#check}
+
+{{< include /_generated/de/power-expert/quiz.qmd >}}
+
+## Spickzettel {#cheatsheet}
+
+```r
+# Gekreuztes Design simulieren
+sim_data <- function(n_part, n_task, effect) {
+  faux::add_random(participant = n_part, task = n_task) |>
+    faux::add_within("participant", condition = c("A", "B")) |>
+    faux::add_ranef("participant", u0 = sd_part, u1 = sd_slope) |>
+    faux::add_ranef("task", w0 = sd_task) |>
+    faux::add_ranef(e = sd_resid) |>
+    mutate(y = mu + u0 + w0 + (condition == "B") * (effect + u1) + e)
+}
+
+# Power-Schleife
+sim_p <- function(n_part, n_task, effect) {
+  fit <- lmerTest::lmer(y ~ condition + (1 + condition | participant) + (1 | task),
+                        data = sim_data(n_part, n_task, effect))
+  coef(summary(fit))["conditionB", "Pr(>|t|)"]
+}
+set.seed(2026)
+mean(replicate(1000, sim_p(50, 8, log(0.9))) < .05)
+```
+
+- Mit dem SESOI planen, nicht mit dem Pilot-Effekt.
+- Simulation und Analyse mit derselben Zufallsstruktur, inklusive Steigungen.
+- Monte-Carlo-Fehler beachten; im Browser üben, lokal planen.
+
+{{< include /_generated/de/power-expert/footer.qmd >}}

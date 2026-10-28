@@ -1,0 +1,134 @@
+# Knowledge check: passed at >= `pass` share of correctly answered questions.
+lesson: power-expert
+pass: 0.8
+questions:
+  - id: pw-e-q-why-sim
+    prompt:
+      de: "Warum Power durch Simulation statt mit einer Formel (z. B. pwr)?"
+      en: "Why power by simulation instead of a formula (e.g. pwr)?"
+    options:
+      - text:
+          de: "Für gekreuzte Designs mit Zufallssteigungen gibt es keine einfache Formel; die Simulation nutzt genau das geplante Modell."
+          en: "For crossed designs with random slopes there is no simple formula; the simulation uses exactly the planned model."
+        correct: true
+        explain:
+          de: "Richtig. Jede Annahme steht dabei explizit im Code."
+          en: "Right. Every assumption is explicit in the code."
+      - text:
+          de: "Weil Simulationen immer eine höhere Power ergeben."
+          en: "Because simulations always give higher power."
+        correct: false
+        explain:
+          de: "Im Gegenteil, realistische Zufallsstrukturen senken die Power oft."
+          en: "On the contrary, realistic random structures often lower power."
+      - text:
+          de: "Weil Formeln keine Effektgröße brauchen."
+          en: "Because formulas need no effect size."
+        correct: false
+        explain:
+          de: "Beide brauchen einen angenommenen Effekt."
+          en: "Both need an assumed effect."
+  - id: pw-e-q-sesoi
+    prompt:
+      de: "Mit welchem Effekt planst du die Stichprobe?"
+      en: "Which effect do you plan the sample with?"
+    options:
+      - text:
+          de: "Mit dem kleinsten Effekt, der inhaltlich noch zählt (SESOI), z. B. 10 % schneller."
+          en: "With the smallest effect that still matters substantively (SESOI), e.g. 10% faster."
+        correct: true
+        explain:
+          de: "Genau. Dann findet die Studie jeden Effekt, der für die Entscheidung relevant ist, mit der geplanten Power."
+          en: "Exactly. Then the study finds every effect relevant to the decision with the planned power."
+      - text:
+          de: "Mit dem Effekt der Pilotstudie."
+          en: "With the effect of the pilot study."
+        correct: false
+        explain:
+          de: "Pilot-Effekte sind sehr unsicher und im Mittel überschätzt."
+          en: "Pilot effects are very uncertain and overestimated on average."
+      - text:
+          de: "Mit einem mittleren Effekt nach Cohen (d = 0,5)."
+          en: "With a medium effect according to Cohen (d = 0.5)."
+        correct: false
+        explain:
+          de: "Pauschale Konventionen ersetzen keine inhaltliche Begründung."
+          en: "Blanket conventions do not replace a substantive justification."
+  - id: pw-e-q-mc-error
+    prompt:
+      de: "Eine Simulation mit 20 Wiederholungen ergibt Power 0,55. Wie genau ist das?"
+      en: "A simulation with 20 repetitions gives power 0.55. How precise is that?"
+    options:
+      - text:
+          de: "Grob: Der Monte-Carlo-SE ist etwa 0,11; für die Planung braucht es etwa 1000 Wiederholungen."
+          en: "Rough: the Monte Carlo SE is about 0.11; planning needs about 1000 repetitions."
+        correct: true
+        explain:
+          de: "Richtig: √(p(1 − p)/n_sim)."
+          en: "Right: √(p(1 − p)/n_sim)."
+      - text:
+          de: "Exakt, weil der Seed festgelegt ist."
+          en: "Exact, because the seed is fixed."
+        correct: false
+        explain:
+          de: "Der Seed macht das Ergebnis reproduzierbar, nicht genau."
+          en: "The seed makes the result reproducible, not precise."
+      - text:
+          de: "Auf etwa ±0,01 genau."
+          en: "Precise to about ±0.01."
+        correct: false
+        explain:
+          de: "Das bräuchte etwa 2500 Wiederholungen."
+          en: "That would need about 2500 repetitions."
+  - id: pw-e-q-slope
+    prompt:
+      de: "Was passiert, wenn die Simulation die Zufallssteigung des Effekts weglässt, die es in Wirklichkeit gibt?"
+      en: "What happens if the simulation omits the random slope of the effect that exists in reality?"
+    options:
+      - text:
+          de: "Die Power wird überschätzt und die Studie zu klein geplant."
+          en: "Power is overestimated and the study is planned too small."
+        correct: true
+        explain:
+          de: "Im Beispiel 99 % statt 73 % bei 40 Personen."
+          en: "In the example 99% instead of 73% at 40 people."
+      - text:
+          de: "Die Power wird unterschätzt."
+          en: "Power is underestimated."
+        correct: false
+        explain:
+          de: "Ohne Steigung wirkt der Effekt bei allen gleich und ist dadurch leichter zu finden."
+          en: "Without a slope the effect looks the same for everyone and is therefore easier to find."
+      - text:
+          de: "Nichts, Steigungen betreffen nur die Varianzen."
+          en: "Nothing, slopes only affect the variances."
+        correct: false
+        explain:
+          de: "Sie bestimmen direkt den SE des Innerhalb-Effekts."
+          en: "They directly determine the SE of the within effect."
+  - id: pw-e-q-sequential
+    prompt:
+      de: "Was gilt für sequentielle Designs mit Zwischenauswertung?"
+      en: "What applies to sequential designs with interim analyses?"
+    options:
+      - text:
+          de: "Zeitpunkte und Alpha-Aufteilung (z. B. O'Brien-Fleming) werden vorab festgelegt; dann sparen sie im Mittel Personen ohne Alpha-Inflation."
+          en: "Time points and alpha spending (e.g. O'Brien-Fleming) are fixed in advance; then they save people on average without alpha inflation."
+        correct: true
+        explain:
+          de: "Genau. Werkzeug z. B. rpact (lokal)."
+          en: "Exactly. Tool e.g. rpact (locally)."
+      - text:
+          de: "Man darf nach jeder Person testen und bei p < .05 aufhören."
+          en: "You may test after every person and stop at p < .05."
+        correct: false
+        explain:
+          de: "Das ist optionales Stoppen und bläht den Fehler 1. Art stark auf."
+          en: "That is optional stopping and strongly inflates the type I error."
+      - text:
+          de: "Sie brauchen keine Power-Planung."
+          en: "They need no power planning."
+        correct: false
+        explain:
+          de: "Auch sie werden für eine maximale Stichprobe und einen SESOI geplant."
+          en: "They too are planned for a maximum sample and a SESOI."

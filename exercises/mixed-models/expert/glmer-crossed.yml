@@ -1,0 +1,86 @@
+id: mm-e-glmer-crossed
+lesson: mixed-models-expert
+order: 2
+title:
+  de: GLMM mit gekreuzten Zufallseffekten
+  en: GLMM with crossed random effects
+kind: write
+required: true
+packages: [lme4]
+data: [usability]
+setup: |
+  library(lme4)
+prompt:
+  de: |
+    Ob eine Aufgabe gelöst wurde (`success`, 0/1), hängt von der Person *und*
+    von der Aufgabe ab. Jede Person hat jede Aufgabe mit jedem Prototyp
+    bearbeitet: Personen und Aufgaben sind gekreuzt.
+
+    Schätze mit `glmer()` ein logistisches Modell
+    `success ~ prototype + expertise` mit je einem Zufallsintercept für
+    `participant` und `task` (`family = binomial`). Gib das Modellobjekt
+    zurück.
+  en: |
+    Whether a task was solved (`success`, 0/1) depends on the person *and* on
+    the task. Each person worked on each task with each prototype: people and
+    tasks are crossed.
+
+    Use `glmer()` to fit a logistic model `success ~ prototype + expertise`
+    with one random intercept each for `participant` and `task`
+    (`family = binomial`). Return the model object.
+starter: |
+  glm(success ~ prototype + expertise, family = binomial, data = usability)
+solution: |
+  glmer(
+    success ~ prototype + expertise + (1 | participant) + (1 | task),
+    data = usability,
+    family = binomial
+  )
+hints:
+  - de: "Gekreuzte Zufallseffekte schreibt man als zwei getrennte Terme: `(1 | participant) + (1 | task)`."
+    en: "Crossed random effects are written as two separate terms: `(1 | participant) + (1 | task)`."
+  - de: "`glmer()` hat dieselbe Formelsyntax wie `lmer()`, dazu `family = binomial`."
+    en: "`glmer()` has the same formula syntax as `lmer()`, plus `family = binomial`."
+  - de: "Nicht `(1 | participant/task)`: Das wäre geschachtelt (Aufgabe innerhalb Person)."
+    en: "Not `(1 | participant/task)`: that would be nested (task within person)."
+explanation:
+  de: |
+    `model_parameters(fit, exponentiate = TRUE)`: Prototyp B OR = 2,39, 95 %-KI
+    [1,03; 5,55]; C 0,62 [0,30; 1,27]; Expertise 2,28 [0,86; 6,02]. Die
+    Personen-SD auf der Logit-Skala ist 0,88, die Aufgaben-SD praktisch 0
+    (1,5e−4): Die Aufgaben unterscheiden sich in der Zeit, aber kaum im Erfolg.
+    Fallstrick: Die ORs sind *bedingt* (für eine typische Person); populations-
+    gemittelte Effekte sind bei SD 0,88 etwas kleiner. Für Wahrscheinlichkeiten
+    `marginaleffects::avg_predictions(fit, by = "prototype")`. Mit nur 4
+    Aufgaben ist die Aufgabenvarianz ohnehin kaum zu schätzen; ein fester
+    Effekt für `task` wäre eine vertretbare Alternative. Formulierung:
+    „Mit Prototyp B wurden Aufgaben häufiger gelöst (OR = 2,39, 95 %-KI
+    [1,03; 5,55]; logistisches GLMM mit Zufallsintercepts für Person und
+    Aufgabe).“
+  en: |
+    `model_parameters(fit, exponentiate = TRUE)`: prototype B OR = 2.39, 95% CI
+    [1.03, 5.55]; C 0.62 [0.30, 1.27]; expertise 2.28 [0.86, 6.02]. The person
+    SD on the logit scale is 0.88, the task SD practically 0 (1.5e−4): tasks
+    differ in time but hardly in success. Pitfall: the ORs are *conditional*
+    (for a typical person); population-averaged effects are somewhat smaller
+    with an SD of 0.88. For probabilities use
+    `marginaleffects::avg_predictions(fit, by = "prototype")`. With only 4 tasks
+    the task variance can hardly be estimated anyway; a fixed effect for `task`
+    would be a defensible alternative. Wording: "Tasks were solved more often
+    with prototype B (OR = 2.39, 95% CI [1.03, 5.55]; logistic GLMM with random
+    intercepts for person and task)."
+misconception:
+  de: "Messwiederholung über Aufgaben kann man ignorieren, wenn nur die Personen als Zufallseffekt modelliert sind."
+  en: "Repeated measures over tasks can be ignored if only people are modelled as a random effect."
+check:
+  type: value
+  tolerance: 1.0e-3
+common_mistakes:
+  - pattern: "participant\\s*/\\s*task"
+    message:
+      de: "`participant/task` ist geschachtelt; Personen und Aufgaben sind gekreuzt: `(1 | participant) + (1 | task)`."
+      en: "`participant/task` is nested; people and tasks are crossed: `(1 | participant) + (1 | task)`."
+  - pattern: "^\\s*glm\\("
+    message:
+      de: "`glm()` ignoriert die Abhängigkeit innerhalb von Personen und Aufgaben; nimm `glmer()`."
+      en: "`glm()` ignores the dependence within people and tasks; use `glmer()`."

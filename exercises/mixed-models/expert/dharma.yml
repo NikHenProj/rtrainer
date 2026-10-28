@@ -1,0 +1,103 @@
+id: mm-e-dharma
+lesson: mixed-models-expert
+order: 4
+title:
+  de: GLMM-Residuen mit DHARMa prüfen
+  en: Checking GLMM residuals with DHARMa
+kind: write
+required: false
+packages: [lme4, DHARMa]
+data: [usability]
+setup: |
+  library(lme4)
+  library(DHARMa)
+  fit0 <- glmer(errors ~ prototype + (1 | participant), data = usability, family = poisson)
+  fit1 <- glmer(errors ~ prototype + success + (1 | participant), data = usability, family = poisson)
+prompt:
+  de: |
+    Residuen eines Poisson-GLMM sind nicht normalverteilt; Diagramme wie bei
+    `lm()` helfen nicht. DHARMa simuliert aus dem Modell neue Daten und
+    vergleicht jede Beobachtung mit ihrer simulierten Verteilung (skalierte
+    Residuen, 0–1).
+
+    `fit0` modelliert die Fehler je Aufgabe ohne, `fit1` mit `success`. Setze
+    `set.seed(2026)`, simuliere für **beide** Modelle nacheinander die
+    Residuen mit `simulateResiduals(model, n = 250)` und berechne je
+    `testDispersion()` und `testZeroInflation()` (jeweils `plot = FALSE`).
+
+    Gib die vier p-Werte als benannten Vektor zurück:
+    `c(disp0 = ..., zi0 = ..., disp1 = ..., zi1 = ...)`.
+  en: |
+    Residuals of a Poisson GLMM are not normally distributed; plots as for
+    `lm()` do not help. DHARMa simulates new data from the model and compares
+    each observation with its simulated distribution (scaled residuals, 0–1).
+
+    `fit0` models errors per task without, `fit1` with `success`. Call
+    `set.seed(2026)`, simulate the residuals for **both** models one after the
+    other with `simulateResiduals(model, n = 250)` and compute
+    `testDispersion()` and `testZeroInflation()` for each (both
+    `plot = FALSE`).
+
+    Return the four p values as a named vector:
+    `c(disp0 = ..., zi0 = ..., disp1 = ..., zi1 = ...)`.
+starter: |
+  set.seed(2026)
+  res0 <- simulateResiduals(fit0, n = 250)
+  testDispersion(res0, plot = FALSE)
+solution: |
+  set.seed(2026)
+  res0 <- simulateResiduals(fit0, n = 250)
+  res1 <- simulateResiduals(fit1, n = 250)
+  c(
+    disp0 = testDispersion(res0, plot = FALSE)$p.value,
+    zi0 = testZeroInflation(res0, plot = FALSE)$p.value,
+    disp1 = testDispersion(res1, plot = FALSE)$p.value,
+    zi1 = testZeroInflation(res1, plot = FALSE)$p.value
+  )
+hints:
+  - de: "Ein Seed für beide Simulationen, in dieser Reihenfolge: erst `fit0`, dann `fit1`."
+    en: "One seed for both simulations, in this order: first `fit0`, then `fit1`."
+  - de: "Beide Tests liefern ein `htest`-Objekt; der p-Wert steht in `$p.value`."
+    en: "Both tests return an `htest` object; the p value is in `$p.value`."
+  - de: "`c(disp0 = testDispersion(res0, plot = FALSE)$p.value, zi0 = ..., ...)`."
+    en: "`c(disp0 = testDispersion(res0, plot = FALSE)$p.value, zi0 = ..., ...)`."
+explanation:
+  de: |
+    Ohne `success`: Überdispersion p = .008, Nullinflation p = .10. Mit
+    `success`: p = .20 und .87, unauffällig. Das wiederholt den Befund der
+    GLM-Lektion auf Mehrebenen-Niveau: Der Zufallsintercept allein fängt die
+    Heterogenität nicht auf, der fehlende Prädiktor schon. DHARMa ist für GLMMs
+    das Standardwerkzeug, weil Pearson-Residuen bei Zählungen mit vielen
+    Nullen schwer zu deuten sind; `plot(res1)` zeigt QQ-Plot und Residuen gegen
+    Vorhersage. Fallstricke: Die p-Werte hängen von der Simulation ab (Seed, n);
+    mit großen Stichproben wird jede kleine Abweichung signifikant, schau auf
+    die Größe der Dispersion (`testDispersion()` gibt das Verhältnis aus). Ein
+    negativ-binomiales GLMM (`glmer.nb()` oder glmmTMB lokal) ist erst nötig,
+    wenn nach inhaltlich sinnvollen Prädiktoren Überdispersion bleibt.
+  en: |
+    Without `success`: overdispersion p = .008, zero inflation p = .10. With
+    `success`: p = .20 and .87, unremarkable. This repeats the finding of the
+    GLM lesson at the multilevel level: the random intercept alone does not
+    absorb the heterogeneity, the missing predictor does. DHARMa is the
+    standard tool for GLMMs because Pearson residuals are hard to read for
+    counts with many zeros; `plot(res1)` shows a QQ plot and residuals against
+    predictions. Pitfalls: the p values depend on the simulation (seed, n); with
+    large samples any small deviation becomes significant, look at the size of
+    the dispersion (`testDispersion()` prints the ratio). A negative binomial
+    GLMM (`glmer.nb()` or glmmTMB locally) is only needed if overdispersion
+    remains after substantively sensible predictors.
+misconception:
+  de: "Ein Zufallsintercept je Person fängt Überdispersion immer auf; Residuen eines GLMM prüft man wie bei `lm()`."
+  en: "A random intercept per person always absorbs overdispersion; GLMM residuals are checked as for `lm()`."
+check:
+  type: value
+  tolerance: 1.0e-4
+common_mistakes:
+  - pattern: "residuals\\(\\s*fit"
+    message:
+      de: "Rohe oder Pearson-Residuen sind bei Zählungen schwer zu deuten; nimm `simulateResiduals()`."
+      en: "Raw or Pearson residuals are hard to read for counts; use `simulateResiduals()`."
+  - pattern: "check_overdispersion"
+    message:
+      de: "Gefragt sind die simulationsbasierten Tests von DHARMa (`testDispersion()`)."
+      en: "The task asks for DHARMa's simulation-based tests (`testDispersion()`)."

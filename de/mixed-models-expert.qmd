@@ -1,0 +1,161 @@
+---
+title: "Mixed Models"
+subtitle: "Expert · Konvergenz und Singularität, REML vs. ML, gekreuzte GLMM, Residuen mit DHARMa"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, tidyr, lme4, lmerTest, parameters, performance, DHARMa]
+resources:
+  - ../data/driving_sim.csv
+  - ../data/usability.csv
+---
+
+{{< include /_generated/de/mixed-models-expert/runtime.qmd >}}
+
+{{< include /_generated/de/mixed-models-expert/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R läuft hier direkt im Browser. Beim ersten Besuch lädt es 30–50 Sekunden (Anzeige unten rechts), danach geht es schneller.
+:::
+
+{{< include /_generated/de/mixed-models-expert/challenge.qmd >}}
+
+## Wozu? {#why}
+
+**Forschungsfrage:** Welche Zufallsstruktur tragen die Fahrsimulator-Daten wirklich, wie vergleicht man Modelle richtig, und wie modelliert man Erfolg und Fehler im Usability-Test, wenn Personen und Aufgaben gekreuzt sind?
+
+In der Intermediate-Lektion hast du Zufallsintercepts und -steigungen geschätzt. In echten Analysen kommen danach die Meldungen: „boundary (singular) fit“, „failed to converge“. Diese Lektion zeigt, wie du sie prüfst statt sie wegzuklicken, wann REML und wann ML gilt, und wie du GLMMs schätzt und ihre Residuen prüfst.
+
+## Konzept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 190" role="img" aria-labelledby="fig-mme-title fig-mme-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-mme-title">Vorgehen bei Meldungen zur Zufallsstruktur</title>
+  <desc id="fig-mme-desc">Ein Ablauf in vier Kästen von links nach rechts. Erstens maximales Modell schätzen. Zweitens bei einer Meldung allFit: Stimmen die festen Effekte über Optimierer überein, ist es kein numerisches Problem. Drittens rePCA und Varianzen ansehen: Dimensionen mit Varianz nahe null zeigen eine zu komplexe Struktur. Viertens vereinfachen: erst Korrelationen streichen, dann Steigungen mit Varianz nahe null, Vergleich mit REML und refit FALSE. Darunter die Regel: feste Effekte vergleichen mit ML, Zufallsstrukturen mit REML.</desc>
+  <rect x="10" y="40" width="120" height="70" class="rt-fig-box" />
+  <text x="20" y="66" class="rt-fig-code">maximal</text>
+  <text x="20" y="88" class="rt-fig-code">schätzen</text>
+  <line x1="130" y1="75" x2="150" y2="75" class="rt-fig-arrow" />
+  <rect x="150" y="40" width="120" height="70" class="rt-fig-box" />
+  <text x="160" y="66" class="rt-fig-code">allFit()</text>
+  <text x="160" y="88" class="rt-fig-code">Optimierer?</text>
+  <line x1="270" y1="75" x2="290" y2="75" class="rt-fig-arrow" />
+  <rect x="290" y="40" width="120" height="70" class="rt-fig-box" />
+  <text x="300" y="66" class="rt-fig-code">rePCA()</text>
+  <text x="300" y="88" class="rt-fig-code">Varianz ≈ 0?</text>
+  <line x1="410" y1="75" x2="430" y2="75" class="rt-fig-arrow" />
+  <rect x="430" y="40" width="120" height="70" class="rt-fig-box-accent" />
+  <text x="440" y="66" class="rt-fig-code">vereinfachen</text>
+  <text x="440" y="88" class="rt-fig-code">|| → Slope</text>
+  <text x="10" y="150" class="rt-fig-label">Feste Effekte vergleichen: ML (anova() refittet). Zufallsstruktur: REML, refit = FALSE.</text>
+  <text x="10" y="175" class="rt-fig-label rt-fig-muted">Berichten: Endmodell mit REML.</text>
+</svg>
+<figcaption>Meldungen zur Zufallsstruktur prüfen statt stummschalten.</figcaption>
+</figure>
+```
+
+- **Meldungen prüfen:** `allFit(fit)` schätzt das Modell mit allen verfügbaren Optimierern neu (lokal; im Browser kann es webR zum Absturz bringen, siehe „Lokal ausführen“). Stimmen die festen Effekte überein, liegt kein numerisches Problem vor. `summary(rePCA(fit))` zeigt, wie viele Dimensionen der Zufallsstruktur die Daten tragen; eine Komponente mit Varianz ≈ 0 heißt: überparametrisiert. `isSingular()` prüft gegen eine Toleranz und kann knapp danebenliegen.
+- **Vereinfachen:** maximal starten, dann Korrelationen streichen (`||`; bei Faktoren mit `afex::lmer_alt()`), dann Steigungen mit Varianz ≈ 0. Steigungen für die Innerhalb-Effekte deiner Hypothese behalten, solange die Daten sie tragen, sonst sind deren SE zu klein.
+- **REML vs. ML:** Die REML-Likelihood hängt von den festen Effekten ab. Feste Effekte vergleichen → ML (`anova(m0, m1)` refittet automatisch). Zufallsstrukturen bei gleichen festen Effekten → REML (`anova(..., refit = FALSE)`). Berichtet wird das Endmodell mit REML.
+- **GLMM:** `glmer(y ~ x + (1 | participant) + (1 | task), family = binomial)` für gekreuzte Einheiten. Odds Ratios sind bedingt (typische Person). Wenige Einheiten (z. B. 4 Aufgaben): Varianz kaum schätzbar, fester Effekt vertretbar.
+- **Residuen mit DHARMa:** `simulateResiduals(fit)` vergleicht jede Beobachtung mit Simulationen aus dem Modell; `testDispersion()`, `testZeroInflation()`, `plot()`. glmmTMB lädt in webR nicht (siehe „Lokal ausführen“).
+
+## Beispiel {#example}
+
+Maximales Modell, Optimierer, Hauptkomponenten und der REML-Vergleich mit dem Intercept-Modell:
+
+```{webr}
+sim <- driving_sim |>
+  mutate(trial_c = trial - 2.5)
+fit_max <- lmer(rt_ms ~ condition * trial_c + (1 + condition + trial_c | participant), data = sim)
+VarCorr(fit_max)
+summary(rePCA(fit_max))
+fit_ri <- lmer(rt_ms ~ condition * trial_c + (1 | participant), data = sim)
+anova(fit_ri, fit_max, refit = FALSE)
+```
+
+Gekreuztes logistisches GLMM und DHARMa-Prüfung eines Poisson-GLMM:
+
+```{webr}
+fit_success <- glmer(success ~ prototype + expertise + (1 | participant) + (1 | task),
+                     data = usability, family = binomial)
+model_parameters(fit_success, exponentiate = TRUE)
+fit_errors <- glmer(errors ~ prototype + success + (1 | participant),
+                    data = usability, family = poisson)
+set.seed(2026)
+res <- simulateResiduals(fit_errors, n = 250)
+testDispersion(res, plot = FALSE)
+plot(res)
+```
+
+**So berichtest du es:** Das maximale Modell mit korrelierten Zufallssteigungen für Warnform und Durchgang war überparametrisiert (eine Hauptkomponente der Zufallseffekte mit Varianz ≈ 0, identische feste Effekte über sieben Optimierer); es passte nicht besser als das Modell mit Zufallsintercept (REML-LRT χ²(9) = 6,6, *p* = .68). Mit Prototyp B wurden Aufgaben häufiger gelöst (OR = 2,39, 95 %-KI [1,03; 5,55]; logistisches GLMM mit Zufallsintercepts für Person und Aufgabe). Die simulationsbasierten Residuen des Fehlermodells zeigten keine Überdispersion (DHARMa, *p* = .20).
+
+## Paketvergleich {#packages}
+
+| Aufgabe | Empfehlung | Alternative |
+|---|---|---|
+| LMM und GLMM | **lme4** `lmer()`, `glmer()`, **lmerTest** für df und p | **glmmTMB** (Negativ-binomial, Nullinflation, lokal), **afex** `mixed()` |
+| Konvergenz prüfen | `allFit()`, `rePCA()`, `isSingular()` | **performance** `check_convergence()`, `check_singularity()`; **buildmer** (schrittweise Vereinfachung) |
+| Modellvergleich | `anova()` (ML bzw. `refit = FALSE`) | **performance** `compare_performance()` (AIC, R²) |
+| Residuen GLMM | **DHARMa** | **performance** `check_model()` (für LMM) |
+
+## Lokal ausführen: allFit() und glmmTMB
+
+`allFit()` läuft im Browser zwar, bringt webR aber bei der Bewertung von Übungen zum Absturz („table index is out of bounds“). Lokal (mit installiertem optimx und dfoptim stehen 7 Optimierer zur Verfügung):
+
+```r
+af <- allFit(fit_max, verbose = FALSE)
+s <- summary(af)
+s$which.OK                                   # welche Optimierer liefen
+apply(s$fixef, 2, \(x) max(x) - min(x))      # Spannweite der festen Effekte
+s$msgs[lengths(s$msgs) > 0]                  # Meldungen je Optimierer
+```
+
+glmmTMB lädt in webR nicht (TMB-Version im webR-Repository zu alt). Lokal für Zählungen mit Überdispersion und Nullen:
+
+```r
+library(glmmTMB)
+fit_nb <- glmmTMB(errors ~ prototype + success + (1 | participant),
+                  family = nbinom2, data = usability)
+fit_zi <- update(fit_nb, ziformula = ~ 1)
+AIC(fit_nb, fit_zi)
+DHARMa::simulateResiduals(fit_nb) |> plot()
+```
+
+## Übungen {#exercises}
+
+Drei Pflichtübungen und eine Zusatzübung. **Ausführen und prüfen** startet deinen Code und prüft ihn sofort. Hinweise deckst du einzeln auf (**Hinweis zeigen**), die Lösung erst danach.
+
+{{< include /_generated/de/mixed-models-expert/exercises.qmd >}}
+
+## Wissenscheck {#check}
+
+{{< include /_generated/de/mixed-models-expert/quiz.qmd >}}
+
+## Spickzettel {#cheatsheet}
+
+```r
+# Meldungen prüfen (allFit lokal)
+af <- allFit(fit, verbose = FALSE)
+summary(af)$fixef              # gleiche Werte = kein Optimiererproblem
+summary(rePCA(fit))            # Dimensionen mit Varianz ≈ 0?
+
+# Vergleichen
+anova(m0, m1)                         # feste Effekte: ML (automatisch)
+anova(fit_simple, fit_max, refit = FALSE)  # Zufallsstruktur: REML
+
+# GLMM mit gekreuzten Einheiten
+fit <- glmer(success ~ x + (1 | participant) + (1 | task), data = d, family = binomial)
+parameters::model_parameters(fit, exponentiate = TRUE)
+
+# Residuen
+res <- DHARMa::simulateResiduals(fit, n = 250)
+DHARMa::testDispersion(res); DHARMa::testZeroInflation(res); plot(res)
+```
+
+- Meldungen nicht stummschalten: erst `allFit()`, dann `rePCA()`, dann begründet vereinfachen.
+- ML für feste Effekte, REML für Zufallsstrukturen und den Bericht.
+- Zufallskorrelationen kleiner Steigungen nicht als Befund deuten.
+
+{{< include /_generated/de/mixed-models-expert/footer.qmd >}}

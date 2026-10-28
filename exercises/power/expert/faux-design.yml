@@ -1,0 +1,118 @@
+id: pw-e-faux-design
+lesson: power-expert
+order: 0
+title:
+  de: Ein gekreuztes Design mit faux simulieren
+  en: Simulating a crossed design with faux
+kind: write
+required: false
+challenge: true
+packages: [dplyr, faux]
+data: []
+setup: |
+  library(dplyr)
+  library(faux)
+prompt:
+  de: |
+    Geplant ist eine Folgestudie: Jede Person bearbeitet 8 Aufgaben mit
+    Prototyp A und B (log-Zeit). Aus der Pilotstudie (`usability`, gelöste
+    Aufgaben, A und B) stammen die Streuungen: Person 0,23, Personen-Steigung
+    für B 0,20, Aufgabe 0,42, Rest 0,31 (alle auf der log-Skala).
+
+    Simuliere mit faux einen Datensatz `d` für 30 Personen und 8 Aufgaben:
+    `add_random(participant = 30, task = 8)`, dann
+    `add_within("participant", prototype = c("A", "B"))`, dann
+    Zufallseffekte `u0` und `u1` **je Person**, `w0` **je Aufgabe** und `e`
+    **je Zeile** mit `add_ranef()`, und
+    `log_time = 3.6 + u0 + w0 + (prototype == "B") * (-0.105 + u1) + e`.
+
+    Prüfe die Struktur: Gib einen Vektor mit `rows` (Zeilen),
+    `u0_per_person` (größte Zahl verschiedener `u0`-Werte innerhalb einer
+    Person) und `w0_per_task` (dasselbe für `w0` innerhalb einer Aufgabe)
+    zurück.
+  en: |
+    A follow-up study is planned: each person works on 8 tasks with prototype
+    A and B (log time). The pilot study (`usability`, solved tasks, A and B)
+    gives the standard deviations: person 0.23, person slope for B 0.20, task
+    0.42, residual 0.31 (all on the log scale).
+
+    Use faux to simulate a dataset `d` for 30 people and 8 tasks:
+    `add_random(participant = 30, task = 8)`, then
+    `add_within("participant", prototype = c("A", "B"))`, then random effects
+    `u0` and `u1` **per person**, `w0` **per task** and `e` **per row** with
+    `add_ranef()`, and
+    `log_time = 3.6 + u0 + w0 + (prototype == "B") * (-0.105 + u1) + e`.
+
+    Check the structure: return a vector with `rows` (rows), `u0_per_person`
+    (the largest number of distinct `u0` values within a person) and
+    `w0_per_task` (the same for `w0` within a task).
+starter: |
+  set.seed(2026)
+  d <- add_random(participant = 30, task = 8) |>
+    add_within("participant", prototype = c("A", "B")) |>
+    add_ranef(u0 = 0.23, u1 = 0.20, w0 = 0.42, e = 0.31) |>
+    mutate(log_time = 3.6 + u0 + w0 + (prototype == "B") * (-0.105 + u1) + e)
+  c(
+    rows = nrow(d),
+    u0_per_person = max(tapply(d$u0, d$participant, n_distinct)),
+    w0_per_task = max(tapply(d$w0, d$task, n_distinct))
+  )
+solution: |
+  set.seed(2026)
+  d <- add_random(participant = 30, task = 8) |>
+    add_within("participant", prototype = c("A", "B")) |>
+    add_ranef("participant", u0 = 0.23, u1 = 0.20) |>
+    add_ranef("task", w0 = 0.42) |>
+    add_ranef(e = 0.31) |>
+    mutate(log_time = 3.6 + u0 + w0 + (prototype == "B") * (-0.105 + u1) + e)
+  c(
+    rows = nrow(d),
+    u0_per_person = max(tapply(d$u0, d$participant, n_distinct)),
+    w0_per_task = max(tapply(d$w0, d$task, n_distinct))
+  )
+hints:
+  - de: "Das erste Argument von `add_ranef()` ist die Gruppierungsspalte. Ohne sie zieht faux für jede Zeile einen neuen Wert."
+    en: "The first argument of `add_ranef()` is the grouping column. Without it, faux draws a new value for every row."
+  - de: "Drei Aufrufe: `add_ranef(\"participant\", u0 = 0.23, u1 = 0.20)`, `add_ranef(\"task\", w0 = 0.42)`, `add_ranef(e = 0.31)`."
+    en: "Three calls: `add_ranef(\"participant\", u0 = 0.23, u1 = 0.20)`, `add_ranef(\"task\", w0 = 0.42)`, `add_ranef(e = 0.31)`."
+  - de: "Richtig ist: 480 Zeilen (30 × 8 × 2), je Person ein `u0`-Wert, je Aufgabe ein `w0`-Wert."
+    en: "Correct is: 480 rows (30 × 8 × 2), one `u0` value per person, one `w0` value per task."
+explanation:
+  de: |
+    480 Zeilen, je Person genau ein `u0` (und `u1`), je Aufgabe ein `w0`. Erst
+    dadurch sind die Zeilen einer Person bzw. Aufgabe abhängig, wie in echten
+    Daten. Im Startercode wurden alle Zufallseffekte je Zeile gezogen: Das ist
+    nur mehr Rauschen ohne Struktur, und jede Power-Schätzung darauf wäre
+    falsch. faux macht die Struktur sichtbar: `add_random()` erzeugt die
+    gekreuzten Einheiten, `add_within()` die Bedingungen innerhalb der Person,
+    `add_ranef(group, ...)` zieht je Einheit (mit `.cors` auch korrelierte
+    Effekte). Die Werte stammen aus dem Pilotmodell
+    `lmer(log(time_s) ~ prototype + (1 + prototype | participant) + (1 | task))`;
+    der Effekt −0,105 ist der kleinste interessierende Effekt (10 % schneller,
+    log(0,9)), nicht der Pilot-Effekt (−0,118).
+  en: |
+    480 rows, exactly one `u0` (and `u1`) per person, one `w0` per task. Only
+    this makes the rows of a person or task dependent, as in real data. In the
+    starter code all random effects were drawn per row: that is just more noise
+    without structure, and any power estimate on it would be wrong. faux makes
+    the structure visible: `add_random()` creates the crossed units,
+    `add_within()` the conditions within the person, `add_ranef(group, ...)`
+    draws per unit (with `.cors` also correlated effects). The values come from
+    the pilot model
+    `lmer(log(time_s) ~ prototype + (1 + prototype | participant) + (1 | task))`;
+    the effect −0.105 is the smallest effect size of interest (10% faster,
+    log(0.9)), not the pilot effect (−0.118).
+misconception:
+  de: "Für eine Power-Simulation reicht es, die gesamte Streuung als Rauschen je Zeile zu ziehen."
+  en: "For a power simulation it is enough to draw the total variation as noise per row."
+check:
+  type: value
+common_mistakes:
+  - pattern: "add_ranef\\(\\s*u0"
+    message:
+      de: "Ohne Gruppierungsspalte zieht `add_ranef()` je Zeile; `u0` und `u1` gehören zu `\"participant\"`."
+      en: "Without a grouping column `add_ranef()` draws per row; `u0` and `u1` belong to `\"participant\"`."
+  - pattern: "add_ranef\\(\\s*\"participant\"[^)]*w0"
+    message:
+      de: "`w0` ist der Aufgabeneffekt und gehört zu `\"task\"`."
+      en: "`w0` is the task effect and belongs to `\"task\"`."

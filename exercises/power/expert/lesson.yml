@@ -1,0 +1,19 @@
+# Lesson metadata; exercises are the other *.yml files in this folder
+# (sorted by `order`), the knowledge check is quiz.yml.
+lesson: power-expert
+minutes: 60
+prerequisites: [power-intermediate, mixed-models-intermediate]
+langs: [de]
+packages: [dplyr, tidyr, purrr, faux, lme4, lmerTest]
+data: [usability]
+goals:
+  de:
+    - Ein gekreuztes Design (Personen × Aufgaben) mit faux simulieren, mit Parametern aus einer Pilotstudie
+    - Power durch eine eigene Simulationsschleife mit lme4 schätzen
+    - Die Power für den kleinsten interessierenden Effekt planen statt für den Pilot-Effekt
+    - Erkennen, wie fehlende Zufallssteigungen die Power überschätzen, und Personen gegen Aufgaben abwägen
+  en:
+    - Simulate a crossed design (people × tasks) with faux, using parameters from a pilot study
+    - Estimate power with your own simulation loop with lme4
+    - Plan power for the smallest effect size of interest instead of the pilot effect
+    - Recognise how missing random slopes overestimate power, and weigh people against tasks

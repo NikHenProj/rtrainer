@@ -1,0 +1,134 @@
+# Knowledge check: passed at >= `pass` share of correctly answered questions.
+lesson: mixed-models-expert
+pass: 0.8
+questions:
+  - id: mm-e-q-reml
+    prompt:
+      de: "Du willst zwei Modelle mit verschiedenen festen Effekten per Likelihood-Ratio-Test vergleichen. Welches Schätzkriterium?"
+      en: "You want to compare two models with different fixed effects using a likelihood ratio test. Which estimation criterion?"
+    options:
+      - text:
+          de: "ML (`REML = FALSE`), weil die REML-Likelihood von der Matrix der festen Effekte abhängt."
+          en: "ML (`REML = FALSE`), because the REML likelihood depends on the fixed-effects matrix."
+        correct: true
+        explain:
+          de: "Richtig. `anova(m0, m1)` erledigt das automatisch; berichtet wird das Endmodell mit REML."
+          en: "Right. `anova(m0, m1)` does this automatically; the final model is reported with REML."
+      - text:
+          de: "REML, weil es die Varianzen unverzerrt schätzt."
+          en: "REML, because it estimates the variances without bias."
+        correct: false
+        explain:
+          de: "Das stimmt für die Varianzen, aber REML-Likelihoods mit verschiedenen festen Effekten sind nicht vergleichbar."
+          en: "True for the variances, but REML likelihoods with different fixed effects are not comparable."
+      - text:
+          de: "Egal, beide liefern dasselbe χ²."
+          en: "It doesn't matter, both give the same χ²."
+        correct: false
+        explain:
+          de: "In `driving_sim` 237,1 (ML) gegenüber 250,8 (REML, falsch)."
+          en: "In `driving_sim` 237.1 (ML) versus 250.8 (REML, wrong)."
+  - id: mm-e-q-allfit
+    prompt:
+      de: "`allFit()` zeigt: alle Optimierer finden dieselben festen Effekte, mehrere melden „singular“. Was folgt?"
+      en: "`allFit()` shows: all optimizers find the same fixed effects, several report \"singular\". What follows?"
+    options:
+      - text:
+          de: "Kein Optimiererproblem; die Zufallsstruktur ist für die Daten zu komplex und sollte begründet vereinfacht werden."
+          en: "No optimizer problem; the random structure is too complex for the data and should be simplified on good grounds."
+        correct: true
+        explain:
+          de: "Genau. Erst Korrelationen, dann Slopes mit Varianz ≈ 0 streichen."
+          en: "Exactly. First drop correlations, then slopes with variance ≈ 0."
+      - text:
+          de: "Den Optimierer wählen, der keine Meldung ausgibt, und weitermachen."
+          en: "Choose the optimizer that gives no message and carry on."
+        correct: false
+        explain:
+          de: "Das versteckt die Grenzlage, statt sie zu lösen."
+          en: "That hides the boundary position instead of solving it."
+      - text:
+          de: "Die festen Effekte sind unbrauchbar."
+          en: "The fixed effects are unusable."
+        correct: false
+        explain:
+          de: "Gerade weil alle Optimierer übereinstimmen, sind sie stabil."
+          en: "Precisely because all optimizers agree, they are stable."
+  - id: mm-e-q-slope
+    prompt:
+      de: "Warum soll ein Innerhalb-Effekt (z. B. Prototyp) möglichst eine Zufallssteigung je Person haben?"
+      en: "Why should a within effect (e.g. prototype) have a random slope per person if possible?"
+    options:
+      - text:
+          de: "Ohne sie werden Personenunterschiede im Effekt zum Residuum gezählt; der SE des Effekts ist zu klein und der Test zu liberal."
+          en: "Without it, person differences in the effect are counted as residual; the SE of the effect is too small and the test too liberal."
+        correct: true
+        explain:
+          de: "Richtig. Das gilt auch für Power-Simulationen (siehe Power-Lektion)."
+          en: "Right. This also applies to power simulations (see the power lesson)."
+      - text:
+          de: "Weil Zufallssteigungen immer die Konvergenz verbessern."
+          en: "Because random slopes always improve convergence."
+        correct: false
+        explain:
+          de: "Im Gegenteil, sie machen Modelle oft schwerer schätzbar."
+          en: "On the contrary, they often make models harder to estimate."
+      - text:
+          de: "Weil sonst die festen Effekte verzerrt sind."
+          en: "Because otherwise the fixed effects are biased."
+        correct: false
+        explain:
+          de: "Die Punktschätzung ändert sich meist kaum; das Problem ist die Unsicherheit."
+          en: "The point estimate usually hardly changes; the problem is the uncertainty."
+  - id: mm-e-q-crossed
+    prompt:
+      de: "Jede Person bearbeitet dieselben 4 Aufgaben. Wie modellierst du Person und Aufgabe?"
+      en: "Each person works on the same 4 tasks. How do you model person and task?"
+    options:
+      - text:
+          de: "Gekreuzt: `(1 | participant) + (1 | task)`; bei nur 4 Aufgaben ist auch `task` als fester Effekt vertretbar."
+          en: "Crossed: `(1 | participant) + (1 | task)`; with only 4 tasks, `task` as a fixed effect is also defensible."
+        correct: true
+        explain:
+          de: "Genau. Varianzen aus 4 Einheiten sind kaum schätzbar."
+          en: "Exactly. Variances from 4 units can hardly be estimated."
+      - text:
+          de: "Geschachtelt: `(1 | participant/task)`."
+          en: "Nested: `(1 | participant/task)`."
+        correct: false
+        explain:
+          de: "Das hieße, jede Person hätte eigene Aufgaben."
+          en: "That would mean each person had their own tasks."
+      - text:
+          de: "Gar nicht, die Aufgaben mitteln sich heraus."
+          en: "Not at all, the tasks average out."
+        correct: false
+        explain:
+          de: "Aufgaben unterscheiden sich stark; ohne sie ist die Abhängigkeit nicht abgebildet."
+          en: "Tasks differ strongly; without them the dependence is not represented."
+  - id: mm-e-q-dharma
+    prompt:
+      de: "Wie prüft DHARMa die Residuen eines Poisson-GLMM?"
+      en: "How does DHARMa check the residuals of a Poisson GLMM?"
+    options:
+      - text:
+          de: "Es simuliert aus dem Modell neue Daten und prüft, wo jede Beobachtung in ihrer simulierten Verteilung liegt (Werte 0–1, gleichverteilt bei passendem Modell)."
+          en: "It simulates new data from the model and checks where each observation falls in its simulated distribution (values 0–1, uniform if the model fits)."
+        correct: true
+        explain:
+          de: "Richtig. Daraus folgen Tests auf Dispersion, Nullen und Ausreißer."
+          en: "Right. Tests for dispersion, zeros and outliers follow from this."
+      - text:
+          de: "Es prüft, ob die Rohresiduen normalverteilt sind."
+          en: "It checks whether the raw residuals are normally distributed."
+        correct: false
+        explain:
+          de: "Bei Zählungen sind sie das nie; das wäre kein sinnvoller Test."
+          en: "With counts they never are; that would not be a meaningful test."
+      - text:
+          de: "Es berechnet R² für das GLMM."
+          en: "It computes R² for the GLMM."
+        correct: false
+        explain:
+          de: "Das macht `performance::r2()`, nicht DHARMa."
+          en: "That is `performance::r2()`, not DHARMa."

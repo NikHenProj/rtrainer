@@ -180,6 +180,10 @@ validate_exercise <- function(ex, datasets = list(), lesson = NULL) {
       add("a `challenge` must have `required: false` (it does not count for completion)")
     }
   }
+  if (!is.null(ex$timelimit) &&
+      (!is.numeric(ex$timelimit) || length(ex$timelimit) != 1 || is.na(ex$timelimit) || ex$timelimit <= 30)) {
+    add("`timelimit` must be a number of seconds above the quarto-live default of 30")
+  }
   for (field in c("title", "prompt", "explanation")) {
     add(check_bilingual(ex[[field]], field))
   }
@@ -542,6 +546,8 @@ render_exercise <- function(ex, n, lang, datasets) {
     ""
   }
   setup_code <- paste(c(data_loader(ex$data, datasets), ex$setup), collapse = "\n")
+  # quarto-live stops exercise code after 30 s unless the block sets a limit.
+  timelimit <- if (!is.null(ex$timelimit)) sprintf("timelimit: %d", as.integer(ex$timelimit))
 
   paste(c(
     sprintf(
@@ -555,11 +561,12 @@ render_exercise <- function(ex, n, lang, datasets) {
     "",
     trimws(ex$prompt[[lang]]),
     "",
-    fence("{webr}", setup_code, c("setup: true", sprintf("exercise: %s", label))),
+    fence("{webr}", setup_code, c("setup: true", sprintf("exercise: %s", label), timelimit)),
     "",
     fence("{webr}", ex$starter, c(
       sprintf("exercise: %s", label),
-      sprintf("caption: \"%s\"", caption)
+      sprintf("caption: \"%s\"", caption),
+      timelimit
     )),
     "",
     hints,
@@ -567,7 +574,7 @@ render_exercise <- function(ex, n, lang, datasets) {
     sprintf("::: {.solution exercise=\"%s\"}", label),
     sprintf("**%s**", l$solution),
     "",
-    fence("{webr}", ex$solution, c(sprintf("exercise: %s", label), "solution: true")),
+    fence("{webr}", ex$solution, c(sprintf("exercise: %s", label), "solution: true", timelimit)),
     misconception,
     sprintf("**%s:** %s", l$explanation, trimws(ex$explanation[[lang]])),
     ":::",

@@ -1,0 +1,118 @@
+id: mo-e-imm
+lesson: moderation-mediation-expert
+order: 0
+title:
+  de: Index der moderierten Mediation
+  en: Index of moderated mediation
+kind: write
+required: false
+challenge: true
+packages: [dplyr, lavaan]
+data: [acceptance]
+setup: |
+  library(dplyr)
+  library(lavaan)
+  acc <- acceptance |>
+    mutate(
+      peou_3 = 8 - peou_3,
+      peou = rowMeans(across(peou_1:peou_4)),
+      pu = rowMeans(across(pu_1:pu_5)),
+      bi = rowMeans(across(bi_1:bi_4)),
+      exp_c = experience - 3,
+      pu_exp = pu * exp_c
+    )
+prompt:
+  de: |
+    TAM-Kette: Bedienbarkeit (`peou`) → Nützlichkeit (`pu`) → Nutzungsabsicht
+    (`bi`). Vermutung: Bei erfahrenen Fahrerinnen und Fahrern zählt die
+    Nützlichkeit mehr, der b-Pfad hängt also von der Erfahrung ab. `acc`
+    enthält die Skalenmittel, `exp_c` (Erfahrung in Jahren minus 3, dem
+    Mittelwert) und das Produkt `pu_exp = pu * exp_c`.
+
+    Schätze in lavaan mit `sem()`:
+
+    - `pu ~ a * peou`
+    - `bi ~ b1 * pu + b3 * pu_exp + exp_c + c * peou`
+    - den Index der moderierten Mediation `imm := a * b3`
+
+    Gib die Zeile von `imm` aus `parameterEstimates()` als Tibble mit den
+    Spalten `est`, `se`, `ci.lower` und `ci.upper` zurück.
+  en: |
+    TAM chain: ease of use (`peou`) → usefulness (`pu`) → intention (`bi`).
+    Hypothesis: for experienced drivers usefulness matters more, so the b path
+    depends on experience. `acc` holds the scale means, `exp_c` (years of
+    experience minus 3, the mean) and the product `pu_exp = pu * exp_c`.
+
+    Fit with `sem()` in lavaan:
+
+    - `pu ~ a * peou`
+    - `bi ~ b1 * pu + b3 * pu_exp + exp_c + c * peou`
+    - the index of moderated mediation `imm := a * b3`
+
+    Return the row of `imm` from `parameterEstimates()` as a tibble with the
+    columns `est`, `se`, `ci.lower` and `ci.upper`.
+starter: |
+  model <- "
+    pu ~ a * peou
+    bi ~ b * pu + c * peou
+    ind := a * b
+  "
+  fit <- sem(model, data = acc)
+  parameterEstimates(fit)
+solution: |
+  model <- "
+    pu ~ a * peou
+    bi ~ b1 * pu + b3 * pu_exp + exp_c + c * peou
+    imm := a * b3
+  "
+  fit <- sem(model, data = acc)
+  parameterEstimates(fit) |>
+    filter(label == "imm") |>
+    select(est, se, ci.lower, ci.upper) |>
+    as_tibble()
+hints:
+  - de: "Der Moderator wirkt auf den b-Pfad: In der Gleichung für `bi` stehen `pu`, das Produkt `pu_exp` und `exp_c` selbst."
+    en: "The moderator acts on the b path: the equation for `bi` contains `pu`, the product `pu_exp` and `exp_c` itself."
+  - de: "Der indirekte Effekt ist a · (b1 + b3 · W). Um wie viel ändert er sich, wenn W um 1 steigt?"
+    en: "The indirect effect is a · (b1 + b3 · W). By how much does it change when W rises by 1?"
+  - de: "`imm := a * b3`, dann `parameterEstimates(fit) |> filter(label == \"imm\")`."
+    en: "`imm := a * b3`, then `parameterEstimates(fit) |> filter(label == \"imm\")`."
+explanation:
+  de: |
+    Index = 0,024, SE = 0,011, 95 %-KI [0,003; 0,045]: Je Jahr Erfahrung wird
+    der indirekte Effekt von Bedienbarkeit über Nützlichkeit auf die
+    Nutzungsabsicht um 0,024 Punkte größer. Das ist der direkte Test der
+    moderierten Mediation (Hayes, 2015), nicht der Vergleich, ob der indirekte
+    Effekt bei einer Gruppe signifikant ist und bei einer anderen nicht. Das
+    Produkt `pu_exp` steht als eigene Spalte in den Daten, weil lavaan keine
+    Interaktion in der Formel bildet. Fallstrick: Die KI hier stammen aus der
+    Delta-Methode; Produkte von Koeffizienten sind schief verteilt, für den
+    Bericht deshalb Bootstrap (`se = "bootstrap"`, lokal, im Browser zu
+    langsam). Weil `exp_c` um 3 Jahre zentriert ist, ist `b1` der b-Pfad bei
+    durchschnittlicher Erfahrung.
+  en: |
+    Index = 0.024, SE = 0.011, 95% CI [0.003, 0.045]: per year of experience
+    the indirect effect of ease of use via usefulness on intention grows by
+    0.024 points. This is the direct test of moderated mediation (Hayes, 2015),
+    not the comparison of whether the indirect effect is significant in one
+    group and not in another. The product `pu_exp` is a column of its own in
+    the data because lavaan does not build interactions in the formula.
+    Pitfall: the CIs here come from the delta method; products of coefficients
+    are skewed, so for the report use the bootstrap (`se = "bootstrap"`,
+    locally, too slow in the browser). Because `exp_c` is centred at 3 years,
+    `b1` is the b path at average experience.
+misconception:
+  de: "Moderierte Mediation zeigt man, indem der indirekte Effekt in einer Gruppe signifikant ist und in der anderen nicht."
+  en: "Moderated mediation is shown by the indirect effect being significant in one group and not in the other."
+check:
+  type: value
+  tolerance: 1.0e-4
+common_mistakes:
+  - pattern: "pu\\s*:\\s*exp_c|pu\\s*\\*\\s*exp_c"
+    message:
+      de: "lavaan bildet keine Interaktionen in der Formel; nimm die vorbereitete Spalte `pu_exp`."
+      en: "lavaan does not build interactions in the formula; use the prepared column `pu_exp`."
+  - pattern: "imm\\s*:=\\s*b3\\b"
+    message:
+      de: "`b3` allein ist die Moderation des b-Pfads; der Index der moderierten Mediation ist `a * b3`."
+      en: "`b3` alone is the moderation of the b path; the index of moderated mediation is `a * b3`."

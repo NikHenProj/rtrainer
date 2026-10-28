@@ -1,0 +1,105 @@
+id: pw-e-sesoi-interpret
+lesson: power-expert
+order: 3
+title:
+  de: Eine Power-Tabelle für die Planung deuten
+  en: Reading a power table for planning
+kind: interpret
+required: true
+packages: []
+data: []
+setup: ""
+prompt:
+  de: |
+    Power-Simulation für die Folgestudie (je 200 Wiederholungen, 8 Aufgaben,
+    Modell mit Zufallssteigung). SESOI = 10 % schneller (log-Effekt −0,105),
+    Pilot-Effekt = −0,118 (aus 24 Personen, 95 %-KI etwa [−0,25; 0,01]).
+
+    ```
+    Personen   SESOI −0,105   Pilot −0,118   SESOI, Simulation ohne Steigung
+      20          .36            .42
+      40          .73            .79              .99
+      60          .87            .92
+    ```
+
+    Welche Aussagen stimmen?
+
+    1. Mit 40 Personen erreicht die Studie für den kleinsten interessierenden Effekt keine 80 % Power.
+    2. Der Pilot-Effekt ist die bessere Planungsgröße, weil er tatsächlich gemessen wurde.
+    3. Die Simulation ohne Zufallssteigung hätte zu einer deutlich zu kleinen Studie geführt.
+    4. Mit 60 Personen ist garantiert, dass ein echter Effekt von 10 % signifikant wird.
+
+    Gib die Nummern der richtigen Aussagen aufsteigend als Vektor ein, z. B. `c(1, 2)`.
+  en: |
+    Power simulation for the follow-up study (200 repetitions each, 8 tasks,
+    model with random slope). SESOI = 10% faster (log effect −0.105), pilot
+    effect = −0.118 (from 24 people, 95% CI about [−0.25, 0.01]).
+
+    ```
+    People    SESOI −0.105   Pilot −0.118   SESOI, simulation without slope
+      20          .36            .42
+      40          .73            .79              .99
+      60          .87            .92
+    ```
+
+    Which statements are true?
+
+    1. With 40 people the study does not reach 80% power for the smallest effect size of interest.
+    2. The pilot effect is the better planning quantity because it was actually measured.
+    3. The simulation without a random slope would have led to a clearly too small study.
+    4. With 60 people it is guaranteed that a true effect of 10% becomes significant.
+
+    Type the numbers of the true statements in ascending order as a vector,
+    e.g. `c(1, 2)`.
+starter: |
+  # Nummern der richtigen Aussagen als Vektor / numbers of the true statements as a vector
+solution: |
+  c(1, 3)
+hints:
+  - de: "Lies die Spalte SESOI in der Zeile mit 40 Personen."
+    en: "Read the SESOI column in the row with 40 people."
+  - de: "Wie genau ist ein Effekt aus 24 Personen geschätzt (siehe KI)? Und welche Pilotstudien werden typischerweise weiterverfolgt?"
+    en: "How precisely is an effect from 24 people estimated (see the CI)? And which pilot studies are typically followed up?"
+  - de: "Was bedeutet 87 % Power für eine einzelne Studie?"
+    en: "What does 87% power mean for a single study?"
+explanation:
+  de: |
+    Richtig sind 1 und 3. Für den SESOI braucht es etwa 50 Personen (zwischen
+    .73 bei 40 und .87 bei 60; lokal mit einer feineren Kurve bestimmen). Der
+    Pilot-Effekt ist kein guter Planungswert (Aussage 2 falsch): Er ist sehr
+    unsicher (KI von −0,25 bis 0,01), und Pilotstudien mit zufällig großem
+    Effekt werden eher weiterverfolgt, was die Effekte im Mittel überschätzt.
+    Der SESOI beantwortet die richtige Frage: „Würden wir einen Effekt finden,
+    der für uns gerade noch zählt?“ Aussage 3 stimmt: Ohne Steigung meldet die
+    Simulation 99 % Power, wo es 73 % sind. Aussage 4 ist falsch: 87 % Power
+    heißt, dass etwa 13 % der Studien einen echten Effekt dieser Größe
+    verpassen. Ausblick: Sequentielle Designs mit Zwischenauswertung (z. B.
+    nach 30 und 60 Personen, alpha-Aufteilung nach Pocock oder O'Brien-Fleming,
+    Paket rpact) sparen im Mittel Personen, müssen aber vorab festgelegt werden.
+  en: |
+    Statements 1 and 3 are true. For the SESOI about 50 people are needed
+    (between .73 at 40 and .87 at 60; determine locally with a finer curve).
+    The pilot effect is not a good planning value (statement 2 false): it is
+    very uncertain (CI from −0.25 to 0.01), and pilot studies with a large
+    effect by chance are more likely to be followed up, which overestimates
+    effects on average. The SESOI answers the right question: "Would we find an
+    effect that just about matters to us?" Statement 3 is true: without a slope
+    the simulation reports 99% power where it is 73%. Statement 4 is false: 87%
+    power means about 13% of studies miss a true effect of this size. Outlook:
+    sequential designs with interim analyses (e.g. after 30 and 60 people,
+    alpha spending after Pocock or O'Brien-Fleming, package rpact) save people
+    on average but must be fixed in advance.
+misconception:
+  de: "Man plant die Stichprobe mit dem Effekt aus der Pilotstudie; mit genug Power ist ein Ergebnis sicher."
+  en: "You plan the sample with the effect from the pilot study; with enough power a result is certain."
+check:
+  type: value
+common_mistakes:
+  - pattern: "\\b2\\b"
+    message:
+      de: "Aussage 2 stimmt nicht: Pilot-Effekte sind unsicher und im Mittel überschätzt; plane mit dem SESOI."
+      en: "Statement 2 is false: pilot effects are uncertain and overestimated on average; plan with the SESOI."
+  - pattern: "\\b4\\b"
+    message:
+      de: "Aussage 4 stimmt nicht: Power ist eine Wahrscheinlichkeit, keine Garantie."
+      en: "Statement 4 is false: power is a probability, not a guarantee."

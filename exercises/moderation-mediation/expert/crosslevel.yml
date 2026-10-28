@@ -1,0 +1,85 @@
+id: mo-e-crosslevel
+lesson: moderation-mediation-expert
+order: 2
+title:
+  de: Cross-Level-Interaktion im Mixed Model
+  en: Cross-level interaction in a mixed model
+kind: write
+required: true
+packages: [dplyr, lme4]
+data: [driving_sim]
+setup: |
+  library(dplyr)
+  library(lme4)
+  sim <- driving_sim |>
+    mutate(
+      trial_c = trial - 2.5,
+      age_c = age - mean(age, na.rm = TRUE)
+    )
+prompt:
+  de: |
+    Lernen ältere Fahrerinnen und Fahrer über die vier Durchgänge langsamer?
+    Der Durchgang (`trial_c`, zentriert) variiert innerhalb der Person, das
+    Alter (`age_c`, zentriert) zwischen Personen: eine Moderation über zwei
+    Ebenen (Cross-Level-Interaktion).
+
+    Schätze mit `lmer()` das Modell `rt_ms ~ trial_c * age_c + condition` mit
+    Zufallsintercept und Zufallssteigung für `trial_c` je Person. Gib das
+    Modellobjekt zurück.
+  en: |
+    Do older drivers learn more slowly across the four trials? Trial
+    (`trial_c`, centred) varies within the person, age (`age_c`, centred)
+    between people: moderation across two levels (cross-level interaction).
+
+    Use `lmer()` to fit `rt_ms ~ trial_c * age_c + condition` with a random
+    intercept and a random slope for `trial_c` per person. Return the model
+    object.
+starter: |
+  lmer(rt_ms ~ trial_c * age_c + condition + (1 | participant), data = sim)
+solution: |
+  lmer(rt_ms ~ trial_c * age_c + condition + (1 + trial_c | participant), data = sim)
+hints:
+  - de: "Eine Cross-Level-Interaktion braucht eine Zufallssteigung für den Innerhalb-Prädiktor: Sonst gibt es keine Unterschiede in der Steigung, die das Alter erklären könnte."
+    en: "A cross-level interaction needs a random slope for the within predictor: otherwise there are no differences in the slope that age could explain."
+  - de: "Zufallsteil: `(1 + trial_c | participant)`."
+    en: "Random part: `(1 + trial_c | participant)`."
+  - de: "Feste Effekte bleiben `trial_c * age_c + condition`."
+    en: "The fixed effects stay `trial_c * age_c + condition`."
+explanation:
+  de: |
+    `trial_c:age_c` = −0,51 ms je Durchgang und Lebensjahr, SE 0,42: Kein
+    Beleg, dass Ältere langsamer lernen. Die Lernrate bei durchschnittlichem
+    Alter (42 Jahre) ist −30,5 ms je Durchgang; ältere Personen sind insgesamt
+    etwas langsamer (+2,7 ms je Jahr, SE 1,6). Die SD der Lernraten zwischen
+    Personen ist 20,7 ms. Ohne Zufallssteigung tut das Modell so, als hätten
+    alle dieselbe Lernrate; der SE der Cross-Level-Interaktion wird dann zu
+    klein (Heisig & Schaeffer, 2019). p17 fehlt, weil sein Alter fehlt (12
+    Zeilen); `lmer()` schließt ihn still aus. Für die Darstellung:
+    `interactions::sim_slopes(fit, pred = trial_c, modx = age_c)` oder
+    `interact_plot()`.
+  en: |
+    `trial_c:age_c` = −0.51 ms per trial and year of age, SE 0.42: no evidence
+    that older people learn more slowly. The learning rate at average age (42
+    years) is −30.5 ms per trial; older people are somewhat slower overall
+    (+2.7 ms per year, SE 1.6). The SD of learning rates between people is
+    20.7 ms. Without a random slope the model pretends everyone has the same
+    learning rate; the SE of the cross-level interaction is then too small
+    (Heisig & Schaeffer, 2019). p17 is missing because their age is missing (12
+    rows); `lmer()` drops them silently. For display:
+    `interactions::sim_slopes(fit, pred = trial_c, modx = age_c)` or
+    `interact_plot()`.
+misconception:
+  de: "Für eine Cross-Level-Interaktion reicht ein Zufallsintercept; die Steigung muss nicht zufällig variieren."
+  en: "A random intercept is enough for a cross-level interaction; the slope need not vary randomly."
+check:
+  type: value
+  tolerance: 1.0e-3
+common_mistakes:
+  - pattern: "\\(\\s*1\\s*\\|\\s*participant\\s*\\)"
+    message:
+      de: "Ohne Zufallssteigung für `trial_c` ist der SE der Cross-Level-Interaktion zu klein: `(1 + trial_c | participant)`."
+      en: "Without a random slope for `trial_c` the SE of the cross-level interaction is too small: `(1 + trial_c | participant)`."
+  - pattern: "\\|\\s*age"
+    message:
+      de: "Das Alter ist ein Merkmal der Person, kein Gruppierungsfaktor; gruppiert wird nach `participant`."
+      en: "Age is a characteristic of the person, not a grouping factor; group by `participant`."

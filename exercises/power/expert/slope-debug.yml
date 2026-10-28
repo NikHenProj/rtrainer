@@ -1,0 +1,108 @@
+id: pw-e-slope-debug
+lesson: power-expert
+order: 2
+title:
+  de: Zu optimistische Simulation ohne Zufallssteigung
+  en: Overly optimistic simulation without a random slope
+kind: debug
+required: true
+packages: [dplyr, faux, lmerTest]
+data: []
+setup: |
+  library(dplyr)
+  library(faux)
+  library(lmerTest)
+prompt:
+  de: |
+    Ein Kollege hat für dieselbe Folgestudie 98 % Power bei 40 Personen
+    berechnet. Seine Simulation lässt den Prototyp-Effekt für alle Personen
+    gleich und schätzt ein Modell ohne Zufallssteigung. In der Pilotstudie
+    streut der Effekt aber zwischen Personen (SD 0,20).
+
+    Repariere `sim_data()` (Personen-Steigung `u1 = 0.20` zusammen mit `u0`
+    ziehen, `u1` zum Effekt addieren) und das Modell
+    (`(1 + prototype | participant)`). Gib den Standardfehler von
+    `prototypeB` aus dem Datensatz mit `set.seed(2026)` und 30 × 8 zurück.
+  en: |
+    A colleague computed 98% power with 40 people for the same follow-up
+    study. His simulation keeps the prototype effect the same for everyone and
+    fits a model without a random slope. In the pilot study, however, the
+    effect varies between people (SD 0.20).
+
+    Fix `sim_data()` (draw the person slope `u1 = 0.20` together with `u0`, add
+    `u1` to the effect) and the model (`(1 + prototype | participant)`). Return
+    the standard error of `prototypeB` from the dataset with `set.seed(2026)`
+    and 30 × 8.
+starter: |
+  sim_data <- function(n_part, n_task, effect = -0.105) {
+    add_random(participant = n_part, task = n_task) |>
+      add_within("participant", prototype = c("A", "B")) |>
+      add_ranef("participant", u0 = 0.23) |>
+      add_ranef("task", w0 = 0.42) |>
+      add_ranef(e = 0.31) |>
+      mutate(log_time = 3.6 + u0 + w0 + (prototype == "B") * effect + e)
+  }
+  set.seed(2026)
+  d <- sim_data(30, 8)
+  fit <- lmer(log_time ~ prototype + (1 | participant) + (1 | task), data = d)
+  coef(summary(fit))["prototypeB", "Std. Error"]
+solution: |
+  sim_data <- function(n_part, n_task, effect = -0.105) {
+    add_random(participant = n_part, task = n_task) |>
+      add_within("participant", prototype = c("A", "B")) |>
+      add_ranef("participant", u0 = 0.23, u1 = 0.20) |>
+      add_ranef("task", w0 = 0.42) |>
+      add_ranef(e = 0.31) |>
+      mutate(log_time = 3.6 + u0 + w0 + (prototype == "B") * (effect + u1) + e)
+  }
+  set.seed(2026)
+  d <- sim_data(30, 8)
+  fit <- suppressMessages(
+    lmer(log_time ~ prototype + (1 + prototype | participant) + (1 | task), data = d)
+  )
+  coef(summary(fit))["prototypeB", "Std. Error"]
+hints:
+  - de: "Zwei Stellen in `sim_data()`: `add_ranef(\"participant\", u0 = 0.23, u1 = 0.20)` und `(effect + u1)` im `mutate()`."
+    en: "Two places in `sim_data()`: `add_ranef(\"participant\", u0 = 0.23, u1 = 0.20)` and `(effect + u1)` in `mutate()`."
+  - de: "Daten mit Zufallssteigung brauchen ein Modell mit Zufallssteigung, sonst landet die Streuung des Effekts im Residuum."
+    en: "Data with a random slope need a model with a random slope, otherwise the variation of the effect ends up in the residual."
+  - de: "Modell: `log_time ~ prototype + (1 + prototype | participant) + (1 | task)`."
+    en: "Model: `log_time ~ prototype + (1 + prototype | participant) + (1 | task)`."
+explanation:
+  de: |
+    SE 0,043 statt 0,029: Mit Personen-Steigung ist die Unsicherheit des
+    Prototyp-Effekts um die Hälfte größer. Ohne sie zählt jede der 240
+    Aufgaben-Paare als eigene Information; tatsächlich trägt jede Person nur
+    ihren eigenen Effekt bei, und der streut. Mit 200 Simulationen bei 40
+    Personen: ohne Steigung 98,5 % Power, mit Steigung 73 %. Die Studie wäre um
+    etwa ein Drittel zu klein geplant. Regel: Die Simulation braucht dieselbe
+    Zufallsstruktur wie die geplante Analyse, und die Analyse braucht
+    Zufallssteigungen für die Innerhalb-Effekte, die die Daten tragen. Die
+    Steigungs-SD aus einem Pilot ist selbst unsicher; rechne die Power auch für
+    eine größere SD (z. B. 0,25) als Sensitivitätsanalyse.
+  en: |
+    SE 0.043 instead of 0.029: with a person slope the uncertainty of the
+    prototype effect is half as large again. Without it, each of the 240 task
+    pairs counts as separate information; in fact each person only contributes
+    their own effect, and that varies. With 200 simulations at 40 people:
+    without slope 98.5% power, with slope 73%. The study would be planned about
+    a third too small. Rule: the simulation needs the same random structure as
+    the planned analysis, and the analysis needs random slopes for the within
+    effects the data support. The slope SD from a pilot is itself uncertain;
+    also compute the power for a larger SD (e.g. 0.25) as a sensitivity
+    analysis.
+misconception:
+  de: "Zufallssteigungen ändern nur Details; für die Power zählt vor allem die Gesamtzahl der Beobachtungen."
+  en: "Random slopes only change details; for power the total number of observations is what counts."
+check:
+  type: value
+  tolerance: 1.0e-4
+common_mistakes:
+  - pattern: "\\(\\s*1\\s*\\|\\s*participant\\s*\\)"
+    message:
+      de: "Das Modell hat noch keine Zufallssteigung: `(1 + prototype | participant)`."
+      en: "The model has no random slope yet: `(1 + prototype | participant)`."
+  - pattern: "\\*\\s*effect\\s*\\+\\s*e\\b"
+    message:
+      de: "`u1` muss zum Effekt addiert werden: `(prototype == \"B\") * (effect + u1)`."
+      en: "`u1` must be added to the effect: `(prototype == \"B\") * (effect + u1)`."
