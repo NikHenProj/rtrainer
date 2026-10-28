@@ -1,0 +1,104 @@
+id: gc-e-interaction-contrast
+lesson: group-comparisons-expert
+order: 0
+title:
+  de: Ein Interaktionskontrast statt des globalen Tests
+  en: An interaction contrast instead of the omnibus test
+kind: write
+required: false
+challenge: true
+packages: [dplyr, afex, emmeans]
+data: [driving_sim]
+setup: |
+  library(dplyr)
+  library(afex)
+  library(emmeans)
+  fit <- aov_ez("participant", "rt_ms", driving_sim,
+                within = "condition", between = "experience",
+                fun_aggregate = mean, na.rm = TRUE)
+prompt:
+  de: |
+    Frage: Profitieren Fahranfänger (`novice`) stärker als Erfahrene davon, dass
+    die Übernahmeaufforderung nicht visuell, sondern auditiv oder haptisch kommt?
+    `fit` ist die gemischte ANOVA (Reaktionszeit `rt_ms`, `condition` innerhalb,
+    `experience` zwischen). Die globale Interaktion ist nicht signifikant
+    (F(1,98; 75,08) = 1,75, p = .18), beantwortet die Frage aber nicht direkt.
+
+    Rechne mit emmeans die Interaktionskontraste: Unterschied jeder Warnform zu
+    `visual` (`"trt.vs.ctrl"`), verglichen zwischen den Erfahrungsgruppen
+    (`"pairwise"`). Gib die Zusammenfassung mit Konfidenzintervallen
+    (`summary(..., infer = TRUE)`) als Tibble zurück.
+  en: |
+    Question: do novice drivers benefit more than experienced ones when the
+    take-over request is auditory or haptic rather than visual? `fit` is the mixed
+    ANOVA (reaction time `rt_ms`, `condition` within, `experience` between). The
+    omnibus interaction is not significant (F(1.98, 75.08) = 1.75, p = .18), but
+    it does not answer the question directly.
+
+    Use emmeans to compute the interaction contrasts: the difference of each
+    warning modality to `visual` (`"trt.vs.ctrl"`), compared between the
+    experience groups (`"pairwise"`). Return the summary with confidence
+    intervals (`summary(..., infer = TRUE)`) as a tibble.
+starter: |
+  emm <- emmeans(fit, ~ condition * experience)
+  pairs(emm)
+solution: |
+  emm <- emmeans(fit, ~ condition * experience)
+  contrast(emm, interaction = c(condition = "trt.vs.ctrl", experience = "pairwise")) |>
+    summary(infer = TRUE) |>
+    as_tibble()
+hints:
+  - de: "`contrast(emm, interaction = ...)` bildet Kontraste von Kontrasten: erst innerhalb eines Faktors, dann deren Unterschied über den anderen."
+    en: "`contrast(emm, interaction = ...)` builds contrasts of contrasts: first within one factor, then their difference across the other."
+  - de: "Pro Faktor eine Kontrastart als benannter Vektor: `c(condition = \"trt.vs.ctrl\", experience = \"pairwise\")`. Die erste Stufe (`visual`) ist die Kontrolle."
+    en: "One contrast type per factor as a named vector: `c(condition = \"trt.vs.ctrl\", experience = \"pairwise\")`. The first level (`visual`) is the control."
+  - de: "Danach `summary(infer = TRUE)` für KI und p und `as_tibble()`."
+    en: "Then `summary(infer = TRUE)` for CIs and p and `as_tibble()`."
+explanation:
+  de: |
+    Die Kontraste lesen sich als (Warnform − visuell) bei Anfängern minus
+    dasselbe bei Erfahrenen. Haptisch: +33 ms, 95 %-KI [−15; 81], p = .17. Weil
+    die Differenz negativ ist (haptisch schneller), heißt +33: Anfänger gewinnen
+    213 ms, Erfahrene 246 ms, der Vorteil ist bei Erfahrenen eher größer.
+    Auditiv: −12 ms (KI [−61; 38]), Anfänger gewinnen 164 ms, Erfahrene 152 ms.
+    Die Vermutung „Anfänger profitieren stärker“ stützen die Daten also nicht.
+    Ein Interaktionskontrast ist ein Test mit 1 df für genau deine Frage und
+    liefert eine Effektgröße in ms mit KI; der globale Test mit 2 df mischt alle
+    Muster. Das KI sagt mehr als p: Unterschiede von bis zu 81 ms in die eine oder
+    61 ms in die andere Richtung sind mit 40 Personen nicht auszuschließen.
+    Formulierung: „Der Vorteil haptischer gegenüber visueller Warnungen
+    unterschied sich nicht deutlich zwischen Anfängern und Erfahrenen
+    (Δ = 33 ms zugunsten der Erfahrenen, 95 %-KI [−15; 81]).“ Vorzeichen immer mit
+    den Zellmittelwerten gegenprüfen. Plane solche Kontraste vorab; nachträglich
+    alle durchzuprobieren braucht eine Korrektur (`adjust = "holm"`).
+  en: |
+    The contrasts read as (modality − visual) for novices minus the same for
+    experienced drivers. Haptic: +33 ms, 95% CI [−15, 81], p = .17. Because the
+    difference is negative (haptic is faster), +33 means: novices gain 213 ms,
+    experienced drivers 246 ms, so the advantage tends to be larger for the
+    experienced. Auditory: −12 ms (CI [−61, 38]), novices gain 164 ms, experienced
+    152 ms. The data therefore do not support "novices benefit more". An
+    interaction contrast is a 1-df test for exactly your question and gives an
+    effect size in ms with a CI; the omnibus test with 2 df mixes all patterns.
+    The CI says more than p: differences of up to 81 ms in one direction or 61 ms
+    in the other cannot be ruled out with 40 people. Wording: "The advantage of
+    haptic over visual warnings did not differ clearly between novices and
+    experienced drivers (Δ = 33 ms in favour of the experienced, 95% CI
+    [−15, 81])." Always check the sign against the cell means. Plan such
+    contrasts in advance; trying all of them afterwards needs a correction
+    (`adjust = "holm"`).
+misconception:
+  de: "Ist die globale Interaktion nicht signifikant, darf man keine gezielten Interaktionskontraste ansehen (und umgekehrt beweist sie, dass alle Effekte gleich sind)."
+  en: "If the omnibus interaction is not significant you must not look at targeted interaction contrasts (and conversely it proves that all effects are equal)."
+check:
+  type: value
+  tolerance: 1.0e-4
+common_mistakes:
+  - pattern: "pairs\\(\\s*emm\\s*\\)"
+    message:
+      de: "`pairs(emm)` vergleicht alle 6 Zellen paarweise (15 Tests); gefragt ist der Unterschied der Unterschiede: `contrast(emm, interaction = ...)`."
+      en: "`pairs(emm)` compares all 6 cells pairwise (15 tests); the task asks for the difference of differences: `contrast(emm, interaction = ...)`."
+  - pattern: "by\\s*=\\s*\"experience\""
+    message:
+      de: "Mit `by` bekommst du die Kontraste getrennt je Gruppe, aber nicht deren Unterschied mit KI. Nimm `interaction = c(...)`."
+      en: "With `by` you get the contrasts separately per group, but not their difference with a CI. Use `interaction = c(...)`."

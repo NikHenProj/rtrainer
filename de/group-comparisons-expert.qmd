@@ -1,0 +1,156 @@
+---
+title: "Gruppenvergleiche"
+subtitle: "Expert · Interaktionskontraste, geplante Kontraste, Äquivalenztests (TOST), ANCOVA"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, tidyr, afex, emmeans, TOSTER]
+resources:
+  - ../data/driving_sim.csv
+  - ../data/usability.csv
+  - ../data/survey.csv
+---
+
+{{< include /_generated/de/group-comparisons-expert/runtime.qmd >}}
+
+{{< include /_generated/de/group-comparisons-expert/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R läuft hier direkt im Browser. Beim ersten Besuch lädt es 20–40 Sekunden (Anzeige unten rechts), danach geht es schneller.
+:::
+
+{{< include /_generated/de/group-comparisons-expert/challenge.qmd >}}
+
+## Wozu? {#why}
+
+**Forschungsfrage:** Hilft eine haptische Übernahmeaufforderung Fahranfängern mehr als Erfahrenen, sind neue Prototypen einfacher als der alte, und erhöht Sprachbedienung den Zeitdruck *nicht*?
+
+In der Intermediate-Lektion hast du ANOVAs mit Messwiederholung gerechnet und paarweise verglichen. Forschungsfragen sind aber meist gezielter als „irgendein Unterschied“: Sie betreffen einen bestimmten Teil einer Interaktion, eine vorab geplante Gegenüberstellung oder die Behauptung, dass zwei Bedingungen *gleich* sind. Dafür gibt es eigene Werkzeuge.
+
+## Konzept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 600 200" role="img" aria-labelledby="fig-gce-title fig-gce-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-gce-title">Vier Befundmuster mit Äquivalenzgrenzen</title>
+  <desc id="fig-gce-desc">Eine waagerechte Achse mit der Null in der Mitte und zwei gestrichelten Grenzen bei minus 10 und plus 10. Darüber vier Konfidenzintervalle: A liegt ganz innerhalb der Grenzen und schließt 0 ein (gleichwertig, nicht verschieden). B liegt ganz außerhalb rechts (verschieden, nicht gleichwertig). C liegt innerhalb, schließt 0 aber aus (verschieden und gleichwertig: echter, aber unbedeutender Unterschied). D ist sehr breit und überdeckt 0 und beide Grenzen (nicht informativ).</desc>
+  <line x1="40" y1="180" x2="470" y2="180" class="rt-fig-arrow" />
+  <line x1="280" y1="20" x2="280" y2="180" class="rt-fig-arrow" />
+  <line x1="180" y1="20" x2="180" y2="180" class="rt-fig-arrow" stroke-dasharray="4 4" />
+  <line x1="380" y1="20" x2="380" y2="180" class="rt-fig-arrow" stroke-dasharray="4 4" />
+  <text x="168" y="196" class="rt-fig-label">−10</text>
+  <text x="276" y="196" class="rt-fig-label">0</text>
+  <text x="370" y="196" class="rt-fig-label">+10</text>
+  <line x1="245" y1="40" x2="341" y2="40" class="rt-fig-arrow" /><circle cx="293" cy="40" r="5" class="rt-fig-box-accent" />
+  <text x="480" y="44" class="rt-fig-label">A gleichwertig</text>
+  <line x1="390" y1="75" x2="470" y2="75" class="rt-fig-arrow" /><circle cx="430" cy="75" r="5" class="rt-fig-box-accent" />
+  <text x="480" y="79" class="rt-fig-label">B verschieden</text>
+  <line x1="300" y1="110" x2="340" y2="110" class="rt-fig-arrow" /><circle cx="320" cy="110" r="5" class="rt-fig-box-accent" />
+  <text x="480" y="114" class="rt-fig-label">C beides</text>
+  <line x1="212" y1="145" x2="428" y2="145" class="rt-fig-arrow" /><circle cx="320" cy="145" r="5" class="rt-fig-box-accent" />
+  <text x="480" y="149" class="rt-fig-label">D offen</text>
+</svg>
+<figcaption>90 %-Konfidenzintervalle eines Unterschieds neben vorab festgelegten Äquivalenzgrenzen von ±10 Punkten.</figcaption>
+</figure>
+```
+
+- **Interaktionskontraste:** `contrast(emm, interaction = c(condition = "trt.vs.ctrl", experience = "pairwise"))` bildet Unterschiede von Unterschieden mit 1 df, Schätzung und KI. Das beantwortet eine gezielte Frage („Ist der Vorteil von X bei Anfängern größer?“) besser als der globale Interaktionstest. Vorzeichen immer an den Zellmittelwerten prüfen.
+- **Geplante Kontraste:** eigene Gewichte als benannte Liste, `contrast(emm, list(new_vs_A = c(-1, 0.5, 0.5)))`. Gewichte summieren sich zu 0; mit ±0,5 bleibt die Schätzung in Skalenpunkten. Vorab geplante, wenige (idealerweise orthogonale) Kontraste brauchen keine Korrektur, nachträgliche schon.
+- **Äquivalenztest (TOST):** Zwei einseitige Tests gegen die Grenzen ±Δ. Gleichwertig, wenn das 90 %-KI ganz innerhalb liegt. `TOSTER::t_TOST(y ~ group, data, eqb = 10)`; für Modelle `parameters::equivalence_test(model, range = c(-10, 10))`. Die Grenze ist der kleinste interessierende Effekt und wird vorab begründet.
+- **Vier Muster:** gleichwertig, verschieden, verschieden *und* gleichwertig (echt, aber unbedeutend), keins von beiden (nicht informativ). Nicht signifikant heißt nie „gleich“.
+- **ANCOVA:** `aov_ez(..., covariate = "x_c", factorize = FALSE)` mit zentrierter Kovariate; `emmeans()` liefert adjustierte Mittelwerte. Sinnvoll bei Randomisierung zur Verkleinerung des Fehlers. Kovariate vor der Behandlung messen, Steigungen in den Gruppen gleich (Interaktion Gruppe × Kovariate prüfen).
+
+## Beispiel {#example}
+
+Gemischte ANOVA, Zellmittelwerte, dann Interaktionskontraste (`visual` als Kontrolle):
+
+```{webr}
+fit <- aov_ez("participant", "rt_ms", driving_sim,
+              within = "condition", between = "experience",
+              fun_aggregate = mean, na.rm = TRUE)
+fit
+emm <- emmeans(fit, ~ condition * experience)
+emm
+contrast(emm, interaction = c(condition = "trt.vs.ctrl", experience = "pairwise")) |>
+  summary(infer = TRUE)
+```
+
+Äquivalenz für alle TLX-Skalen auf einmal, Grenzen ±10 Punkte:
+
+```{webr}
+tlx_vars <- c("tlx_mental", "tlx_physical", "tlx_temporal", "tlx_performance", "tlx_effort")
+lapply(tlx_vars, \(v) {
+  res <- t_TOST(reformulate("interface", v), data = survey, eqb = 10)
+  data.frame(
+    scale = v,
+    diff = res$effsize["Raw", "estimate"],
+    lower = res$effsize["Raw", "lower.ci"],
+    upper = res$effsize["Raw", "upper.ci"],
+    p_t = res$TOST["t-test", "p.value"],
+    p_tost = max(res$TOST[c("TOST Lower", "TOST Upper"), "p.value"])
+  )
+}) |>
+  bind_rows() |>
+  mutate(across(diff:upper, \(x) round(x, 1)), across(p_t:p_tost, \(x) round(x, 3)))
+```
+
+ANCOVA mit zentrierter Kovariate und Prüfung gleicher Steigungen:
+
+```{webr}
+ancova_data <- survey |>
+  mutate(tech_c = tech_affinity - mean(tech_affinity))
+fit_anc <- aov_ez("respondent", "tlx_frustration", ancova_data,
+                  between = "interface", covariate = "tech_c", factorize = FALSE)
+fit_anc
+emmeans(fit_anc, ~ interface)
+anova(lm(tlx_frustration ~ interface * tech_c, data = ancova_data))
+```
+
+**So berichtest du es:** Der Vorteil haptischer gegenüber visueller Warnungen unterschied sich nicht deutlich zwischen Anfängern und Erfahrenen (Interaktionskontrast Δ = 33 ms zugunsten der Erfahrenen, 95 %-KI [−15; 81], *p* = .17). Der Zeitdruck war mit beiden Bedienformen gleichwertig (Δ = 1,3 Punkte, 90 %-KI [−3,5; 6,1]; TOST mit vorab festgelegten Grenzen ±10, beide *p* ≤ .002). Bei gleicher Technikaffinität war die Frustration mit Sprachbedienung höher (adjustierte *M* = 43,6 vs. 34,3; *F*(1, 151) = 9,75, *p* = .002, η²G = .06).
+
+## Paketvergleich {#packages}
+
+| Aufgabe | Empfehlung | Alternative |
+|---|---|---|
+| Interaktions- und geplante Kontraste | **emmeans** `contrast(interaction = …)`, Gewichtslisten | **modelbased** `estimate_contrasts()` (einfacher, weniger flexibel); `marginaleffects::hypotheses()` |
+| Äquivalenztests | **TOSTER** `t_TOST()`, `wilcox_TOST()`, `boot_t_TOST()` | **parameters** `equivalence_test()` (für Modelle, auch Mixed Models); `emmeans::test(…, delta = 10)` |
+| ANCOVA | **afex** `aov_ez(covariate = …, factorize = FALSE)` | `lm()` + `car::Anova(type = 3)`; robuste ANCOVA mit `WRS2::ancova()` |
+| Kleinster interessierender Effekt | Inhaltlich begründen (Skalenwissen, Anforderungen) | Anker-Methoden, Lakens et al. (2018) |
+
+## Übungen {#exercises}
+
+Drei Pflichtübungen und eine Zusatzübung. **Ausführen und prüfen** startet deinen Code und prüft ihn sofort. Hinweise deckst du einzeln auf (**Hinweis zeigen**), die Lösung erst danach.
+
+{{< include /_generated/de/group-comparisons-expert/exercises.qmd >}}
+
+## Wissenscheck {#check}
+
+{{< include /_generated/de/group-comparisons-expert/quiz.qmd >}}
+
+## Spickzettel {#cheatsheet}
+
+```r
+# Interaktionskontraste
+emm <- emmeans(fit, ~ condition * experience)
+contrast(emm, interaction = c(condition = "trt.vs.ctrl", experience = "pairwise")) |>
+  summary(infer = TRUE)
+
+# Geplante Kontraste (Gewichte in Stufenreihenfolge, Summe 0)
+contrast(emmeans(fit, ~ prototype), list(new_vs_A = c(-1, 0.5, 0.5), B_vs_C = c(0, 1, -1)))
+
+# Äquivalenztest
+res <- TOSTER::t_TOST(y ~ group, data = d, eqb = 10)
+res$TOST; res$effsize
+parameters::equivalence_test(lm(y ~ group, d), range = c(-10, 10))
+
+# ANCOVA
+d <- mutate(d, x_c = x - mean(x))
+aov_ez("id", "y", d, between = "group", covariate = "x_c", factorize = FALSE) |>
+  emmeans(~ group)
+```
+
+- Gezielte Frage → gezielter Kontrast mit KI, nicht nur der globale Test.
+- „Nicht signifikant“ ≠ „gleich“: Gleichwertigkeit braucht vorab festgelegte Grenzen und TOST.
+- ANCOVA: Kovariate vor der Behandlung, zentriert, gleiche Steigungen.
+
+{{< include /_generated/de/group-comparisons-expert/footer.qmd >}}

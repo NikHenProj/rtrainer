@@ -1,0 +1,93 @@
+id: gc-e-ancova
+lesson: group-comparisons-expert
+order: 4
+title:
+  de: ANCOVA mit adjustierten Mittelwerten
+  en: ANCOVA with adjusted means
+kind: write
+required: false
+packages: [dplyr, afex, emmeans]
+data: [survey]
+setup: |
+  library(dplyr)
+  library(afex)
+  library(emmeans)
+prompt:
+  de: |
+    Frustration (`tlx_frustration`) nach Bedienform, kontrolliert für die
+    Technikaffinität (`tech_affinity`, 1–5). Die Befragten wurden den Bedienformen
+    zufällig zugeteilt; die Kovariate soll den Fehler verkleinern, nicht einen
+    Gruppenunterschied „wegrechnen“.
+
+    Zentriere die Kovariate (`tech_c = tech_affinity - mean(tech_affinity)`),
+    rechne die ANCOVA mit `aov_ez()` (ID `respondent`, `between = "interface"`,
+    `covariate = "tech_c"`, `factorize = FALSE`) und gib die adjustierten
+    Mittelwerte je Bedienform aus `emmeans()` als Tibble zurück.
+  en: |
+    Frustration (`tlx_frustration`) by input mode, controlling for technology
+    affinity (`tech_affinity`, 1–5). Respondents were randomly assigned to the
+    input modes; the covariate should reduce the error, not "explain away" a
+    group difference.
+
+    Centre the covariate (`tech_c = tech_affinity - mean(tech_affinity)`), run
+    the ANCOVA with `aov_ez()` (ID `respondent`, `between = "interface"`,
+    `covariate = "tech_c"`, `factorize = FALSE`) and return the adjusted means per
+    input mode from `emmeans()` as a tibble.
+starter: |
+  fit <- aov_ez("respondent", "tlx_frustration", survey, between = "interface")
+  emmeans(fit, ~ interface) |>
+    as_tibble()
+solution: |
+  ancova_data <- survey |>
+    mutate(tech_c = tech_affinity - mean(tech_affinity))
+  fit <- aov_ez("respondent", "tlx_frustration", ancova_data,
+                between = "interface", covariate = "tech_c", factorize = FALSE)
+  emmeans(fit, ~ interface) |>
+    as_tibble()
+hints:
+  - de: "Erst `mutate()` für `tech_c`, dann `aov_ez()` mit diesem Datensatz."
+    en: "First `mutate()` for `tech_c`, then `aov_ez()` with that dataset."
+  - de: "`factorize = FALSE` verhindert, dass afex die Kovariate in einen Faktor verwandelt; `interface` ist schon ein Faktor."
+    en: "`factorize = FALSE` stops afex from turning the covariate into a factor; `interface` is already a factor."
+  - de: "`emmeans(fit, ~ interface)` setzt die Kovariate auf ihren Mittelwert (zentriert: 0); danach `as_tibble()`."
+    en: "`emmeans(fit, ~ interface)` sets the covariate to its mean (centred: 0); then `as_tibble()`."
+explanation:
+  de: |
+    Adjustierte Mittelwerte: touch 34,3, voice 43,6 (SE ≈ 2,1); F(1, 151) = 9,75,
+    p = .002, η²G = .06, die Kovariate trägt wenig bei (F = 2,82, p = .095). Weil
+    die Gruppen randomisiert sind und sich in der Technikaffinität kaum
+    unterscheiden (je 3,15), ändern sich die Mittelwerte durch die Adjustierung
+    fast nicht; die Kovariate verkleinert vor allem den Fehler. Zentrieren ist bei
+    afex Pflicht: Ohne Zentrierung warnt es („Numerical variables NOT centered on
+    0“), weil Typ-III-Tests der Faktoren dann bei Kovariate = 0 gelten, also
+    außerhalb des Wertebereichs 1–5, sobald eine Interaktion im Modell ist. Zwei
+    Voraussetzungen der ANCOVA: Die Kovariate wird vor der Behandlung gemessen
+    (sonst kann sie selbst vom Effekt betroffen sein), und die Steigung ist in
+    beiden Gruppen gleich (prüfen mit `tlx_frustration ~ interface * tech_c`).
+  en: |
+    Adjusted means: touch 34.3, voice 43.6 (SE ≈ 2.1); F(1, 151) = 9.75,
+    p = .002, η²G = .06, the covariate contributes little (F = 2.82, p = .095).
+    Because the groups are randomised and barely differ in technology affinity
+    (3.15 each), the adjustment hardly changes the means; the covariate mainly
+    reduces the error. Centring is required with afex: without it, afex warns
+    ("Numerical variables NOT centered on 0") because type III tests of the
+    factors then apply at covariate = 0, outside the range 1–5, as soon as an
+    interaction is in the model. Two ANCOVA assumptions: the covariate is measured
+    before the treatment (otherwise it may itself be affected by the effect), and
+    the slope is equal in both groups (check with
+    `tlx_frustration ~ interface * tech_c`).
+misconception:
+  de: "Eine ANCOVA gleicht nachträglich Gruppen an, die sich in der Kovariate unterscheiden, als wären sie randomisiert."
+  en: "An ANCOVA retroactively equates groups that differ in the covariate as if they had been randomised."
+check:
+  type: value
+  tolerance: 1.0e-4
+common_mistakes:
+  - pattern: "covariate\\s*=\\s*\"tech_affinity\""
+    message:
+      de: "Nimm die zentrierte Kovariate `tech_c`; afex warnt bei nicht zentrierten Kovariaten."
+      en: "Use the centred covariate `tech_c`; afex warns about non-centred covariates."
+  - pattern: "^(?![\\s\\S]*factorize\\s*=\\s*FALSE)[\\s\\S]*covariate"
+    message:
+      de: "Ohne `factorize = FALSE` macht afex aus der Kovariate einen Faktor mit vielen Stufen."
+      en: "Without `factorize = FALSE`, afex turns the covariate into a factor with many levels."

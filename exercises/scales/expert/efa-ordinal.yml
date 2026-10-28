@@ -1,0 +1,89 @@
+id: sc-e-efa-ordinal
+lesson: scales-expert
+order: 2
+title:
+  de: EFA auf der polychorischen Matrix
+  en: EFA on the polychoric matrix
+kind: write
+required: true
+packages: [dplyr, EFAtools, lavaan]
+data: [tam_markets]
+setup: |
+  library(dplyr)
+  library(EFAtools)
+  library(lavaan)
+  items <- tam_markets |>
+    mutate(peou_3 = 8 - peou_3, trust_4 = 8 - trust_4) |>
+    select(pu_1:bi_4)
+  rho <- lavCor(items, ordered = names(items))
+prompt:
+  de: |
+    Die Parallelanalyse schlägt 4 Faktoren vor. Rechne mit EFAtools eine EFA auf
+    der polychorischen Matrix `rho`: 4 Faktoren, Schätzer `"ULS"`, schiefwinklige
+    Rotation `"oblimin"`, Stichprobengröße aus `items`.
+
+    Welche Items teilen am wenigsten Varianz mit den Faktoren? Gib eine Tabelle
+    mit den Spalten `item` und `h2` (Kommunalität, auf 2 Stellen gerundet) zurück,
+    aufsteigend nach `h2` sortiert.
+  en: |
+    The parallel analysis suggests 4 factors. Use EFAtools to run an EFA on the
+    polychoric matrix `rho`: 4 factors, estimator `"ULS"`, oblique rotation
+    `"oblimin"`, sample size from `items`.
+
+    Which items share the least variance with the factors? Return a table with
+    the columns `item` and `h2` (communality, rounded to 2 decimals), sorted by
+    `h2` in ascending order.
+starter: |
+  efa <- EFA(rho, n_factors = 4)
+  efa
+solution: |
+  efa <- EFA(rho, n_factors = 4, N = nrow(items), method = "ULS", rotation = "oblimin")
+  tibble(item = names(efa$h2), h2 = round(efa$h2, 2)) |>
+    arrange(h2)
+hints:
+  - de: "`EFA()` braucht neben `n_factors` die Argumente `N`, `method` und `rotation`."
+    en: "Besides `n_factors`, `EFA()` needs the arguments `N`, `method` and `rotation`."
+  - de: "Die Kommunalitäten stehen als benannter Vektor in `efa$h2`; die Namen sind die Items."
+    en: "The communalities are a named vector in `efa$h2`; the names are the items."
+  - de: "`tibble(item = names(efa$h2), h2 = round(efa$h2, 2))` und dann `arrange(h2)`."
+    en: "`tibble(item = names(efa$h2), h2 = round(efa$h2, 2))` and then `arrange(h2)`."
+explanation:
+  de: |
+    Die Kommunalität h² ist der Anteil der Itemvarianz, den die vier Faktoren
+    gemeinsam erklären. `pu_5` liegt mit .17 weit unten (Ladung .37 auf
+    Nützlichkeit), danach folgen `trust_4` (.48) und `peou_3` (.50), beide
+    umgepolte Items, die oft schwächer laden. Auf der Pearson-Matrix käme
+    `peou_1` mit .43 an zweiter Stelle; polychorisch sind es .61, weil der
+    Deckeneffekt die Pearson-Korrelation dämpft, nicht die Messqualität. ULS
+    (unweighted least squares) ist für polychorische Matrizen robuster als ML,
+    weil es keine multivariate Normalverteilung der Items annimmt. Oblimin erlaubt
+    korrelierte Faktoren (`efa$Phi`: .25 bis .54), wie bei TAM-Skalen zu erwarten.
+    Fit: CFI = .998, RMSEA = .015 (`efa$fit_indices`), nur mit `N` berechnet.
+    Entscheidung: `pu_5` inhaltlich prüfen, nicht automatisch streichen.
+  en: |
+    The communality h² is the share of item variance that the four factors
+    explain together. `pu_5` is far down at .17 (loading .37 on usefulness),
+    followed by `trust_4` (.48) and `peou_3` (.50), both reverse-keyed items,
+    which often load more weakly. On the Pearson matrix `peou_1` would come second
+    at .43; polychoric it is .61, because the ceiling effect attenuates the
+    Pearson correlation, not the measurement quality. ULS (unweighted least
+    squares) is more robust than ML for polychoric matrices because it does not
+    assume multivariate normal items. Oblimin allows correlated factors
+    (`efa$Phi`: .25 to .54), as expected for TAM scales. Fit: CFI = .998,
+    RMSEA = .015 (`efa$fit_indices`), only computed with `N`. Decision: review
+    `pu_5` for content, do not drop it automatically.
+misconception:
+  de: "Ein Item mit niedriger Pearson-Kommunalität misst schlecht, auch wenn es nur schief verteilt ist."
+  en: "An item with a low Pearson communality measures poorly, even if it is merely skewed."
+check:
+  type: value
+  ignore_row_order: true
+common_mistakes:
+  - pattern: "EFA\\(\\s*items"
+    message:
+      de: "Mit `items` rechnet `EFA()` Pearson-Korrelationen. Nimm die polychorische Matrix `rho` und gib `N` an."
+      en: "With `items`, `EFA()` computes Pearson correlations. Use the polychoric matrix `rho` and supply `N`."
+  - pattern: "varimax"
+    message:
+      de: "Varimax erzwingt unkorrelierte Faktoren; Nützlichkeit, Bedienbarkeit, Vertrauen und Absicht hängen aber zusammen. Nimm `\"oblimin\"`."
+      en: "Varimax forces uncorrelated factors, but usefulness, ease of use, trust and intention are related. Use `\"oblimin\"`."

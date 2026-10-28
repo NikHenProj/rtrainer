@@ -1,0 +1,96 @@
+id: sm-e-wlsmv
+lesson: sem-expert
+order: 3
+title:
+  de: Ordinale CFA mit WLSMV
+  en: Ordinal CFA with WLSMV
+kind: write
+required: true
+packages: [dplyr, lavaan]
+data: [tam_markets]
+setup: |
+  library(dplyr)
+  library(lavaan)
+  tam <- tam_markets |>
+    mutate(peou_3 = 8 - peou_3, trust_4 = 8 - trust_4)
+  peou_model <- "peou =~ peou_1 + peou_2 + peou_3 + peou_4"
+prompt:
+  de: |
+    `peou_1` hat einen Deckeneffekt (58 % kreuzen 7 an). Schätze das Messmodell
+    `peou_model` zweimal an `tam`: wie gewohnt mit ML (`fit_ml`) und mit den Items
+    als ordinal (`fit_ord`, `ordered = TRUE`; lavaan nimmt dann WLSMV).
+
+    Gib eine Tabelle mit den Spalten `item`, `ml` und `wlsmv` zurück: die
+    standardisierten Ladungen (`est.std` aus `standardizedSolution()`) beider
+    Modelle, auf 2 Stellen gerundet, Items in der Reihenfolge `peou_1` bis
+    `peou_4`.
+  en: |
+    `peou_1` has a ceiling effect (58% tick 7). Fit the measurement model
+    `peou_model` twice on `tam`: as usual with ML (`fit_ml`) and with the items as
+    ordinal (`fit_ord`, `ordered = TRUE`; lavaan then uses WLSMV).
+
+    Return a table with the columns `item`, `ml` and `wlsmv`: the standardised
+    loadings (`est.std` from `standardizedSolution()`) of both models, rounded to
+    2 decimals, items in the order `peou_1` to `peou_4`.
+starter: |
+  fit_ml <- cfa(peou_model, data = tam)
+  standardizedSolution(fit_ml) |>
+    filter(op == "=~")
+solution: |
+  fit_ml <- cfa(peou_model, data = tam)
+  fit_ord <- cfa(peou_model, data = tam, ordered = TRUE)
+  loadings <- function(fit) {
+    standardizedSolution(fit) |>
+      filter(op == "=~") |>
+      pull(est.std)
+  }
+  tibble(
+    item = paste0("peou_", 1:4),
+    ml = round(loadings(fit_ml), 2),
+    wlsmv = round(loadings(fit_ord), 2)
+  )
+hints:
+  - de: "`cfa(peou_model, data = tam, ordered = TRUE)` behandelt alle Indikatoren als ordinal und wählt WLSMV."
+    en: "`cfa(peou_model, data = tam, ordered = TRUE)` treats all indicators as ordinal and chooses WLSMV."
+  - de: "Die Ladungen stehen in den Zeilen mit `op == \"=~\"`, Spalte `est.std`; `pull()` holt sie als Vektor."
+    en: "The loadings are in the rows with `op == \"=~\"`, column `est.std`; `pull()` extracts them as a vector."
+  - de: "Eine kleine Hilfsfunktion für beide Modelle spart Wiederholung; dann `tibble(item = paste0(\"peou_\", 1:4), ml = ..., wlsmv = ...)`."
+    en: "A small helper function for both models saves repetition; then `tibble(item = paste0(\"peou_\", 1:4), ml = ..., wlsmv = ...)`."
+explanation:
+  de: |
+    Bei drei Items ändert sich wenig (.79/.79, .69/.71, .73/.75), bei `peou_1`
+    steigt die Ladung von .66 auf .78. ML behandelt die Antworten als
+    intervallskaliert und normalverteilt; der Deckeneffekt dämpft die Kovarianz,
+    und das Item wirkt schwächer, als es ist. WLSMV schätzt das Modell auf den
+    polychorischen Korrelationen (Schwellen pro Item) und nutzt robuste
+    Standardfehler und einen skalierten χ²-Test; berichte deshalb `cfi.scaled`
+    und `rmsea.scaled`. Faustregel: Bei 5 oder weniger Kategorien oder starker
+    Schiefe ordinal schätzen, bei 7 symmetrischen Stufen ist ML (oder MLR) meist
+    vertretbar. Auch die Messinvarianz lässt sich ordinal prüfen (Schwellen statt
+    Intercepts, `group.equal = c("thresholds", "loadings")`, Identifikation nach
+    Wu und Estabrook mit `semTools::measEq.syntax()`).
+  en: |
+    For three items little changes (.79/.79, .69/.71, .73/.75); for `peou_1` the
+    loading rises from .66 to .78. ML treats the answers as interval-scaled and
+    normally distributed; the ceiling effect dampens the covariance, and the item
+    looks weaker than it is. WLSMV fits the model on the polychoric correlations
+    (thresholds per item) and uses robust standard errors and a scaled χ² test;
+    so report `cfi.scaled` and `rmsea.scaled`. Rule of thumb: estimate as ordinal
+    with 5 or fewer categories or strong skew; with 7 symmetric points ML (or MLR)
+    is usually defensible. Measurement invariance can be tested ordinally too
+    (thresholds instead of intercepts, `group.equal = c("thresholds", "loadings")`,
+    identification after Wu and Estabrook with `semTools::measEq.syntax()`).
+misconception:
+  de: "ML ist für Likert-Items unproblematisch, egal wie schief sie verteilt sind."
+  en: "ML is unproblematic for Likert items, however skewed they are."
+check:
+  type: value
+common_mistakes:
+  - pattern: "estimator\\s*=\\s*\"MLR\""
+    message:
+      de: "MLR korrigiert Standardfehler für Nichtnormalität, behandelt die Items aber weiter als metrisch. Für ordinale Items `ordered = TRUE`."
+      en: "MLR corrects standard errors for non-normality but still treats the items as metric. For ordinal items use `ordered = TRUE`."
+  - pattern: "\\bstd\\.all\\b"
+    message:
+      de: "`std.all` steht in `parameterEstimates(..., standardized = TRUE)`; in `standardizedSolution()` heißt die Spalte `est.std`."
+      en: "`std.all` is in `parameterEstimates(..., standardized = TRUE)`; in `standardizedSolution()` the column is called `est.std`."

@@ -1,0 +1,19 @@
+# Lesson metadata; exercises are the other *.yml files in this folder
+# (sorted by `order`), the knowledge check is quiz.yml.
+lesson: group-comparisons-expert
+minutes: 60
+prerequisites: [group-comparisons-intermediate]
+langs: [de]
+packages: [dplyr, tidyr, afex, emmeans, TOSTER]
+data: [driving_sim, usability, survey]
+goals:
+  de:
+    - Interaktionskontraste mit emmeans rechnen statt nur den globalen Interaktionstest zu berichten
+    - Geplante Kontraste mit eigenen Gewichten formulieren und testen
+    - Gleichwertigkeit mit Äquivalenztests (TOST) zeigen und vier Befundmuster unterscheiden
+    - Eine ANCOVA mit zentrierter Kovariate rechnen und adjustierte Mittelwerte berichten
+  en:
+    - Compute interaction contrasts with emmeans instead of only reporting the omnibus interaction test
+    - Formulate and test planned contrasts with custom weights
+    - Show equivalence with equivalence tests (TOST) and distinguish four patterns of results
+    - Run an ANCOVA with a centred covariate and report adjusted means

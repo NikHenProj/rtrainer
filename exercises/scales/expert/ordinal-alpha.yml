@@ -1,0 +1,94 @@
+id: sc-e-ordinal-alpha
+lesson: scales-expert
+order: 0
+title:
+  de: Ordinales Alpha für eine schiefe Skala
+  en: Ordinal alpha for a skewed scale
+kind: write
+required: false
+challenge: true
+packages: [dplyr, psych, lavaan]
+data: [tam_markets]
+setup: |
+  library(dplyr)
+  library(psych)
+  library(lavaan)
+  peou <- tam_markets |>
+    mutate(peou_3 = 8 - peou_3) |>
+    select(peou_1:peou_4)
+prompt:
+  de: |
+    Frage: Wie zuverlässig misst die Skala Bedienbarkeit (`peou_1`–`peou_4`, 1–7)?
+    `peou_1` („leicht einzuschalten“) hat einen Deckeneffekt: 349 von 600 Befragten
+    kreuzen 7 an. `peou` enthält die vier Items, `peou_3` ist schon umgepolt.
+
+    Berechne Cronbachs α zweimal: einmal wie üblich aus den Rohwerten
+    (Pearson-Korrelationen) und einmal aus der polychorischen Korrelationsmatrix
+    (`lavCor()` mit allen Items als `ordered`). Gib eine Tabelle mit den Spalten
+    `type` (`"pearson"`, `"ordinal"`) und `alpha` (`raw_alpha`, auf 3 Stellen
+    gerundet) zurück.
+  en: |
+    Question: how reliably does the ease-of-use scale (`peou_1`–`peou_4`, 1–7)
+    measure? `peou_1` ("easy to switch on") has a ceiling effect: 349 of 600
+    respondents tick 7. `peou` contains the four items, `peou_3` is already
+    reverse-scored.
+
+    Compute Cronbach's α twice: once as usual from the raw scores (Pearson
+    correlations) and once from the polychoric correlation matrix (`lavCor()`
+    with all items as `ordered`). Return a table with the columns `type`
+    (`"pearson"`, `"ordinal"`) and `alpha` (`raw_alpha`, rounded to 3 decimals).
+starter: |
+  alpha(peou)$total$raw_alpha
+solution: |
+  rho <- lavCor(peou, ordered = names(peou))
+  tibble(
+    type = c("pearson", "ordinal"),
+    alpha = c(alpha(peou)$total$raw_alpha, alpha(rho)$total$raw_alpha)
+  ) |>
+    mutate(alpha = round(alpha, 3))
+hints:
+  - de: "`alpha()` aus psych nimmt Rohdaten oder eine Korrelationsmatrix. Für das ordinale α brauchst du zuerst die polychorische Matrix."
+    en: "`alpha()` from psych takes raw data or a correlation matrix. For ordinal α you first need the polychoric matrix."
+  - de: "`lavCor(peou, ordered = names(peou))` schätzt die polychorischen Korrelationen aller vier Items."
+    en: "`lavCor(peou, ordered = names(peou))` estimates the polychoric correlations of all four items."
+  - de: "Beide Werte stehen in `alpha(...)$total$raw_alpha`; baue daraus mit `tibble(type = ..., alpha = ...)` die Tabelle."
+    en: "Both values are in `alpha(...)$total$raw_alpha`; build the table from them with `tibble(type = ..., alpha = ...)`."
+explanation:
+  de: |
+    Aus den Rohwerten ergibt sich α = .805, aus der polychorischen Matrix .844.
+    Pearson-Korrelationen zwischen groben, schiefen Kategorien sind gedämpft: Wer
+    bei `peou_1` fast immer 7 ankreuzt, kann kaum mit anderen Items kovariieren
+    (r = .47–.51 statt polychorisch .57–.61). Die polychorische Korrelation nimmt
+    an, dass hinter jedem Item eine normalverteilte Neigung steckt, die an
+    Schwellen in Kategorien geschnitten wird, und schätzt die Korrelation dieser
+    Neigungen. Ordinales α beschreibt damit die Reliabilität der latenten
+    Antwortneigungen, nicht die des Summenwerts, den du später auswertest. Berichte
+    deshalb beide oder sag dazu, welches gemeint ist: „Ordinales α (polychorisch)
+    = .84, α der Rohwerte = .81.“ Fallstrick: `alpha(cor(peou))` ist nicht ordinal,
+    sondern das standardisierte α der Pearson-Matrix (.809).
+  en: |
+    The raw scores give α = .805, the polychoric matrix .844. Pearson correlations
+    between coarse, skewed categories are attenuated: if `peou_1` is almost always
+    answered with 7, it can hardly covary with other items (r = .47–.51 instead of
+    polychoric .57–.61). The polychoric correlation assumes a normally distributed
+    tendency behind each item that is cut into categories at thresholds, and
+    estimates the correlation of these tendencies. Ordinal α therefore describes
+    the reliability of the latent response tendencies, not of the sum score you
+    analyse later. So report both or say which one you mean: "ordinal α
+    (polychoric) = .84, α of the raw scores = .81." Pitfall: `alpha(cor(peou))` is
+    not ordinal but the standardised α of the Pearson matrix (.809).
+misconception:
+  de: "Cronbachs α aus Rohwerten ist für 7-stufige Items mit Deckeneffekt genauso gut wie für normalverteilte Werte."
+  en: "Cronbach's α from raw scores works just as well for 7-point items with a ceiling effect as for normally distributed scores."
+check:
+  type: value
+  tolerance: 1.0e-3
+common_mistakes:
+  - pattern: "alpha\\(\\s*cor\\("
+    message:
+      de: "`cor()` liefert Pearson-Korrelationen; das ist das standardisierte, nicht das ordinale α. Nimm `lavCor(..., ordered = ...)`."
+      en: "`cor()` gives Pearson correlations; that is the standardised, not the ordinal α. Use `lavCor(..., ordered = ...)`."
+  - pattern: "std\\.alpha"
+    message:
+      de: "Gefragt ist `raw_alpha`. Bei einer Korrelationsmatrix als Eingabe sind beide gleich, bei Rohwerten nicht."
+      en: "The task asks for `raw_alpha`. With a correlation matrix as input both are equal, with raw scores they are not."

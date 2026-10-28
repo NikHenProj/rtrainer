@@ -1,0 +1,185 @@
+---
+title: "CFA und SEM"
+subtitle: "Expert · Messinvarianz, partielle Invarianz, ordinale CFA (WLSMV), latente Mediation"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, purrr, lavaan, semTools]
+resources:
+  - ../data/tam_markets.csv
+---
+
+{{< include /_generated/de/sem-expert/runtime.qmd >}}
+
+{{< include /_generated/de/sem-expert/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R läuft hier direkt im Browser. Beim ersten Besuch lädt es 15–30 Sekunden (Anzeige unten rechts), danach geht es schneller.
+:::
+
+{{< include /_generated/de/sem-expert/challenge.qmd >}}
+
+## Wozu? {#why}
+
+**Forschungsfrage:** Finden Fahrerinnen und Fahrer in den USA ein Assistenzsystem nützlicher als in Deutschland, und hängt die Nutzungsabsicht dort stärker an der Nützlichkeit?
+
+Solche Vergleiche sind nur sinnvoll, wenn der Fragebogen in beiden Märkten dasselbe misst. In der Intermediate-Lektion hast du ein Messmodell geschätzt und Modelle verglichen. Hier prüfst du Messinvarianz Stufe für Stufe, findest das Item, das in einem Markt anders beantwortet wird, schätzt ordinale Indikatoren mit WLSMV und schreibst eine latente Mediation auf.
+
+## Konzept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 190" role="img" aria-labelledby="fig-sme-title fig-sme-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-sme-title">Stufen der Messinvarianz</title>
+  <desc id="fig-sme-desc">Vier Stufen als Treppe von links unten nach rechts oben: konfigural (gleiche Struktur), metrisch (plus gleiche Ladungen, erlaubt Vergleich von Zusammenhängen), skalar (plus gleiche Intercepts, erlaubt Vergleich latenter Mittelwerte), strikt (plus gleiche Residualvarianzen, erlaubt Vergleich beobachteter Skalenwerte). Zwischen metrisch und skalar ein Hinweis: hier scheitert pu_3, partielle Invarianz mit freiem Intercept.</desc>
+  <rect x="10" y="130" width="125" height="46" class="rt-fig-box" />
+  <text x="20" y="150" class="rt-fig-label">konfigural</text>
+  <text x="20" y="168" class="rt-fig-label rt-fig-muted">gleiche Struktur</text>
+  <rect x="145" y="96" width="125" height="80" class="rt-fig-box" />
+  <text x="155" y="116" class="rt-fig-label">metrisch</text>
+  <text x="155" y="134" class="rt-fig-label rt-fig-muted">+ Ladungen</text>
+  <text x="155" y="164" class="rt-fig-code">Zusammenhänge</text>
+  <rect x="280" y="62" width="125" height="114" class="rt-fig-box-accent" />
+  <text x="290" y="82" class="rt-fig-label">skalar</text>
+  <text x="290" y="100" class="rt-fig-label rt-fig-muted">+ Intercepts</text>
+  <text x="290" y="164" class="rt-fig-code">latente Mittel</text>
+  <rect x="415" y="28" width="135" height="148" class="rt-fig-box" />
+  <text x="425" y="48" class="rt-fig-label">strikt</text>
+  <text x="425" y="66" class="rt-fig-label rt-fig-muted">+ Residuen</text>
+  <text x="425" y="164" class="rt-fig-code">Skalenwerte</text>
+  <text x="280" y="20" class="rt-fig-label">hier scheitert pu_3 → partiell</text>
+  <line x1="300" y1="26" x2="300" y2="58" class="rt-fig-arrow" />
+</svg>
+<figcaption>Jede Stufe fügt Gleichheitsbedingungen hinzu und erlaubt einen weiteren Vergleich. Geprüft wird jeweils der Fit-Verlust gegenüber der vorigen Stufe.</figcaption>
+</figure>
+```
+
+- **Mehrgruppen-CFA:** `cfa(model, data, group = "market")` schätzt das Modell in jeder Gruppe. `group.equal` legt fest, was gleich sein soll: `"loadings"` (metrisch), `c("loadings", "intercepts")` (skalar), dazu `"residuals"` (strikt).
+- **Beurteilen:** Fit-Verlust gegenüber der vorigen Stufe, nicht absoluter Fit. Δχ² mit `lavTestLRT()`, ΔCFI und ΔRMSEA mit `semTools::compareFit()`. Übliche Grenzen: ΔCFI ≤ −.01, ΔRMSEA ≥ .015 sprechen gegen die strengere Stufe; Δχ² ist bei großen N sehr empfindlich.
+- **Partielle Invarianz:** Hält eine Stufe nicht, mit `lavTestScore()` die teuerste Gleichheitsbedingung suchen (Namen über `parTable()`), einzeln freigeben (`group.partial = "pu_3 ~ 1"`), neu prüfen. Für Mittelwertvergleiche reichen zwei invariante Items pro Faktor.
+- **Latente Mittelwerte:** In der ersten Gruppe auf 0 gesetzt, in der zweiten geschätzt, in Einheiten des Markeritems. Durch die latente SD geteilt ergibt sich ein d.
+- **Ordinale Indikatoren:** `ordered = TRUE` (oder Itemnamen) wählt WLSMV: polychorische Korrelationen, Schwellen statt Intercepts, robuste SE und skalierter Test (`cfi.scaled`, `rmsea.scaled`).
+- **Latente Mediation und Moderation:** Pfade mit Labels benennen (`pu ~ a * peou`), Effekte mit `:=` definieren (`ind := a * b`). Mehrgruppen-Moderation: pro Gruppe ein Label (`bi ~ c(b_de, b_us) * pu`), Unterschied als `diff := b_us - b_de`; setzt metrische Invarianz voraus.
+
+## Beispiel {#example}
+
+Die drei Stufen und der Vergleich in einer Tabelle (`peou_3` und `trust_4` umgepolt):
+
+```{webr}
+tam <- tam_markets |>
+  mutate(peou_3 = 8 - peou_3, trust_4 = 8 - trust_4)
+tam_model <- "
+  pu =~ pu_1 + pu_2 + pu_3 + pu_4 + pu_5
+  peou =~ peou_1 + peou_2 + peou_3 + peou_4
+  trust =~ trust_1 + trust_2 + trust_3 + trust_4 + trust_5
+  bi =~ bi_1 + bi_2 + bi_3 + bi_4
+"
+configural <- cfa(tam_model, data = tam, group = "market")
+metric <- cfa(tam_model, data = tam, group = "market", group.equal = "loadings")
+scalar <- cfa(tam_model, data = tam, group = "market", group.equal = c("loadings", "intercepts"))
+lavTestLRT(configural, metric, scalar)
+summary(compareFit(configural, metric, scalar), fit.measures = c("cfi", "rmsea", "srmr"))
+```
+
+Welche Gleichheitsbedingung kostet am meisten? Score-Test und Zuordnung der Parameternamen:
+
+```{webr}
+score <- lavTestScore(scalar)$uni |>
+  arrange(desc(X2)) |>
+  head(3)
+score
+parTable(scalar) |>
+  filter(plabel %in% c(score$lhs, score$rhs)) |>
+  select(lhs, op, rhs, group, plabel)
+```
+
+Partiell invariantes Modell, dann die Moderation: Hängt die Absicht in den USA stärker an der Nützlichkeit?
+
+```{webr}
+partial <- cfa(tam_model, data = tam, group = "market",
+               group.equal = c("loadings", "intercepts"), group.partial = "pu_3 ~ 1")
+lavTestLRT(metric, partial)
+
+mg_model <- paste(tam_model, "
+  bi ~ c(b_de, b_us) * pu + trust
+  diff := b_us - b_de
+")
+mg <- sem(mg_model, data = tam, group = "market",
+          group.equal = c("loadings", "intercepts"), group.partial = "pu_3 ~ 1")
+parameterEstimates(mg) |>
+  filter(label %in% c("b_de", "b_us", "diff")) |>
+  select(label, est, se, pvalue, ci.lower, ci.upper)
+```
+
+**So berichtest du es:** Die Messinvarianz zwischen den Märkten wurde stufenweise geprüft. Metrische Invarianz hielt (Δχ²(14) = 18,1, *p* = .20, ΔCFI = .000), skalare nicht (Δχ²(14) = 119,3, *p* < .001, ΔCFI = −.018). Nach Freigabe des Intercepts von `pu_3` war das partiell skalare Modell dem metrischen gleichwertig (Δχ²(13) = 9,0, *p* = .77). Die wahrgenommene Nützlichkeit lag in den USA höher (Δ = 0,34, *SE* = 0,12, *d* ≈ 0,23); unter voller skalarer Invarianz wäre der Unterschied mit 0,60 fast doppelt so groß geschätzt worden. Die Nützlichkeit sagte die Nutzungsabsicht in den USA stärker vorher (*b* = 0,51 vs. 0,32; Differenz 0,18, 95 %-KI [0,03; 0,34]).
+
+## Paketvergleich {#packages}
+
+| Aufgabe | Empfehlung | Alternative |
+|---|---|---|
+| Mehrgruppen-CFA, Invarianz | **lavaan** `group`, `group.equal`, `group.partial` | `semTools::measEq.syntax()` (schreibt die Syntax, auch ordinal nach Wu und Estabrook) |
+| Stufen vergleichen | **lavaan** `lavTestLRT()` + **semTools** `compareFit()` | `performance::compare_performance()` |
+| Nicht invariante Parameter finden | **lavaan** `lavTestScore()` | `modindices()` (zeigt keine Gleichheitsbedingungen), Alignment (Mplus, `sirt::invariance.alignment()`) bei vielen Gruppen |
+| Ordinale Indikatoren | **lavaan** `ordered = TRUE` (WLSMV) | `estimator = "MLR"` bei 7 und mehr symmetrischen Stufen |
+| Mediation, Moderation | **lavaan** Labels + `:=`, Bootstrap lokal | `semTools::probe2WayMC()` (latente Interaktion), `tidySEM` für Diagramme |
+
+## Lokal ausführen: Bootstrap und ordinale Invarianz
+
+Bootstrap braucht im Browser zu lange (1000 Modelle). Lokal:
+
+```r
+fit <- sem(med_model, data = tam, se = "bootstrap", bootstrap = 1000)
+parameterEstimates(fit, boot.ci.type = "perc") |> filter(op == ":=")
+
+# Ordinale Messinvarianz: Jede Kategorie muss in jeder Gruppe vorkommen.
+# peou_1 = 1 fehlt in us (Deckeneffekt), also seltene Kategorien zusammenlegen.
+table(tam$market, tam$peou_1)
+tam_ord <- mutate(tam, peou_1 = pmax(peou_1, 3))
+# Syntax schreiben lassen (Schwellen, dann Ladungen)
+syn <- semTools::measEq.syntax(tam_model, data = tam_ord, group = "market",
+  ordered = TRUE, parameterization = "theta", ID.fac = "std.lv", ID.cat = "Wu.Estabrook.2016",
+  group.equal = c("thresholds", "loadings"))
+fit_ord <- cfa(as.character(syn), data = tam_ord, group = "market", ordered = TRUE,
+               parameterization = "theta")
+```
+
+## Übungen {#exercises}
+
+Drei Pflichtübungen und eine Zusatzübung. **Ausführen und prüfen** startet deinen Code und prüft ihn sofort. Hinweise deckst du einzeln auf (**Hinweis zeigen**), die Lösung erst danach.
+
+{{< include /_generated/de/sem-expert/exercises.qmd >}}
+
+## Wissenscheck {#check}
+
+{{< include /_generated/de/sem-expert/quiz.qmd >}}
+
+## Spickzettel {#cheatsheet}
+
+```r
+# Invarianzstufen
+configural <- cfa(model, data, group = "g")
+metric <- cfa(model, data, group = "g", group.equal = "loadings")
+scalar <- cfa(model, data, group = "g", group.equal = c("loadings", "intercepts"))
+lavTestLRT(configural, metric, scalar)
+summary(semTools::compareFit(configural, metric, scalar))
+
+# Teuerste Gleichheitsbedingung finden und freigeben
+lavTestScore(scalar)$uni |> arrange(desc(X2))
+parTable(scalar) |> filter(plabel %in% c(".p49.", ".p117."))
+partial <- cfa(model, data, group = "g", group.equal = c("loadings", "intercepts"),
+               group.partial = "item ~ 1")
+
+# Ordinal (WLSMV)
+fit <- cfa(model, data, ordered = TRUE)
+fitMeasures(fit, c("cfi.scaled", "rmsea.scaled"))
+
+# Labels, definierte Effekte, Mehrgruppen-Moderation
+"m ~ a * x;  y ~ b * m + c * x;  ind := a * b;  total := c + a * b"
+"y ~ c(b1, b2) * x;  diff := b2 - b1"
+```
+
+- Invarianz: Fit-Verlust (ΔCFI, Δχ²), nicht absoluter Fit.
+- Zusammenhänge vergleichen: metrisch; Mittelwerte: skalar (partiell reicht).
+- Freigeben einzeln und begründet, berichten welche.
+
+{{< include /_generated/de/sem-expert/footer.qmd >}}

@@ -1,0 +1,19 @@
+# Lesson metadata; exercises are the other *.yml files in this folder
+# (sorted by `order`), the knowledge check is quiz.yml.
+lesson: scales-expert
+minutes: 60
+prerequisites: [scales-intermediate]
+langs: [de]
+packages: [dplyr, tidyr, psych, EFAtools, lavaan]
+data: [tam_markets]
+goals:
+  de:
+    - Reliabilität ordinaler Items mit polychorischen Korrelationen schätzen (ordinales α und ω)
+    - Die Faktorzahl mit mehreren Kriterien (Parallelanalyse, EKC, SMT) begründen und eine EFA auf der polychorischen Matrix rechnen
+    - Ein Graded-Response-Modell (IRT) lesen: Trennschärfe a, Schwellen b, Deckeneffekte
+    - Wissen, welche Angaben eine Korrelationsmatrix nicht enthält (Stichprobengröße) und wann das zählt
+  en:
+    - Estimate the reliability of ordinal items from polychoric correlations (ordinal α and ω)
+    - Justify the number of factors with several criteria (parallel analysis, EKC, SMT) and run an EFA on the polychoric matrix
+    - Read a graded response model (IRT): discrimination a, thresholds b, ceiling effects
+    - Know what a correlation matrix does not contain (the sample size) and when that matters

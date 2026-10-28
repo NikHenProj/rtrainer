@@ -1,0 +1,86 @@
+id: gc-e-tost
+lesson: group-comparisons-expert
+order: 2
+title:
+  de: Gleichwertigkeit mit TOST zeigen
+  en: Showing equivalence with TOST
+kind: write
+required: true
+packages: [dplyr, TOSTER]
+data: [survey]
+setup: |
+  library(dplyr)
+  library(TOSTER)
+prompt:
+  de: |
+    Das Team will zeigen, dass Sprachbedienung den Zeitdruck nicht erhöht.
+    Vorab festgelegt: Unterschiede unter 10 Punkten auf der TLX-Skala
+    `tlx_temporal` (0–100) sind praktisch bedeutungslos. Ein nicht signifikanter
+    t-Test (p = .66) reicht dafür nicht.
+
+    Rechne mit TOSTER einen Äquivalenztest (Welch) für `tlx_temporal` nach
+    `interface` in `survey` mit den Grenzen ±10 Rohpunkte. Gib die Tabelle `$TOST`
+    des Ergebnisses zurück (t-Test und beide einseitigen Tests).
+  en: |
+    The team wants to show that voice control does not increase time pressure.
+    Fixed in advance: differences below 10 points on the TLX scale
+    `tlx_temporal` (0–100) are practically meaningless. A non-significant t-test
+    (p = .66) is not enough for that.
+
+    Use TOSTER to run an equivalence test (Welch) for `tlx_temporal` by
+    `interface` in `survey` with bounds of ±10 raw points. Return the `$TOST`
+    table of the result (t-test and both one-sided tests).
+starter: |
+  t.test(tlx_temporal ~ interface, data = survey)
+solution: |
+  res <- t_TOST(tlx_temporal ~ interface, data = survey, eqb = 10)
+  res$TOST
+hints:
+  - de: "`t_TOST()` nimmt eine Formel wie `t.test()` und die Äquivalenzgrenze `eqb`."
+    en: "`t_TOST()` takes a formula like `t.test()` and the equivalence bound `eqb`."
+  - de: "Eine Zahl für `eqb` heißt symmetrische Grenzen ±10; `eqbound_type = \"raw\"` (Rohpunkte) ist die Voreinstellung."
+    en: "A single number for `eqb` means symmetric bounds of ±10; `eqbound_type = \"raw\"` (raw points) is the default."
+  - de: "Speichere das Ergebnis als `res` und gib `res$TOST` zurück."
+    en: "Store the result as `res` and return `res$TOST`."
+explanation:
+  de: |
+    Beide einseitigen Tests sind signifikant: Der Unterschied liegt über −10
+    (t = 3,88, p < .001) und unter +10 (t = −3,00, p = .002). Gleichwertig heißt
+    hier: Das 90 %-KI der Differenz (touch − voice = 1,3 Punkte, [−3,5; 6,1])
+    liegt ganz innerhalb von ±10. 90 % statt 95 %, weil TOST zwei einseitige Tests
+    mit je α = .05 rechnet. Formulierung: „Der Zeitdruck war mit beiden
+    Bedienformen gleichwertig (Δ = 1,3 Punkte, 90 %-KI [−3,5; 6,1]; TOST mit
+    Grenzen ±10, beide p ≤ .002).“ Die Grenze muss vorab inhaltlich begründet
+    sein (kleinster interessierender Effekt), nicht nachträglich passend gewählt.
+    Grenzen in SD-Einheiten (`eqbound_type = "SMD"`) warnt TOSTER als verzerrt;
+    Rohpunkte sind ehrlicher, wenn die Skala eine Bedeutung hat.
+  en: |
+    Both one-sided tests are significant: the difference lies above −10
+    (t = 3.88, p < .001) and below +10 (t = −3.00, p = .002). Equivalent here
+    means: the 90% CI of the difference (touch − voice = 1.3 points,
+    [−3.5, 6.1]) lies entirely within ±10. 90% rather than 95% because TOST runs
+    two one-sided tests at α = .05 each. Wording: "Time pressure was equivalent
+    for both input modes (Δ = 1.3 points, 90% CI [−3.5, 6.1]; TOST with bounds
+    ±10, both p ≤ .002)." The bound must be justified substantively in advance
+    (smallest effect size of interest), not chosen afterwards to fit. TOSTER
+    warns that bounds in SD units (`eqbound_type = "SMD"`) are biased; raw points
+    are more honest when the scale has a meaning.
+misconception:
+  de: "Ein nicht signifikanter Unterschied zeigt, dass zwei Bedingungen gleich sind."
+  en: "A non-significant difference shows that two conditions are equal."
+check:
+  type: value
+  tolerance: 1.0e-4
+common_mistakes:
+  - pattern: "eqb\\s*=\\s*c\\(\\s*10"
+    message:
+      de: "Bei zwei Werten gibt `eqb` untere und obere Grenze an; ±10 schreibst du als `eqb = 10` oder `c(-10, 10)`."
+      en: "With two values, `eqb` gives the lower and upper bound; write ±10 as `eqb = 10` or `c(-10, 10)`."
+  - pattern: "SMD"
+    message:
+      de: "Die Grenze ist in Rohpunkten festgelegt (10 TLX-Punkte), nicht in Standardabweichungen."
+      en: "The bound is set in raw points (10 TLX points), not in standard deviations."
+  - pattern: "var\\.equal\\s*=\\s*TRUE"
+    message:
+      de: "Gefragt ist die Welch-Variante (Voreinstellung); `var.equal = TRUE` nimmt gleiche Varianzen an."
+      en: "The task asks for the Welch version (default); `var.equal = TRUE` assumes equal variances."

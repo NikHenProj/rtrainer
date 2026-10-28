@@ -1,0 +1,134 @@
+# Knowledge check: passed at >= `pass` share of correctly answered questions.
+lesson: scales-expert
+pass: 0.8
+questions:
+  - id: sc-e-q-polychoric
+    prompt:
+      de: "Was nimmt eine polychorische Korrelation zwischen zwei 7-stufigen Items an?"
+      en: "What does a polychoric correlation between two 7-point items assume?"
+    options:
+      - text:
+          de: "Hinter jedem Item steht eine normalverteilte latente Neigung, die an Schwellen in die Kategorien geschnitten wird."
+          en: "Behind each item there is a normally distributed latent tendency that is cut into the categories at thresholds."
+        correct: true
+        explain:
+          de: "Genau. Geschätzt wird die Korrelation dieser Neigungen, nicht die der Kategoriennummern."
+          en: "Exactly. It estimates the correlation of these tendencies, not of the category numbers."
+      - text:
+          de: "Die Abstände zwischen den Kategorien sind gleich groß."
+          en: "The distances between categories are equal."
+        correct: false
+        explain:
+          de: "Das nimmt gerade die Pearson-Korrelation der Rohwerte an. Polychorisch dürfen die Schwellen beliebig liegen."
+          en: "That is what the Pearson correlation of raw scores assumes. Polychoric thresholds may lie anywhere."
+      - text:
+          de: "Die Antworten selbst sind normalverteilt."
+          en: "The answers themselves are normally distributed."
+        correct: false
+        explain:
+          de: "Die Antworten dürfen schief sein (Deckeneffekt); normal verteilt sein soll nur die latente Neigung."
+          en: "The answers may be skewed (ceiling effect); only the latent tendency should be normally distributed."
+  - id: sc-e-q-ordinal-alpha
+    prompt:
+      de: "Ordinales α ist .84, α der Rohwerte .81. Du berichtest den Mittelwert der Items als Skalenwert. Was schreibst du?"
+      en: "Ordinal α is .84, α of the raw scores .81. You report the item mean as the scale score. What do you write?"
+    options:
+      - text:
+          de: "Beide Werte und welcher wofür steht; für den Summenwert ist das Rohwert-α die passendere Zahl."
+          en: "Both values and what each stands for; for the sum score the raw-score α is the more fitting number."
+        correct: true
+        explain:
+          de: "Richtig: Ordinales α beschreibt die latenten Neigungen, der ausgewertete Mittelwert hat die Reliabilität der Rohwerte."
+          en: "Right: ordinal α describes the latent tendencies; the mean you analyse has the reliability of the raw scores."
+      - text:
+          de: "Nur das ordinale α, weil es höher ist."
+          en: "Only ordinal α, because it is higher."
+        correct: false
+        explain:
+          de: "Höher heißt nicht passender. Für den Summenwert überschätzt es die Reliabilität."
+          en: "Higher does not mean more fitting. For the sum score it overestimates the reliability."
+      - text:
+          de: "Keinen, weil α bei ordinalen Items nicht definiert ist."
+          en: "Neither, because α is not defined for ordinal items."
+        correct: false
+        explain:
+          de: "α ist definiert; die Frage ist nur, auf welche Korrelationen es sich bezieht."
+          en: "α is defined; the question is only which correlations it refers to."
+  - id: sc-e-q-n-matrix
+    prompt:
+      de: "Du rechnest eine EFA auf einer Korrelationsmatrix und gibst kein `N` an. Was fehlt?"
+      en: "You run an EFA on a correlation matrix without giving `N`. What is missing?"
+    options:
+      - text:
+          de: "Alles, was von der Stichprobengröße abhängt: χ², Fit-Indizes, Standardfehler, Parallelanalyse."
+          en: "Everything that depends on the sample size: χ², fit indices, standard errors, parallel analysis."
+        correct: true
+        explain:
+          de: "Genau. Die Ladungen selbst kommen aus der Matrix, ihre Unsicherheit und der Modelltest nicht."
+          en: "Exactly. The loadings come from the matrix, their uncertainty and the model test do not."
+      - text:
+          de: "Nichts, die Matrix enthält alle Informationen."
+          en: "Nothing, the matrix contains all the information."
+        correct: false
+        explain:
+          de: "Dieselbe Matrix aus 50 oder 5000 Personen ist unterschiedlich verlässlich; das steht nicht in der Matrix."
+          en: "The same matrix from 50 or 5000 people differs in reliability; that is not in the matrix."
+      - text:
+          de: "Die Ladungen, weil sie ohne N nicht geschätzt werden können."
+          en: "The loadings, because they cannot be estimated without N."
+        correct: false
+        explain:
+          de: "Ladungen und Kommunalitäten lassen sich aus der Matrix allein schätzen."
+          en: "Loadings and communalities can be estimated from the matrix alone."
+  - id: sc-e-q-irt-info
+    prompt:
+      de: "In einem Graded-Response-Modell hat ein Item a = 2,4 und Schwellen von −3,9 bis −0,3. Für wen misst es genau?"
+      en: "In a graded response model an item has a = 2.4 and thresholds from −3.9 to −0.3. For whom does it measure precisely?"
+    options:
+      - text:
+          de: "Für Personen unterhalb des Mittelwerts; darüber kreuzen fast alle die höchste Kategorie an."
+          en: "For people below the mean; above it almost everyone ticks the highest category."
+        correct: true
+        explain:
+          de: "Richtig. Die Information eines Items ist dort hoch, wo seine Schwellen liegen."
+          en: "Right. An item's information is high where its thresholds are."
+      - text:
+          de: "Für alle gleich genau, weil a hoch ist."
+          en: "Equally precisely for everyone, because a is high."
+        correct: false
+        explain:
+          de: "a bestimmt, wie viel Information es gibt, die Schwellen bestimmen, wo."
+          en: "a determines how much information there is, the thresholds determine where."
+      - text:
+          de: "Für Personen mit hohen Werten, weil die Schwellen negativ sind."
+          en: "For people with high scores, because the thresholds are negative."
+        correct: false
+        explain:
+          de: "Umgekehrt: Negative Schwellen heißen, dass schon niedrige θ für hohe Kategorien reichen."
+          en: "The other way round: negative thresholds mean that low θ already suffices for high categories."
+  - id: sc-e-q-criteria
+    prompt:
+      de: "Parallelanalyse, EKC und SMT sagen 4 Faktoren, das AIC 5, das Kaiser-Kriterium 3. Wie entscheidest du?"
+      en: "Parallel analysis, EKC and SMT say 4 factors, the AIC 5, the Kaiser criterion 3. How do you decide?"
+    options:
+      - text:
+          de: "Nach Übereinstimmung der verlässlichen Kriterien und Theorie (4), die Lösungen mit 3 und 5 Faktoren ansehen und alles berichten."
+          en: "By agreement of the reliable criteria and theory (4), look at the 3- and 5-factor solutions and report everything."
+        correct: true
+        explain:
+          de: "Genau. Ein Blick auf die Nachbarlösungen zeigt, ob ein zusätzlicher Faktor inhaltlich etwas bedeutet."
+          en: "Exactly. Looking at the neighbouring solutions shows whether an extra factor means anything."
+      - text:
+          de: "Das AIC, weil es Fit und Sparsamkeit abwägt."
+          en: "The AIC, because it balances fit and parsimony."
+        correct: false
+        explain:
+          de: "Bei großen Stichproben belohnt das AIC auch winzige Zusatzfaktoren."
+          en: "With large samples the AIC also rewards tiny extra factors."
+      - text:
+          de: "Das Kaiser-Kriterium, weil es das bekannteste ist."
+          en: "The Kaiser criterion, because it is the best known."
+        correct: false
+        explain:
+          de: "Es ist bekannt, aber unzuverlässig; Gutachter erwarten Parallelanalyse oder vergleichbare Verfahren."
+          en: "It is well known but unreliable; reviewers expect parallel analysis or comparable methods."

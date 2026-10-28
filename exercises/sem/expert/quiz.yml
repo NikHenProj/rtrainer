@@ -1,0 +1,134 @@
+# Knowledge check: passed at >= `pass` share of correctly answered questions.
+lesson: sem-expert
+pass: 0.8
+questions:
+  - id: sm-e-q-levels
+    prompt:
+      de: "Welche Invarianzstufe brauchst du mindestens, um latente Mittelwerte zwischen Gruppen zu vergleichen?"
+      en: "Which invariance step do you need at least to compare latent means between groups?"
+    options:
+      - text:
+          de: "Skalar (gleiche Ladungen und Intercepts), vollständig oder partiell."
+          en: "Scalar (equal loadings and intercepts), full or partial."
+        correct: true
+        explain:
+          de: "Genau. Erst gleiche Intercepts sorgen dafür, dass ein Mittelwertunterschied im Konstrukt liegt und nicht in einzelnen Items."
+          en: "Exactly. Only equal intercepts ensure that a mean difference lies in the construct and not in single items."
+      - text:
+          de: "Metrisch (gleiche Ladungen)."
+          en: "Metric (equal loadings)."
+        correct: false
+        explain:
+          de: "Metrisch reicht für Zusammenhänge (Regressionsgewichte), nicht für Mittelwerte."
+          en: "Metric is enough for relationships (regression weights), not for means."
+      - text:
+          de: "Strikt (zusätzlich gleiche Residualvarianzen)."
+          en: "Strict (equal residual variances as well)."
+        correct: false
+        explain:
+          de: "Strikte Invarianz braucht man nur, wenn man beobachtete Skalenwerte statt latenter Mittelwerte vergleicht."
+          en: "Strict invariance is only needed when comparing observed scale scores instead of latent means."
+  - id: sm-e-q-delta-cfi
+    prompt:
+      de: "Konfigural CFI = .990, metrisch .988, skalar .962; Δχ² metrisch p = .04, skalar p < .001; N = 1200. Was folgt?"
+      en: "Configural CFI = .990, metric .988, scalar .962; Δχ² metric p = .04, scalar p < .001; N = 1200. What follows?"
+    options:
+      - text:
+          de: "Metrisch hält (ΔCFI = −.002, Δχ² bei großem N empfindlich), skalar nicht (ΔCFI = −.026)."
+          en: "Metric holds (ΔCFI = −.002, Δχ² is sensitive at large N), scalar does not (ΔCFI = −.026)."
+        correct: true
+        explain:
+          de: "Richtig. Bei großen Stichproben wird Δχ² schon bei winzigen Unterschieden signifikant; ΔCFI ist das übliche Zusatzkriterium."
+          en: "Right. With large samples Δχ² becomes significant for tiny differences; ΔCFI is the usual additional criterion."
+      - text:
+          de: "Keine Stufe hält, weil beide Δχ²-Tests signifikant sind."
+          en: "No step holds because both Δχ² tests are significant."
+        correct: false
+        explain:
+          de: "Bei N = 1200 ist das zu streng; berichte Δχ² und ΔCFI und entscheide begründet."
+          en: "At N = 1200 that is too strict; report Δχ² and ΔCFI and decide with reasons."
+      - text:
+          de: "Alle Stufen halten, weil jeder CFI über .95 liegt."
+          en: "All steps hold because every CFI is above .95."
+        correct: false
+        explain:
+          de: "Der absolute CFI sagt nichts darüber, wie viel Fit die Gleichheitsbedingungen kosten."
+          en: "The absolute CFI says nothing about how much fit the equality constraints cost."
+  - id: sm-e-q-partial
+    prompt:
+      de: "Der Score-Test zeigt beim skalaren Modell drei auffällige Intercepts. Wie gehst du vor?"
+      en: "The score test shows three conspicuous intercepts in the scalar model. How do you proceed?"
+    options:
+      - text:
+          de: "Den größten freigeben, neu schätzen und prüfen; nur so viele wie nötig und inhaltlich begründet."
+          en: "Free the largest, refit and check; only as many as necessary and with a substantive reason."
+        correct: true
+        explain:
+          de: "Genau. Nach jeder Freigabe ändern sich die übrigen Tests; berichte, welche Parameter frei sind."
+          en: "Exactly. After each release the remaining tests change; report which parameters are free."
+      - text:
+          de: "Alle drei auf einmal freigeben, damit der Fit sicher gut wird."
+          en: "Free all three at once so that the fit is sure to be good."
+        correct: false
+        explain:
+          de: "Oft verschwinden kleinere Auffälligkeiten, wenn der größte Parameter frei ist."
+          en: "Smaller flags often disappear once the largest parameter is free."
+      - text:
+          de: "Die auffälligen Items aus dem Fragebogen streichen."
+          en: "Drop the flagged items from the questionnaire."
+        correct: false
+        explain:
+          de: "Das ändert das Konstrukt; partielle Invarianz behält die Items und modelliert den Unterschied."
+          en: "That changes the construct; partial invariance keeps the items and models the difference."
+  - id: sm-e-q-wlsmv
+    prompt:
+      de: "Wann ist WLSMV (`ordered = TRUE`) statt ML die bessere Wahl?"
+      en: "When is WLSMV (`ordered = TRUE`) the better choice instead of ML?"
+    options:
+      - text:
+          de: "Bei wenigen Kategorien (≤ 5) oder deutlich schiefen Antworten, etwa einem Deckeneffekt."
+          en: "With few categories (≤ 5) or clearly skewed answers, such as a ceiling effect."
+        correct: true
+        explain:
+          de: "Richtig. Dann unterschätzt ML Ladungen und Fit leidet; WLSMV modelliert Schwellen."
+          en: "Right. Then ML underestimates loadings and fit suffers; WLSMV models thresholds."
+      - text:
+          de: "Immer, wenn Werte fehlen."
+          en: "Whenever values are missing."
+        correct: false
+        explain:
+          de: "Im Gegenteil: WLSMV nutzt paarweise vorhandene Werte; für FIML unter MAR ist ML/MLR der Weg."
+          en: "On the contrary: WLSMV uses pairwise available values; for FIML under MAR, ML/MLR is the way."
+      - text:
+          de: "Bei kleinen Stichproben unter 100, weil es weniger Annahmen macht."
+          en: "With small samples below 100, because it makes fewer assumptions."
+        correct: false
+        explain:
+          de: "WLSMV braucht eher größere Stichproben, weil es viele Schwellen schätzt."
+          en: "WLSMV rather needs larger samples because it estimates many thresholds."
+  - id: sm-e-q-mediation
+    prompt:
+      de: "Labels: `pu ~ a * peou`, `bi ~ b * pu + c * peou`. Welche Definition ist der indirekte Effekt?"
+      en: "Labels: `pu ~ a * peou`, `bi ~ b * pu + c * peou`. Which definition is the indirect effect?"
+    options:
+      - text:
+          de: "`ind := a * b`"
+          en: "`ind := a * b`"
+        correct: true
+        explain:
+          de: "Genau: peou → pu (a) mal pu → bi (b)."
+          en: "Exactly: peou → pu (a) times pu → bi (b)."
+      - text:
+          de: "`ind := a * c`"
+          en: "`ind := a * c`"
+        correct: false
+        explain:
+          de: "`c` ist der direkte Pfad; das Produkt hat keine Bedeutung."
+          en: "`c` is the direct path; the product has no meaning."
+      - text:
+          de: "`ind := c - a`"
+          en: "`ind := c - a`"
+        correct: false
+        explain:
+          de: "Die Differenzmethode wäre totaler minus direkter Effekt, nicht `c - a`."
+          en: "The difference method would be total minus direct effect, not `c - a`."

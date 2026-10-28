@@ -1,0 +1,180 @@
+---
+title: "Fragebögen und Skalen"
+subtitle: "Expert · Ordinale Items, Faktorzahl mit mehreren Kriterien, EFA polychorisch, IRT"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, tidyr, psych, EFAtools, lavaan]
+resources:
+  - ../data/tam_markets.csv
+---
+
+{{< include /_generated/de/scales-expert/runtime.qmd >}}
+
+{{< include /_generated/de/scales-expert/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R läuft hier direkt im Browser. Beim ersten Besuch lädt es 15–30 Sekunden (Anzeige unten rechts), danach geht es schneller.
+:::
+
+{{< include /_generated/de/scales-expert/challenge.qmd >}}
+
+## Wozu? {#why}
+
+**Forschungsfrage:** Misst der Akzeptanzfragebogen mit seinen 7-stufigen Items in zwei Märkten vier Konstrukte zuverlässig, und welche Items tragen wo auf der Skala Information?
+
+In der Intermediate-Lektion hast du α, ω und eine EFA auf Pearson-Korrelationen gerechnet. Likert-Items sind aber ordinal, oft schief (Deckeneffekt), und die Zahl der Faktoren ist eine Entscheidung, die Gutachter begründet sehen wollen. Hier rechnest du mit polychorischen Korrelationen, begründest die Faktorzahl mit mehreren Kriterien und liest ein IRT-Modell, das zeigt, für wen ein Item genau misst.
+
+## Konzept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 190" role="img" aria-labelledby="fig-sce-title fig-sce-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-sce-title">Polychorische Korrelation: latente Neigung und Schwellen</title>
+  <desc id="fig-sce-desc">Eine Normalverteilungskurve steht für die latente Neigung, ein Item positiv zu bewerten. Sechs senkrechte Linien schneiden sie in sieben Kategorien. Beim Item peou_1 liegen alle Schwellen weit links, sodass der größte Teil der Fläche in Kategorie 7 fällt. Rechts der Text: Pearson korreliert die Kategoriennummern, polychorisch die latenten Neigungen.</desc>
+  <path d="M20 150 C 80 150, 110 40, 170 40 C 230 40, 260 150, 320 150" class="rt-fig-arrow" fill="none" />
+  <line x1="20" y1="150" x2="320" y2="150" class="rt-fig-arrow" />
+  <line x1="48" y1="70" x2="48" y2="150" class="rt-fig-arrow" stroke-dasharray="3 3" />
+  <line x1="66" y1="70" x2="66" y2="150" class="rt-fig-arrow" stroke-dasharray="3 3" />
+  <line x1="90" y1="70" x2="90" y2="150" class="rt-fig-arrow" stroke-dasharray="3 3" />
+  <line x1="106" y1="70" x2="106" y2="150" class="rt-fig-arrow" stroke-dasharray="3 3" />
+  <line x1="124" y1="70" x2="124" y2="150" class="rt-fig-arrow" stroke-dasharray="3 3" />
+  <line x1="144" y1="70" x2="144" y2="150" class="rt-fig-arrow" stroke-dasharray="3 3" />
+  <rect x="146" y="120" width="170" height="26" class="rt-fig-box-accent" />
+  <text x="160" y="138" class="rt-fig-code">Kategorie 7 (58 %)</text>
+  <text x="20" y="172" class="rt-fig-label rt-fig-muted">peou_1: Schwellen b1 … b6 von −4,0 bis −0,3</text>
+  <text x="350" y="60" class="rt-fig-label">Pearson: korreliert</text>
+  <text x="350" y="78" class="rt-fig-label">die Nummern 1–7</text>
+  <text x="350" y="112" class="rt-fig-label">polychorisch: korreliert</text>
+  <text x="350" y="130" class="rt-fig-label">die latenten Neigungen</text>
+</svg>
+<figcaption>Wer fast immer 7 ankreuzt, kann kaum mitschwanken: Pearson unterschätzt die Korrelation (.47–.51 statt polychorisch .57–.61).</figcaption>
+</figure>
+```
+
+- **Polychorische Korrelation:** nimmt an, dass hinter jedem Item eine normalverteilte Neigung steckt, die an Schwellen in Kategorien geschnitten wird. `lavaan::lavCor(items, ordered = names(items))` schätzt die ganze Matrix schnell (im Browser unter einer Sekunde; `psych::polychoric()` rechnet dasselbe, braucht hier aber 18 s).
+- **Ordinales α und ω:** α bzw. ω aus der polychorischen Matrix (`alpha(rho)`, `omega(rho, n.obs = …)`). Sie beschreiben die Reliabilität der latenten Neigungen. Für den Summenwert, den du später auswertest, gilt eher das Rohwert-α; berichte beide mit Bezeichnung.
+- **Stichprobengröße bei Matrizen:** Eine Korrelationsmatrix kennt kein N. Parallelanalyse, Fit-Indizes und Standardfehler brauchen es (`N =` in EFAtools, `n.obs =` in psych, `sample.nobs =` in lavaan).
+- **Faktorzahl begründen:** EFAtools `N_FACTORS()` rechnet mehrere Kriterien auf einmal. Parallelanalyse und EKC (Empirical Kaiser Criterion) sind verlässlich, SMT (sequenzielle χ²-Tests) wird bei großen N großzügig, das Kaiser-Kriterium (Eigenwert > 1) ist überholt.
+- **EFA auf ordinalen Daten:** `EFA(rho, n_factors, N, method = "ULS", rotation = "oblimin")`. ULS (oder `"PAF"`) statt ML, weil die polychorische Matrix keine multivariate Normalverteilung der Rohwerte voraussetzt. `type = "SPSS"` oder `"psych"` bildet die Voreinstellungen anderer Programme nach, wenn du Ergebnisse reproduzieren musst.
+- **IRT, Graded-Response-Modell:** Für jedes Item eine Trennschärfe `a` (wie steil, wie viel Information) und Schwellen `b1`…`b6` (wo auf der latenten Skala Kategorie k + 1 wahrscheinlicher wird). Lage und Trennschärfe sind getrennt: Ein Item kann gut, aber nur in einem Bereich messen.
+
+## Beispiel {#example}
+
+Pearson und polychorisch für die Bedienbarkeit (`peou_3` umgepolt), danach α und ω beider Varianten:
+
+```{webr}
+peou <- tam_markets |>
+  mutate(peou_3 = 8 - peou_3) |>
+  select(peou_1:peou_4)
+table(peou$peou_1)
+
+rho_peou <- lavCor(peou, ordered = names(peou))
+round(cor(peou), 2)
+round(rho_peou, 2)
+
+c(
+  alpha_raw = alpha(peou)$total$raw_alpha,
+  alpha_ordinal = alpha(rho_peou)$total$raw_alpha,
+  omega_ordinal = omega(rho_peou, nfactors = 1, n.obs = nrow(peou), plot = FALSE)$omega.tot
+) |> round(3)
+```
+
+Alle 18 Items: polychorische Matrix, Faktorzahl mit drei Kriterien, dann eine EFA mit vier Faktoren:
+
+```{webr}
+items <- tam_markets |>
+  mutate(peou_3 = 8 - peou_3, trust_4 = 8 - trust_4) |>
+  select(pu_1:bi_4)
+rho <- lavCor(items, ordered = names(items))
+
+set.seed(2026)
+nf <- N_FACTORS(rho, N = nrow(items), criteria = c("PARALLEL", "EKC", "SMT"),
+                method = "ULS", show_progress = FALSE)
+nf$n_factors
+
+efa <- EFA(rho, n_factors = 4, N = nrow(items), method = "ULS", rotation = "oblimin")
+efa$rot_loadings
+round(efa$Phi, 2)
+efa$fit_indices[c("CFI", "RMSEA")]
+```
+
+Liegen die Skalen in beiden Märkten gleich? Ein erster beschreibender Blick (die eigentliche Prüfung ist die Messinvarianz in der Lektion „CFA und SEM“):
+
+```{webr}
+tam_markets |>
+  summarise(across(c(pu_3, pu_5, peou_1), mean), .by = market)
+```
+
+**So berichtest du es:** Weil die Items ordinal und teils schief verteilt waren (`peou_1`: 58 % in der höchsten Kategorie), rechneten wir mit polychorischen Korrelationen. Parallelanalyse, EKC und sequenzielle Modelltests (χ², RMSEA) sprachen für vier Faktoren, das AIC für fünf. Die EFA (ULS, Oblimin, *N* = 600) bildete die vier TAM-Skalen ab (Ladungen .68–.85, Faktorkorrelationen .25–.54; CFI = .998, RMSEA = .015); `pu_5` lud schwach (.37). Ordinales α der Bedienbarkeit = .84 (Rohwerte: .81).
+
+## Paketvergleich {#packages}
+
+| Aufgabe | Empfehlung | Alternative |
+|---|---|---|
+| Polychorische Korrelationen | **lavaan** `lavCor(ordered = …)` (schnell) | `psych::polychoric()` (langsamer, mit Schwellen), `polycor::hetcor()` (gemischte Typen) |
+| Faktorzahl | **EFAtools** `N_FACTORS()` (mehrere Kriterien) | `psych::fa.parallel()`, `psych::vss()` (MAP) |
+| EFA | **EFAtools** `EFA()` (ULS/PAF/ML, SPSS- und psych-Voreinstellungen nachbildbar) | `psych::fa()` |
+| Ordinales α/ω | **psych** `alpha()`/`omega()` auf der polychorischen Matrix | `semTools::compRelSEM()` nach ordinaler CFA (nächste Lektion) |
+| IRT | **mirt** (`itemtype = "graded"`, mehrdimensional, DIF; lokal) | `ltm::grm()`, `TAM`, `eRm` (Rasch) |
+
+## Lokal ausführen: Graded-Response-Modell mit mirt
+
+mirt lädt im Browser nicht (eine Abhängigkeit fehlt im webR-Index). Lokal:
+
+```r
+library(mirt)
+pu <- dplyr::select(tam_markets, pu_1:pu_5)
+grm <- mirt(pu, model = 1, itemtype = "graded")
+coef(grm, IRTpars = TRUE, simplify = TRUE)$items   # a, b1 … b6
+M2(grm, type = "C2")                               # Modellfit
+itemfit(grm)                                       # S-X² je Item
+plot(grm, type = "infotrace")                      # Information je Item über θ
+plot(grm, type = "rxx")                            # Reliabilität über θ
+
+# Unterschiedliches Antwortverhalten der Märkte (DIF) für ein Item
+mg <- multipleGroup(pu, 1, group = tam_markets$market, itemtype = "graded",
+                    invariance = c("free_means", "free_var", paste0("pu_", c(1, 2, 4, 5))))
+```
+
+Die Ergebnisse für `pu` und `peou` stehen in Übung 3.
+
+## Übungen {#exercises}
+
+Drei Pflichtübungen und eine Zusatzübung. **Ausführen und prüfen** startet deinen Code und prüft ihn sofort. Hinweise deckst du einzeln auf (**Hinweis zeigen**), die Lösung erst danach.
+
+{{< include /_generated/de/scales-expert/exercises.qmd >}}
+
+## Wissenscheck {#check}
+
+{{< include /_generated/de/scales-expert/quiz.qmd >}}
+
+## Spickzettel {#cheatsheet}
+
+```r
+# Polychorische Matrix (alle Items ordinal)
+rho <- lavaan::lavCor(items, ordered = names(items))
+
+# Ordinales α und ω (Stichprobengröße angeben)
+psych::alpha(rho)$total$raw_alpha
+psych::omega(rho, nfactors = 1, n.obs = nrow(items), plot = FALSE)$omega.tot
+
+# Faktorzahl mit mehreren Kriterien
+set.seed(2026)
+EFAtools::N_FACTORS(rho, N = nrow(items), criteria = c("PARALLEL", "EKC", "SMT"),
+                    method = "ULS", show_progress = FALSE)
+
+# EFA
+efa <- EFAtools::EFA(rho, n_factors = 4, N = nrow(items), method = "ULS", rotation = "oblimin")
+efa$rot_loadings; efa$h2; efa$Phi; efa$fit_indices
+
+# IRT (lokal)
+mirt::mirt(pu, 1, itemtype = "graded") |> coef(IRTpars = TRUE, simplify = TRUE)
+```
+
+- Matrix statt Rohdaten: immer `N` mitgeben.
+- Ordinales α beschreibt latente Neigungen; für den Summenwert zusätzlich das Rohwert-α.
+- Faktorzahl: mehrere Kriterien + Theorie, Nachbarlösungen ansehen, alles berichten.
+- IRT: `a` = wie viel Information, `b` = wo.
+
+{{< include /_generated/de/scales-expert/footer.qmd >}}

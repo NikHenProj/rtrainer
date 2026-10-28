@@ -686,6 +686,66 @@ run_exercise("vi-e-ci-dist", paste(
 checked <- wait_for("!!document.querySelector('#ex-vi-e-ci-dist .exercise-grade.alert-success')", timeout = 90)
 step("visualisation-expert: ggdist plot with xdist graded correct", !is.na(checked), sprintf("%s s", checked))
 
+# 16. Expert P2: linked in the course plan; sem-expert challenge (hint and
+# solution) before #why; polychoric matrix with lavCor + EFAtools and a
+# TOSTER equivalence test graded; load times with lavaan/EFAtools,
+# lavaan/semTools and afex/emmeans/TOSTER.
+goto("/de/index.html")
+Sys.sleep(1)
+expert_p2 <- c("scales", "sem", "group-comparisons")
+unlinked <- js(sprintf(
+  "[%s].filter(slug => !document.querySelector(`a[href*=\"${slug}-expert\"]`)).join(', ')",
+  paste0("'", expert_p2, "'", collapse = ", ")
+))
+step("expert: P2 lessons linked in the German course plan", identical(unlinked, ""), unlinked)
+
+loaded <- wait_lesson("/de/scales-expert.html", "sc-e-efa-ordinal")
+step("scales-expert: webR, psych, EFAtools and lavaan ready", !is.na(loaded), sprintf("%s s", loaded))
+run_exercise("sc-e-efa-ordinal", paste(
+  "efa <- EFA(rho, n_factors = 4, N = nrow(items), method = \"ULS\", rotation = \"oblimin\")",
+  "tibble(item = names(efa$h2), h2 = round(efa$h2, 2)) |>",
+  "  arrange(h2)",
+  sep = "\n"
+))
+checked <- wait_for("!!document.querySelector('#ex-sc-e-efa-ordinal .exercise-grade.alert-success')", timeout = 120)
+step("scales-expert: EFA on the lavCor matrix graded correct", !is.na(checked), sprintf("%s s", checked))
+
+loaded <- wait_lesson("/de/sem-expert.html", "sm-e-invariance")
+step("sem-expert: webR, lavaan and semTools ready", !is.na(loaded), sprintf("%s s", loaded))
+before_why <- js("(() => {
+  const box = document.querySelector('.rt-challenge');
+  const why = document.getElementById('why');
+  return !!box && !!why && !!(box.compareDocumentPosition(why) & Node.DOCUMENT_POSITION_FOLLOWING) &&
+    !!box.querySelector('#ex-sm-e-invariance');
+})()")
+step("sem-expert: challenge box with the exercise stands before #why", before_why)
+invariance_code <- function(scalar_equal) paste(
+  "configural <- cfa(tam_model, data = tam, group = \"market\")",
+  "metric <- cfa(tam_model, data = tam, group = \"market\", group.equal = \"loadings\")",
+  sprintf("scalar <- cfa(tam_model, data = tam, group = \"market\", group.equal = %s)", scalar_equal),
+  "list(configural = configural, metric = metric, scalar = scalar) |>",
+  "  imap(\\(fit, name) tibble(model = name, !!!as.list(fitMeasures(fit, c(\"chisq\", \"df\", \"cfi\", \"rmsea\"))))) |>",
+  "  list_rbind() |>",
+  "  mutate(across(chisq:rmsea, \\(x) round(x, 3)))",
+  sep = "\n"
+)
+run_exercise("sm-e-invariance", invariance_code("\"intercepts\""))
+hinted <- wait_for("(document.querySelector('#ex-sm-e-invariance .exercise-grade.alert-danger')?.textContent || '').includes('setzt metrische voraus')", timeout = 90)
+step("sem-expert: intercepts without loadings in the challenge gets the hint", !is.na(hinted))
+run_exercise("sm-e-invariance", invariance_code("c(\"loadings\", \"intercepts\")"))
+checked <- wait_for("!!document.querySelector('#ex-sm-e-invariance .exercise-grade.alert-success')", timeout = 90)
+step("sem-expert: challenge (three invariance steps) graded correct", !is.na(checked), sprintf("%s s", checked))
+
+loaded <- wait_lesson("/de/group-comparisons-expert.html", "gc-e-tost")
+step("group-comparisons-expert: webR, afex, emmeans and TOSTER ready", !is.na(loaded), sprintf("%s s", loaded))
+run_exercise("gc-e-tost", paste(
+  "res <- t_TOST(tlx_temporal ~ interface, data = survey, eqb = 10)",
+  "res$TOST",
+  sep = "\n"
+))
+checked <- wait_for("!!document.querySelector('#ex-gc-e-tost .exercise-grade.alert-success')", timeout = 90)
+step("group-comparisons-expert: TOSTER equivalence test graded correct", !is.na(checked), sprintf("%s s", checked))
+
 goto("/en/index.html")
 Sys.sleep(1)
 beginner <- c(

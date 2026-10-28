@@ -1,0 +1,124 @@
+id: sm-e-partial
+lesson: sem-expert
+order: 1
+title:
+  de: Partielle Invarianz und latente Mittelwerte
+  en: Partial invariance and latent means
+kind: write
+required: true
+packages: [dplyr, lavaan]
+data: [tam_markets]
+setup: |
+  library(dplyr)
+  library(lavaan)
+  tam <- tam_markets |>
+    mutate(peou_3 = 8 - peou_3, trust_4 = 8 - trust_4)
+  tam_model <- "
+    pu =~ pu_1 + pu_2 + pu_3 + pu_4 + pu_5
+    peou =~ peou_1 + peou_2 + peou_3 + peou_4
+    trust =~ trust_1 + trust_2 + trust_3 + trust_4 + trust_5
+    bi =~ bi_1 + bi_2 + bi_3 + bi_4
+  "
+  scalar <- cfa(tam_model, data = tam, group = "market",
+                group.equal = c("loadings", "intercepts"))
+prompt:
+  de: |
+    Das skalare Modell `scalar` passt deutlich schlechter als das metrische. Der
+    Score-Test zeigt, welche Gleichheitsbedingung am meisten kostet:
+
+    ```
+    lavTestScore(scalar)$uni |> arrange(desc(X2)) |> head(2)
+        lhs op    rhs      X2 df p.value
+      .p49. == .p117. 104.479  1       0
+      .p48. == .p116.  18.794  1       0
+    ```
+
+    Laut `parTable(scalar)` ist `.p49.` der Intercept von `pu_3` in `de`
+    (`.p117.` derselbe in `us`).
+
+    Schätze das partiell invariante Modell `partial`: wie `scalar`, aber mit
+    freiem Intercept von `pu_3` (`group.partial`). Gib die latenten Mittelwerte
+    der zweiten Gruppe (`us`, relativ zu `de` = 0) als Tabelle mit den Spalten
+    `lhs`, `est`, `se` zurück, Zahlen auf 3 Stellen gerundet, in der Reihenfolge
+    `pu`, `peou`, `trust`, `bi`.
+  en: |
+    The scalar model `scalar` fits clearly worse than the metric one. The score
+    test shows which equality constraint costs most:
+
+    ```
+    lavTestScore(scalar)$uni |> arrange(desc(X2)) |> head(2)
+        lhs op    rhs      X2 df p.value
+      .p49. == .p117. 104.479  1       0
+      .p48. == .p116.  18.794  1       0
+    ```
+
+    According to `parTable(scalar)`, `.p49.` is the intercept of `pu_3` in `de`
+    (`.p117.` the same in `us`).
+
+    Fit the partially invariant model `partial`: like `scalar`, but with a free
+    intercept for `pu_3` (`group.partial`). Return the latent means of the second
+    group (`us`, relative to `de` = 0) as a table with the columns `lhs`, `est`,
+    `se`, numbers rounded to 3 decimals, in the order `pu`, `peou`, `trust`, `bi`.
+starter: |
+  parameterEstimates(scalar) |>
+    filter(op == "~1", lhs %in% c("pu", "peou", "trust", "bi"), group == 2) |>
+    select(lhs, est, se) |>
+    mutate(across(c(est, se), \(x) round(x, 3)))
+solution: |
+  partial <- cfa(tam_model, data = tam, group = "market",
+                 group.equal = c("loadings", "intercepts"),
+                 group.partial = "pu_3 ~ 1")
+  parameterEstimates(partial) |>
+    filter(op == "~1", lhs %in% c("pu", "peou", "trust", "bi"), group == 2) |>
+    select(lhs, est, se) |>
+    mutate(across(c(est, se), \(x) round(x, 3)))
+hints:
+  - de: "`group.partial` nimmt Parameter in lavaan-Syntax, die trotz `group.equal` frei bleiben sollen."
+    en: "`group.partial` takes parameters in lavaan syntax that stay free despite `group.equal`."
+  - de: "Ein Intercept schreibt sich `\"pu_3 ~ 1\"`."
+    en: "An intercept is written `\"pu_3 ~ 1\"`."
+  - de: "Kopiere den Aufruf von `scalar`, ergänze `group.partial = \"pu_3 ~ 1\"` und setze das neue Modell in den Code der Vorlage ein."
+    en: "Copy the call for `scalar`, add `group.partial = \"pu_3 ~ 1\"` and use the new model in the template code."
+explanation:
+  de: |
+    Mit freiem `pu_3`-Intercept passt das Modell so gut wie das metrische
+    (Δχ²(13) = 9,0, p = .77; CFI = 1,000). Die latenten Mittelwerte ändern sich
+    an einer Stelle deutlich: Nützlichkeit liegt in den USA um 0,34 (SE 0,12)
+    höher statt 0,60 unter voller skalarer Invarianz. Das Item „verbessert meine
+    Sicherheit“ wird in den USA bei gleicher Nützlichkeit höher angekreuzt; im
+    skalaren Modell wird dieser Itemeffekt dem Konstrukt zugeschlagen. Die
+    Mittelwerte stehen in Einheiten des Markeritems (`pu_1`); geteilt durch die
+    latente SD in `de` (√2,05 = 1,43) ergibt sich d ≈ 0,23. Vertrauen (−0,19,
+    p = .11) und Absicht (0,10) unterscheiden sich nicht bedeutsam. Partielle
+    Invarianz reicht für Mittelwertvergleiche, solange pro Faktor mindestens zwei
+    Items invariant sind; berichte, welches Item frei ist und warum. Fallstrick:
+    nicht nach dem Score-Test alle auffälligen Parameter nacheinander freigeben,
+    sondern einzeln und inhaltlich begründet.
+  en: |
+    With a free `pu_3` intercept the model fits as well as the metric one
+    (Δχ²(13) = 9.0, p = .77; CFI = 1.000). The latent means change clearly in one
+    place: usefulness is 0.34 (SE 0.12) higher in the US instead of 0.60 under
+    full scalar invariance. The item "improves my safety" is ticked higher in the
+    US at the same usefulness; the scalar model attributes this item effect to the
+    construct. The means are in units of the marker item (`pu_1`); divided by the
+    latent SD in `de` (√2.05 = 1.43) this gives d ≈ 0.23. Trust (−0.19, p = .11)
+    and intention (0.10) do not differ meaningfully. Partial invariance is enough
+    for mean comparisons as long as at least two items per factor are invariant;
+    report which item is free and why. Pitfall: do not free every flagged
+    parameter in turn after the score test, but one at a time and with a
+    substantive reason.
+misconception:
+  de: "Unterscheiden sich Gruppen in einem Item, kann man die latenten Mittelwerte gar nicht mehr vergleichen."
+  en: "If groups differ on one item, latent means can no longer be compared at all."
+check:
+  type: value
+  tolerance: 1.0e-3
+common_mistakes:
+  - pattern: "group\\.partial\\s*=\\s*\"pu_3\\s*=~"
+    message:
+      de: "`=~` wäre die Ladung von `pu_3`. Die Ladungen sind invariant; frei bleiben soll der Intercept: `\"pu_3 ~ 1\"`."
+      en: "`=~` would be the loading of `pu_3`. The loadings are invariant; the intercept should stay free: `\"pu_3 ~ 1\"`."
+  - pattern: "group\\.equal\\s*=\\s*\"loadings\"\\s*\\)"
+    message:
+      de: "Ohne gleiche Intercepts sind die latenten Mittelwerte nicht identifiziert bzw. nicht vergleichbar. Behalte `c(\"loadings\", \"intercepts\")` und gib nur `pu_3` frei."
+      en: "Without equal intercepts the latent means are not identified or not comparable. Keep `c(\"loadings\", \"intercepts\")` and free only `pu_3`."

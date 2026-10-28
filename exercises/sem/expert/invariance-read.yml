@@ -1,0 +1,109 @@
+id: sm-e-invariance-read
+lesson: sem-expert
+order: 2
+title:
+  de: Invarianzbefunde deuten
+  en: Interpreting invariance results
+kind: interpret
+required: true
+packages: []
+data: []
+setup: ""
+prompt:
+  de: |
+    Zusammenfassung der Mehrgruppen-CFA (de vs. us, je 300 Befragte) und der
+    latenten Mittelwerte der Nützlichkeit (`us` − `de`, Einheiten von `pu_1`):
+
+    ```
+    Modell            χ²     df    CFI    RMSEA   Vergleich      Δχ²   Δdf     p    ΔCFI
+    configural      233.7   258  1.000   .000
+    metric          251.8   272  1.000   .000   vs. configural   18.1   14   .203   .000
+    scalar          371.1   286   .982   .031   vs. metric      119.3   14  <.001  −.018
+    partial (pu_3)  260.8   285  1.000   .000   vs. metric        9.0   13   .774   .000
+
+    Latenter Mittelwert pu (us):  scalar 0.597 (SE 0.120)   partial 0.336 (SE 0.124)
+    ```
+
+    Welche Aussagen stimmen?
+
+    1. Die Ladungen sind invariant; Zusammenhänge zwischen den Konstrukten (z. B. Nützlichkeit → Absicht) dürfen zwischen den Märkten verglichen werden.
+    2. Skalare Invarianz hält, weil der CFI des skalaren Modells mit .982 über .95 liegt.
+    3. Unter voller skalarer Invarianz würde der Marktunterschied in der Nützlichkeit fast doppelt so groß geschätzt; ein einziges Item treibt diese Überschätzung.
+    4. Weil `pu_3` nicht invariant ist, darf die Nützlichkeit zwischen den Märkten gar nicht verglichen werden.
+
+    Gib die Nummern der richtigen Aussagen aufsteigend als Vektor ein, z. B. `c(1, 2)`.
+  en: |
+    Summary of the multi-group CFA (de vs. us, 300 respondents each) and the
+    latent means of usefulness (`us` − `de`, units of `pu_1`):
+
+    ```
+    Model             χ²     df    CFI    RMSEA   Comparison     Δχ²   Δdf     p    ΔCFI
+    configural      233.7   258  1.000   .000
+    metric          251.8   272  1.000   .000   vs. configural   18.1   14   .203   .000
+    scalar          371.1   286   .982   .031   vs. metric      119.3   14  <.001  −.018
+    partial (pu_3)  260.8   285  1.000   .000   vs. metric        9.0   13   .774   .000
+
+    Latent mean pu (us):  scalar 0.597 (SE 0.120)   partial 0.336 (SE 0.124)
+    ```
+
+    Which statements are true?
+
+    1. The loadings are invariant; relationships between the constructs (e.g. usefulness → intention) may be compared between the markets.
+    2. Scalar invariance holds because the CFI of the scalar model, .982, is above .95.
+    3. Under full scalar invariance the market difference in usefulness would be estimated almost twice as large; a single item drives this overestimate.
+    4. Because `pu_3` is not invariant, usefulness must not be compared between the markets at all.
+
+    Type the numbers of the true statements in ascending order as a vector,
+    e.g. `c(1, 2)`.
+starter: |
+  # Nummern der richtigen Aussagen als Vektor / numbers of the true statements as a vector
+solution: |
+  c(1, 3)
+hints:
+  - de: "Bei Invarianz zählt der Vergleich mit der vorherigen Stufe (Δ), nicht der absolute Fit einer Stufe."
+    en: "For invariance what counts is the comparison with the previous step (Δ), not the absolute fit of one step."
+  - de: "Was erlaubt metrische, was erst skalare Invarianz?"
+    en: "What does metric invariance allow, and what only scalar invariance?"
+  - de: "Partielle Invarianz: Wie viele invariante Items pro Faktor braucht ein Mittelwertvergleich?"
+    en: "Partial invariance: how many invariant items per factor does a mean comparison need?"
+explanation:
+  de: |
+    Richtig sind 1 und 3. Metrisch hält (Δχ² p = .20, ΔCFI = .000), damit sind
+    die Faktoren gleich skaliert und Regressionsgewichte vergleichbar; eine
+    Mehrgruppen-Moderation (Nützlichkeit → Absicht: b = 0,32 in de, 0,51 in us) ist
+    zulässig. Aussage 2 nutzt den falschen Maßstab: Die Stufe wird am Zuwachs an
+    Misfit beurteilt (ΔCFI = −.018 über der Grenze −.01, Δχ² hoch signifikant),
+    nicht am absoluten CFI. Aussage 3: 0,60 statt 0,34; mit freiem
+    `pu_3`-Intercept passt das Modell wieder so gut wie das metrische. Aussage 4
+    ist zu streng: Partielle Invarianz (mindestens zwei invariante Items pro
+    Faktor, hier vier) erlaubt den Vergleich. Formulierung: „Skalare Invarianz
+    hielt nicht (ΔCFI = −.018); nach Freigabe des Intercepts von `pu_3` war das
+    partiell invariante Modell dem metrischen gleichwertig (Δχ²(13) = 9,0,
+    p = .77). Die Nützlichkeit lag in den USA höher (Δ = 0,34, SE = 0,12, d ≈ 0,23).“
+  en: |
+    Statements 1 and 3 are true. Metric invariance holds (Δχ² p = .20,
+    ΔCFI = .000), so the factors are scaled equally and regression weights are
+    comparable; a multi-group moderation (usefulness → intention: b = 0.32 in de, 0.51
+    in us) is admissible. Statement 2 uses the wrong yardstick: the step is judged
+    by the increase in misfit (ΔCFI = −.018 beyond the −.01 cut-off, Δχ² highly
+    significant), not by the absolute CFI. Statement 3: 0.60 instead of 0.34; with
+    a free `pu_3` intercept the model fits as well as the metric one again.
+    Statement 4 is too strict: partial invariance (at least two invariant items
+    per factor, here four) allows the comparison. Wording: "Scalar invariance did
+    not hold (ΔCFI = −.018); after freeing the intercept of `pu_3` the partially
+    invariant model was equivalent to the metric one (Δχ²(13) = 9.0, p = .77).
+    Usefulness was higher in the US (Δ = 0.34, SE = 0.12, d ≈ 0.23)."
+misconception:
+  de: "Eine Invarianzstufe hält, sobald ihr absoluter Fit gut ist."
+  en: "An invariance step holds as soon as its absolute fit is good."
+check:
+  type: value
+common_mistakes:
+  - pattern: "\\b2\\b"
+    message:
+      de: "Aussage 2 stimmt nicht: Entscheidend ist der Fit-Verlust gegenüber der metrischen Stufe (ΔCFI = −.018), nicht der absolute CFI."
+      en: "Statement 2 is false: what matters is the loss of fit compared with the metric step (ΔCFI = −.018), not the absolute CFI."
+  - pattern: "\\b4\\b"
+    message:
+      de: "Aussage 4 stimmt nicht: Mit partieller Invarianz (hier vier invariante Items) ist der Vergleich zulässig."
+      en: "Statement 4 is false: with partial invariance (here four invariant items) the comparison is admissible."

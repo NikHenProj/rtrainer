@@ -1,0 +1,19 @@
+# Lesson metadata; exercises are the other *.yml files in this folder
+# (sorted by `order`), the knowledge check is quiz.yml.
+lesson: sem-expert
+minutes: 60
+prerequisites: [sem-intermediate]
+langs: [de]
+packages: [dplyr, purrr, lavaan, semTools]
+data: [tam_markets]
+goals:
+  de:
+    - Messinvarianz zwischen Gruppen stufenweise prüfen (konfigural → metrisch → skalar) und ΔCFI/Δχ² richtig deuten
+    - Ein nicht invariantes Item finden und partielle Invarianz schätzen, bevor latente Mittelwerte verglichen werden
+    - Ordinale Indikatoren mit WLSMV modellieren und den Unterschied zu ML erklären
+    - Eine latente Mediation mit Labels und definierten Parametern (`:=`) korrekt aufschreiben
+  en:
+    - Test measurement invariance between groups step by step (configural → metric → scalar) and interpret ΔCFI/Δχ² correctly
+    - Find a non-invariant item and estimate partial invariance before comparing latent means
+    - Model ordinal indicators with WLSMV and explain the difference to ML
+    - Write a latent mediation correctly with labels and defined parameters (`:=`)

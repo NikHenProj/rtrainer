@@ -1,0 +1,87 @@
+id: sc-e-parallel-debug
+lesson: scales-expert
+order: 1
+title:
+  de: Parallelanalyse auf einer Korrelationsmatrix
+  en: Parallel analysis on a correlation matrix
+kind: debug
+required: true
+packages: [dplyr, EFAtools, lavaan]
+data: [tam_markets]
+setup: |
+  library(dplyr)
+  library(EFAtools)
+  library(lavaan)
+  items <- tam_markets |>
+    mutate(peou_3 = 8 - peou_3, trust_4 = 8 - trust_4) |>
+    select(pu_1:bi_4)
+  rho <- lavCor(items, ordered = names(items))
+prompt:
+  de: |
+    `rho` ist die polychorische Korrelationsmatrix der 18 Akzeptanz-Items (600
+    Befragte, umgepolte Items schon gedreht). Eine Kollegin will mit einer
+    Parallelanalyse (EFAtools) prüfen, wie viele Faktoren sie extrahieren soll.
+    Ihr Code bricht mit einer Fehlermeldung ab.
+
+    Korrigiere den Aufruf (Seed, Matrix und `eigen_type` bleiben) und gib die
+    vorgeschlagene Faktorzahl `res$n_factors` zurück.
+  en: |
+    `rho` is the polychoric correlation matrix of the 18 acceptance items (600
+    respondents, reverse-keyed items already flipped). A colleague wants to use a
+    parallel analysis (EFAtools) to check how many factors to extract. Her code
+    stops with an error.
+
+    Fix the call (keep the seed, the matrix and `eigen_type`) and return the
+    suggested number of factors `res$n_factors`.
+starter: |
+  set.seed(2026)
+  res <- PARALLEL(rho, eigen_type = "SMC")
+  res$n_factors
+solution: |
+  set.seed(2026)
+  res <- PARALLEL(rho, N = nrow(items), eigen_type = "SMC")
+  res$n_factors
+hints:
+  - de: "Lies die Fehlermeldung: Welche Angabe kann `PARALLEL()` aus einer Korrelationsmatrix nicht ablesen?"
+    en: "Read the error message: which piece of information can `PARALLEL()` not read off a correlation matrix?"
+  - de: "Die Zufallsdaten der Parallelanalyse brauchen dieselbe Stichprobengröße wie die echten Daten."
+    en: "The random data of the parallel analysis need the same sample size as the real data."
+  - de: "Ergänze `N = nrow(items)` im Aufruf."
+    en: "Add `N = nrow(items)` to the call."
+explanation:
+  de: |
+    Eine Korrelationsmatrix enthält keine Stichprobengröße. Die Parallelanalyse
+    vergleicht die Eigenwerte der echten Daten mit denen von Zufallsdaten
+    gleicher Größe, und wie stark Zufallseigenwerte streuen, hängt an N: Bei 100
+    Personen liegt der erste Zufallseigenwert deutlich höher als bei 600. Mit
+    `N = 600` schlägt sie 4 Faktoren vor: Vier Eigenwerte liegen deutlich über
+    dem 95. Perzentil der Zufallsdaten, der fünfte (0,04) darunter (0,19). Dasselbe gilt für
+    `EFA()`, `N_FACTORS()`, `fa()` (`n.obs`) und lavaan mit einer Matrix
+    (`sample.nobs`): Ohne N fehlen Fit-Indizes und Standardfehler, oder die
+    Funktion bricht ab. Mit Rohdaten (`PARALLEL(items)`) würde EFAtools Pearson-
+    Korrelationen rechnen; der Umweg über `rho` ist gewollt.
+  en: |
+    A correlation matrix contains no sample size. Parallel analysis compares the
+    eigenvalues of the real data with those of random data of the same size, and
+    how much random eigenvalues vary depends on N: with 100 people the first
+    random eigenvalue is clearly higher than with 600. With `N = 600` it suggests
+    4 factors: four eigenvalues lie well above the 95th percentile of the random
+    data, the fifth (0.04) below it (0.19). The same holds for `EFA()`, `N_FACTORS()`,
+    `fa()` (`n.obs`) and lavaan with a matrix (`sample.nobs`): without N, fit
+    indices and standard errors are missing or the function stops. With raw data
+    (`PARALLEL(items)`) EFAtools would compute Pearson correlations; the detour
+    via `rho` is intended.
+misconception:
+  de: "Eine Korrelationsmatrix enthält alle Informationen, die eine Faktorenanalyse braucht."
+  en: "A correlation matrix contains all the information a factor analysis needs."
+check:
+  type: value
+common_mistakes:
+  - pattern: "PARALLEL\\(\\s*items"
+    message:
+      de: "Mit den Rohdaten rechnet `PARALLEL()` Pearson-Korrelationen. Bleib bei `rho` und gib die Stichprobengröße an."
+      en: "With raw data `PARALLEL()` computes Pearson correlations. Stay with `rho` and supply the sample size."
+  - pattern: "N\\s*=\\s*18\\b|N\\s*=\\s*ncol"
+    message:
+      de: "18 ist die Zahl der Items. `N` ist die Zahl der Befragten: `nrow(items)`."
+      en: "18 is the number of items. `N` is the number of respondents: `nrow(items)`."

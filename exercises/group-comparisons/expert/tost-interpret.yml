@@ -1,0 +1,105 @@
+id: gc-e-tost-interpret
+lesson: group-comparisons-expert
+order: 3
+title:
+  de: Vier Befundmuster mit Äquivalenzgrenzen
+  en: Four patterns of results with equivalence bounds
+kind: interpret
+required: true
+packages: []
+data: []
+setup: ""
+prompt:
+  de: |
+    TLX-Skalen nach Bedienform (touch − voice, 0–100), Äquivalenzgrenzen ±10
+    Punkte (vorab festgelegt). Die ersten drei Zeilen stammen aus `survey`
+    (n = 160), die letzte aus einer Pilotstudie mit 20 Personen.
+
+    ```
+                          Δ    90 %-KI           p (t-Test)   p (TOST)
+    tlx_temporal        1.3   [ -3.5;  6.1]        .658        .002
+    tlx_mental         13.3   [  8.4; 18.1]       <.001        .867
+    tlx_physical        9.3   [  5.1; 13.5]       <.001        .387
+    Pilot: tlx_effort   4.0   [ -6.8; 14.8]        .52         .21
+    ```
+
+    Welche Aussagen stimmen?
+
+    1. Beim Zeitdruck (`tlx_temporal`) sind die Bedienformen praktisch gleichwertig.
+    2. Bei der körperlichen Beanspruchung (`tlx_physical`) gibt es einen Unterschied, aber ob er die 10-Punkte-Grenze überschreitet, bleibt offen.
+    3. Die Pilotstudie zeigt, dass die Anstrengung mit beiden Bedienformen gleich ist, weil p = .52.
+    4. Beim Zeitdruck hätte schon der t-Test (p = .658) gereicht, um Gleichwertigkeit zu folgern.
+
+    Gib die Nummern der richtigen Aussagen aufsteigend als Vektor ein, z. B. `c(1, 2)`.
+  en: |
+    TLX subscales by input mode (touch − voice, 0–100), equivalence bounds ±10
+    points (fixed in advance). The first three rows come from `survey`
+    (n = 160), the last from a pilot study with 20 people.
+
+    ```
+                          Δ    90% CI            p (t-test)   p (TOST)
+    tlx_temporal        1.3   [ -3.5,  6.1]        .658        .002
+    tlx_mental         13.3   [  8.4, 18.1]       <.001        .867
+    tlx_physical        9.3   [  5.1, 13.5]       <.001        .387
+    Pilot: tlx_effort   4.0   [ -6.8, 14.8]        .52         .21
+    ```
+
+    Which statements are true?
+
+    1. For time pressure (`tlx_temporal`) the input modes are practically equivalent.
+    2. For physical demand (`tlx_physical`) there is a difference, but whether it exceeds the 10-point bound remains open.
+    3. The pilot study shows that effort is the same with both input modes because p = .52.
+    4. For time pressure the t-test alone (p = .658) would have been enough to conclude equivalence.
+
+    Type the numbers of the true statements in ascending order as a vector,
+    e.g. `c(1, 2)`.
+starter: |
+  # Nummern der richtigen Aussagen als Vektor / numbers of the true statements as a vector
+solution: |
+  c(1, 2)
+hints:
+  - de: "Leg jedes KI neben die Grenzen −10 und +10: ganz innerhalb, ganz außerhalb, oder überlappt es eine Grenze?"
+    en: "Put each CI next to the bounds −10 and +10: entirely inside, entirely outside, or does it overlap a bound?"
+  - de: "Signifikant verschieden heißt: KI schließt 0 aus. Gleichwertig heißt: KI liegt innerhalb der Grenzen. Beides kann gleichzeitig gelten oder keins."
+    en: "Significantly different means: the CI excludes 0. Equivalent means: the CI lies within the bounds. Both can hold at once, or neither."
+  - de: "Was sagt ein KI von −6,8 bis 14,8 über die Frage „gleich oder nicht“?"
+    en: "What does a CI from −6.8 to 14.8 say about the question \"equal or not\"?"
+explanation:
+  de: |
+    Richtig sind 1 und 2. Zeitdruck: KI [−3,5; 6,1] liegt ganz innerhalb ±10,
+    gleichwertig. Mentale Beanspruchung: KI ganz über +10, bedeutsam
+    verschieden. Körperliche Beanspruchung: KI schließt 0 aus (verschieden),
+    reicht aber unter 10 (5,1); der Unterschied kann relevant oder klein sein.
+    Pilot: KI von −6,8 bis 14,8 schließt weder 0 noch ±10 aus, die Daten sind
+    schlicht nicht informativ (Aussage 3 ist der klassische Fehlschluss
+    „Abwesenheit von Evidenz = Evidenz für Abwesenheit“). Aussage 4 ist falsch,
+    weil p = .658 auch bei einem KI von −30 bis 30 möglich wäre; erst das KI
+    innerhalb der Grenzen zeigt Gleichwertigkeit. Das vierte Muster, „signifikant
+    verschieden und gleichwertig“ (KI z. B. [2; 6]), entsteht bei großen
+    Stichproben: Der Unterschied ist echt, aber praktisch unbedeutend.
+  en: |
+    Statements 1 and 2 are true. Time pressure: CI [−3.5, 6.1] lies entirely
+    within ±10, equivalent. Mental demand: CI entirely above +10, meaningfully
+    different. Physical demand: the CI excludes 0 (different) but reaches below 10
+    (5.1); the difference may be relevant or small. Pilot: the CI from −6.8 to
+    14.8 rules out neither 0 nor ±10, the data are simply not informative
+    (statement 3 is the classic fallacy "absence of evidence = evidence of
+    absence"). Statement 4 is false because p = .658 would also be possible with
+    a CI from −30 to 30; only the CI within the bounds shows equivalence. The
+    fourth pattern, "significantly different and equivalent" (CI e.g. [2, 6]),
+    arises with large samples: the difference is real but practically
+    negligible.
+misconception:
+  de: "Ein nicht signifikanter Test zeigt Gleichheit, ein signifikanter zeigt einen relevanten Unterschied."
+  en: "A non-significant test shows equality, a significant one shows a relevant difference."
+check:
+  type: value
+common_mistakes:
+  - pattern: "\\b3\\b"
+    message:
+      de: "Aussage 3 stimmt nicht: Das KI der Pilotstudie reicht von −6,8 bis 14,8; Gleichheit ist damit nicht gezeigt."
+      en: "Statement 3 is false: the pilot CI ranges from −6.8 to 14.8; equality is not shown."
+  - pattern: "\\b4\\b"
+    message:
+      de: "Aussage 4 stimmt nicht: Ein großer p-Wert sagt nichts darüber, ob große Unterschiede ausgeschlossen sind."
+      en: "Statement 4 is false: a large p value says nothing about whether large differences are ruled out."

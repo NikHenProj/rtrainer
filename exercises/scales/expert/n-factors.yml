@@ -1,0 +1,91 @@
+id: sc-e-n-factors
+lesson: scales-expert
+order: 4
+title:
+  de: Faktorzahl mit mehreren Kriterien
+  en: Number of factors with several criteria
+kind: write
+required: false
+packages: [dplyr, EFAtools, lavaan]
+data: [tam_markets]
+setup: |
+  library(dplyr)
+  library(EFAtools)
+  library(lavaan)
+  items <- tam_markets |>
+    mutate(peou_3 = 8 - peou_3, trust_4 = 8 - trust_4) |>
+    select(pu_1:bi_4)
+  rho <- lavCor(items, ordered = names(items))
+prompt:
+  de: |
+    Ein Kriterium allein überzeugt Gutachter selten. Lass `N_FACTORS()` aus
+    EFAtools auf `rho` (600 Befragte) drei Kriterien auf einmal rechnen:
+    Parallelanalyse (`"PARALLEL"`), Empirical Kaiser Criterion (`"EKC"`) und
+    Sequential Model Tests (`"SMT"`), Schätzer `"ULS"`, ohne Fortschrittsbalken
+    (`show_progress = FALSE`). Setze vorher `set.seed(2026)`.
+
+    Gib den benannten Vektor `$n_factors` des Ergebnisses zurück.
+  en: |
+    A single criterion rarely convinces reviewers. Let `N_FACTORS()` from
+    EFAtools compute three criteria at once on `rho` (600 respondents): parallel
+    analysis (`"PARALLEL"`), the empirical Kaiser criterion (`"EKC"`) and
+    sequential model tests (`"SMT"`), estimator `"ULS"`, without a progress bar
+    (`show_progress = FALSE`). Call `set.seed(2026)` first.
+
+    Return the named vector `$n_factors` of the result.
+starter: |
+  set.seed(2026)
+  nf <- N_FACTORS(rho, criteria = "PARALLEL")
+  nf$n_factors
+solution: |
+  set.seed(2026)
+  nf <- N_FACTORS(
+    rho,
+    N = nrow(items),
+    criteria = c("PARALLEL", "EKC", "SMT"),
+    method = "ULS",
+    show_progress = FALSE
+  )
+  nf$n_factors
+hints:
+  - de: "`criteria` nimmt einen Vektor: `c(\"PARALLEL\", \"EKC\", \"SMT\")`."
+    en: "`criteria` takes a vector: `c(\"PARALLEL\", \"EKC\", \"SMT\")`."
+  - de: "Wie bei `PARALLEL()` braucht `N_FACTORS()` mit einer Matrix die Stichprobengröße."
+    en: "As with `PARALLEL()`, `N_FACTORS()` needs the sample size when given a matrix."
+  - de: "Ergänze `N = nrow(items)`, `method = \"ULS\"` und `show_progress = FALSE`."
+    en: "Add `N = nrow(items)`, `method = \"ULS\"` and `show_progress = FALSE`."
+explanation:
+  de: |
+    EKC, Parallelanalyse, χ²-Test und RMSEA der sequenziellen Modelltests
+    schlagen 4 Faktoren vor, das AIC 5. Das ist typisch: Bei 600 Personen findet
+    ein Kriterium, das nur Fit belohnt, schnell einen kleinen Zusatzfaktor (hier
+    ohne Item mit nennenswerter Ladung, höchstens .19). Entscheide nach Übereinstimmung und
+    Theorie (vier TAM-Konstrukte) und berichte die Kriterien: „Parallelanalyse,
+    EKC und SMT (χ², RMSEA) sprachen für vier Faktoren, das AIC für fünf; wir
+    folgten der Theorie und der Mehrheit der Kriterien.“ Das Kaiser-Kriterium
+    (Eigenwerte > 1) fehlt bewusst: Es überschätzt die Faktorzahl bei vielen
+    Items und ist nur noch historisch.
+  en: |
+    EKC, parallel analysis and the χ² test and RMSEA of the sequential model tests
+    suggest 4 factors, the AIC 5. That is typical: with 600 people, a criterion
+    that only rewards fit quickly finds a small extra factor (here without any
+    item loading notably on it, at most .19). Decide by agreement and theory (four TAM
+    constructs) and report the criteria: "Parallel analysis, EKC and SMT (χ²,
+    RMSEA) suggested four factors, the AIC five; we followed theory and the
+    majority of criteria." The Kaiser criterion (eigenvalues > 1) is left out on
+    purpose: it overestimates the number of factors with many items and is only
+    of historical interest.
+misconception:
+  de: "Es gibt das eine richtige Kriterium für die Zahl der Faktoren."
+  en: "There is one correct criterion for the number of factors."
+check:
+  type: value
+common_mistakes:
+  - pattern: "\"KGC\""
+    message:
+      de: "Das Kaiser-Kriterium (Eigenwerte > 1) überschätzt die Faktorzahl; gefragt sind PARALLEL, EKC und SMT."
+      en: "The Kaiser criterion (eigenvalues > 1) overestimates the number of factors; the task asks for PARALLEL, EKC and SMT."
+  - pattern: "N_FACTORS\\(\\s*items"
+    message:
+      de: "Mit `items` rechnet EFAtools Pearson-Korrelationen. Nimm `rho` und gib `N` an."
+      en: "With `items`, EFAtools computes Pearson correlations. Use `rho` and supply `N`."

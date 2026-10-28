@@ -1,0 +1,125 @@
+id: sc-e-grm-interpret
+lesson: scales-expert
+order: 3
+title:
+  de: Ein Graded-Response-Modell lesen
+  en: Reading a graded response model
+kind: interpret
+required: true
+packages: []
+data: []
+setup: ""
+prompt:
+  de: |
+    Lokal mit mirt geschätzt (läuft im Browser nicht): je ein eindimensionales
+    Graded-Response-Modell für Nützlichkeit und Bedienbarkeit, 600 Befragte,
+    `peou_3` umgepolt. `a` = Trennschärfe, `b1`–`b6` = Schwellen auf der latenten
+    Skala (Mittelwert 0, SD 1).
+
+    ```
+    mirt(pu, 1, itemtype = "graded")
+               a     b1     b2     b3     b4    b5    b6
+    pu_1    2.70  -1.66  -1.00  -0.36   0.24  0.90  1.55
+    pu_2    2.25  -1.93  -1.18  -0.51   0.20  0.89  1.61
+    pu_3    2.61  -2.12  -1.34  -0.72  -0.12  0.53  1.16
+    pu_4    2.54  -1.83  -1.14  -0.56   0.21  0.93  1.57
+    pu_5    0.74  -3.78  -2.17  -0.79   0.53  2.02  3.28
+
+    mirt(peou, 1, itemtype = "graded")
+    peou_1  2.22  -3.97  -3.14  -2.13  -1.54 -0.85 -0.25
+    peou_2  2.26  -1.84  -0.96  -0.27   0.39  1.14  1.95
+    peou_3  1.74  -1.94  -1.04  -0.31   0.44  1.37  2.12
+    peou_4  2.00  -1.83  -1.07  -0.32   0.54  1.32  1.97
+    ```
+
+    Welche Aussagen stimmen?
+
+    1. `pu_5` trennt am schlechtesten: Seine Antworten hängen nur schwach von der Nützlichkeit ab, es liefert über den ganzen Bereich wenig Information.
+    2. Bei `peou_1` liegen alle Schwellen unter 0: Das Item unterscheidet nur unterhalb des Mittelwerts, zwischen Personen mit hoher Bedienbarkeit kaum.
+    3. Weil `peou_1` so schief verteilt ist, ist seine Trennschärfe niedrig.
+    4. `b3 = -0.36` bei `pu_1` heißt: 36 % der Befragten wählen höchstens Kategorie 3.
+
+    Gib die Nummern der richtigen Aussagen aufsteigend als Vektor ein, z. B. `c(1, 2)`.
+  en: |
+    Estimated locally with mirt (does not run in the browser): one unidimensional
+    graded response model each for usefulness and ease of use, 600 respondents,
+    `peou_3` reverse-scored. `a` = discrimination, `b1`–`b6` = thresholds on the
+    latent scale (mean 0, SD 1).
+
+    ```
+    mirt(pu, 1, itemtype = "graded")
+               a     b1     b2     b3     b4    b5    b6
+    pu_1    2.70  -1.66  -1.00  -0.36   0.24  0.90  1.55
+    pu_2    2.25  -1.93  -1.18  -0.51   0.20  0.89  1.61
+    pu_3    2.61  -2.12  -1.34  -0.72  -0.12  0.53  1.16
+    pu_4    2.54  -1.83  -1.14  -0.56   0.21  0.93  1.57
+    pu_5    0.74  -3.78  -2.17  -0.79   0.53  2.02  3.28
+
+    mirt(peou, 1, itemtype = "graded")
+    peou_1  2.22  -3.97  -3.14  -2.13  -1.54 -0.85 -0.25
+    peou_2  2.26  -1.84  -0.96  -0.27   0.39  1.14  1.95
+    peou_3  1.74  -1.94  -1.04  -0.31   0.44  1.37  2.12
+    peou_4  2.00  -1.83  -1.07  -0.32   0.54  1.32  1.97
+    ```
+
+    Which statements are true?
+
+    1. `pu_5` discriminates worst: its answers depend only weakly on usefulness, it provides little information across the whole range.
+    2. For `peou_1` all thresholds lie below 0: the item only distinguishes below the mean, hardly between people with high ease of use.
+    3. Because `peou_1` is so skewed, its discrimination is low.
+    4. `b3 = -0.36` for `pu_1` means: 36% of respondents choose at most category 3.
+
+    Type the numbers of the true statements in ascending order as a vector,
+    e.g. `c(1, 2)`.
+starter: |
+  # Nummern der richtigen Aussagen als Vektor / numbers of the true statements as a vector
+solution: |
+  c(1, 2)
+hints:
+  - de: "`a` gibt an, wie steil die Kategorienkurven sind: Je höher, desto schärfer trennt das Item benachbarte Personen."
+    en: "`a` says how steep the category curves are: the higher, the more sharply the item separates nearby people."
+  - de: "`b_k` ist der Punkt auf der latenten Skala, an dem die Wahrscheinlichkeit, Kategorie k + 1 oder höher zu wählen, 50 % beträgt."
+    en: "`b_k` is the point on the latent scale where the probability of choosing category k + 1 or higher is 50%."
+  - de: "Lage (b) und Trennschärfe (a) sind getrennte Parameter. Wo liegt die höchste Schwelle von `peou_1`, und was heißt das für Personen bei θ = +1?"
+    en: "Location (b) and discrimination (a) are separate parameters. Where is the highest threshold of `peou_1`, and what does that mean for people at θ = +1?"
+explanation:
+  de: |
+    Richtig sind 1 und 2. `pu_5` hat a = 0,74 (die anderen 2,3–2,7), und seine
+    Schwellen liegen weit gespreizt (−3,8 bis 3,3): Die Antwort hängt wenig von
+    der Nützlichkeit ab. Das passt zur niedrigen Kommunalität in der EFA. Bei
+    `peou_1` liegt selbst die höchste Schwelle (7 statt 6) bei θ = −0,25: Wer
+    durchschnittlich oder besser bewertet, kreuzt fast sicher 7 an. Das Item
+    trennt dort kaum, obwohl a = 2,22 hoch ist; es misst gut, aber nur unten.
+    Trennschärfe und Lage sind getrennt, deshalb ist 3 falsch. 4 verwechselt die
+    Schwelle mit einem Anteil: b ist ein Ort auf der θ-Skala (in SD), an dem
+    P(Kategorie ≥ 4) = 50 % für eine Person mit diesem θ gilt. Für die Skala
+    folgt: Für Vergleiche im oberen Bereich (wer findet das System sehr leicht?)
+    trägt `peou_1` nichts bei; ein schwierigeres Item („auch ohne Anleitung alle
+    Funktionen gefunden“) würde helfen.
+  en: |
+    Statements 1 and 2 are true. `pu_5` has a = 0.74 (the others 2.3–2.7), and its
+    thresholds are spread far apart (−3.8 to 3.3): the answer depends little on
+    usefulness. That matches its low communality in the EFA. For `peou_1` even the
+    highest threshold (7 instead of 6) lies at θ = −0.25: anyone rating average or
+    better almost certainly ticks 7. The item hardly discriminates there, although
+    a = 2.22 is high; it measures well, but only at the low end. Discrimination
+    and location are separate, so 3 is false. 4 confuses the threshold with a
+    proportion: b is a location on the θ scale (in SD) at which
+    P(category ≥ 4) = 50% for a person with that θ. For the scale this means:
+    for comparisons at the high end (who finds the system very easy?) `peou_1`
+    contributes nothing; a harder item ("found all functions without
+    instructions") would help.
+misconception:
+  de: "Ein schief verteiltes Item misst automatisch schlecht."
+  en: "A skewed item automatically measures poorly."
+check:
+  type: value
+common_mistakes:
+  - pattern: "\\b3\\b"
+    message:
+      de: "Aussage 3 stimmt nicht: `peou_1` hat a = 2,22, also hohe Trennschärfe. Schiefe zeigt sich in den Schwellen (Lage), nicht in a."
+      en: "Statement 3 is false: `peou_1` has a = 2.22, i.e. high discrimination. Skewness shows in the thresholds (location), not in a."
+  - pattern: "\\b4\\b"
+    message:
+      de: "Aussage 4 stimmt nicht: Schwellen sind Orte auf der latenten Skala in SD-Einheiten, keine Anteile der Stichprobe."
+      en: "Statement 4 is false: thresholds are locations on the latent scale in SD units, not proportions of the sample."

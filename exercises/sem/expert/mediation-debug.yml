@@ -1,0 +1,109 @@
+id: sm-e-mediation-debug
+lesson: sem-expert
+order: 4
+title:
+  de: Latente Mediation mit falschem Pfad
+  en: Latent mediation with the wrong path
+kind: debug
+required: false
+packages: [dplyr, lavaan]
+data: [tam_markets]
+setup: |
+  library(dplyr)
+  library(lavaan)
+  tam <- tam_markets |>
+    mutate(peou_3 = 8 - peou_3, trust_4 = 8 - trust_4)
+prompt:
+  de: |
+    TAM-Annahme: Bedienbarkeit wirkt über die Nützlichkeit auf die
+    Nutzungsabsicht (peou → pu → bi). Ein Kollege schätzt das latent und meldet
+    „kein indirekter Effekt“ (0,050, KI schließt 0 ein). Der totale Effekt ist
+    aber deutlich (0,509).
+
+    Finde den Fehler in der Modellsyntax und gib die definierten Parameter als
+    Tabelle mit den Spalten `label`, `est`, `ci.lower`, `ci.upper` zurück, Zahlen
+    auf 3 Stellen gerundet.
+  en: |
+    TAM assumption: ease of use acts on intention through usefulness
+    (peou → pu → bi). A colleague estimates this latently and reports "no
+    indirect effect" (0.050, CI includes 0). The total effect, however, is clear
+    (0.509).
+
+    Find the error in the model syntax and return the defined parameters as a
+    table with the columns `label`, `est`, `ci.lower`, `ci.upper`, numbers rounded
+    to 3 decimals.
+starter: |
+  med_model <- "
+    peou =~ peou_1 + peou_2 + peou_3 + peou_4
+    pu =~ pu_1 + pu_2 + pu_3 + pu_4 + pu_5
+    bi =~ bi_1 + bi_2 + bi_3 + bi_4
+    pu ~ a * peou
+    bi ~ b * pu + c * peou
+    ind := a * c
+    total := c + a * b
+  "
+  fit <- sem(med_model, data = tam)
+  parameterEstimates(fit) |>
+    filter(op == ":=") |>
+    select(label, est, ci.lower, ci.upper) |>
+    mutate(across(c(est, ci.lower, ci.upper), \(x) round(x, 3)))
+solution: |
+  med_model <- "
+    peou =~ peou_1 + peou_2 + peou_3 + peou_4
+    pu =~ pu_1 + pu_2 + pu_3 + pu_4 + pu_5
+    bi =~ bi_1 + bi_2 + bi_3 + bi_4
+    pu ~ a * peou
+    bi ~ b * pu + c * peou
+    ind := a * b
+    total := c + a * b
+  "
+  fit <- sem(med_model, data = tam)
+  parameterEstimates(fit) |>
+    filter(op == ":=") |>
+    select(label, est, ci.lower, ci.upper) |>
+    mutate(across(c(est, ci.lower, ci.upper), \(x) round(x, 3)))
+hints:
+  - de: "Die Labels stehen vor den Prädiktoren: Welcher Pfad heißt `a`, welcher `b`, welcher `c`?"
+    en: "The labels stand before the predictors: which path is `a`, which `b`, which `c`?"
+  - de: "Der indirekte Effekt ist das Produkt der beiden Pfade über den Mediator: peou → pu und pu → bi."
+    en: "The indirect effect is the product of the two paths through the mediator: peou → pu and pu → bi."
+  - de: "`ind := a * b`."
+    en: "`ind := a * b`."
+explanation:
+  de: |
+    `c` ist der direkte Pfad peou → bi; `a * c` multipliziert den ersten Pfad mit
+    dem direkten Effekt und ergibt nichts Interpretierbares. Richtig ist
+    `ind := a * b` = 0,983 × 0,466 = 0,458, 95 %-KI [0,329; 0,588]. Der direkte
+    Effekt ist klein (c = 0,051, KI schließt 0 ein), der totale 0,509: Fast der
+    ganze Effekt der Bedienbarkeit läuft über die Nützlichkeit (vollständige
+    Mediation im TAM-Sinn). Latent modelliert sind die Pfade messfehlerbereinigt;
+    mit Skalenmittelwerten wäre der indirekte Effekt kleiner und der direkte
+    größer. Die KI hier sind Delta-Methode; für Berichte bootstrappen
+    (`se = "bootstrap"`, `bootstrap = 1000`, lokal) und `ci.lower`/`ci.upper` aus
+    `parameterEstimates(fit, boot.ci.type = "perc")` nehmen.
+  en: |
+    `c` is the direct path peou → bi; `a * c` multiplies the first path by the
+    direct effect and yields nothing interpretable. Correct is `ind := a * b` =
+    0.983 × 0.466 = 0.458, 95% CI [0.329, 0.588]. The direct effect is small
+    (c = 0.051, CI includes 0), the total 0.509: almost the whole effect of ease
+    of use runs through usefulness (full mediation in the TAM sense). Modelled
+    latently, the paths are corrected for measurement error; with scale means the
+    indirect effect would be smaller and the direct one larger. The CIs here are
+    delta method; for reports bootstrap (`se = "bootstrap"`, `bootstrap = 1000`,
+    locally) and take `ci.lower`/`ci.upper` from
+    `parameterEstimates(fit, boot.ci.type = "perc")`.
+misconception:
+  de: "In `:=` kann man beliebige Labels kombinieren; lavaan prüft, ob der Pfad über den Mediator läuft."
+  en: "In `:=` any labels can be combined; lavaan checks whether the path runs through the mediator."
+check:
+  type: value
+  tolerance: 1.0e-3
+common_mistakes:
+  - pattern: "ind\\s*:=\\s*a\\s*\\*\\s*c"
+    message:
+      de: "`c` ist der direkte Pfad peou → bi. Der indirekte Effekt läuft über pu: `a * b`."
+      en: "`c` is the direct path peou → bi. The indirect effect runs through pu: `a * b`."
+  - pattern: "se\\s*=\\s*\"boot"
+    message:
+      de: "Bootstrap ist im Browser sehr langsam und liefert andere Grenzen. Für diese Übung reichen die KI der Delta-Methode (Voreinstellung)."
+      en: "Bootstrapping is very slow in the browser and gives different limits. For this exercise the delta-method CIs (default) are enough."

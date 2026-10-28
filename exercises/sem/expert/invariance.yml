@@ -1,0 +1,105 @@
+id: sm-e-invariance
+lesson: sem-expert
+order: 0
+title:
+  de: Messinvarianz in drei Stufen
+  en: Measurement invariance in three steps
+kind: write
+required: false
+challenge: true
+packages: [dplyr, purrr, lavaan]
+data: [tam_markets]
+setup: |
+  library(dplyr)
+  library(purrr)
+  library(lavaan)
+  tam <- tam_markets |>
+    mutate(peou_3 = 8 - peou_3, trust_4 = 8 - trust_4)
+  tam_model <- "
+    pu =~ pu_1 + pu_2 + pu_3 + pu_4 + pu_5
+    peou =~ peou_1 + peou_2 + peou_3 + peou_4
+    trust =~ trust_1 + trust_2 + trust_3 + trust_4 + trust_5
+    bi =~ bi_1 + bi_2 + bi_3 + bi_4
+  "
+prompt:
+  de: |
+    Frage: Bevor du Nützlichkeit, Vertrauen und Nutzungsabsicht zwischen
+    Deutschland und den USA vergleichst, musst du zeigen, dass der Fragebogen in
+    beiden Märkten dasselbe misst. `tam` enthält die Daten (umgepolte Items
+    gedreht), `tam_model` das Messmodell mit vier Faktoren.
+
+    Schätze drei Mehrgruppenmodelle mit `cfa(..., group = "market")`:
+    `configural` (ohne Gleichheitsbedingungen), `metric` (Ladungen gleich) und
+    `scalar` (Ladungen und Intercepts gleich). Gib eine Tabelle mit den Spalten
+    `model` (`"configural"`, `"metric"`, `"scalar"`), `chisq`, `df`, `cfi` und
+    `rmsea` zurück, Zahlen auf 3 Stellen gerundet.
+  en: |
+    Question: before you compare usefulness, trust and intention between Germany
+    and the US, you have to show that the questionnaire measures the same thing in
+    both markets. `tam` holds the data (reverse-keyed items flipped), `tam_model`
+    the measurement model with four factors.
+
+    Fit three multi-group models with `cfa(..., group = "market")`: `configural`
+    (no equality constraints), `metric` (equal loadings) and `scalar` (equal
+    loadings and intercepts). Return a table with the columns `model`
+    (`"configural"`, `"metric"`, `"scalar"`), `chisq`, `df`, `cfi` and `rmsea`,
+    numbers rounded to 3 decimals.
+starter: |
+  fit <- cfa(tam_model, data = tam)
+  fitMeasures(fit, c("chisq", "df", "cfi", "rmsea"))
+solution: |
+  configural <- cfa(tam_model, data = tam, group = "market")
+  metric <- cfa(tam_model, data = tam, group = "market", group.equal = "loadings")
+  scalar <- cfa(tam_model, data = tam, group = "market",
+                group.equal = c("loadings", "intercepts"))
+  list(configural = configural, metric = metric, scalar = scalar) |>
+    imap(\(fit, name) {
+      tibble(model = name, !!!as.list(fitMeasures(fit, c("chisq", "df", "cfi", "rmsea"))))
+    }) |>
+    list_rbind() |>
+    mutate(across(chisq:rmsea, \(x) round(x, 3)))
+hints:
+  - de: "Die Stufen unterscheiden sich nur in `group.equal`: nichts, `\"loadings\"`, `c(\"loadings\", \"intercepts\")`."
+    en: "The steps differ only in `group.equal`: nothing, `\"loadings\"`, `c(\"loadings\", \"intercepts\")`."
+  - de: "`fitMeasures(fit, c(\"chisq\", \"df\", \"cfi\", \"rmsea\"))` liefert einen benannten Vektor; `as.list()` macht daraus Spalten für `tibble()`."
+    en: "`fitMeasures(fit, c(\"chisq\", \"df\", \"cfi\", \"rmsea\"))` returns a named vector; `as.list()` turns it into columns for `tibble()`."
+  - de: "Drei Zeilen mit `tibble(model = ..., !!!as.list(fitMeasures(...)))` und `bind_rows()` gehen auch; `imap()` über eine benannte Liste spart Wiederholung."
+    en: "Three rows with `tibble(model = ..., !!!as.list(fitMeasures(...)))` and `bind_rows()` work too; `imap()` over a named list saves repetition."
+explanation:
+  de: |
+    Konfigural (gleiche Struktur, alles frei) passt sehr gut (χ²(258) = 233,7,
+    CFI = 1,000). Metrisch (gleiche Ladungen) verschlechtert kaum: Δχ²(14) = 18,1,
+    p = .20, ΔCFI = .000. Skalar (zusätzlich gleiche Intercepts) bricht ein:
+    Δχ²(14) = 119,3, p < .001, ΔCFI = −.018, RMSEA steigt auf .031. Gängige
+    Grenze: ΔCFI ≤ −.01 (Chen, 2007) spricht gegen die strengere Stufe. Für die
+    Deutung: Metrische Invarianz erlaubt Vergleiche von Zusammenhängen
+    (Regressionsgewichte, Korrelationen), erst skalare Invarianz Vergleiche von
+    latenten Mittelwerten. Hier misst mindestens ein Item in den USA auf einem
+    anderen Niveau. Den Δχ²-Test liefert `lavTestLRT(configural, metric, scalar)`,
+    die ganze Übersicht `semTools::compareFit()`.
+  en: |
+    Configural (same structure, everything free) fits very well (χ²(258) = 233.7,
+    CFI = 1.000). Metric (equal loadings) barely worsens: Δχ²(14) = 18.1, p = .20,
+    ΔCFI = .000. Scalar (equal intercepts as well) breaks down: Δχ²(14) = 119.3,
+    p < .001, ΔCFI = −.018, RMSEA rises to .031. A common cut-off: ΔCFI ≤ −.01
+    (Chen, 2007) speaks against the stricter step. For interpretation: metric
+    invariance allows comparing relationships (regression weights,
+    correlations), only scalar invariance allows comparing latent means. Here at
+    least one item is answered at a different level in the US. The Δχ² test comes
+    from `lavTestLRT(configural, metric, scalar)`, the full overview from
+    `semTools::compareFit()`.
+misconception:
+  de: "Wenn das Messmodell in der Gesamtstichprobe gut passt, misst es in allen Gruppen dasselbe."
+  en: "If the measurement model fits well in the whole sample, it measures the same thing in all groups."
+check:
+  type: value
+  tolerance: 1.0e-3
+common_mistakes:
+  - pattern: "group\\.equal\\s*=\\s*\"intercepts\""
+    message:
+      de: "Skalare Invarianz setzt metrische voraus: Ladungen und Intercepts gleich, `c(\"loadings\", \"intercepts\")`."
+      en: "Scalar invariance presupposes metric invariance: equal loadings and intercepts, `c(\"loadings\", \"intercepts\")`."
+  - pattern: "group\\.equal\\s*=\\s*c\\([^)]*\"means\""
+    message:
+      de: "Gleiche latente Mittelwerte sind keine Invarianzstufe des Messmodells, sondern die inhaltliche Hypothese, die du danach prüfst."
+      en: "Equal latent means are not a measurement invariance step but the substantive hypothesis you test afterwards."

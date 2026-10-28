@@ -1,0 +1,95 @@
+id: gc-e-planned
+lesson: group-comparisons-expert
+order: 1
+title:
+  de: Geplante Kontraste mit eigenen Gewichten
+  en: Planned contrasts with custom weights
+kind: write
+required: true
+packages: [dplyr, afex, emmeans]
+data: [usability]
+setup: |
+  library(dplyr)
+  library(afex)
+  library(emmeans)
+  fit_seq <- suppressWarnings(
+    aov_ez("participant", "seq", usability, within = "prototype", fun_aggregate = mean)
+  )
+prompt:
+  de: |
+    Im Usability-Test ist Prototyp A die aktuelle Version, B und C sind zwei
+    neue Entwürfe. Vorab festgelegt waren zwei Fragen: (1) Werden die neuen
+    Entwürfe im Mittel als einfacher erlebt als A? (2) Unterscheiden sich B und C?
+    `fit_seq` ist die ANOVA mit Messwiederholung der Einfachheitsbewertung `seq`
+    (1–7, Mittel pro Person und Prototyp; vier Personen ohne vollständige Daten
+    hat afex entfernt, n = 20).
+
+    Teste beide Fragen mit `contrast()` und einer benannten Liste von Gewichten:
+    `new_vs_A` (neue Entwürfe minus A) und `B_vs_C`. Gib die Zusammenfassung mit
+    Konfidenzintervallen (`summary(..., infer = TRUE)`) als Tibble zurück.
+  en: |
+    In the usability test, prototype A is the current version, B and C are two
+    new designs. Two questions were fixed in advance: (1) are the new designs on
+    average experienced as easier than A? (2) do B and C differ? `fit_seq` is the
+    repeated-measures ANOVA of the ease rating `seq` (1–7, mean per person and
+    prototype; afex removed four people without complete data, n = 20).
+
+    Test both questions with `contrast()` and a named list of weights:
+    `new_vs_A` (new designs minus A) and `B_vs_C`. Return the summary with
+    confidence intervals (`summary(..., infer = TRUE)`) as a tibble.
+starter: |
+  emm <- emmeans(fit_seq, ~ prototype)
+  pairs(emm, adjust = "holm")
+solution: |
+  emm <- emmeans(fit_seq, ~ prototype)
+  contrast(emm, list(new_vs_A = c(-1, 0.5, 0.5), B_vs_C = c(0, 1, -1))) |>
+    summary(infer = TRUE) |>
+    as_tibble()
+hints:
+  - de: "Die Gewichte stehen in der Reihenfolge der Stufen (A, B, C) und summieren sich zu 0."
+    en: "The weights follow the order of the levels (A, B, C) and sum to 0."
+  - de: "„Neue minus A“: A bekommt −1, B und C je +0,5. „B minus C“: 0, 1, −1."
+    en: "\"New minus A\": A gets −1, B and C +0.5 each. \"B minus C\": 0, 1, −1."
+  - de: "`contrast(emm, list(new_vs_A = c(-1, 0.5, 0.5), B_vs_C = c(0, 1, -1)))`, dann `summary(infer = TRUE)` und `as_tibble()`."
+    en: "`contrast(emm, list(new_vs_A = c(-1, 0.5, 0.5), B_vs_C = c(0, 1, -1)))`, then `summary(infer = TRUE)` and `as_tibble()`."
+explanation:
+  de: |
+    Die neuen Entwürfe werden im Mittel 0,14 Punkte einfacher bewertet als A,
+    95 %-KI [−0,10; 0,37], t(19) = 1,23, p = .23; B liegt 0,33 Punkte über C
+    (KI [−0,18; 0,83], p = .19). Beide Fragen bleiben offen. Gewichte mit ±0,5
+    halten den Kontrast in der Einheit der Skala (Differenz zweier Mittelwerte);
+    `c(-2, 1, 1)` testet dasselbe, schätzt aber das Doppelte. Die beiden
+    Kontraste sind orthogonal (Produkt der Gewichte summiert sich zu 0) und
+    vorab geplant, deshalb ohne Korrektur; alle drei Paarvergleiche nachträglich
+    bräuchten Holm. Zwei Feinheiten: afex hat Personen ohne vollständige Daten
+    entfernt (bei p07 fehlt C ganz); mit allen 24 wäre ein Mixed Model nötig
+    (`lmer(seq ~ prototype + (1 | participant))`). Und eine Bewertung auf 1–7 mit
+    Mitteln über vier Aufgaben ist ordinal genug, dass sich ein Blick in die
+    Lektion „Nichtparametrisch und robust“ lohnt.
+  en: |
+    The new designs are rated 0.14 points easier than A on average, 95% CI
+    [−0.10, 0.37], t(19) = 1.23, p = .23; B is 0.33 points above C (CI
+    [−0.18, 0.83], p = .19). Both questions stay open. Weights of ±0.5 keep the
+    contrast in the unit of the scale (difference of two means); `c(-2, 1, 1)`
+    tests the same but estimates twice the value. The two contrasts are
+    orthogonal (the products of the weights sum to 0) and planned in advance, so
+    no correction; all three pairwise comparisons afterwards would need Holm. Two
+    details: afex removed people without complete data (p07 lacks C entirely);
+    using all 24 would need a mixed model (`lmer(seq ~ prototype + (1 |
+    participant))`). And a 1–7 rating averaged over four tasks is ordinal enough
+    that a look at the lesson "Nonparametric and robust" pays off.
+misconception:
+  de: "Nach einer ANOVA muss man immer alle Paarvergleiche rechnen."
+  en: "After an ANOVA you always have to compute all pairwise comparisons."
+check:
+  type: value
+  tolerance: 1.0e-4
+common_mistakes:
+  - pattern: "c\\(\\s*1\\s*,\\s*-0?\\.5\\s*,\\s*-0?\\.5\\s*\\)"
+    message:
+      de: "Das ist A minus neue Entwürfe; gefragt ist „neue minus A“: `c(-1, 0.5, 0.5)`."
+      en: "That is A minus the new designs; the task asks for \"new minus A\": `c(-1, 0.5, 0.5)`."
+  - pattern: "c\\(\\s*-2\\s*,\\s*1\\s*,\\s*1\\s*\\)"
+    message:
+      de: "Testet dasselbe, schätzt aber das Doppelte der Mittelwertdifferenz. Mit ±0,5 bleibt der Kontrast in Skalenpunkten."
+      en: "Tests the same but estimates twice the mean difference. With ±0.5 the contrast stays in scale points."

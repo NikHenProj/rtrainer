@@ -1,0 +1,134 @@
+# Knowledge check: passed at >= `pass` share of correctly answered questions.
+lesson: group-comparisons-expert
+pass: 0.8
+questions:
+  - id: gc-e-q-interaction
+    prompt:
+      de: "Was testet der Interaktionskontrast „(haptisch − visuell) bei Anfängern minus (haptisch − visuell) bei Erfahrenen“?"
+      en: "What does the interaction contrast \"(haptic − visual) for novices minus (haptic − visual) for experienced drivers\" test?"
+    options:
+      - text:
+          de: "Ob der Vorteil der haptischen Warnung von der Erfahrung abhängt, mit 1 df und einer Effektgröße in ms."
+          en: "Whether the advantage of the haptic warning depends on experience, with 1 df and an effect size in ms."
+        correct: true
+        explain:
+          de: "Genau. Ein gezielter Teil der Interaktion, direkt als Differenz von Differenzen mit KI."
+          en: "Exactly. A targeted part of the interaction, directly as a difference of differences with a CI."
+      - text:
+          de: "Ob haptische Warnungen insgesamt schneller sind als visuelle."
+          en: "Whether haptic warnings are faster than visual ones overall."
+        correct: false
+        explain:
+          de: "Das wäre ein Haupteffektkontrast, gemittelt über die Gruppen."
+          en: "That would be a main-effect contrast, averaged over the groups."
+      - text:
+          de: "Dasselbe wie der globale Interaktionstest der ANOVA."
+          en: "The same as the omnibus interaction test of the ANOVA."
+        correct: false
+        explain:
+          de: "Der globale Test hat hier 2 df und prüft alle Interaktionsmuster auf einmal."
+          en: "The omnibus test has 2 df here and tests all interaction patterns at once."
+  - id: gc-e-q-weights
+    prompt:
+      de: "Drei Stufen A, B, C. Welche Gewichte testen „B und C im Mittel gegen A“ in der Einheit der Skala?"
+      en: "Three levels A, B, C. Which weights test \"B and C on average against A\" in the unit of the scale?"
+    options:
+      - text:
+          de: "`c(-1, 0.5, 0.5)`"
+          en: "`c(-1, 0.5, 0.5)`"
+        correct: true
+        explain:
+          de: "Richtig: Mittel von B und C minus A, Gewichte summieren sich zu 0."
+          en: "Right: mean of B and C minus A, the weights sum to 0."
+      - text:
+          de: "`c(-2, 1, 1)`"
+          en: "`c(-2, 1, 1)`"
+        correct: false
+        explain:
+          de: "Gleicher Test (gleiches t und p), aber die Schätzung ist doppelt so groß und nicht in Skalenpunkten."
+          en: "Same test (same t and p), but the estimate is twice as large and not in scale points."
+      - text:
+          de: "`c(0, 1, 1)`"
+          en: "`c(0, 1, 1)`"
+        correct: false
+        explain:
+          de: "Die Gewichte summieren sich nicht zu 0; das ist kein Kontrast, sondern die Summe zweier Mittelwerte."
+          en: "The weights do not sum to 0; that is not a contrast but the sum of two means."
+  - id: gc-e-q-tost-ci
+    prompt:
+      de: "Warum zeigt TOSTER beim Äquivalenztest mit α = .05 ein 90 %-KI?"
+      en: "Why does TOSTER show a 90% CI for an equivalence test at α = .05?"
+    options:
+      - text:
+          de: "Weil zwei einseitige Tests mit je α = .05 genau dann beide signifikant sind, wenn das 90 %-KI innerhalb der Grenzen liegt."
+          en: "Because two one-sided tests at α = .05 each are both significant exactly when the 90% CI lies within the bounds."
+        correct: true
+        explain:
+          de: "Genau. Jede Seite des 90 %-KI entspricht einem einseitigen Test auf 5 %."
+          en: "Exactly. Each side of the 90% CI corresponds to a one-sided test at 5%."
+      - text:
+          de: "Weil Äquivalenztests großzügiger sein sollen als normale Tests."
+          en: "Because equivalence tests are meant to be more lenient than ordinary tests."
+        correct: false
+        explain:
+          de: "Das Fehlerniveau bleibt 5 %; es ist eine Folge der zwei einseitigen Tests."
+          en: "The error level stays at 5%; it follows from the two one-sided tests."
+      - text:
+          de: "Weil die Stichprobe zu klein für ein 95 %-KI ist."
+          en: "Because the sample is too small for a 95% CI."
+        correct: false
+        explain:
+          de: "Mit der Stichprobengröße hat die Wahl des KI-Niveaus nichts zu tun."
+          en: "The choice of CI level has nothing to do with sample size."
+  - id: gc-e-q-sesoi
+    prompt:
+      de: "Wie legst du die Äquivalenzgrenzen fest?"
+      en: "How do you set the equivalence bounds?"
+    options:
+      - text:
+          de: "Vorab, als kleinsten Unterschied, der inhaltlich zählt (z. B. 10 TLX-Punkte aus früheren Studien oder Anforderungen)."
+          en: "In advance, as the smallest difference that matters substantively (e.g. 10 TLX points from earlier studies or requirements)."
+        correct: true
+        explain:
+          de: "Richtig, und im Methodenteil begründen; idealerweise präregistriert."
+          en: "Right, and justify it in the methods section; ideally preregistered."
+      - text:
+          de: "Nach der Analyse so, dass das KI gerade innerhalb liegt."
+          en: "After the analysis, so that the CI just fits inside."
+        correct: false
+        explain:
+          de: "Damit ist jedes Ergebnis „gleichwertig“; der Test verliert seinen Sinn."
+          en: "Then every result is \"equivalent\"; the test loses its meaning."
+      - text:
+          de: "Immer als d = ±0,5, weil das ein mittlerer Effekt ist."
+          en: "Always as d = ±0.5, because that is a medium effect."
+        correct: false
+        explain:
+          de: "Pauschale Effektgrößen ersetzen keine inhaltliche Begründung, und ±0,5 SD ist oft zu großzügig."
+          en: "Blanket effect sizes do not replace a substantive justification, and ±0.5 SD is often too lenient."
+  - id: gc-e-q-ancova
+    prompt:
+      de: "Wann ist eine ANCOVA mit Kovariate problematisch?"
+      en: "When is an ANCOVA with a covariate problematic?"
+    options:
+      - text:
+          de: "Wenn die Kovariate nach der Behandlung gemessen wurde und selbst von ihr beeinflusst sein kann."
+          en: "When the covariate was measured after the treatment and may itself be affected by it."
+        correct: true
+        explain:
+          de: "Genau. Dann rechnet man einen Teil des Behandlungseffekts heraus."
+          en: "Exactly. Then part of the treatment effect is removed."
+      - text:
+          de: "Wenn die Gruppen randomisiert wurden."
+          en: "When the groups were randomised."
+        correct: false
+        explain:
+          de: "Das ist der beste Fall: Die Kovariate verkleinert nur den Fehler und erhöht die Power."
+          en: "That is the best case: the covariate only reduces the error and increases power."
+      - text:
+          de: "Wenn die Kovariate zentriert wurde."
+          en: "When the covariate was centred."
+        correct: false
+        explain:
+          de: "Zentrieren ist bei afex sogar empfohlen; es ändert die Tests der Faktoren nicht zum Schlechten."
+          en: "Centring is even recommended with afex; it does not change the tests of the factors for the worse."

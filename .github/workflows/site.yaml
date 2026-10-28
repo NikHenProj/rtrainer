@@ -87,6 +87,8 @@ jobs:
             any::ggrepel
             any::ggtext
             any::colorspace
+            any::EFAtools
+            any::TOSTER
             any::here
             any::jsonlite
             any::chromote
