@@ -1,0 +1,94 @@
+id: vi-e-richtext
+lesson: visualisation-expert
+order: 4
+title:
+  de: Direkt beschriften statt Legende
+  en: Direct labels instead of a legend
+kind: write
+required: false
+packages: [dplyr, ggplot2, ggtext]
+data: [driving_sim]
+setup: |
+  library(dplyr)
+  library(ggplot2)
+  library(ggtext)
+  trend <- driving_sim |>
+    summarise(rt_ms = mean(rt_ms, na.rm = TRUE), .by = c(condition, trial))
+prompt:
+  de: |
+    `trend` enthält die mittlere Reaktionszeit pro Bedingung und Durchgang (1–4).
+    Statt einer Legende soll am Ende jeder Linie ein Etikett stehen: der Name der
+    Bedingung fett und darunter der Wert im letzten Durchgang, z. B.
+    `**visual**<br>1074 ms`.
+
+    1. Erzeuge `ends`: die Zeilen mit `trial == 4` und eine Spalte `label` mit
+       `paste0("**", condition, "**<br>", round(rt_ms), " ms")`.
+    2. Ergänze den Plot im Starter um `geom_richtext(data = ends, aes(label = label),
+       hjust = 0, fill = NA, label.colour = NA)`.
+
+    Der Plot steht in der letzten Zeile.
+  en: |
+    `trend` holds the mean reaction time per condition and trial (1–4). Instead
+    of a legend, each line should end in a label: the condition name in bold and
+    below it the value in the last trial, e.g. `**visual**<br>1074 ms`.
+
+    1. Create `ends`: the rows with `trial == 4` and a column `label` with
+       `paste0("**", condition, "**<br>", round(rt_ms), " ms")`.
+    2. Add `geom_richtext(data = ends, aes(label = label), hjust = 0, fill = NA,
+       label.colour = NA)` to the plot in the starter.
+
+    The plot is on the last line.
+starter: |
+  ggplot(trend, aes(x = trial, y = rt_ms, colour = condition)) +
+    geom_line() +
+    scale_x_continuous(breaks = 1:4, expand = expansion(mult = c(0.05, 0.35))) +
+    guides(colour = "none")
+solution: |
+  ends <- trend |>
+    filter(trial == 4) |>
+    mutate(label = paste0("**", condition, "**<br>", round(rt_ms), " ms"))
+  ggplot(trend, aes(x = trial, y = rt_ms, colour = condition)) +
+    geom_line() +
+    geom_richtext(data = ends, aes(label = label), hjust = 0, fill = NA, label.colour = NA) +
+    scale_x_continuous(breaks = 1:4, expand = expansion(mult = c(0.05, 0.35))) +
+    guides(colour = "none")
+hints:
+  - de: "Zuerst die Tabelle `ends` mit `filter()` und `mutate()` bauen, dann den Plot."
+    en: "First build the table `ends` with `filter()` and `mutate()`, then the plot."
+  - de: "`geom_richtext()` versteht Markdown und einfache HTML-Tags wie `<br>`; ohne `fill = NA` und `label.colour = NA` zeichnet es einen Kasten."
+    en: "`geom_richtext()` understands Markdown and simple HTML tags such as `<br>`; without `fill = NA` and `label.colour = NA` it draws a box."
+  - de: "`ends <- trend |> filter(trial == 4) |> mutate(label = paste0(\"**\", condition, \"**<br>\", round(rt_ms), \" ms\"))`"
+    en: "`ends <- trend |> filter(trial == 4) |> mutate(label = paste0(\"**\", condition, \"**<br>\", round(rt_ms), \" ms\"))`"
+explanation:
+  de: |
+    Direkte Beschriftung erspart den Blicksprung zur Legende und funktioniert auch
+    ohne Farbe (Druck, Farbsehschwäche). `geom_richtext()` aus ggtext rendert
+    Markdown (`**fett**`, `*kursiv*`) und `<br>` für Zeilenumbrüche; die Farbe
+    erbt das Etikett von der Linie. `hjust = 0` setzt den Text links ans Linienende,
+    `expansion(mult = c(0.05, 0.35))` schafft rechts Platz. Dasselbe geht für
+    Titel: `labs(title = "<span style='color:#0072B2'>haptisch</span> am schnellsten")`
+    mit `theme(plot.title = element_markdown())` ersetzt die Legende durch farbige
+    Wörter im Titel.
+  en: |
+    Direct labelling saves the eye jump to the legend and also works without
+    colour (print, colour vision deficiency). `geom_richtext()` from ggtext renders
+    Markdown (`**bold**`, `*italic*`) and `<br>` for line breaks; the label
+    inherits its colour from the line. `hjust = 0` puts the text to the right of the
+    line end, `expansion(mult = c(0.05, 0.35))` makes room on the right. The same
+    works for titles: `labs(title = "<span style='color:#0072B2'>haptic</span>
+    fastest")` with `theme(plot.title = element_markdown())` replaces the legend
+    with coloured words in the title.
+misconception:
+  de: "Mehrere Linien brauchen immer eine Legende, damit man sie zuordnen kann."
+  en: "Several lines always need a legend so that they can be identified."
+check:
+  type: plot
+common_mistakes:
+  - pattern: "geom_text\\(|geom_label\\("
+    message:
+      de: "`geom_text()` zeigt `**` und `<br>` als Zeichen. Markdown rendert `geom_richtext()`."
+      en: "`geom_text()` shows `**` and `<br>` literally. `geom_richtext()` renders Markdown."
+  - pattern: "\\\\n"
+    message:
+      de: "In ggtext bricht `<br>` die Zeile um, nicht `\\n`."
+      en: "In ggtext, `<br>` breaks the line, not `\\n`."

@@ -609,6 +609,83 @@ run_exercise("pj-i-figure", paste(
 checked <- wait_for("!!document.querySelector('#ex-pj-i-figure .exercise-grade.alert-success')", timeout = 120)
 step("project-intermediate: contrast figure graded correct", !is.na(checked), sprintf("%s s", checked))
 
+# 15. Expert P1: linked in the course plan; the challenge box stands before
+# #why with a skip link and is graded like an exercise; load times with
+# dtplyr/duckplyr, mice/ggmice and ggdist/ggrepel/ggtext/colorspace.
+goto("/de/index.html")
+Sys.sleep(1)
+expert_p1 <- c("reshaping", "missing", "visualisation")
+unlinked <- js(sprintf(
+  "[%s].filter(slug => !document.querySelector(`a[href*=\"${slug}-expert\"]`)).join(', ')",
+  paste0("'", expert_p1, "'", collapse = ", ")
+))
+step("expert: P1 lessons linked in the German course plan", identical(unlinked, ""), unlinked)
+loaded <- wait_lesson("/de/reshaping-expert.html", "rs-e-glance-windows")
+step("reshaping-expert: webR, dtplyr and data.table ready", !is.na(loaded), sprintf("%s s", loaded))
+before_why <- js("(() => {
+  const box = document.querySelector('.rt-challenge');
+  const why = document.getElementById('why');
+  return !!box && !!why && !!(box.compareDocumentPosition(why) & Node.DOCUMENT_POSITION_FOLLOWING) &&
+    !!box.querySelector('#ex-rs-e-glance-windows');
+})()")
+step("reshaping-expert: challenge box with the exercise stands before #why", before_why)
+# Quarto rewrites the relative href to an absolute URL of the same page.
+skip <- js("(() => {
+  const a = document.querySelector('.rt-challenge a.rt-challenge-skip');
+  return a ? a.pathname + a.hash : '';
+})()")
+step("reshaping-expert: skip link points to #why", identical(skip, "/de/reshaping-expert.html#why"), skip)
+unnumbered <- js("(() => {
+  const title = document.querySelector('#ex-rs-e-glance-windows .rt-exercise-title')?.textContent || '';
+  const first = document.querySelector('.rt-exercise:not([data-challenge=\"true\"]) .rt-exercise-title')?.textContent || '';
+  return title.includes('Herausforderung') && first.includes('Übung 1');
+})()")
+step("reshaping-expert: challenge unnumbered, first exercise is Übung 1", unnumbered)
+glance_code <- function(count) paste(
+  "windows |>",
+  "  left_join(glances, by = join_by(participant, between(y$time_s, x$start_s, x$end_s))) |>",
+  sprintf("  summarise(n_glances = %s, .by = c(participant, condition, trial))", count),
+  sep = "\n"
+)
+run_exercise("rs-e-glance-windows", glance_code("n()"))
+hinted <- wait_for("(document.querySelector('#ex-rs-e-glance-windows .exercise-grade.alert-danger')?.textContent || '').includes('zählt Zeilen')", timeout = 90)
+step("reshaping-expert: n() in the challenge gets the hint", !is.na(hinted))
+run_exercise("rs-e-glance-windows", glance_code("sum(!is.na(time_s))"))
+checked <- wait_for("!!document.querySelector('#ex-rs-e-glance-windows .exercise-grade.alert-success')", timeout = 90)
+step("reshaping-expert: challenge (inequality join) graded correct", !is.na(checked), sprintf("%s s", checked))
+saved <- wait_for("JSON.parse(localStorage.getItem('rtrainer.progress') || '{}').exercises?.['rs-e-glance-windows']?.solved === true", timeout = 10)
+step("reshaping-expert: solved challenge saved in progress", !is.na(saved))
+run_exercise("rs-e-lazy-debug", paste(
+  "lane_log |>",
+  "  lazy_dt() |>",
+  "  group_by(participant, condition) |>",
+  "  summarise(share_out = round(mean(abs(lane_pos) > 0.5), 3)) |>",
+  "  as_tibble()",
+  sep = "\n"
+))
+checked <- wait_for("!!document.querySelector('#ex-rs-e-lazy-debug .exercise-grade.alert-success')", timeout = 90)
+step("reshaping-expert: dtplyr solution graded correct", !is.na(checked), sprintf("%s s", checked))
+
+loaded <- wait_lesson("/de/missing-expert.html", "ms-e-ggmice-strip")
+step("missing-expert: webR, mice, ggmice and naniar ready", !is.na(loaded), sprintf("%s s", loaded))
+run_exercise("ms-e-ggmice-strip", paste(
+  "ggmice(imp, aes(x = .imp, y = tlx_effort)) +",
+  "  geom_jitter(width = 0.25, height = 0)",
+  sep = "\n"
+))
+checked <- wait_for("!!document.querySelector('#ex-ms-e-ggmice-strip .exercise-grade.alert-success')", timeout = 120)
+step("missing-expert: mice in webR, ggmice plot graded correct", !is.na(checked), sprintf("%s s", checked))
+
+loaded <- wait_lesson("/de/visualisation-expert.html", "vi-e-ci-dist")
+step("visualisation-expert: webR, ggdist, ggrepel, ggtext and colorspace ready", !is.na(loaded), sprintf("%s s", loaded))
+run_exercise("vi-e-ci-dist", paste(
+  "ggplot(ci, aes(y = condition, xdist = rt_dist)) +",
+  "  stat_halfeye(.width = c(0.66, 0.95))",
+  sep = "\n"
+))
+checked <- wait_for("!!document.querySelector('#ex-vi-e-ci-dist .exercise-grade.alert-success')", timeout = 90)
+step("visualisation-expert: ggdist plot with xdist graded correct", !is.na(checked), sprintf("%s s", checked))
+
 goto("/en/index.html")
 Sys.sleep(1)
 beginner <- c(
@@ -631,6 +708,8 @@ unlinked <- js(sprintf(
   paste0("'", intermediate, "'", collapse = ", ")
 ))
 step("en: all 18 intermediate lessons linked in course plan", identical(unlinked, ""), unlinked)
+linked <- js("[...document.querySelectorAll('a[href*=\"-expert\"]')].map(a => a.getAttribute('href')).join(', ')")
+step("en: German-only expert lessons not linked", identical(linked, ""), linked)
 project_row <- js("document.querySelector('tr.rt-plan-project a[href*=\"project-beginner\"]')?.getAttribute('href') || ''")
 step("en: project row links the English page", grepl("project-beginner", project_row) && !grepl("/de/", project_row), project_row)
 project_row <- js("document.querySelector('tr.rt-plan-project a[href*=\"project-intermediate\"]')?.getAttribute('href') || ''")

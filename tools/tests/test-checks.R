@@ -228,6 +228,11 @@ test_that("rt_compare_plot checks layer positions", {
   # default positions of different geoms are compared as they are
   jitter <- ggplot2::ggplot(d, ggplot2::aes(x, y)) + ggplot2::geom_jitter()
   expect_null(rt_compare_plot(jitter, jitter))
+  # geom_jitter() equals geom_point() with jitter, whatever the layer is called
+  point_jitter <- ggplot2::ggplot(d, ggplot2::aes(x, y)) + ggplot2::geom_point(position = "jitter")
+  expect_null(rt_compare_plot(point_jitter, jitter))
+  point <- ggplot2::ggplot(d, ggplot2::aes(x, y)) + ggplot2::geom_point()
+  expect_match(rt_compare_plot(point, jitter), "Position.*position_jitter.*position_identity")
 })
 
 test_that("rt_compare_plot checks a layer's own data, e.g. reference lines", {

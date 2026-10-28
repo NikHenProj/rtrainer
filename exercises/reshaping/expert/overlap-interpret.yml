@@ -1,0 +1,107 @@
+id: rs-e-overlap-interpret
+lesson: reshaping-expert
+order: 4
+title:
+  de: Doppelte Treffer an Fenstergrenzen
+  en: Double matches at window bounds
+kind: interpret
+required: false
+packages: []
+data: []
+setup: ""
+prompt:
+  de: |
+    Eine Kollegin ordnet 1 000 Blicke Aufgabenphasen zu, die lückenlos aneinander
+    anschließen (Phase 1 von 0 bis 30 s, Phase 2 von 30 bis 60 s usw.):
+
+    ```
+    joined <- left_join(glances, phases,
+      by = join_by(participant, between(time_s, start_s, end_s)))
+    nrow(glances)   # 1000
+    nrow(joined)    # 1004 (keine Warnung)
+    count(joined, glance_id) |> filter(n > 1)
+    #   glance_id     n
+    # 1 g0137         2   (time_s = 60)
+    # 2 g0412         2   (time_s = 30)
+    # 3 g0655         2   (time_s = 90)
+    # 4 g0871         2   (time_s = 120)
+    ```
+
+    Welche Aussagen stimmen?
+
+    1. Die vier Blicke liegen genau auf einer Grenze und passen zu zwei Phasen, weil `between()` beide Grenzen einschließt.
+    2. dplyr hat eine Warnung zu mehrfachen Treffern ausgegeben, die übersehen wurde.
+    3. Mit `between(time_s, start_s, end_s, bounds = "[)")` passt jeder Blick zu höchstens einer Phase.
+    4. `distinct(joined)` entfernt die vier überzähligen Zeilen, weil sie identisch sind.
+
+    Gib die Nummern der richtigen Aussagen aufsteigend als Vektor ein, z. B. `c(1, 2)`.
+  en: |
+    A colleague assigns 1,000 glances to task phases that follow each other without
+    gaps (phase 1 from 0 to 30 s, phase 2 from 30 to 60 s, and so on):
+
+    ```
+    joined <- left_join(glances, phases,
+      by = join_by(participant, between(time_s, start_s, end_s)))
+    nrow(glances)   # 1000
+    nrow(joined)    # 1004 (no warning)
+    count(joined, glance_id) |> filter(n > 1)
+    #   glance_id     n
+    # 1 g0137         2   (time_s = 60)
+    # 2 g0412         2   (time_s = 30)
+    # 3 g0655         2   (time_s = 90)
+    # 4 g0871         2   (time_s = 120)
+    ```
+
+    Which statements are true?
+
+    1. The four glances lie exactly on a bound and match two phases, because `between()` includes both bounds.
+    2. dplyr issued a warning about multiple matches that was overlooked.
+    3. With `between(time_s, start_s, end_s, bounds = "[)")` each glance matches at most one phase.
+    4. `distinct(joined)` removes the four extra rows because they are identical.
+
+    Type the numbers of the true statements in ascending order as a vector,
+    e.g. `c(1, 2)`.
+starter: |
+  # Nummern der richtigen Aussagen als Vektor / numbers of the true statements as a vector
+solution: |
+  c(1, 3)
+hints:
+  - de: "Bei welchen Zeiten liegen die doppelten Blicke? Vergleiche sie mit den Phasengrenzen."
+    en: "At which times do the duplicated glances lie? Compare them with the phase bounds."
+  - de: "dplyr warnt bei mehrfachen Treffern nur in Gleichheits-Joins; bei Ungleichungen sind mehrere Treffer oft gewollt."
+    en: "dplyr warns about multiple matches only in equality joins; with inequalities several matches are often intended."
+  - de: "Die beiden Zeilen eines doppelten Blicks unterscheiden sich in den Spalten aus `phases`. Was macht `distinct()` dann?"
+    en: "The two rows of a duplicated glance differ in the columns from `phases`. What does `distinct()` do then?"
+explanation:
+  de: |
+    Richtig sind 1 und 3. `between()` schließt beide Grenzen ein (`bounds = "[]"`),
+    bei lückenlosen Phasen gehört ein Blick bei 30 s also zu Phase 1 und 2.
+    `bounds = "[)"` macht die obere Grenze offen: 30 s zählt nur noch zu Phase 2.
+    dplyr warnt bei Ungleichungs-Joins nicht, weil mehrere Treffer dort oft gewollt
+    sind (z. B. überlappende Fenster); du musst die Zeilenzahl selbst prüfen. Die
+    doppelten Zeilen unterscheiden sich in `phase`, `start_s` und `end_s`, deshalb
+    entfernt `distinct()` nichts. Für den Methodenteil: „Blicke an Phasengrenzen
+    wurden der folgenden Phase zugeordnet.“
+  en: |
+    Statements 1 and 3 are true. `between()` includes both bounds (`bounds = "[]"`),
+    so with gapless phases a glance at 30 s belongs to phases 1 and 2.
+    `bounds = "[)"` makes the upper bound open: 30 s then counts only for phase 2.
+    dplyr does not warn in inequality joins because several matches are often
+    intended there (e.g. overlapping windows); you have to check the row count
+    yourself. The duplicated rows differ in `phase`, `start_s` and `end_s`, so
+    `distinct()` removes nothing. For the methods section: "Glances at phase bounds
+    were assigned to the following phase."
+misconception:
+  de: "dplyr warnt bei jedem Join, der mehr Zeilen erzeugt als erwartet."
+  en: "dplyr warns in every join that creates more rows than expected."
+check:
+  type: value
+common_mistakes:
+  - pattern: "\\b2\\b"
+    message:
+      de: "Aussage 2 stimmt nicht: Bei Ungleichungs-Joins gibt dplyr keine Warnung zu mehrfachen Treffern aus."
+      en: "Statement 2 is false: in inequality joins dplyr gives no warning about multiple matches."
+  - pattern: "\\b4\\b"
+    message:
+      de: "Aussage 4 stimmt nicht: Die doppelten Zeilen unterscheiden sich in den Phasenspalten, `distinct()` lässt sie stehen."
+      en: "Statement 4 is false: the duplicated rows differ in the phase columns, so `distinct()` keeps them."

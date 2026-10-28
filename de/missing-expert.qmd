@@ -1,0 +1,182 @@
+---
+title: "Fehlende Werte"
+subtitle: "Expert · Mehrfachimputation vollständig, Diagnose, MNAR-Sensitivität, FIML"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, purrr, mice, ggmice, ggplot2, naniar]
+resources:
+  - ../data/survey.csv
+---
+
+{{< include /_generated/de/missing-expert/runtime.qmd >}}
+
+{{< include /_generated/de/missing-expert/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R läuft hier direkt im Browser. Beim ersten Besuch lädt es 20–40 Sekunden (Anzeige unten rechts), danach geht es schneller.
+:::
+
+{{< include /_generated/de/missing-expert/challenge.qmd >}}
+
+## Wozu? {#why}
+
+**Forschungsfrage:** Ist Sprachbedienung frustrierender und weniger gebrauchstauglich als Touch, und hält der Befund, wenn die fehlenden Antworten nicht zufällig fehlen?
+
+In der Intermediate-Lektion hast du Mehrfachimputation als Ergebnis gedeutet. Hier führst du sie selbst durch: Verfahren pro Variable wählen, Prädiktoren festlegen, Skalenwerte richtig aus imputierten Items berechnen, die Imputation prüfen und am Ende zeigen, wie empfindlich der Schluss auf die MAR-Annahme reagiert. Gutachten fragen genau danach („Wie wurde mit fehlenden Werten umgegangen, und ist das Ergebnis robust?“).
+
+## Konzept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 170" role="img" aria-labelledby="fig-mse-title fig-mse-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-mse-title">Ablauf der Mehrfachimputation</title>
+  <desc id="fig-mse-desc">Links ein unvollständiger Datensatz. Pfeil zu mice, das m vervollständigte Datensätze erzeugt, dargestellt als drei gestapelte Kästen. Pfeil zu with, das in jedem Datensatz dasselbe Modell schätzt. Pfeil zu pool, das die Schätzungen nach Rubins Regeln zu einem Ergebnis kombiniert. Darunter der Hinweis: Skalenwerte zwischen mice und with berechnen, mit complete include TRUE und as.mids.</desc>
+  <rect x="10" y="40" width="90" height="60" class="rt-fig-box" />
+  <text x="20" y="66" class="rt-fig-code">Daten</text>
+  <text x="20" y="86" class="rt-fig-code">mit NA</text>
+  <line x1="100" y1="70" x2="135" y2="70" class="rt-fig-arrow" />
+  <rect x="140" y="30" width="100" height="56" class="rt-fig-box" />
+  <rect x="148" y="38" width="100" height="56" class="rt-fig-box" />
+  <rect x="156" y="46" width="100" height="56" class="rt-fig-box-accent" />
+  <text x="166" y="70" class="rt-fig-code">mice()</text>
+  <text x="166" y="90" class="rt-fig-code">m Datensätze</text>
+  <line x1="256" y1="70" x2="291" y2="70" class="rt-fig-arrow" />
+  <rect x="296" y="40" width="110" height="60" class="rt-fig-box" />
+  <text x="306" y="66" class="rt-fig-code">with()</text>
+  <text x="306" y="86" class="rt-fig-code">m Modelle</text>
+  <line x1="406" y1="70" x2="441" y2="70" class="rt-fig-arrow" />
+  <rect x="446" y="40" width="104" height="60" class="rt-fig-box-accent" />
+  <text x="456" y="66" class="rt-fig-code">pool()</text>
+  <text x="456" y="86" class="rt-fig-code">ein Ergebnis</text>
+  <text x="140" y="130" class="rt-fig-label">Skalenwerte hier: complete(include = TRUE) → as.mids()</text>
+  <text x="140" y="155" class="rt-fig-label rt-fig-muted">Diagnose: ggmice(), plot_trace()</text>
+</svg>
+<figcaption>Imputieren, in jedem Datensatz schätzen, nach Rubins Regeln zusammenfassen.</figcaption>
+</figure>
+```
+
+- **Verfahren pro Variable:** `make.method(d)` zeigt, was mice vorschlägt: `pmm` für Zahlen, `logreg` für zweistufige, `polyreg` für mehrstufige Faktoren, `""` für vollständige Variablen. Ändern mit `meth["age"] <- "norm"`.
+- **Prädiktoren:** `make.predictorMatrix(d)` legt fest, welche Variable welche vorhersagt (Zeile = Ziel, Spalte = Prädiktor). IDs, Kontrollfragen und Variablen, die aus anderen berechnet werden, gehören nicht hinein (`pred[, "attention_check"] <- 0`). Alle Variablen des Analysemodells gehören hinein, auch das Ergebnis.
+- **Rubins Regeln:** `with()` schätzt pro Datensatz, `pool()` kombiniert: Gesamtvarianz = mittlere Varianz innerhalb + (1 + 1/m) × Varianz zwischen den Imputationen. `fmi` zeigt den Informationsverlust.
+- **Erst imputieren, dann transformieren:** Items imputieren, Skalenwert in jedem Datensatz berechnen: `complete(imp, "long", include = TRUE)` → `mutate()` → `as.mids()`.
+- **Diagnose:** `ggmice()` vergleicht beobachtete und imputierte Werte, `plot_trace()` zeigt, ob die Ketten konvergieren (Linien mischen sich ohne Trend).
+- **MNAR-Sensitivität:** Ob Werte MNAR fehlen, ist nicht prüfbar. Mit `post` verschiebst du die imputierten Werte um δ und zeigst, ab welcher Abweichung der Schluss kippt.
+- **FIML** (lavaan `missing = "fiml"`) schätzt direkt aus allen beobachteten Werten, ohne einzusetzen. Unter MAR und mit denselben Variablen gleichwertig zur MI; ohne Hilfsvariablen bringt es nichts, wenn nur das Ergebnis fehlt.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## Mehr dazu: FIML mit Hilfsvariablen in lavaan
+
+FIML läuft hier nicht live, weil lavaan diese Seite deutlich langsamer laden ließe. Lokal (oder in der Lektion „CFA und SEM“):
+
+```r
+library(lavaan)
+d <- survey |>
+  transmute(voice = as.integer(interface == "voice"), tech_affinity,
+            tlx_frustration, tlx_mental, tlx_effort, tlx_temporal)
+fit <- sem("tlx_frustration ~ voice + tech_affinity", data = d,
+           missing = "fiml", fixed.x = FALSE)
+# Hilfsvariablen als "saturated correlates"
+fit_aux <- semTools::sem.auxiliary("tlx_frustration ~ voice + tech_affinity", data = d,
+  aux = c("tlx_mental", "tlx_effort", "tlx_temporal"), missing = "fiml", fixed.x = FALSE)
+```
+
+Wie viele Imputationen? Faustregel (von Hippel): `m` mindestens so groß wie der Prozentsatz unvollständiger Fälle; für stabile p-Werte eher 20–50 statt 5.
+:::
+
+## Beispiel {#example}
+
+Wie viel fehlt wo? Danach Verfahren und Prädiktoren festlegen: Die Kontrollfrage `attention_check` soll nichts vorhersagen, `age` (eine Lücke) wird mit `norm` imputiert.
+
+```{webr}
+d <- survey |>
+  mutate(interface = factor(interface), gender = factor(gender)) |>
+  select(interface, gender, age, tech_affinity, starts_with("tlx_"), attention_check)
+miss_var_summary(d) |> filter(n_miss > 0)
+
+meth <- make.method(d)
+meth["age"] <- "norm"
+pred <- make.predictorMatrix(d)
+pred[, "attention_check"] <- 0
+meth
+```
+
+Imputieren, schätzen, zusammenfassen und mit dem Fallausschluss vergleichen:
+
+```{webr}
+imp <- mice(d, method = meth, predictorMatrix = pred, m = 10, seed = 2026, printFlag = FALSE)
+fit <- with(imp, lm(tlx_frustration ~ interface + tech_affinity))
+pooled <- pool(fit)
+summary(pooled, conf.int = TRUE)[, c("term", "estimate", "std.error", "2.5 %", "97.5 %")]
+pooled$pooled[, c("term", "fmi")]
+coef(summary(lm(tlx_frustration ~ interface + tech_affinity, data = d)))[, 1:2]
+```
+
+Diagnose: Liegen die imputierten Werte im Bereich der beobachteten, und mischen sich die Ketten?
+
+```{webr}
+ggmice(imp, aes(x = .imp, y = tlx_frustration)) +
+  geom_jitter(width = 0.25, height = 0)
+plot_trace(imp, c("tlx_frustration", "tlx_effort"))
+```
+
+Sensitivität: Was, wenn die Fehlenden um 15 Punkte frustrierter waren als vergleichbare Befragte?
+
+```{webr}
+post <- make.post(d)
+post["tlx_frustration"] <- "imp[[j]][, i] <- imp[[j]][, i] + 15"
+imp_15 <- mice(d, method = meth, predictorMatrix = pred, post = post, m = 10, seed = 2026, printFlag = FALSE)
+summary(pool(with(imp_15, lm(tlx_frustration ~ interface + tech_affinity))))[, c("term", "estimate", "std.error")]
+```
+
+**So berichtest du es (Methoden- und Ergebnisteil):** Fehlende Werte (3–5 % je TLX-Skala) wurden mit Mehrfachimputation durch verkettete Gleichungen ersetzt (mice, 10 Imputationen, predictive mean matching; alle Analysevariablen und TLX-Skalen als Prädiktoren). Die Ergebnisse wurden nach Rubins Regeln zusammengefasst. Mit Sprachbedienung war die Frustration um *b* = 9,4 Punkte höher, 95 %-KI [3,6; 15,2]. Eine Sensitivitätsanalyse mit um 15 Punkte erhöhten imputierten Werten änderte den Effekt kaum (*b* = 8,8).
+
+## Paketvergleich {#packages}
+
+| Aufgabe | Empfehlung | Alternative |
+|---|---|---|
+| Mehrfachimputation | **mice** (verkettete Gleichungen, flexibel pro Variable) | `Amelia` (multivariat normal, schnell); `missRanger` (Random Forest, lokal) |
+| Mehrebenen-Daten imputieren | **mice** mit `2l.pan`/`2l.pmm` (miceadds) | `jomo`, `mitml`; JointAI (lokal, nicht im Webindex) |
+| Diagnose | **ggmice** (`ggmice()`, `plot_trace()`, `plot_pred()`) | `mice::stripplot()`, `densityplot()` (lattice) |
+| Ohne Imputation | **lavaan** `missing = "fiml"` (SEM, Regression) | lme4 nutzt alle vorhandenen Messungen pro Person (fehlende Ergebnisse unter MAR) |
+| Fehlmuster beschreiben | **naniar** (`miss_var_summary()`, `gg_miss_upset()`) | `mice::md.pattern()` |
+
+## Übungen {#exercises}
+
+Drei Pflichtübungen und zwei Zusatzübungen. **Ausführen und prüfen** startet deinen Code und prüft ihn sofort. Hinweise deckst du einzeln auf (**Hinweis zeigen**), die Lösung erst danach.
+
+{{< include /_generated/de/missing-expert/exercises.qmd >}}
+
+## Wissenscheck {#check}
+
+{{< include /_generated/de/missing-expert/quiz.qmd >}}
+
+## Spickzettel {#cheatsheet}
+
+```r
+# Verfahren und Prädiktoren festlegen
+meth <- make.method(d); meth["age"] <- "norm"
+pred <- make.predictorMatrix(d); pred[, "attention_check"] <- 0
+
+# Imputieren, schätzen, zusammenfassen
+imp <- mice(d, method = meth, predictorMatrix = pred, m = 20, seed = 2026, printFlag = FALSE)
+fit <- with(imp, lm(y ~ x))
+summary(pool(fit), conf.int = TRUE)
+
+# Erst imputieren, dann transformieren
+long <- complete(imp, "long", include = TRUE) |> mutate(score = rowMeans(pick(item_1:item_5)))
+imp2 <- as.mids(long)
+
+# Diagnose
+ggmice(imp, aes(x = .imp, y = var)) + geom_jitter(width = 0.25, height = 0)
+plot_trace(imp)
+
+# MNAR-Sensitivität
+post <- make.post(d); post["y"] <- "imp[[j]][, i] <- imp[[j]][, i] + 10"
+```
+
+- Nie mit `complete(imp)` (erster Datensatz) oder der gestapelten Tabelle rechnen: `with()` + `pool()`.
+- Das Ergebnis gehört ins Imputationsmodell, IDs und berechnete Variablen nicht.
+- MNAR ist nicht prüfbar, nur als Sensitivität durchspielbar.
+
+{{< include /_generated/de/missing-expert/footer.qmd >}}

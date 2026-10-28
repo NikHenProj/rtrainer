@@ -1,0 +1,134 @@
+# Knowledge check: passed at >= `pass` share of correctly answered questions.
+lesson: visualisation-expert
+pass: 0.8
+questions:
+  - id: vi-e-q-interval
+    prompt:
+      de: "`ggplot(person, aes(x = time_s, y = prototype)) + stat_halfeye()` auf Personenmitteln. Was zeigt das dünne Intervall?"
+      en: "`ggplot(person, aes(x = time_s, y = prototype)) + stat_halfeye()` on participant means. What does the thin interval show?"
+    options:
+      - text:
+          de: "Den Bereich, in dem die mittleren 95 % der Personenwerte liegen."
+          en: "The range containing the middle 95% of the participant values."
+        correct: true
+        explain:
+          de: "Genau, die Streuung der Daten. Die Unsicherheit des Mittelwerts zeigst du mit `xdist = dist_student_t(...)`."
+          en: "Exactly, the spread of the data. You show the uncertainty of the mean with `xdist = dist_student_t(...)`."
+      - text:
+          de: "Das 95 %-Konfidenzintervall des Mittelwerts."
+          en: "The 95% confidence interval of the mean."
+        correct: false
+        explain:
+          de: "Das wäre viel schmaler; aus Rohdaten berechnet ggdist Quantilintervalle der Werte."
+          en: "That would be much narrower; from raw data ggdist computes quantile intervals of the values."
+      - text:
+          de: "Mittelwert ± 2 Standardabweichungen."
+          en: "Mean ± 2 standard deviations."
+        correct: false
+        explain:
+          de: "ggdist nutzt standardmäßig Median und Quantilintervalle, keine SD."
+          en: "By default ggdist uses the median and quantile intervals, not the SD."
+  - id: vi-e-q-theme-order
+    prompt:
+      de: "Was ergibt `theme(legend.position = \"bottom\") + theme_bw()`?"
+      en: "What does `theme(legend.position = \"bottom\") + theme_bw()` give?"
+    options:
+      - text:
+          de: "`theme_bw()` mit Legende rechts; das vollständige Theme überschreibt die Einstellung davor."
+          en: "`theme_bw()` with the legend on the right; the complete theme overwrites the setting before it."
+        correct: true
+        explain:
+          de: "Richtig. Erst das Grundtheme, dann `theme()` mit den Änderungen."
+          en: "Right. First the base theme, then `theme()` with the changes."
+      - text:
+          de: "`theme_bw()` mit Legende unten."
+          en: "`theme_bw()` with the legend at the bottom."
+        correct: false
+        explain:
+          de: "Das ergibt nur die umgekehrte Reihenfolge."
+          en: "Only the reverse order gives that."
+      - text:
+          de: "Einen Fehler, weil man Themes nicht addieren kann."
+          en: "An error, because themes cannot be added."
+        correct: false
+        explain:
+          de: "Themes lassen sich addieren; nur die Reihenfolge zählt."
+          en: "Themes can be added; only the order matters."
+  - id: vi-e-q-replace
+    prompt:
+      de: "Worin unterscheidet sich `theme_minimal() %+replace% theme(axis.title = element_text(face = \"bold\"))` von der Variante mit `+`?"
+      en: "How does `theme_minimal() %+replace% theme(axis.title = element_text(face = \"bold\"))` differ from the version with `+`?"
+    options:
+      - text:
+          de: "`%+replace%` ersetzt das ganze Element; Größe, Farbe usw. des Achsentitels gehen verloren."
+          en: "`%+replace%` replaces the whole element; size, colour etc. of the axis title are lost."
+        correct: true
+        explain:
+          de: "Genau. `+` ändert nur die genannten Eigenschaften, `%+replace%` braucht man selten."
+          en: "Exactly. `+` changes only the named properties; `%+replace%` is rarely needed."
+      - text:
+          de: "Kein Unterschied, beide machen nur den Achsentitel fett."
+          en: "No difference; both only make the axis title bold."
+        correct: false
+        explain:
+          de: "`%+replace%` übernimmt nicht die übrigen Eigenschaften des Elements."
+          en: "`%+replace%` does not keep the element's other properties."
+      - text:
+          de: "`%+replace%` setzt das Theme für alle folgenden Plots."
+          en: "`%+replace%` sets the theme for all following plots."
+        correct: false
+        explain:
+          de: "Das macht `theme_set()`."
+          en: "That is what `theme_set()` does."
+  - id: vi-e-q-layer-data
+    prompt:
+      de: "`ggplot(tasks, aes(time_s, success, colour = prototype)) + geom_point() + geom_text_repel(data = filter(tasks, success < 0.75), aes(label = label))` – was gilt für die Textebene?"
+      en: "`ggplot(tasks, aes(time_s, success, colour = prototype)) + geom_point() + geom_text_repel(data = filter(tasks, success < 0.75), aes(label = label))` – what holds for the text layer?"
+    options:
+      - text:
+          de: "Sie nutzt nur die gefilterten Zeilen und erbt `x`, `y` und `colour` vom Plot."
+          en: "It uses only the filtered rows and inherits `x`, `y` and `colour` from the plot."
+        correct: true
+        explain:
+          de: "Richtig. Die gefilterte Tabelle braucht deshalb dieselben Spalten."
+          en: "Right. The filtered table therefore needs the same columns."
+      - text:
+          de: "Sie beschriftet alle Punkte, weil der Plot die Daten vorgibt."
+          en: "It labels all points, because the plot sets the data."
+        correct: false
+        explain:
+          de: "`data =` in der Ebene ersetzt die Plotdaten für diese Ebene."
+          en: "`data =` in the layer replaces the plot data for this layer."
+      - text:
+          de: "Sie muss `x` und `y` neu angeben, weil sich die Daten geändert haben."
+          en: "It has to specify `x` and `y` again because the data changed."
+        correct: false
+        explain:
+          de: "Ästhetiken werden vererbt (`inherit.aes = TRUE`), solange die Spalten existieren."
+          en: "Aesthetics are inherited (`inherit.aes = TRUE`) as long as the columns exist."
+  - id: vi-e-q-cvd
+    prompt:
+      de: "Drei Gruppen in den Standardfarben von ggplot2. Was macht die Abbildung am zuverlässigsten für alle lesbar?"
+      en: "Three groups in ggplot2's default colours. What makes the figure most reliably readable for everyone?"
+    options:
+      - text:
+          de: "Eine für Farbsehschwäche geprüfte Palette mit unterschiedlicher Helligkeit und zusätzlich Form oder direkte Beschriftung."
+          en: "A palette checked for colour vision deficiency with different lightness, plus shape or direct labels."
+        correct: true
+        explain:
+          de: "Ja. Redundante Kodierung wirkt auch im Graudruck; mit `deutan()` und `desaturate()` prüfst du die Palette."
+          en: "Yes. Redundant coding also works in greyscale print; you check the palette with `deutan()` and `desaturate()`."
+      - text:
+          de: "Kräftigere Farben mit `saturate()`, damit sie besser leuchten."
+          en: "Stronger colours with `saturate()` so that they stand out more."
+        correct: false
+        explain:
+          de: "Mehr Buntheit hilft nicht, wenn der Farbton nicht wahrgenommen wird oder die Helligkeit gleich bleibt."
+          en: "More chroma does not help if the hue is not perceived or the lightness stays equal."
+      - text:
+          de: "Nichts, die Standardfarben sind für Farbsehschwäche optimiert."
+          en: "Nothing; the default colours are optimised for colour vision deficiency."
+        correct: false
+        explain:
+          de: "Sie haben gleiche Helligkeit; Rot und Grün fallen bei Deuteranopie zusammen."
+          en: "They have equal lightness; red and green merge with deuteranopia."

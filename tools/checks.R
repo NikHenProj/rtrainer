@@ -414,7 +414,8 @@ rt_compare_plot <- function(result, expected, params = NULL, check_data = FALSE,
     }
     return(NULL)
   }
-  geoms <- function(p) vapply(p$layers, function(l) rt_snake(class(l$geom)[1]), character(1))
+  # unname(): ggplot2 >= 4 names layers after their constructor (geom_jitter).
+  geoms <- function(p) unname(vapply(p$layers, function(l) rt_snake(class(l$geom)[1]), character(1)))
   result_geoms <- geoms(result)
   expected_geoms <- geoms(expected)
   if (!identical(result_geoms, expected_geoms)) {

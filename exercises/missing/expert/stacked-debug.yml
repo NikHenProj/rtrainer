@@ -1,0 +1,84 @@
+id: ms-e-stacked-debug
+lesson: missing-expert
+order: 3
+title:
+  de: Zu kleine Standardfehler
+  en: Standard errors too small
+kind: debug
+required: true
+packages: [dplyr, mice]
+data: [survey]
+setup: |
+  library(dplyr)
+  library(mice)
+  tlx <- survey |>
+    mutate(interface = factor(interface)) |>
+    select(interface, tech_affinity, starts_with("tlx_"))
+  imp <- mice(tlx, m = 10, seed = 2026, printFlag = FALSE)
+prompt:
+  de: |
+    Ein Kollege will wissen, ob die Anstrengung (`tlx_effort`) von der
+    Bedienform abhängt, und rechnet mit allen 10 Imputationen auf einmal. Der
+    Effekt ist „signifikant“ (b = −1,95, SE = 0,90, p = .03), der Standardfehler
+    aber verdächtig klein.
+
+    Korrigiere die Auswertung so, dass sie Rubins Regeln folgt. Gib eine Tabelle
+    mit den Spalten `term`, `estimate`, `std.error` zurück (aus `summary(pool(...))`).
+  en: |
+    A colleague wants to know whether effort (`tlx_effort`) depends on the input
+    mode and analyses all 10 imputations at once. The effect is "significant"
+    (b = −1.95, SE = 0.90, p = .03), but the standard error is suspiciously small.
+
+    Fix the analysis so that it follows Rubin's rules. Return a table with the
+    columns `term`, `estimate`, `std.error` (from `summary(pool(...))`).
+starter: |
+  stacked <- complete(imp, "long")
+  fit <- lm(tlx_effort ~ interface, data = stacked)
+  tibble(term = names(coef(fit)), estimate = coef(fit), std.error = sqrt(diag(vcov(fit))))
+solution: |
+  fit <- with(imp, lm(tlx_effort ~ interface))
+  summary(pool(fit)) |>
+    select(term, estimate, std.error)
+hints:
+  - de: "Wie viele Zeilen hat `stacked`? Für wie viele Personen hält `lm()` die Daten?"
+    en: "How many rows does `stacked` have? How many respondents does `lm()` think it has?"
+  - de: "Jede Imputation muss für sich ausgewertet werden; danach werden die Ergebnisse kombiniert."
+    en: "Each imputation has to be analysed on its own; afterwards the results are combined."
+  - de: "`with(imp, lm(tlx_effort ~ interface))`, dann `summary(pool(fit))`."
+    en: "`with(imp, lm(tlx_effort ~ interface))`, then `summary(pool(fit))`."
+explanation:
+  de: |
+    `complete(imp, "long")` stapelt die 10 Datensätze zu 1 600 Zeilen. `lm()`
+    hält das für 1 600 unabhängige Personen: Der Schätzwert stimmt fast (es ist das
+    Mittel über die Imputationen), der Standardfehler ist aber etwa um den Faktor
+    √10 ≈ 3,2 zu klein, und die Streuung zwischen den Imputationen fehlt ganz.
+    `with()` + `pool()` rechnen pro Datensatz und kombinieren nach Rubins Regeln:
+    Gesamtvarianz = mittlere Varianz innerhalb + (1 + 1/m) × Varianz zwischen den
+    Imputationen. Hier: b = −1,95 mit SE = 2,90 statt 0,90, kein belastbarer
+    Unterschied mehr. Dasselbe gilt für alle Modelle (`glm()`, `lmer()`): Erst pro
+    Imputation schätzen, dann poolen.
+  en: |
+    `complete(imp, "long")` stacks the 10 datasets into 1,600 rows. `lm()` takes
+    that for 1,600 independent respondents: the estimate is almost right (it is the
+    mean across imputations), but the standard error is too small by about a factor
+    of √10 ≈ 3.2, and the spread between imputations is missing entirely. `with()`
+    + `pool()` analyse each dataset and combine according to Rubin's rules: total
+    variance = mean within variance + (1 + 1/m) × between-imputation variance. Here:
+    b = −1.95 with SE = 2.90 instead of 0.90, no reliable difference any more. The
+    same holds for all models (`glm()`, `lmer()`): fit per imputation first, then
+    pool.
+misconception:
+  de: "Mehr imputierte Datensätze bedeuten mehr Personen und damit kleinere Standardfehler."
+  en: "More imputed datasets mean more respondents and hence smaller standard errors."
+check:
+  type: value
+  tolerance: 1.0e-4
+common_mistakes:
+  - pattern: "data\\s*=\\s*stacked"
+    message:
+      de: "Die gestapelte Tabelle zählt jede Person zehnmal. Schätze mit `with(imp, ...)` pro Imputation."
+      en: "The stacked table counts every respondent ten times. Fit per imputation with `with(imp, ...)`."
+  - pattern: "complete\\(imp\\s*(,\\s*1\\s*)?\\)"
+    message:
+      de: "Ein einzelner Datensatz ignoriert die Unsicherheit der Imputation; der Standardfehler bleibt zu klein."
+      en: "A single dataset ignores the uncertainty of the imputation; the standard error stays too small."

@@ -1,0 +1,92 @@
+id: rs-e-closest-calibration
+lesson: reshaping-expert
+order: 2
+title:
+  de: Letzte Kalibrierung vor jedem Durchgang
+  en: Last calibration before each trial
+kind: write
+required: true
+packages: [dplyr]
+data: [driving_sim]
+setup: |
+  library(dplyr)
+  set.seed(3)
+  windows <- driving_sim |>
+    distinct(participant, condition, trial) |>
+    mutate(start_s = (row_number() - 1) * 30, end_s = start_s + 20, .by = participant)
+  people <- unique(driving_sim$participant)
+  recalibrated <- sample(people, 15)
+  calibrations <- bind_rows(
+    tibble(participant = people, calib_s = 0),
+    tibble(participant = recalibrated, calib_s = round(runif(15, 60, 300), 1))
+  ) |>
+    arrange(participant, calib_s)
+prompt:
+  de: |
+    Der Eyetracker wurde zu Beginn jeder Sitzung kalibriert (`calib_s = 0`), bei 15
+    Personen ein zweites Mal während der Sitzung. Ob die Blickdaten eines
+    Durchgangs verlässlich sind, hängt davon ab, wie lange die letzte Kalibrierung
+    her ist.
+
+    Hänge an jeden Durchgang in `windows` die **letzte Kalibrierung bei oder vor
+    `start_s`** an und berechne `since_calib_s = start_s - calib_s`. Ergebnis: 480
+    Zeilen mit `participant`, `condition`, `trial`, `calib_s`, `since_calib_s`.
+  en: |
+    The eye tracker was calibrated at the start of every session (`calib_s = 0`),
+    and for 15 participants a second time during the session. Whether a trial's
+    gaze data are reliable depends on how long ago the last calibration was.
+
+    Attach to each trial in `windows` the **last calibration at or before
+    `start_s`** and compute `since_calib_s = start_s - calib_s`. Result: 480 rows
+    with `participant`, `condition`, `trial`, `calib_s`, `since_calib_s`.
+starter: |
+  windows |>
+    left_join(calibrations, by = join_by(participant)) |>
+    mutate(since_calib_s = start_s - calib_s) |>
+    select(participant, condition, trial, calib_s, since_calib_s)
+solution: |
+  windows |>
+    left_join(calibrations, by = join_by(participant, closest(start_s >= calib_s))) |>
+    mutate(since_calib_s = start_s - calib_s) |>
+    select(participant, condition, trial, calib_s, since_calib_s)
+hints:
+  - de: "Prüfe `nrow()` nach dem Join. Bei den 15 Personen mit zwei Kalibrierungen passt jeder Durchgang zu beiden."
+    en: "Check `nrow()` after the join. For the 15 participants with two calibrations each trial matches both."
+  - de: "Gesucht ist nicht jede Kalibrierung vor dem Durchgang, sondern die nächstgelegene. Dafür gibt es in `join_by()` einen eigenen Helfer."
+    en: "You need not every calibration before the trial, but the nearest one. `join_by()` has a dedicated helper for that."
+  - de: "`join_by(participant, closest(start_s >= ______))`"
+    en: "`join_by(participant, closest(start_s >= ______))`"
+explanation:
+  de: |
+    `closest(start_s >= calib_s)` ist ein Rolling Join: Von allen Kalibrierungen
+    mit `calib_s <= start_s` nimmt er die mit dem größten `calib_s`, also die
+    letzte davor. Ohne `closest()` ergäbe die Ungleichung alle früheren
+    Kalibrierungen (mehr Zeilen), ein Join nur über `participant` sogar
+    Kalibrierungen, die erst später stattfanden (negative Abstände). `>=` schließt
+    eine Kalibrierung genau zum Startzeitpunkt ein, `>` würde sie ausschließen.
+    Rolling Joins brauchst du überall, wo ein Zustand gilt, bis er sich ändert:
+    letzte Kalibrierung, aktueller Automationsmodus, zuletzt angezeigte Warnung.
+  en: |
+    `closest(start_s >= calib_s)` is a rolling join: of all calibrations with
+    `calib_s <= start_s` it takes the one with the largest `calib_s`, i.e. the last
+    one before. Without `closest()` the inequality would return all earlier
+    calibrations (more rows); a join on `participant` alone would even include
+    calibrations that happened later (negative gaps). `>=` includes a calibration at
+    exactly the start time, `>` would exclude it. You need rolling joins wherever a
+    state holds until it changes: last calibration, current automation mode, most
+    recent warning shown.
+misconception:
+  de: "Mit `join_by(participant, start_s >= calib_s)` erhält jeder Durchgang genau eine, die passende Kalibrierung."
+  en: "With `join_by(participant, start_s >= calib_s)` each trial gets exactly one, the matching calibration."
+check:
+  type: value
+  ignore_row_order: true
+common_mistakes:
+  - pattern: "^(?![\\s\\S]*closest)[\\s\\S]*start_s\\s*>=?\\s*calib_s"
+    message:
+      de: "Die Ungleichung allein liefert alle früheren Kalibrierungen. `closest()` behält nur die letzte."
+      en: "The inequality alone returns all earlier calibrations. `closest()` keeps only the last one."
+  - pattern: "slice_max|filter\\(\\s*calib_s\\s*<="
+    message:
+      de: "Erst alles verbinden und dann filtern geht, wird bei großen Daten aber teuer. `closest()` erledigt das im Join."
+      en: "Joining everything and filtering afterwards works but gets expensive with large data. `closest()` does it within the join."

@@ -1,0 +1,83 @@
+id: rs-e-pivot-value
+lesson: reshaping-expert
+order: 1
+title:
+  de: Zwei Messgrößen gleichzeitig lang machen
+  en: Making two measures long at once
+kind: write
+required: true
+packages: [dplyr, tidyr]
+data: [driving_sim]
+setup: |
+  library(dplyr)
+  library(tidyr)
+  halves <- driving_sim |>
+    mutate(half = if_else(trial <= 2, "first", "second")) |>
+    summarise(across(c(rt_ms, lane_dev), \(x) mean(x, na.rm = TRUE)), .by = c(participant, half)) |>
+    pivot_wider(names_from = half, values_from = c(rt_ms, lane_dev))
+prompt:
+  de: |
+    `halves` enthält pro Person die mittlere Reaktionszeit und Spurabweichung in der
+    ersten und zweiten Hälfte der Durchgänge, in vier Spalten: `rt_ms_first`,
+    `rt_ms_second`, `lane_dev_first`, `lane_dev_second`. Für ein Modell mit dem
+    Faktor Hälfte brauchst du eine Zeile pro Person und Hälfte.
+
+    Forme `halves` in **einem** `pivot_longer()` um zu den Spalten `participant`,
+    `half` (Werte `"first"`, `"second"`), `rt_ms` und `lane_dev` (80 Zeilen).
+  en: |
+    `halves` holds each participant's mean reaction time and lane deviation in the
+    first and second half of the trials, in four columns: `rt_ms_first`,
+    `rt_ms_second`, `lane_dev_first`, `lane_dev_second`. For a model with the factor
+    half you need one row per participant and half.
+
+    Reshape `halves` in **one** `pivot_longer()` call to the columns `participant`,
+    `half` (values `"first"`, `"second"`), `rt_ms` and `lane_dev` (80 rows).
+starter: |
+  halves |>
+    pivot_longer(-participant, names_to = c(".value", "half"), names_sep = "_")
+solution: |
+  halves |>
+    pivot_longer(-participant, names_to = c(".value", "half"), names_pattern = "(.+)_(first|second)")
+hints:
+  - de: "Sieh dir an, wie `names_sep = \"_\"` den Namen `lane_dev_first` zerlegt. Wie viele Teile entstehen?"
+    en: "Look at how `names_sep = \"_\"` splits the name `lane_dev_first`. How many pieces come out?"
+  - de: "Statt eines Trennzeichens kann ein regulärer Ausdruck mit zwei Gruppen den Namen zerlegen: alles bis zum letzten Unterstrich und den Rest."
+    en: "Instead of a separator, a regular expression with two groups can split the name: everything up to the last underscore, and the rest."
+  - de: "`names_pattern = \"(.+)_(first|second)\"`; die erste Gruppe wird über `\".value\"` zum Spaltennamen."
+    en: "`names_pattern = \"(.+)_(first|second)\"`; via `\".value\"` the first group becomes the column name."
+explanation:
+  de: |
+    `".value"` in `names_to` sagt `pivot_longer()`, dass dieser Teil des Namens
+    kein Wert, sondern der neue Spaltenname ist. So entstehen aus vier Spalten zwei
+    Messgrößen (`rt_ms`, `lane_dev`) und eine Schlüsselspalte (`half`) in einem
+    Schritt, statt erst alles in eine Spalte zu stapeln und wieder breit zu machen.
+    `names_sep = "_"` scheitert, weil die Messgrößen selbst Unterstriche enthalten
+    (`lane_dev_first` hat drei Teile). `names_pattern` mit zwei Klammergruppen
+    zerlegt eindeutig; `(.+)` ist gierig und nimmt alles bis zum letzten
+    Unterstrich vor `first`/`second`. Typische Anwendungen: Prä/Post-Messungen
+    mehrerer Skalen oder Items pro Messzeitpunkt (`sus_01_t1`).
+  en: |
+    `".value"` in `names_to` tells `pivot_longer()` that this part of the name is not
+    a value but the new column name. That way four columns become two measures
+    (`rt_ms`, `lane_dev`) and one key column (`half`) in a single step, instead of
+    stacking everything into one column and widening it again. `names_sep = "_"`
+    fails because the measures themselves contain underscores (`lane_dev_first` has
+    three parts). `names_pattern` with two capture groups splits unambiguously;
+    `(.+)` is greedy and takes everything up to the last underscore before
+    `first`/`second`. Typical uses: pre/post measures of several scales, or items per
+    time point (`sus_01_t1`).
+misconception:
+  de: "`pivot_longer()` kann pro Aufruf nur eine Wertespalte erzeugen."
+  en: "`pivot_longer()` can only create one value column per call."
+check:
+  type: value
+  ignore_row_order: true
+common_mistakes:
+  - pattern: "pivot_wider"
+    message:
+      de: "Es geht auch ohne Umweg über lang und wieder breit: `\".value\"` erzeugt mehrere Wertespalten in einem Schritt."
+      en: "No need to go long and wide again: `\".value\"` creates several value columns in one step."
+  - pattern: "names_sep"
+    message:
+      de: "Die Messgrößen enthalten selbst Unterstriche (`lane_dev_first`), ein Trennzeichen zerlegt sie falsch. Nimm `names_pattern`."
+      en: "The measures contain underscores themselves (`lane_dev_first`), so a separator splits them wrongly. Use `names_pattern`."

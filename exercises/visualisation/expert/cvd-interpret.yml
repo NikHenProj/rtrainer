@@ -1,0 +1,105 @@
+id: vi-e-cvd-interpret
+lesson: visualisation-expert
+order: 5
+title:
+  de: Farben auf Farbsehschwäche prüfen
+  en: Checking colours for colour vision deficiency
+kind: interpret
+required: false
+packages: []
+data: []
+setup: ""
+prompt:
+  de: |
+    Eine Abbildung nutzt die Standardfarben von ggplot2 für drei Prototypen. Du
+    prüfst sie mit colorspace:
+
+    ```
+    pal <- c(A = "#F8766D", B = "#00BA38", C = "#619CFF")
+    deutan(pal)        # Grün-Sehschwäche (häufigste Form)
+    #         A         B         C
+    # "#B6A86A" "#AC9C45" "#5A96FD"
+    desaturate(pal)    # Graustufen
+    #         A         B         C
+    # "#9E9E9E" "#A1A1A1" "#9D9D9D"
+    ```
+
+    Welche Aussagen stimmen?
+
+    1. Bei Deuteranopie werden A und B zu fast gleichen Olivtönen und sind kaum zu unterscheiden.
+    2. In Graustufen sind alle drei Farben praktisch gleich hell; im Schwarz-Weiß-Druck ist die Abbildung unlesbar.
+    3. C ist bei Deuteranopie nicht mehr als Blau zu erkennen.
+    4. Es genügt, alle drei Farben mit `lighten()` aufzuhellen, damit sie unterscheidbar werden.
+
+    Gib die Nummern der richtigen Aussagen aufsteigend als Vektor ein, z. B. `c(1, 2)`.
+  en: |
+    A figure uses ggplot2's default colours for three prototypes. You check them
+    with colorspace:
+
+    ```
+    pal <- c(A = "#F8766D", B = "#00BA38", C = "#619CFF")
+    deutan(pal)        # green deficiency (most common form)
+    #         A         B         C
+    # "#B6A86A" "#AC9C45" "#5A96FD"
+    desaturate(pal)    # greyscale
+    #         A         B         C
+    # "#9E9E9E" "#A1A1A1" "#9D9D9D"
+    ```
+
+    Which statements are true?
+
+    1. With deuteranopia A and B become almost identical olive tones and are hard to tell apart.
+    2. In greyscale all three colours are practically equally light; printed in black and white the figure is unreadable.
+    3. With deuteranopia C can no longer be recognised as blue.
+    4. Lightening all three colours with `lighten()` is enough to make them distinguishable.
+
+    Type the numbers of the true statements in ascending order as a vector,
+    e.g. `c(1, 2)`.
+starter: |
+  # Nummern der richtigen Aussagen als Vektor / numbers of the true statements as a vector
+solution: |
+  c(1, 2)
+hints:
+  - de: "Vergleiche die Hex-Codes nach `deutan()`: Welche liegen nah beieinander?"
+    en: "Compare the hex codes after `deutan()`: which are close to each other?"
+  - de: "`desaturate()` entfernt die Farbe und lässt nur die Helligkeit übrig. Wie unterschiedlich sind die drei Grauwerte?"
+    en: "`desaturate()` removes the colour and leaves only the lightness. How different are the three grey values?"
+  - de: "Aufhellen ändert alle Farben gleich. Hilft das gegen gleiche Helligkeit oder gleichen Farbton?"
+    en: "Lightening changes all colours equally. Does that help against equal lightness or equal hue?"
+explanation:
+  de: |
+    Richtig sind 1 und 2. Die Standardpalette von ggplot2 wählt Farbtöne mit
+    gleicher Helligkeit und Buntheit. Das ist gerecht für normale Sicht, aber
+    unterscheidbar nur über den Farbton, und genau der fehlt bei Rot-Grün-Schwäche
+    (etwa 8 % der Männer) und im Graudruck. Blau bleibt bei Deuteranopie blau
+    (`#5A96FD`). `lighten()` hebt alle Farben gleich an und ändert am Problem nichts.
+    Besser: Paletten mit unterschiedlicher Helligkeit oder für Farbsehschwäche
+    geprüft (Okabe-Ito über `palette.colors()`, `scale_colour_discrete_qualitative()`
+    prüfen), dazu redundante Kodierung (Form, Linientyp, direkte Beschriftung).
+    `colorspace::cvd_emulator()` (lokal) oder `swatchplot(deutan(pal))` zeigen das
+    Ergebnis.
+  en: |
+    Statements 1 and 2 are true. ggplot2's default palette chooses hues with equal
+    lightness and chroma. That is fair for normal vision but distinguishable only
+    by hue, which is exactly what is missing with red–green deficiency (about 8% of
+    men) and in greyscale print. Blue stays blue with deuteranopia (`#5A96FD`).
+    `lighten()` raises all colours equally and does not change the problem.
+    Better: palettes with different lightness or checked for colour vision
+    deficiency (Okabe-Ito via `palette.colors()`, check
+    `scale_colour_discrete_qualitative()`), plus redundant coding (shape, line type,
+    direct labels). `colorspace::cvd_emulator()` (locally) or
+    `swatchplot(deutan(pal))` show the result.
+misconception:
+  de: "Farben, die für mich gut unterscheidbar sind, sind es auch für alle anderen und im Druck."
+  en: "Colours that I can tell apart well can be told apart by everyone and in print too."
+check:
+  type: value
+common_mistakes:
+  - pattern: "\\b3\\b"
+    message:
+      de: "Aussage 3 stimmt nicht: `#5A96FD` ist weiterhin ein Blau; Blau bleibt bei Rot-Grün-Schwäche erhalten."
+      en: "Statement 3 is false: `#5A96FD` is still a blue; blue is preserved with red–green deficiency."
+  - pattern: "\\b4\\b"
+    message:
+      de: "Aussage 4 stimmt nicht: Aufhellen ändert alle Farben gleich, die Unterschiede bleiben so klein wie vorher."
+      en: "Statement 4 is false: lightening changes all colours equally, so the differences stay as small as before."

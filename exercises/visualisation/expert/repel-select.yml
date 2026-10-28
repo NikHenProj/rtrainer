@@ -1,0 +1,84 @@
+id: vi-e-repel-select
+lesson: visualisation-expert
+order: 2
+title:
+  de: Nur die auffälligen Punkte beschriften
+  en: Labelling only the notable points
+kind: write
+required: true
+packages: [dplyr, ggplot2, ggrepel]
+data: [usability]
+setup: |
+  library(dplyr)
+  library(ggplot2)
+  library(ggrepel)
+  tasks <- usability |>
+    summarise(success = mean(success), time_s = median(time_s), .by = c(prototype, task)) |>
+    mutate(label = paste(prototype, task))
+prompt:
+  de: |
+    `tasks` enthält pro Prototyp und Aufgabe die Erfolgsquote `success` und die
+    mediane Zeit `time_s` (12 Zeilen), dazu eine Spalte `label` wie `"C filter"`.
+
+    Zeichne ein Streudiagramm mit `time_s` auf der x- und `success` auf der
+    y-Achse, Farbe nach `prototype`. Beschrifte mit `geom_text_repel()` **nur** die
+    Aufgaben mit einer Erfolgsquote unter 0.75; die Beschriftungen sollen nicht in
+    die Legende (`show.legend = FALSE`). Der Plot steht in der letzten Zeile.
+  en: |
+    `tasks` holds, per prototype and task, the success rate `success` and the
+    median time `time_s` (12 rows), plus a column `label` such as `"C filter"`.
+
+    Draw a scatter plot with `time_s` on the x axis and `success` on the y axis,
+    colour by `prototype`. Using `geom_text_repel()`, label **only** the tasks with
+    a success rate below 0.75; the labels should stay out of the legend
+    (`show.legend = FALSE`). The plot is on the last line.
+starter: |
+  ggplot(tasks, aes(x = time_s, y = success, colour = prototype)) +
+    geom_point() +
+    geom_text(aes(label = label))
+solution: |
+  ggplot(tasks, aes(x = time_s, y = success, colour = prototype)) +
+    geom_point() +
+    geom_text_repel(data = filter(tasks, success < 0.75), aes(label = label), show.legend = FALSE)
+hints:
+  - de: "`geom_text()` setzt die Texte genau auf die Punkte; ggrepel schiebt sie auseinander und zieht bei Bedarf Linien."
+    en: "`geom_text()` puts the texts exactly on the points; ggrepel pushes them apart and draws lines if needed."
+  - de: "Jede Ebene kann eigene Daten bekommen. Gib der Textebene nur die gefilterten Zeilen."
+    en: "Every layer can get its own data. Give the text layer only the filtered rows."
+  - de: "`geom_text_repel(data = filter(tasks, ______), aes(label = label), show.legend = FALSE)`"
+    en: "`geom_text_repel(data = filter(tasks, ______), aes(label = label), show.legend = FALSE)`"
+explanation:
+  de: |
+    Gezielt beschriften lenkt den Blick: Statt zwölf überlappender Texte stehen
+    nur die vier Problemfälle da (A compare, C filter, C compare, C checkout). Die
+    Textebene bekommt mit `data =` eine gefilterte Tabelle und erbt `x`, `y` und
+    `colour` vom Plot. `geom_text_repel()` verschiebt die Texte so, dass sie sich
+    nicht überlappen, und verbindet sie mit Linien, wenn sie weit vom Punkt
+    landen. `show.legend = FALSE` verhindert das kleine „a“ in der Legende.
+    Inhaltlich: Prototyp C fällt bei drei Aufgaben unter 75 % Erfolg, obwohl er
+    nicht langsamer ist; bei Filter ist er klar schlechter. `set.seed()` (oder das
+    Argument `seed`) macht die Anordnung reproduzierbar.
+  en: |
+    Selective labelling guides the eye: instead of twelve overlapping texts, only
+    the four problem cases appear (A compare, C filter, C compare, C checkout). The
+    text layer gets a filtered table via `data =` and inherits `x`, `y` and
+    `colour` from the plot. `geom_text_repel()` moves the texts so that they do not
+    overlap and connects them with lines when they land far from the point.
+    `show.legend = FALSE` prevents the small "a" in the legend. In substance:
+    prototype C drops below 75% success in three tasks although it is not slower;
+    for filter it is clearly worse. `set.seed()` (or the argument `seed`) makes the
+    layout reproducible.
+misconception:
+  de: "Eine Beschriftungsebene muss dieselben Daten haben wie der Plot; ausblenden geht nur über leere Labels."
+  en: "A label layer must use the same data as the plot; hiding works only via empty labels."
+check:
+  type: plot
+common_mistakes:
+  - pattern: "if_else\\(|ifelse\\("
+    message:
+      de: "Leere Labels per `if_else()` gehen, sind aber umständlich. Gib der Textebene gefilterte Daten (`data = filter(...)`)."
+      en: "Empty labels via `if_else()` work but are clumsy. Give the text layer filtered data (`data = filter(...)`)."
+  - pattern: "geom_label_repel"
+    message:
+      de: "Gesucht ist `geom_text_repel()` (Text ohne Kasten)."
+      en: "You need `geom_text_repel()` (text without a box)."

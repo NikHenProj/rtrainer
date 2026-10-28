@@ -1,0 +1,96 @@
+id: ms-e-sus-mids
+lesson: missing-expert
+order: 1
+title:
+  de: Skalenwert nach dem Imputieren berechnen
+  en: Computing a scale score after imputing
+kind: write
+required: true
+packages: [dplyr, mice]
+data: [survey]
+setup: |
+  library(dplyr)
+  library(mice)
+  sus_items <- survey |>
+    mutate(interface = factor(interface)) |>
+    select(interface, tech_affinity, starts_with("sus_"))
+  imp <- mice(sus_items, m = 10, seed = 2026, printFlag = FALSE)
+  sus_score <- function(items) {
+    odd <- rowSums(select(items, sus_01, sus_03, sus_05, sus_07, sus_09))
+    even <- rowSums(select(items, sus_02, sus_04, sus_06, sus_08, sus_10))
+    ((odd - 5) + (25 - even)) * 2.5
+  }
+prompt:
+  de: |
+    `imp` enthält 10 Imputationen der zehn SUS-Items (fehlend bei 3–9 Befragten pro
+    Item). `sus_score(items)` berechnet aus einer Tabelle mit den Spalten `sus_01`
+    bis `sus_10` den SUS-Wert (0–100).
+
+    Berechne `sus` in **jedem** imputierten Datensatz, schätze
+    `lm(sus ~ interface)` über alle Imputationen und gib `summary(pool(fit))` mit
+    den Spalten `term`, `estimate`, `std.error` zurück. Im Starter fehlt der
+    Schritt, der aus der langen Tabelle wieder ein `mids`-Objekt macht.
+  en: |
+    `imp` holds 10 imputations of the ten SUS items (missing for 3–9 respondents
+    per item). `sus_score(items)` computes the SUS score (0–100) from a table with
+    the columns `sus_01` to `sus_10`.
+
+    Compute `sus` in **every** imputed dataset, fit `lm(sus ~ interface)` across all
+    imputations and return `summary(pool(fit))` with the columns `term`,
+    `estimate`, `std.error`. The starter lacks the step that turns the long table
+    back into a `mids` object.
+starter: |
+  long <- complete(imp, "long", include = TRUE) |>
+    mutate(sus = sus_score(pick(starts_with("sus_"))))
+  fit <- with(imp, lm(sus ~ interface))
+  summary(pool(fit)) |>
+    select(term, estimate, std.error)
+solution: |
+  long <- complete(imp, "long", include = TRUE) |>
+    mutate(sus = sus_score(pick(starts_with("sus_"))))
+  imp_sus <- as.mids(long)
+  fit <- with(imp_sus, lm(sus ~ interface))
+  summary(pool(fit)) |>
+    select(term, estimate, std.error)
+hints:
+  - de: "`long` enthält `sus` für alle Imputationen, aber `with(imp, ...)` greift noch auf das alte `imp` ohne `sus` zu."
+    en: "`long` contains `sus` for all imputations, but `with(imp, ...)` still uses the old `imp` without `sus`."
+  - de: "`include = TRUE` behält die Originaldaten (`.imp == 0`); genau die braucht mice, um aus der langen Tabelle wieder ein `mids`-Objekt zu bauen."
+    en: "`include = TRUE` keeps the original data (`.imp == 0`); mice needs exactly those to rebuild a `mids` object from the long table."
+  - de: "`imp_sus <- as.mids(long)`, dann `with(imp_sus, lm(sus ~ interface))`."
+    en: "`imp_sus <- as.mids(long)`, then `with(imp_sus, lm(sus ~ interface))`."
+explanation:
+  de: |
+    Erst imputieren, dann transformieren („impute, then transform“): Die Items
+    werden imputiert, der Skalenwert wird in jedem vervollständigten Datensatz neu
+    berechnet. `complete(imp, "long", include = TRUE)` stapelt Original
+    (`.imp == 0`) und Imputationen, `mutate()` rechnet `sus` überall, `as.mids()`
+    macht daraus wieder ein Objekt, das `with()` und `pool()` verstehen. Ohne
+    `include = TRUE` scheitert `as.mids()`, weil es die Originaldaten braucht.
+    Den Skalenwert vor dem Imputieren zu berechnen verschenkt Information: Wer
+    ein Item auslässt, hätte dann gar keinen SUS-Wert. Ergebnis: Sprachbedienung
+    erreicht im Mittel 10,6 SUS-Punkte mehr (SE ≈ 3,8).
+  en: |
+    Impute first, then transform: the items are imputed and the scale score is
+    recomputed in every completed dataset. `complete(imp, "long", include = TRUE)`
+    stacks the original (`.imp == 0`) and the imputations, `mutate()` computes `sus`
+    everywhere, `as.mids()` turns it back into an object that `with()` and `pool()`
+    understand. Without `include = TRUE`, `as.mids()` fails because it needs the
+    original data. Computing the scale score before imputing wastes information:
+    anyone who skipped one item would then have no SUS score at all. Result: voice
+    control scores 10.6 SUS points higher on average (SE ≈ 3.8).
+misconception:
+  de: "Eine neue Spalte in der langen Tabelle steht automatisch auch im `mids`-Objekt zur Verfügung."
+  en: "A new column in the long table is automatically available in the `mids` object too."
+check:
+  type: value
+  tolerance: 1.0e-4
+common_mistakes:
+  - pattern: "include\\s*=\\s*FALSE"
+    message:
+      de: "`as.mids()` braucht die Originaldaten (`.imp == 0`); setze `include = TRUE`."
+      en: "`as.mids()` needs the original data (`.imp == 0`); set `include = TRUE`."
+  - pattern: "lm\\([^)]*data\\s*=\\s*long"
+    message:
+      de: "Ein `lm()` über die gestapelte Tabelle zählt jede Person elfmal und macht die Standardfehler viel zu klein."
+      en: "One `lm()` over the stacked table counts every respondent eleven times and makes the standard errors far too small."

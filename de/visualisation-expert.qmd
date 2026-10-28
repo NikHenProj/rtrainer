@@ -1,0 +1,180 @@
+---
+title: "Visualisieren"
+subtitle: "Expert · Verteilung und Unsicherheit, eigenes Theme, Beschriftung, Farbsehschwäche"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, ggplot2, ggdist, distributional, ggrepel, ggtext, colorspace]
+resources:
+  - ../data/usability.csv
+  - ../data/driving_sim.csv
+---
+
+{{< include /_generated/de/visualisation-expert/runtime.qmd >}}
+
+{{< include /_generated/de/visualisation-expert/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R läuft hier direkt im Browser. Beim ersten Besuch lädt es 15–30 Sekunden (Anzeige unten rechts), danach geht es schneller.
+:::
+
+{{< include /_generated/de/visualisation-expert/challenge.qmd >}}
+
+## Wozu? {#why}
+
+**Forschungsfrage:** Welcher Prototyp ist schneller zu bedienen, und wie sicher ist dieser Unterschied?
+
+Eine Abbildung für eine Veröffentlichung muss zwei Dinge zeigen, die oft verwechselt werden: wie die Daten verteilt sind und wie genau ein Kennwert bestimmt ist. Dazu kommt, dass sie im Bericht einheitlich aussehen, ohne Legendensuche lesbar sein und auch bei Farbsehschwäche oder im Graudruck funktionieren soll. Diese Lektion zeigt, wie du das mit ggplot2-Erweiterungen erreichst, statt jede Abbildung von Hand nachzubessern.
+
+## Konzept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 180" role="img" aria-labelledby="fig-vie-title fig-vie-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-vie-title">Verteilung der Daten und Unsicherheit des Mittelwerts</title>
+  <desc id="fig-vie-desc">Links eine breite halbe Dichte mit langem rechten Rand und darunter einzelnen Punkten: die Verteilung der Personenwerte, Intervall von 25 bis 125 Sekunden. Rechts eine schmale, symmetrische Dichte um denselben Mittelwert: die Unsicherheit des Mittelwerts, Intervall von 45 bis 60 Sekunden. Beide nutzen stat_halfeye, aber mit Rohdaten links und einer Verteilung über xdist rechts.</desc>
+  <text x="20" y="22" class="rt-fig-label">Verteilung der Daten</text>
+  <path d="M 30 110 C 60 40, 90 40, 120 80 S 220 105, 250 108 L 250 110 Z" class="rt-fig-box" />
+  <line x1="35" y1="118" x2="235" y2="118" class="rt-fig-axis" />
+  <line x1="60" y1="118" x2="140" y2="118" class="rt-fig-a" />
+  <text x="40" y="140" class="rt-fig-code">• •• ••• •• •  •   •</text>
+  <text x="20" y="168" class="rt-fig-label rt-fig-muted">stat_halfeye() auf Rohdaten</text>
+  <text x="310" y="22" class="rt-fig-label">Unsicherheit des Mittelwerts</text>
+  <path d="M 360 110 C 390 110, 395 40, 410 40 S 430 110, 460 110 Z" class="rt-fig-box-accent" />
+  <line x1="375" y1="118" x2="445" y2="118" class="rt-fig-axis" />
+  <line x1="395" y1="118" x2="425" y2="118" class="rt-fig-a" />
+  <text x="310" y="168" class="rt-fig-label rt-fig-muted">stat_halfeye(aes(xdist = dist_student_t(...)))</text>
+</svg>
+<figcaption>Gleiche Geometrie, verschiedene Aussage: Streuung der Personen gegenüber Genauigkeit des Mittelwerts.</figcaption>
+</figure>
+```
+
+- **ggdist** zeichnet Verteilungen mit Intervallen: aus Rohdaten (`x = time_s`) die Streuung der Daten, aus Verteilungsobjekten (`xdist = dist_student_t(df, mu, sigma)`, Paket distributional) die Unsicherheit eines Kennwerts. `stat_halfeye()`, `stat_interval()`, `stat_pointinterval()`, `stat_dots()`; `.width` legt die Intervalle fest (Standard 66 % und 95 %).
+- **Eigenes Theme als Funktion:** `theme_report <- function(base_size = 11) theme_minimal(base_size = base_size) + theme(...)`. Erst das vollständige Theme, dann die Änderungen; sonst überschreibt das vollständige Theme alles davor. `theme_set()` macht es zum Standard.
+- **Gezielt beschriften:** Eine Ebene kann eigene Daten haben (`data = filter(...)`) und erbt die Ästhetiken. `ggrepel::geom_text_repel()` verhindert Überlappungen.
+- **Markdown in Plots:** ggtext rendert `**fett**`, `<br>` und `<span style='color:...'>` in Etiketten (`geom_richtext()`) und Titeln (`element_markdown()`). Direkte Beschriftung ersetzt die Legende.
+- **Farben prüfen:** `colorspace::deutan()`, `protan()`, `tritan()` simulieren Farbsehschwächen, `desaturate()` den Graudruck. Paletten mit unterschiedlicher Helligkeit (`scale_colour_discrete_qualitative()`, Okabe-Ito) und redundante Kodierung (Form, Linientyp, Beschriftung) machen Abbildungen für alle lesbar.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## Mehr dazu: Schriften und Export
+
+- Schriften wie IBM Plex Sans brauchen lokal `systemfonts`/`ragg` (`ggsave(..., device = ragg::agg_png)`); im Browser stehen nur Standardschriften zur Verfügung.
+- Für Zeitschriften: `theme_report(base_size = 8)` und `ggsave(width = 8.5, units = "cm")` (eine Spalte), damit die Schrift in der gedruckten Größe stimmt.
+- ggdist zeigt auch Bayes-Ziehungen direkt: `stat_halfeye(aes(x = value))` auf einer Spalte mit Posterior-Ziehungen (Lektion „Bayes“).
+:::
+
+## Beispiel {#example}
+
+Verteilung der Personenmittel pro Prototyp als „Raincloud“: oben die halbe Dichte mit Median und 50 %-/90 %-Intervall der Werte, darunter jede Person als Punkt (`stat_dots()` stapelt sie wie ein Histogramm):
+
+```{webr}
+person <- usability |>
+  summarise(time_s = mean(time_s), .by = c(participant, prototype))
+ggplot(person, aes(x = time_s, y = prototype)) +
+  stat_halfeye(.width = c(0.5, 0.9), scale = 0.6) +
+  stat_dots(side = "bottom", scale = 0.5)
+```
+
+Unsicherheit der Mittelwerte als t-Verteilung, dazu ein eigenes Theme als Funktion:
+
+```{webr}
+theme_report <- function(base_size = 11) {
+  theme_minimal(base_size = base_size) +
+    theme(
+      panel.grid.minor = element_blank(),
+      panel.grid.major.y = element_blank(),
+      legend.position = "bottom",
+      plot.title.position = "plot"
+    )
+}
+means <- person |>
+  summarise(mean = mean(time_s), se = sd(time_s) / sqrt(n()), df = n() - 1, .by = prototype) |>
+  mutate(time_dist = dist_student_t(df = df, mu = mean, sigma = se))
+ggplot(means, aes(y = prototype, xdist = time_dist)) +
+  stat_halfeye(.width = c(0.66, 0.95), fill = "#4F46E5") +
+  labs(x = "Mittlere Zeit pro Aufgabe (s)", y = NULL, title = "Prototyp B ist im Mittel am schnellsten") +
+  theme_report(base_size = 13)
+```
+
+Gezielt beschriften und Farben im Titel statt Legende:
+
+```{webr}
+tasks <- usability |>
+  summarise(success = mean(success), time_s = median(time_s), .by = c(prototype, task)) |>
+  mutate(label = paste(prototype, task))
+okabe <- c(A = "#E69F00", B = "#56B4E9", C = "#009E73")
+ggplot(tasks, aes(time_s, success, colour = prototype, shape = prototype)) +
+  geom_point(size = 3) +
+  geom_text_repel(data = filter(tasks, success < 0.75), aes(label = label), show.legend = FALSE, seed = 1) +
+  scale_colour_manual(values = okabe) +
+  labs(
+    x = "Mediane Zeit (s)", y = "Erfolgsquote",
+    title = "<span style='color:#009E73'>**C**</span> verliert bei drei Aufgaben an Erfolg"
+  ) +
+  theme_report() +
+  theme(plot.title = element_markdown(), legend.position = "none")
+```
+
+Farben prüfen: Standardpalette und Okabe-Ito, normal, bei Deuteranopie und in Graustufen.
+
+```{webr}
+default <- c("#F8766D", "#00BA38", "#619CFF")
+swatchplot(
+  "Standard" = default, "Standard, deutan" = deutan(default), "Standard, grau" = desaturate(default),
+  "Okabe-Ito" = unname(okabe), "Okabe-Ito, deutan" = deutan(unname(okabe)), "Okabe-Ito, grau" = desaturate(unname(okabe))
+)
+```
+
+**So berichtest du es (Abbildungslegende):** Abbildung 2. Mittlere Bearbeitungszeit pro Aufgabe nach Prototyp. Halbe Dichten zeigen die Unsicherheit der Mittelwerte (t-Verteilung), Balken die 66 %- und 95 %-Konfidenzintervalle. *n* = 24 Personen (Prototyp C: 23). Farben für Farbsehschwäche geprüft (Okabe-Ito), Prototypen zusätzlich durch Form unterschieden.
+
+## Paketvergleich {#packages}
+
+| Aufgabe | Empfehlung | Alternative |
+|---|---|---|
+| Verteilung + Intervalle | **ggdist** (`stat_halfeye()`, `stat_interval()`, `xdist`) | `ggridges` (Ridgeline-Plots); `geom_violin()` + `stat_summary()` |
+| Unsicherheit aus Modellen | **ggdist** mit `dist_student_t()` aus `estimate_means()` | `modelbased::plot()`; `ggplot2::geom_pointrange()` |
+| Beschriftung ohne Überlappung | **ggrepel** | `geomtextpath` (Text entlang Linien); `directlabels` |
+| Markdown in Titeln/Etiketten | **ggtext** | `marquee` (neuer, lokal); `labs()` mit `plotmath` |
+| Farbsehschwäche prüfen | **colorspace** (`deutan()`, `desaturate()`, `swatchplot()`) | `khroma` (Paletten nach Paul Tol); viridis-Skalen in ggplot2 |
+| Eigenes Theme | **Funktion** um `theme_minimal()` + `theme()` | `hrbrthemes`, `ggthemes` als Vorlage |
+
+## Übungen {#exercises}
+
+Drei Pflichtübungen und zwei Zusatzübungen. **Ausführen und prüfen** startet deinen Code und prüft ihn sofort. Hinweise deckst du einzeln auf (**Hinweis zeigen**), die Lösung erst danach.
+
+{{< include /_generated/de/visualisation-expert/exercises.qmd >}}
+
+## Wissenscheck {#check}
+
+{{< include /_generated/de/visualisation-expert/quiz.qmd >}}
+
+## Spickzettel {#cheatsheet}
+
+```r
+# Verteilung der Daten
+ggplot(d, aes(x = value, y = group)) + stat_halfeye() +
+  geom_point(position = position_nudge(y = -0.15), alpha = 0.4)
+
+# Unsicherheit eines Kennwerts
+means |> mutate(dist = dist_student_t(df = df, mu = mean, sigma = se)) |>
+  ggplot(aes(y = group, xdist = dist)) + stat_halfeye(.width = c(0.66, 0.95))
+
+# Eigenes Theme: erst vollständig, dann ändern
+theme_report <- function(base_size = 11) {
+  theme_minimal(base_size = base_size) + theme(legend.position = "bottom")
+}
+
+# Gezielt beschriften, Markdown
+geom_text_repel(data = filter(d, flag), aes(label = label), show.legend = FALSE)
+geom_richtext(data = ends, aes(label = label), hjust = 0, fill = NA, label.colour = NA)
+theme(plot.title = element_markdown())
+
+# Farben prüfen
+swatchplot(pal, deutan(pal), desaturate(pal))
+```
+
+- Rohdaten-Intervall = Streuung, `xdist`-Intervall = Unsicherheit. Immer dazuschreiben, was gezeigt wird.
+- Vollständiges Theme zuerst, `+` statt `%+replace%`.
+- Farbe nie als einziges Unterscheidungsmerkmal.
+
+{{< include /_generated/de/visualisation-expert/footer.qmd >}}

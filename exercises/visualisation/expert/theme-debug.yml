@@ -1,0 +1,103 @@
+id: vi-e-theme-debug
+lesson: visualisation-expert
+order: 3
+title:
+  de: Das eigene Theme greift nicht
+  en: The custom theme has no effect
+kind: debug
+required: true
+packages: [ggplot2]
+data: []
+setup: |
+  library(ggplot2)
+  # Shows the theme settings this exercise is about.
+  theme_check <- function(th) {
+    c(
+      base_size = as.character(th$text$size),
+      legend = as.character(th$legend.position),
+      title_position = as.character(th$plot.title.position),
+      minor_grid = class(th$panel.grid.minor)[1]
+    )
+  }
+prompt:
+  de: |
+    Für alle Abbildungen eines Berichts soll ein eigenes Theme gelten:
+    Grundlage `theme_minimal()` mit wählbarer Schriftgröße `base_size`, Legende
+    unten, keine kleinen Gitterlinien, Titel bündig mit dem ganzen Plot
+    (`plot.title.position = "plot"`). Die Funktion unten liefert aber eine Legende
+    rechts und kleine Gitterlinien. `theme_check()` zeigt die betroffenen
+    Einstellungen.
+
+    Korrigiere `theme_report()` so, dass alle vier Vorgaben gelten. Die letzte Zeile
+    bleibt `theme_check(theme_report(base_size = 12))`.
+  en: |
+    A custom theme should apply to all figures of a report: based on
+    `theme_minimal()` with a selectable font size `base_size`, legend at the
+    bottom, no minor grid lines, title aligned with the whole plot
+    (`plot.title.position = "plot"`). The function below, however, gives a legend
+    on the right and minor grid lines. `theme_check()` shows the settings
+    concerned.
+
+    Fix `theme_report()` so that all four requirements hold. The last line stays
+    `theme_check(theme_report(base_size = 12))`.
+starter: |
+  theme_report <- function(base_size = 11) {
+    theme(
+      legend.position = "bottom",
+      panel.grid.minor = element_blank(),
+      plot.title.position = "plot"
+    ) +
+      theme_minimal(base_size = base_size)
+  }
+  theme_check(theme_report(base_size = 12))
+solution: |
+  theme_report <- function(base_size = 11) {
+    theme_minimal(base_size = base_size) +
+      theme(
+        legend.position = "bottom",
+        panel.grid.minor = element_blank(),
+        plot.title.position = "plot"
+      )
+  }
+  theme_check(theme_report(base_size = 12))
+hints:
+  - de: "`theme_minimal()` ist ein vollständiges Theme. Was passiert, wenn man ein vollständiges Theme zu einem anderen addiert?"
+    en: "`theme_minimal()` is a complete theme. What happens when you add a complete theme to another one?"
+  - de: "Ein vollständiges Theme setzt alle Einstellungen neu und überschreibt, was vorher kam. Die Reihenfolge entscheidet."
+    en: "A complete theme resets all settings and overwrites whatever came before. The order decides."
+  - de: "Erst `theme_minimal(base_size = base_size)`, dann `+ theme(...)` mit den eigenen Änderungen."
+    en: "First `theme_minimal(base_size = base_size)`, then `+ theme(...)` with your own changes."
+explanation:
+  de: |
+    Vollständige Themes (`theme_minimal()`, `theme_bw()` …) legen jede Einstellung
+    fest. Kommt eines **nach** `theme()`, ersetzt es alles davor; deshalb zuerst
+    das Grundtheme, dann die Änderungen. Als Funktion mit `base_size` lässt sich
+    das Theme wie die eingebauten verwenden (`+ theme_report(14)`) und für
+    Folien größer, für Zeitschriften kleiner setzen. Für alle Plots einer Sitzung:
+    `theme_set(theme_report())`. Ein häufiger zweiter Fehler: `%+replace%` statt
+    `+` ersetzt ganze Elemente; `theme(axis.title = element_text(face = "bold"))`
+    mit `%+replace%` löscht Größe und Farbe des Achsentitels, mit `+` werden nur
+    die genannten Eigenschaften geändert.
+  en: |
+    Complete themes (`theme_minimal()`, `theme_bw()` …) set every setting. If one
+    comes **after** `theme()`, it replaces everything before it; so the base theme
+    goes first, then the changes. As a function with `base_size`, the theme can be
+    used like the built-in ones (`+ theme_report(14)`) and set larger for slides,
+    smaller for journals. For all plots of a session: `theme_set(theme_report())`.
+    A common second mistake: `%+replace%` instead of `+` replaces whole elements;
+    `theme(axis.title = element_text(face = "bold"))` with `%+replace%` deletes the
+    size and colour of the axis title, with `+` only the named properties change.
+misconception:
+  de: "Bei `+` zwischen Themes ist die Reihenfolge egal, Einstellungen werden immer zusammengeführt."
+  en: "With `+` between themes the order does not matter; settings are always merged."
+check:
+  type: value
+common_mistakes:
+  - pattern: "theme_set\\("
+    message:
+      de: "`theme_set()` ändert das Standardtheme der Sitzung; gesucht ist eine Funktion, die das richtige Theme zurückgibt."
+      en: "`theme_set()` changes the session's default theme; you need a function that returns the right theme."
+  - pattern: "theme_minimal\\(\\s*\\)"
+    message:
+      de: "Reiche `base_size` an `theme_minimal(base_size = base_size)` weiter, sonst bleibt die Schrift immer 11 pt."
+      en: "Pass `base_size` on to `theme_minimal(base_size = base_size)`, otherwise the font always stays 11 pt."

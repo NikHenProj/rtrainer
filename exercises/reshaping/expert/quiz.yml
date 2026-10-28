@@ -1,0 +1,134 @@
+# Knowledge check: passed at >= `pass` share of correctly answered questions.
+lesson: reshaping-expert
+pass: 0.8
+questions:
+  - id: rs-e-q-between
+    prompt:
+      de: "`left_join(trials, glances, by = join_by(participant, between(y$time_s, x$start_s, x$end_s)))`, danach `summarise(n = n(), .by = trial)`. Was steht bei einem Durchgang ohne Blick?"
+      en: "`left_join(trials, glances, by = join_by(participant, between(y$time_s, x$start_s, x$end_s)))`, then `summarise(n = n(), .by = trial)`. What does a trial without a glance show?"
+    options:
+      - text:
+          de: "1, weil `left_join()` den Durchgang als eine Zeile mit `NA` behält."
+          en: "1, because `left_join()` keeps the trial as one row with `NA`."
+        correct: true
+        explain:
+          de: "Genau. `sum(!is.na(time_s))` zählt nur echte Treffer und ergibt 0."
+          en: "Exactly. `sum(!is.na(time_s))` counts only real matches and gives 0."
+      - text:
+          de: "0, weil kein Blick im Fenster liegt."
+          en: "0, because no glance lies within the window."
+        correct: false
+        explain:
+          de: "`n()` zählt Zeilen, nicht Treffer; die `NA`-Zeile zählt mit."
+          en: "`n()` counts rows, not matches; the `NA` row counts too."
+      - text:
+          de: "Der Durchgang fehlt im Ergebnis."
+          en: "The trial is missing from the result."
+        correct: false
+        explain:
+          de: "Das passiert bei `inner_join()`; `left_join()` behält alle Zeilen der linken Tabelle."
+          en: "That happens with `inner_join()`; `left_join()` keeps all rows of the left table."
+  - id: rs-e-q-closest
+    prompt:
+      de: "Was liefert `join_by(participant, closest(start_s >= calib_s))` für einen Durchgang mit `start_s = 150`, wenn es Kalibrierungen bei 0, 120 und 200 s gibt?"
+      en: "What does `join_by(participant, closest(start_s >= calib_s))` return for a trial with `start_s = 150` if there are calibrations at 0, 120 and 200 s?"
+    options:
+      - text:
+          de: "Die Kalibrierung bei 120 s."
+          en: "The calibration at 120 s."
+        correct: true
+        explain:
+          de: "Richtig: von allen mit `calib_s <= 150` die nächstgelegene."
+          en: "Right: of all with `calib_s <= 150`, the nearest one."
+      - text:
+          de: "Die Kalibrierungen bei 0 und 120 s."
+          en: "The calibrations at 0 and 120 s."
+        correct: false
+        explain:
+          de: "Das liefert die Ungleichung ohne `closest()`."
+          en: "That is what the inequality without `closest()` returns."
+      - text:
+          de: "Die Kalibrierung bei 200 s, weil sie am nächsten an 150 liegt."
+          en: "The calibration at 200 s, because it is closest to 150."
+        correct: false
+        explain:
+          de: "Die Richtung zählt: `start_s >= calib_s` lässt nur frühere Kalibrierungen zu."
+          en: "The direction matters: `start_s >= calib_s` only admits earlier calibrations."
+  - id: rs-e-q-value
+    prompt:
+      de: "Spalten `sus_t1`, `sus_t2`, `tlx_t1`, `tlx_t2`. Was liefert `pivot_longer(-id, names_to = c(\".value\", \"time\"), names_sep = \"_\")`?"
+      en: "Columns `sus_t1`, `sus_t2`, `tlx_t1`, `tlx_t2`. What does `pivot_longer(-id, names_to = c(\".value\", \"time\"), names_sep = \"_\")` return?"
+    options:
+      - text:
+          de: "Die Spalten `id`, `time`, `sus`, `tlx` mit zwei Zeilen pro Person."
+          en: "The columns `id`, `time`, `sus`, `tlx` with two rows per person."
+        correct: true
+        explain:
+          de: "Ja. Hier klappt `names_sep`, weil die Messgrößen keinen Unterstrich enthalten."
+          en: "Yes. `names_sep` works here because the measures contain no underscore."
+      - text:
+          de: "Die Spalten `id`, `.value`, `time`, `value` mit vier Zeilen pro Person."
+          en: "The columns `id`, `.value`, `time`, `value` with four rows per person."
+        correct: false
+        explain:
+          de: "`\".value\"` wird nicht zur Spalte, sondern liefert die Namen der neuen Wertespalten."
+          en: "`\".value\"` does not become a column; it supplies the names of the new value columns."
+      - text:
+          de: "Einen Fehler, weil `pivot_longer()` nur eine Wertespalte erzeugen kann."
+          en: "An error, because `pivot_longer()` can only create one value column."
+        correct: false
+        explain:
+          de: "Mit `\".value\"` entstehen beliebig viele Wertespalten in einem Schritt."
+          en: "With `\".value\"` any number of value columns arise in one step."
+  - id: rs-e-q-lazy
+    prompt:
+      de: "Wann rechnet dtplyr die Anweisungen aus `lazy_dt(d) |> filter(...) |> summarise(...)` tatsächlich?"
+      en: "When does dtplyr actually compute the steps in `lazy_dt(d) |> filter(...) |> summarise(...)`?"
+    options:
+      - text:
+          de: "Erst bei `as_tibble()`, `as.data.frame()` oder `collect()`; vorher siehst du nur eine Vorschau."
+          en: "Only at `as_tibble()`, `as.data.frame()` or `collect()`; until then you only see a preview."
+        correct: true
+        explain:
+          de: "Richtig. So kann dtplyr alle Schritte in eine data.table-Anweisung übersetzen."
+          en: "Right. That way dtplyr can translate all steps into one data.table call."
+      - text:
+          de: "Bei jedem Verb sofort, wie dplyr."
+          en: "Immediately at every verb, like dplyr."
+        correct: false
+        explain:
+          de: "Dann gäbe es keinen Grund für `lazy_dt()`; die Verben werden nur aufgezeichnet."
+          en: "Then there would be no reason for `lazy_dt()`; the verbs are only recorded."
+      - text:
+          de: "Bei `show_query()`, das das Ergebnis ausgibt."
+          en: "At `show_query()`, which prints the result."
+        correct: false
+        explain:
+          de: "`show_query()` zeigt die übersetzte Anweisung, nicht das Ergebnis."
+          en: "`show_query()` shows the translated call, not the result."
+  - id: rs-e-q-size
+    prompt:
+      de: "Du hast 144 000 Zeilen Fahrdaten und ein Skript mit dplyr, das in 0,1 s läuft. Lohnt sich der Umstieg auf dtplyr oder duckplyr?"
+      en: "You have 144,000 rows of driving data and a dplyr script that runs in 0.1 s. Is switching to dtplyr or duckplyr worth it?"
+    options:
+      - text:
+          de: "Nein. Der Gewinn zeigt sich erst bei Millionen Zeilen oder Daten, die nicht in den Arbeitsspeicher passen."
+          en: "No. The gain only shows with millions of rows or data that do not fit into memory."
+        correct: true
+        explain:
+          de: "Genau. Erst messen (z. B. mit `bench::mark()`), dann umsteigen; der Code bleibt fast gleich."
+          en: "Exactly. Measure first (e.g. with `bench::mark()`), then switch; the code stays almost the same."
+      - text:
+          de: "Ja, dtplyr ist immer schneller als dplyr."
+          en: "Yes, dtplyr is always faster than dplyr."
+        correct: false
+        explain:
+          de: "Bei kleinen Daten kostet die Übersetzung mehr, als sie spart."
+          en: "With small data the translation costs more than it saves."
+      - text:
+          de: "Ja, sonst sind die Ergebnisse ungenau."
+          en: "Yes, otherwise the results are inaccurate."
+        correct: false
+        explain:
+          de: "Alle drei rechnen gleich genau; es geht nur um Geschwindigkeit und Speicher."
+          en: "All three compute equally accurately; it is only about speed and memory."

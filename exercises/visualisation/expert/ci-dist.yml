@@ -1,0 +1,93 @@
+id: vi-e-ci-dist
+lesson: visualisation-expert
+order: 1
+title:
+  de: Unsicherheit des Mittelwerts als Verteilung
+  en: Uncertainty of the mean as a distribution
+kind: write
+required: true
+packages: [dplyr, ggplot2, ggdist, distributional]
+data: [driving_sim]
+setup: |
+  library(dplyr)
+  library(ggplot2)
+  library(ggdist)
+  library(distributional)
+  ci <- driving_sim |>
+    summarise(rt = mean(rt_ms, na.rm = TRUE), .by = c(participant, condition)) |>
+    summarise(mean = mean(rt), se = sd(rt) / sqrt(n()), df = n() - 1, .by = condition) |>
+    mutate(rt_dist = dist_student_t(df = df, mu = mean, sigma = se))
+prompt:
+  de: |
+    `ci` enthält pro Bedingung die mittlere Reaktionszeit der 40 Personen, ihren
+    Standardfehler und die Freiheitsgrade. Die Spalte `rt_dist` beschreibt die
+    Unsicherheit jedes Mittelwerts als t-Verteilung (aus dem Paket distributional).
+
+    Zeichne pro Bedingung (y-Achse) diese Verteilung mit `stat_halfeye()`: Die
+    Verteilung kommt über die Ästhetik `xdist = rt_dist` hinein, die Intervalle
+    sollen 66 % und 95 % abdecken (`.width = c(0.66, 0.95)`). Der Plot steht in der
+    letzten Zeile.
+  en: |
+    `ci` holds, per condition, the mean reaction time of the 40 participants, its
+    standard error and the degrees of freedom. The column `rt_dist` describes the
+    uncertainty of each mean as a t distribution (from the package distributional).
+
+    Draw this distribution per condition (y axis) with `stat_halfeye()`: the
+    distribution enters through the aesthetic `xdist = rt_dist`, and the intervals
+    should cover 66% and 95% (`.width = c(0.66, 0.95)`). The plot is on the last
+    line.
+starter: |
+  ggplot(ci, aes(x = mean, y = condition)) +
+    geom_point()
+solution: |
+  ggplot(ci, aes(y = condition, xdist = rt_dist)) +
+    stat_halfeye(.width = c(0.66, 0.95))
+hints:
+  - de: "ggdist kann statt Rohdaten auch Verteilungsobjekte zeichnen. Dafür gibt es die Ästhetik `xdist` (bzw. `ydist`) statt `x`."
+    en: "Instead of raw data, ggdist can also draw distribution objects. There is the aesthetic `xdist` (or `ydist`) instead of `x` for that."
+  - de: "Die Intervallbreiten steuert das Argument `.width` von `stat_halfeye()`."
+    en: "The argument `.width` of `stat_halfeye()` controls the interval widths."
+  - de: "`ggplot(ci, aes(y = condition, xdist = ______)) + stat_halfeye(.width = c(0.66, 0.95))`"
+    en: "`ggplot(ci, aes(y = condition, xdist = ______)) + stat_halfeye(.width = c(0.66, 0.95))`"
+explanation:
+  de: |
+    Hier zeigt dieselbe Geometrie etwas anderes als in der Herausforderung: nicht,
+    wie die Personen streuen, sondern wie genau der **Mittelwert** bestimmt ist.
+    Das dünne Intervall ist das 95 %-Konfidenzintervall (Mittel ± t₀.₉₇₅ × SE),
+    die Dichte zeigt, dass Werte nahe der Mitte plausibler sind als am Rand
+    („confidence distribution“). Visuell: 1 132 ms (SE 23) bei visuellen, 974 ms
+    bei auditiven und 902 ms bei haptischen Hinweisen; die Verteilungen
+    überlappen kaum. Achtung bei Messwiederholung: Die Intervalle beruhen auf
+    Personenmitteln je Bedingung und berücksichtigen nicht, dass dieselben
+    Personen alle Bedingungen hatten; für Vergleiche zählen Intervalle der
+    Differenzen (Lektion „Gruppenvergleiche“). Mit Modellen geht es genauso:
+    `estimate_means()` liefern Mittel und SE, `dist_student_t()` daraus die
+    Verteilung, bei Bayes-Modellen nimmt `stat_halfeye()` direkt die Ziehungen.
+  en: |
+    Here the same geometry shows something different from the challenge: not how
+    the participants spread, but how precisely the **mean** is determined. The thin
+    interval is the 95% confidence interval (mean ± t₀.₉₇₅ × SE); the density shows
+    that values near the centre are more plausible than at the edge ("confidence
+    distribution"). Visually: 1,132 ms (SE 23) with visual, 974 ms with auditory
+    and 902 ms with haptic cues; the distributions barely overlap. Careful with
+    repeated measures: the intervals rest on participant means per condition and
+    ignore that the same participants had all conditions; for comparisons the
+    intervals of the differences count (lesson "Group comparisons"). With models it
+    works the same way: `estimate_means()` gives means and SE, `dist_student_t()`
+    the distribution; with Bayesian models `stat_halfeye()` takes the draws
+    directly.
+misconception:
+  de: "Ein Konfidenzintervall ist gleichförmig: Jeder Wert darin ist gleich plausibel."
+  en: "A confidence interval is uniform: every value inside it is equally plausible."
+check:
+  type: plot
+  params: [".width"]
+common_mistakes:
+  - pattern: "aes\\([^)]*\\bx\\s*=\\s*rt_dist"
+    message:
+      de: "Verteilungsobjekte gehören in die Ästhetik `xdist`, nicht `x`."
+      en: "Distribution objects belong in the aesthetic `xdist`, not `x`."
+  - pattern: "geom_errorbar|geom_pointrange"
+    message:
+      de: "Fehlerbalken zeigen nur die Grenzen. `stat_halfeye()` mit `xdist` zeigt die ganze Verteilung der Unsicherheit."
+      en: "Error bars show only the bounds. `stat_halfeye()` with `xdist` shows the whole distribution of uncertainty."

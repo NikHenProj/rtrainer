@@ -1,0 +1,19 @@
+# Lesson metadata; exercises are the other *.yml files in this folder
+# (sorted by `order`), the knowledge check is quiz.yml.
+lesson: reshaping-expert
+minutes: 60
+prerequisites: [reshaping-intermediate]
+langs: [de]
+packages: [dplyr, tidyr, dtplyr, data.table]
+data: [driving_sim]
+goals:
+  de:
+    - Ereignisse mit Ungleichungs-Joins (`between()`) Zeitfenstern zuordnen und Fenstergrenzen festlegen
+    - Mit `closest()` den letzten Wert vor einem Zeitpunkt anhängen (rolling join)
+    - Breite Tabellen mit mehreren Messgrößen über `".value"` und `names_pattern` umformen
+    - Große Tabellen mit dtplyr oder duckplyr auswerten und wissen, wann gerechnet wird
+  en:
+    - Assign events to time windows with inequality joins (`between()`) and set the window bounds
+    - Attach the last value before a time point with `closest()` (rolling join)
+    - Reshape wide tables with several measures using `".value"` and `names_pattern`
+    - Analyse large tables with dtplyr or duckplyr and know when the computation happens

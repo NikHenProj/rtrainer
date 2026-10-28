@@ -1,0 +1,91 @@
+id: rs-e-lazy-debug
+lesson: reshaping-expert
+order: 3
+title:
+  de: Ergebnis aus dtplyr holen
+  en: Getting the result out of dtplyr
+kind: debug
+required: true
+packages: [dplyr, dtplyr, data.table]
+data: [driving_sim]
+setup: |
+  library(dplyr)
+  library(dtplyr)
+  library(data.table)
+  set.seed(7)
+  lane_log <- driving_sim |>
+    select(participant, condition, trial) |>
+    slice(rep(seq_len(n()), each = 300)) |>
+    mutate(sample = rep(1:300, times = 480), lane_pos = round(rnorm(n(), 0, 0.3), 3))
+prompt:
+  de: |
+    `lane_log` enthält die seitliche Spurposition mit 15 Hz, 300 Messpunkte pro
+    Durchgang (144 000 Zeilen). Gesucht ist pro Person und Bedingung der Anteil der
+    Messpunkte mit `abs(lane_pos) > 0.5` als `share_out`, gerundet auf 3 Stellen.
+
+    Der Code unten nutzt dtplyr, liefert aber keine Tabelle, sondern etwas, das mit
+    `Source: local data table` beginnt. Korrigiere ihn so, dass ein Tibble mit den
+    Spalten `participant`, `condition`, `share_out` (120 Zeilen) herauskommt.
+  en: |
+    `lane_log` holds the lateral lane position at 15 Hz, 300 samples per trial
+    (144,000 rows). You need, per participant and condition, the share of samples
+    with `abs(lane_pos) > 0.5` as `share_out`, rounded to 3 decimals.
+
+    The code below uses dtplyr but returns not a table but something that starts
+    with `Source: local data table`. Fix it so that a tibble with the columns
+    `participant`, `condition`, `share_out` (120 rows) comes out.
+starter: |
+  lane_log |>
+    lazy_dt() |>
+    group_by(participant, condition) |>
+    summarise(share_out = round(mean(abs(lane_pos) > 0.5), 3))
+solution: |
+  lane_log |>
+    lazy_dt() |>
+    group_by(participant, condition) |>
+    summarise(share_out = round(mean(abs(lane_pos) > 0.5), 3)) |>
+    as_tibble()
+hints:
+  - de: "Lies die Ausgabe genau: Steht dort schon das Ergebnis oder nur eine Vorschau mit der übersetzten data.table-Anweisung (`Call:`)?"
+    en: "Read the output closely: is that already the result, or only a preview with the translated data.table call (`Call:`)?"
+  - de: "dtplyr sammelt die Verben nur ein. Gerechnet wird erst, wenn du das Ergebnis ausdrücklich anforderst."
+    en: "dtplyr only collects the verbs. The computation happens once you explicitly request the result."
+  - de: "Hänge `as_tibble()` (oder `collect()`) ans Ende der Pipe."
+    en: "Append `as_tibble()` (or `collect()`) to the end of the pipe."
+explanation:
+  de: |
+    `lazy_dt()` macht aus einer Tabelle ein „faules“ Objekt: Die dplyr-Verben werden
+    nur aufgezeichnet und in eine einzige data.table-Anweisung übersetzt
+    (`show_query()` zeigt sie). Erst `as_tibble()`, `as.data.frame()` oder
+    `collect()` führt sie aus. Das spart Kopien bei großen Tabellen, heißt aber:
+    Was du siehst, ist bis dahin nur eine Vorschau, und Funktionen, die eine echte
+    Tabelle erwarten (`ggplot()`, `lm()`), scheitern daran. duckplyr arbeitet
+    ähnlich, materialisiert aber automatisch, sobald du das Ergebnis brauchst. Ob
+    sich das lohnt, hängt von der Größe ab: Bei 144 000 Zeilen ist dplyr
+    ebenso schnell, ab einigen Millionen Zeilen (Blick- oder Fahrdaten mit hoher
+    Rate) spürbar langsamer.
+  en: |
+    `lazy_dt()` turns a table into a "lazy" object: the dplyr verbs are only
+    recorded and translated into a single data.table call (`show_query()` shows it).
+    Only `as_tibble()`, `as.data.frame()` or `collect()` executes it. That saves
+    copies with large tables but means that what you see until then is only a
+    preview, and functions expecting a real table (`ggplot()`, `lm()`) fail on it.
+    duckplyr works similarly but materialises automatically as soon as you need the
+    result. Whether it pays off depends on size: with 144,000 rows dplyr is just as
+    fast; from a few million rows (gaze or driving data at high rates) it is
+    noticeably slower.
+misconception:
+  de: "Nach `lazy_dt()` rechnen die dplyr-Verben sofort und liefern eine normale Tabelle."
+  en: "After `lazy_dt()` the dplyr verbs compute immediately and return a normal table."
+check:
+  type: value
+  ignore_row_order: true
+common_mistakes:
+  - pattern: "print\\("
+    message:
+      de: "`print()` zeigt nur die Vorschau des faulen Objekts. Das Ergebnis holst du mit `as_tibble()`."
+      en: "`print()` only shows the preview of the lazy object. You get the result with `as_tibble()`."
+  - pattern: "show_query\\("
+    message:
+      de: "`show_query()` zeigt die übersetzte data.table-Anweisung, führt sie aber nicht aus."
+      en: "`show_query()` shows the translated data.table call but does not execute it."

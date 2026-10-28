@@ -1,0 +1,194 @@
+---
+title: "Umformen und zusammenführen"
+subtitle: "Expert · Ungleichungs- und Rolling Joins, `.value`, große Daten"
+body-classes: rt-lesson
+engine: markdown
+webr:
+  packages: [dplyr, tidyr, dtplyr, data.table]
+resources:
+  - ../data/driving_sim.csv
+---
+
+{{< include /_generated/de/reshaping-expert/runtime.qmd >}}
+
+{{< include /_generated/de/reshaping-expert/header.qmd >}}
+
+::: {.callout-note .rt-loading-note appearance="simple"}
+R läuft hier direkt im Browser. Beim ersten Besuch lädt es 15–30 Sekunden (Anzeige unten rechts), danach geht es schneller.
+:::
+
+{{< include /_generated/de/reshaping-expert/challenge.qmd >}}
+
+## Wozu? {#why}
+
+**Forschungsfrage:** Schauen Fahrende bei visuellen Hinweisen häufiger von der Straße weg als bei auditiven oder haptischen, und liegt das an der Bedingung oder an einer veralteten Kalibrierung des Eyetrackers?
+
+Sobald Sensordaten ins Spiel kommen, passen die Tabellen nicht mehr über gleiche Schlüssel zusammen. Blicke, Herzschläge oder Warnungen haben Zeitstempel, die Versuchsdurchgänge Zeitfenster, die Kalibrierungen einzelne Zeitpunkte, die bis zur nächsten gelten. Dazu kommen breite Exporte mit mehreren Messgrößen pro Zeitpunkt und Tabellen mit Millionen Zeilen. Diese Lektion zeigt die Werkzeuge dafür, ohne Schleifen und ohne Umweg über `filter()` nach einem riesigen Join.
+
+## Konzept {#concept}
+
+```{=html}
+<figure class="rt-figure">
+<svg viewBox="0 0 560 190" role="img" aria-labelledby="fig-rse-title fig-rse-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="fig-rse-title">Ungleichungs-Join und Rolling Join auf einer Zeitachse</title>
+  <desc id="fig-rse-desc">Eine Zeitachse von 0 bis 90 Sekunden mit drei Durchgangsfenstern von 0 bis 20, 30 bis 50 und 60 bis 80 Sekunden. Blicke als Punkte: Blicke innerhalb eines Fensters werden diesem Durchgang zugeordnet, Blicke in den Pausen bleiben ohne Partner. Darunter Kalibrierungen bei 0 und 45 Sekunden: Der Rolling Join gibt jedem Durchgang die letzte Kalibrierung vor seinem Beginn, also 0 für die ersten beiden und 45 für den dritten.</desc>
+  <text x="20" y="22" class="rt-fig-label">between(): Blick liegt im Fenster</text>
+  <rect x="40" y="34" width="100" height="26" class="rt-fig-box-accent" />
+  <rect x="190" y="34" width="100" height="26" class="rt-fig-box-accent" />
+  <rect x="340" y="34" width="100" height="26" class="rt-fig-box-accent" />
+  <text x="58" y="52" class="rt-fig-code">trial 1</text>
+  <text x="208" y="52" class="rt-fig-code">trial 2</text>
+  <text x="358" y="52" class="rt-fig-code">trial 3</text>
+  <line x1="40" y1="80" x2="520" y2="80" class="rt-fig-axis" />
+  <circle cx="75" cy="80" r="5" class="rt-fig-arrowhead" />
+  <circle cx="120" cy="80" r="5" class="rt-fig-arrowhead" />
+  <circle cx="165" cy="80" r="5" class="rt-fig-muted" />
+  <circle cx="250" cy="80" r="5" class="rt-fig-arrowhead" />
+  <circle cx="470" cy="80" r="5" class="rt-fig-muted" />
+  <text x="150" y="102" class="rt-fig-label rt-fig-muted">Pause: kein Partner</text>
+  <text x="20" y="132" class="rt-fig-label">closest(): letzte Kalibrierung vor dem Start</text>
+  <line x1="40" y1="160" x2="520" y2="160" class="rt-fig-axis" />
+  <rect x="36" y="152" width="8" height="16" class="rt-fig-box-accent" />
+  <rect x="261" y="152" width="8" height="16" class="rt-fig-box-accent" />
+  <text x="30" y="184" class="rt-fig-code">0 s</text>
+  <text x="250" y="184" class="rt-fig-code">45 s</text>
+  <text x="300" y="164" class="rt-fig-label">trial 1, 2 → 0 s · trial 3 → 45 s</text>
+</svg>
+<figcaption>Ungleichungs-Joins ordnen Ereignisse Fenstern zu; Rolling Joins nehmen den letzten gültigen Zustand.</figcaption>
+</figure>
+```
+
+- **Ungleichungs-Join:** `join_by(participant, between(y$time_s, x$start_s, x$end_s))` verbindet Zeilen, deren Werte in einem Bereich liegen. Die Spalte der linken Tabelle steht in `between()` zuerst; `x$` und `y$` legen die Herkunft fest. Gleichwertig: `join_by(participant, start_s <= time_s, end_s >= time_s)`.
+- **Grenzen festlegen:** `between()` schließt beide Grenzen ein. Bei lückenlosen Fenstern gehört ein Punkt auf der Grenze dann zu zwei Fenstern; `bounds = "[)"` öffnet die obere Grenze.
+- **Rolling Join:** `closest(start_s >= calib_s)` nimmt von allen passenden Zeilen nur die nächstgelegene. Für Zustände, die gelten, bis sie sich ändern.
+- **Keine Warnung:** Bei Ungleichungen sind mehrere Treffer oft gewollt; dplyr warnt nicht. `nrow()` vorher und nachher bleibt Pflicht.
+- **Mehrere Messgrößen umformen:** `names_to = c(".value", "time")` macht aus dem ersten Teil des Namens den Spaltennamen. Enthalten die Messgrößen selbst Unterstriche, zerlegt `names_pattern = "(.+)_(t1|t2)"` eindeutig.
+- **Große Daten:** dtplyr (`lazy_dt()`) übersetzt dplyr-Code in data.table, duckplyr (`as_duckdb_tibble()`) in die Datenbank DuckDB. Beide rechnen „faul“; dtplyr erst bei `as_tibble()`/`collect()`, duckplyr automatisch, sobald das Ergebnis gebraucht wird.
+
+::: {.callout-tip collapse="true" appearance="simple"}
+## Mehr dazu: überlappende Fenster und `multiple`
+
+- **Überlappende Fenster** (z. B. gleitende 10-s-Fenster) sollen Ereignisse mehrfach zählen; dann ist der mehrfache Treffer gewollt.
+- `multiple = "first"`/`"last"` behält pro Zeile links nur einen Treffer, `unmatched = "error"` bricht ab, wenn ein Ereignis in keinem Fenster liegt.
+- **Feste Reihenfolge:** Wer nach einem Join mit `row_number()` oder `first()` weiterrechnet, sortiert vorher mit `arrange()`; datenbankgestützte Backends (duckplyr, dbplyr) garantieren keine Zeilenfolge.
+:::
+
+## Beispiel {#example}
+
+Ein Sitzungsprotokoll: Jeder Durchgang dauert 20 s, dazwischen 10 s Pause. Spurverlassenswarnungen (`warnings`) haben Zeitstempel. Welcher Durchgang hat wie viele Warnungen?
+
+```{webr}
+set.seed(11)
+windows <- driving_sim |>
+  distinct(participant, condition, trial) |>
+  mutate(start_s = (row_number() - 1) * 30, end_s = start_s + 20, .by = participant)
+warnings <- tibble(
+  participant = sample(unique(driving_sim$participant), 300, replace = TRUE),
+  warn_s = round(runif(300, 0, 360), 1)
+)
+per_trial <- windows |>
+  left_join(warnings, by = join_by(participant, between(y$warn_s, x$start_s, x$end_s))) |>
+  summarise(n_warnings = sum(!is.na(warn_s)), .by = c(participant, condition, trial))
+c(windows = nrow(windows), per_trial = nrow(per_trial))
+per_trial |>
+  summarise(mean_warnings = mean(n_warnings), .by = condition)
+```
+
+Rolling Join: Wie lange ist die letzte Warnung vor jedem Durchgang her? Durchgänge ohne frühere Warnung erhalten `NA`.
+
+```{webr}
+windows |>
+  left_join(warnings, by = join_by(participant, closest(start_s >= warn_s))) |>
+  mutate(since_warning_s = start_s - warn_s) |>
+  filter(participant == "p01") |>
+  select(condition, trial, start_s, warn_s, since_warning_s)
+```
+
+Ein breiter Export mit zwei Messgrößen pro Bedingung, zurück in die lange Form mit einer Spalte je Messgröße:
+
+```{webr}
+wide <- driving_sim |>
+  summarise(across(c(rt_ms, lane_dev), \(x) mean(x, na.rm = TRUE)), .by = c(participant, condition)) |>
+  pivot_wider(names_from = condition, values_from = c(rt_ms, lane_dev))
+names(wide)
+wide |>
+  pivot_longer(-participant, names_to = c(".value", "condition"), names_pattern = "(.+)_(visual|auditory|haptic)")
+```
+
+Große Daten: 144 000 Messpunkte der Spurposition mit dtplyr. Der dplyr-Code bleibt gleich, `show_query()` zeigt die übersetzte data.table-Anweisung:
+
+```{webr}
+lane_log <- driving_sim |>
+  select(participant, condition, trial) |>
+  slice(rep(seq_len(n()), each = 300)) |>
+  mutate(lane_pos = rnorm(n(), 0, 0.3))
+
+lazy <- lane_log |>
+  lazy_dt() |>
+  summarise(share_out = mean(abs(lane_pos) > 0.5), .by = condition)
+show_query(lazy)
+as_tibble(lazy)
+```
+
+::: {.callout-note appearance="simple"}
+## Lokal ausführen: duckplyr
+
+duckplyr rechnet denselben Code in DuckDB. Hier läuft es nicht live: `library(duckplyr)` übernimmt die dplyr-Verben für **alle** Tabellen der Sitzung, die Zeilenfolge von `distinct()` oder `summarise()` ist dann nicht mehr garantiert, und im Browser hing die erste Auswertung. Lokal, am besten nur über `duckplyr::` statt `library()`:
+
+```r
+lane_log |>
+  duckplyr::as_duckdb_tibble() |>
+  summarise(share_out = mean(abs(lane_pos) > 0.5), .by = condition)
+
+# Dateien größer als der Arbeitsspeicher: liest erst beim Auswerten
+duckplyr::read_parquet_duckdb("gaze/*.parquet") |>
+  summarise(n = n(), .by = participant)
+```
+:::
+
+**So berichtest du es (Methodenteil):** Blicke weg von der Straße wurden dem Durchgang zugeordnet, in dessen Zeitfenster sie lagen (Grenzen eingeschlossen); Blicke in den Pausen wurden nicht gewertet. Für jeden Durchgang wurde der Abstand zur letzten Kalibrierung des Eyetrackers bestimmt (Median 120 s, Spannweite 0–330 s) und als Kovariate geprüft.
+
+## Paketvergleich {#packages}
+
+| Aufgabe | Empfehlung | Alternative |
+|---|---|---|
+| Ereignisse Fenstern zuordnen | **dplyr** `join_by(between())`, Ungleichungen | `data.table` non-equi join `x[y, on = .(start <= t, end >= t)]`; `fuzzyjoin` (langsamer, veraltet) |
+| Letzter Wert vor einem Zeitpunkt | **dplyr** `join_by(closest())` | `data.table` mit `roll = TRUE`; `tidyr::fill()` nach einem Gleichheits-Join |
+| Mehrere Messgrößen lang machen | **tidyr** `pivot_longer()` mit `".value"`, `names_pattern` | zweimal `pivot_longer()` und `pivot_wider()`; `data.table::melt()` mit `measure()` |
+| Große Tabellen im Speicher | **dtplyr** (dplyr-Code, data.table rechnet) | data.table direkt (schnellste, eigene Syntax) |
+| Sehr große Dateien, Parquet | **duckplyr** (dplyr-Code, DuckDB rechnet) | `arrow` (lokal, nicht im Browser); `duckdb` + `dbplyr` mit SQL |
+
+## Übungen {#exercises}
+
+Drei Pflichtübungen und eine Zusatzübung. **Ausführen und prüfen** startet deinen Code und prüft ihn sofort. Hinweise deckst du einzeln auf (**Hinweis zeigen**), die Lösung erst danach.
+
+{{< include /_generated/de/reshaping-expert/exercises.qmd >}}
+
+## Wissenscheck {#check}
+
+{{< include /_generated/de/reshaping-expert/quiz.qmd >}}
+
+## Spickzettel {#cheatsheet}
+
+```r
+# Ereignisse Fenstern zuordnen (Grenzen eingeschlossen; "[)" öffnet oben)
+windows |>
+  left_join(events, by = join_by(participant, between(y$time_s, x$start_s, x$end_s))) |>
+  summarise(n = sum(!is.na(time_s)), .by = c(participant, trial))
+
+# Letzter Zustand vor jedem Zeitpunkt (rolling join)
+left_join(trials, calibrations, by = join_by(participant, closest(start_s >= calib_s)))
+
+# Mehrere Messgrößen in einem Schritt lang
+pivot_longer(d, -id, names_to = c(".value", "time"), names_pattern = "(.+)_(t1|t2)")
+
+# Große Daten: gleicher dplyr-Code
+lazy_dt(d) |> summarise(m = mean(x), .by = g) |> as_tibble()
+duckplyr::as_duckdb_tibble(d) |> summarise(m = mean(x), .by = g)
+```
+
+- Nach `left_join()` zählt `n()` auch die `NA`-Zeile; Treffer zählt `sum(!is.na(...))`.
+- Ungleichungs-Joins warnen nicht bei mehrfachen Treffern: `nrow()` prüfen, Grenzen festlegen.
+- dtplyr rechnet erst bei `as_tibble()`/`collect()`.
+
+{{< include /_generated/de/reshaping-expert/footer.qmd >}}

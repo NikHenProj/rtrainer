@@ -1,0 +1,86 @@
+id: vi-e-raincloud
+lesson: visualisation-expert
+order: 0
+title:
+  de: Verteilung und Einzelwerte in einem Plot
+  en: Distribution and individual values in one plot
+kind: write
+required: false
+challenge: true
+packages: [dplyr, ggplot2, ggdist]
+data: [usability]
+setup: |
+  library(dplyr)
+  library(ggplot2)
+  library(ggdist)
+  person <- usability |>
+    summarise(time_s = mean(time_s), .by = c(participant, prototype))
+prompt:
+  de: |
+    `person` enthält die mittlere Bearbeitungszeit jeder Person pro Prototyp (über
+    die vier Aufgaben). Ein Balken mit Fehlerbalken würde verbergen, dass die Zeiten
+    schief verteilt sind und einzelne Personen sehr lange brauchen.
+
+    Zeichne pro Prototyp (y-Achse) die Verteilung von `time_s` (x-Achse) als halbe
+    Dichte mit Median und Intervallen (`stat_halfeye()` aus ggdist) und darunter die
+    Einzelwerte als Punkte, um 0.15 nach unten verschoben
+    (`position = position_nudge(y = -0.15)`) und mit `alpha = 0.4`. Der Plot steht
+    in der letzten Zeile.
+  en: |
+    `person` holds each participant's mean task time per prototype (across the
+    four tasks). A bar with error bars would hide that the times are skewed and
+    that some participants take very long.
+
+    Draw, per prototype (y axis), the distribution of `time_s` (x axis) as a half
+    density with median and intervals (`stat_halfeye()` from ggdist), and below it
+    the individual values as points, shifted down by 0.15
+    (`position = position_nudge(y = -0.15)`) and with `alpha = 0.4`. The plot is on
+    the last line.
+starter: |
+  ggplot(person, aes(x = prototype, y = time_s)) +
+    geom_col()
+solution: |
+  ggplot(person, aes(x = time_s, y = prototype)) +
+    stat_halfeye() +
+    geom_point(position = position_nudge(y = -0.15), alpha = 0.4)
+hints:
+  - de: "Die Prototypen gehören auf die y-Achse, die Zeit auf die x-Achse; ggdist erkennt die Ausrichtung selbst."
+    en: "The prototypes belong on the y axis, the time on the x axis; ggdist detects the orientation itself."
+  - de: "Zwei Ebenen: zuerst `stat_halfeye()`, dann `geom_point()` mit Verschiebung und Transparenz."
+    en: "Two layers: first `stat_halfeye()`, then `geom_point()` with a shift and transparency."
+  - de: "`+ stat_halfeye() + geom_point(position = position_nudge(y = ______), alpha = 0.4)`"
+    en: "`+ stat_halfeye() + geom_point(position = position_nudge(y = ______), alpha = 0.4)`"
+explanation:
+  de: |
+    `stat_halfeye()` zeichnet eine halbe Dichte, darunter den Median (Punkt) und
+    zwei Intervalle (dick: mittlere 66 %, dünn: mittlere 95 % der Werte). Die
+    Punkte darunter zeigen, worauf die Dichte beruht: 24 bzw. 23 Personen, nicht
+    tausende. Wichtig: Das Intervall beschreibt hier die **Streuung der Daten**,
+    nicht die Unsicherheit des Mittelwerts. Prototyp A hat den längsten
+    rechten Rand (bis 140 s), B die kompakteste Verteilung (Median 44 s). Weil
+    jede Person alle Prototypen getestet hat, wären Linien zwischen den Punkten
+    derselben Person noch aufschlussreicher; dafür die Werte mit `geom_line(aes(group = participant))` verbinden.
+  en: |
+    `stat_halfeye()` draws a half density with the median (point) and two
+    intervals below it (thick: middle 66%, thin: middle 95% of the values). The
+    points underneath show what the density rests on: 24 or 23 participants, not
+    thousands. Important: here the interval describes the **spread of the data**,
+    not the uncertainty of the mean. Prototype A has the longest right tail (up to
+    140 s), B the most compact distribution (median 44 s). Because every
+    participant tested all prototypes, lines between the points of the same person
+    would be even more informative; connect them with
+    `geom_line(aes(group = participant))`.
+misconception:
+  de: "Das Intervall unter einer Dichte aus Rohdaten ist ein Konfidenzintervall für den Mittelwert."
+  en: "The interval below a density of raw data is a confidence interval for the mean."
+check:
+  type: plot
+common_mistakes:
+  - pattern: "geom_col|geom_bar|stat_summary"
+    message:
+      de: "Balken und Mittelwerte verbergen die schiefe Verteilung. Gesucht ist die ganze Verteilung mit `stat_halfeye()`."
+      en: "Bars and means hide the skewed distribution. You need the whole distribution with `stat_halfeye()`."
+  - pattern: "geom_jitter"
+    message:
+      de: "Zufälliges Streuen verschiebt die Punkte auch in die Dichte hinein. Verschiebe sie gezielt mit `position_nudge(y = -0.15)`."
+      en: "Random jitter also moves points into the density. Shift them deliberately with `position_nudge(y = -0.15)`."

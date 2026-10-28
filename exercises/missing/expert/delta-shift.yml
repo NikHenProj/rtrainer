@@ -1,0 +1,93 @@
+id: ms-e-delta-shift
+lesson: missing-expert
+order: 4
+title:
+  de: Sensitivität gegen MNAR mit δ-Verschiebung
+  en: Sensitivity to MNAR with a δ shift
+kind: write
+required: false
+packages: [dplyr, purrr, mice]
+data: [survey]
+setup: |
+  library(dplyr)
+  library(purrr)
+  library(mice)
+  tlx <- survey |>
+    mutate(interface = factor(interface)) |>
+    select(interface, tech_affinity, starts_with("tlx_"))
+prompt:
+  de: |
+    Vielleicht haben gerade sehr frustrierte Befragte `tlx_frustration` ausgelassen
+    (MNAR). Prüfe, ob der Effekt der Bedienform das übersteht: Imputiere `tlx` für
+    jedes δ in `c(0, 10, 20)` so, dass die imputierten Werte von `tlx_frustration`
+    um δ Punkte erhöht werden (Argument `post`), jeweils mit `m = 5`,
+    `seed = 2026`, `printFlag = FALSE`. Schätze `lm(tlx_frustration ~ interface +
+    tech_affinity)`, poole und gib eine Tabelle mit den Spalten `delta` und
+    `estimate` (Effekt `interfacevoice`, gerundet auf 2 Stellen) zurück, eine Zeile
+    pro δ.
+  en: |
+    Perhaps it was precisely the very frustrated respondents who skipped
+    `tlx_frustration` (MNAR). Check whether the effect of the input mode survives:
+    for each δ in `c(0, 10, 20)`, impute `tlx` so that the imputed values of
+    `tlx_frustration` are raised by δ points (argument `post`), each with `m = 5`,
+    `seed = 2026`, `printFlag = FALSE`. Fit `lm(tlx_frustration ~ interface +
+    tech_affinity)`, pool, and return a table with the columns `delta` and
+    `estimate` (effect `interfacevoice`, rounded to 2 decimals), one row per δ.
+starter: |
+  imp <- mice(tlx, m = 5, seed = 2026, printFlag = FALSE)
+  fit <- with(imp, lm(tlx_frustration ~ interface + tech_affinity))
+  summary(pool(fit))
+solution: |
+  shifted_estimate <- function(delta) {
+    post <- make.post(tlx)
+    post["tlx_frustration"] <- paste("imp[[j]][, i] <- imp[[j]][, i] +", delta)
+    imp <- mice(tlx, m = 5, seed = 2026, post = post, printFlag = FALSE)
+    fit <- with(imp, lm(tlx_frustration ~ interface + tech_affinity))
+    summary(pool(fit)) |>
+      filter(term == "interfacevoice") |>
+      transmute(delta = delta, estimate = round(estimate, 2))
+  }
+  map(c(0, 10, 20), shifted_estimate) |>
+    list_rbind()
+hints:
+  - de: "`make.post(tlx)` liefert einen leeren Zeichenvektor mit einem Eintrag pro Variable. Dort steht R-Code, den mice nach jedem Imputationsschritt ausführt."
+    en: "`make.post(tlx)` returns an empty character vector with one entry per variable. It holds R code that mice runs after each imputation step."
+  - de: "Im `post`-Code sind `imp[[j]][, i]` die gerade imputierten Werte der Variable `j`. Schreibe eine Funktion für ein δ und wende sie mit `map()` auf alle drei an."
+    en: "In the `post` code, `imp[[j]][, i]` are the values just imputed for variable `j`. Write a function for one δ and apply it to all three with `map()`."
+  - de: "`post[\"tlx_frustration\"] <- paste(\"imp[[j]][, i] <- imp[[j]][, i] +\", delta)`; danach `filter(term == \"interfacevoice\")`."
+    en: "`post[\"tlx_frustration\"] <- paste(\"imp[[j]][, i] <- imp[[j]][, i] +\", delta)`; then `filter(term == \"interfacevoice\")`."
+explanation:
+  de: |
+    Ob Daten MNAR sind, lässt sich aus den Daten nicht prüfen; man kann aber
+    zeigen, wie stark eine angenommene Abweichung das Ergebnis ändert. Die
+    δ-Verschiebung (van Buuren, Kap. 9.2) imputiert zunächst unter MAR und
+    verschiebt dann die imputierten Werte um δ, hier also „die Fehlenden waren
+    um δ Punkte frustrierter als vergleichbare Befragte“. Der Effekt sinkt von
+    9,3 (δ = 0) auf 8,3 (δ = 20), weil 5 der 6 fehlenden Werte bei Touch liegen. Selbst
+    eine Verschiebung um 20 Punkte auf einer Skala von 0–100 kippt den Schluss
+    nicht. Bericht: „Eine Sensitivitätsanalyse (δ-Verschiebung um 0, 10 und 20
+    Punkte) änderte den Effekt nur geringfügig (b = 9,3 bis 8,3).“
+  en: |
+    Whether data are MNAR cannot be tested from the data; you can, however, show
+    how much an assumed departure changes the result. The δ shift (van Buuren,
+    ch. 9.2) first imputes under MAR and then shifts the imputed values by δ, here
+    "the missing respondents were δ points more frustrated than comparable
+    respondents". The effect drops from 9.3 (δ = 0) to 8.3 (δ = 20) because 5 of the
+    6 missing values are in the touch group. Even a shift of 20 points on a 0–100 scale
+    does not overturn the conclusion. Report: "A sensitivity analysis (δ shift of
+    0, 10 and 20 points) changed the effect only slightly (b = 9.3 to 8.3)."
+misconception:
+  de: "Ob fehlende Werte MNAR sind, kann man mit einem Test aus den beobachteten Daten entscheiden."
+  en: "Whether missing values are MNAR can be decided with a test on the observed data."
+check:
+  type: value
+  ignore_row_order: true
+common_mistakes:
+  - pattern: "mutate\\(\\s*tlx_frustration\\s*=\\s*tlx_frustration\\s*\\+"
+    message:
+      de: "Das verschiebt alle Werte, auch die beobachteten. Verschoben werden nur die imputierten, über `post`."
+      en: "That shifts all values, including the observed ones. Only the imputed ones are shifted, via `post`."
+  - pattern: "for\\s*\\("
+    message:
+      de: "Eine Schleife geht, sammelt die Ergebnisse aber umständlich. `map()` über die δ-Werte und `list_rbind()` liefern direkt eine Tabelle."
+      en: "A loop works but collects the results awkwardly. `map()` over the δ values and `list_rbind()` return a table directly."

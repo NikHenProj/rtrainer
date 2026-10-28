@@ -1,0 +1,134 @@
+# Knowledge check: passed at >= `pass` share of correctly answered questions.
+lesson: missing-expert
+pass: 0.8
+questions:
+  - id: ms-e-q-rubin
+    prompt:
+      de: "Was macht `pool()` mit den Standardfehlern aus 10 imputierten Datensätzen?"
+      en: "What does `pool()` do with the standard errors from 10 imputed datasets?"
+    options:
+      - text:
+          de: "Es kombiniert die mittlere Varianz innerhalb der Datensätze mit der Varianz der Schätzungen zwischen ihnen."
+          en: "It combines the mean variance within the datasets with the variance of the estimates between them."
+        correct: true
+        explain:
+          de: "Genau, Rubins Regeln: T = W̄ + (1 + 1/m) B. Die Unsicherheit der Imputation steckt in B."
+          en: "Exactly, Rubin's rules: T = W̄ + (1 + 1/m) B. The uncertainty of the imputation sits in B."
+      - text:
+          de: "Es mittelt die Standardfehler."
+          en: "It averages the standard errors."
+        correct: false
+        explain:
+          de: "Dann fehlte die Streuung zwischen den Imputationen; der Standardfehler wäre zu klein."
+          en: "Then the spread between imputations would be missing; the standard error would be too small."
+      - text:
+          de: "Es teilt den Standardfehler durch √10, weil zehnmal so viele Daten vorliegen."
+          en: "It divides the standard error by √10 because there are ten times as many data."
+        correct: false
+        explain:
+          de: "Die 10 Datensätze enthalten dieselben Personen; mehr Imputationen machen die Schätzung stabiler, nicht die Stichprobe größer."
+          en: "The 10 datasets contain the same respondents; more imputations make the estimate more stable, not the sample larger."
+  - id: ms-e-q-transform
+    prompt:
+      de: "Du willst einen Skalenwert aus imputierten Items berechnen. Welcher Weg ist richtig?"
+      en: "You want to compute a scale score from imputed items. Which route is right?"
+    options:
+      - text:
+          de: "`complete(imp, \"long\", include = TRUE)`, Skalenwert mit `mutate()`, `as.mids()`, dann `with()` und `pool()`."
+          en: "`complete(imp, \"long\", include = TRUE)`, scale score with `mutate()`, `as.mids()`, then `with()` and `pool()`."
+        correct: true
+        explain:
+          de: "Richtig: erst imputieren, dann transformieren, und das `mids`-Objekt neu bauen."
+          en: "Right: impute first, then transform, and rebuild the `mids` object."
+      - text:
+          de: "Skalenwert vor dem Imputieren berechnen und nur ihn imputieren."
+          en: "Compute the scale score before imputing and impute only that."
+        correct: false
+        explain:
+          de: "Dann geht die Information der beantworteten Items verloren; wer ein Item auslässt, hat keinen Wert."
+          en: "Then the information of the answered items is lost; anyone skipping one item has no score."
+      - text:
+          de: "`complete(imp)` nehmen, Skalenwert berechnen und mit `lm()` auswerten."
+          en: "Take `complete(imp)`, compute the scale score and analyse with `lm()`."
+        correct: false
+        explain:
+          de: "Das ist nur der erste Datensatz; die Unsicherheit der Imputation fehlt."
+          en: "That is only the first dataset; the uncertainty of the imputation is missing."
+  - id: ms-e-q-pmm
+    prompt:
+      de: "Im ggmice-Streifenplot liegen alle imputierten Werte von `tlx_effort` im Bereich der beobachteten, sind aber im Mittel etwas höher. Was folgt daraus?"
+      en: "In the ggmice strip plot all imputed values of `tlx_effort` lie within the range of the observed ones but are slightly higher on average. What follows?"
+    options:
+      - text:
+          de: "Nichts Bedenkliches: Unter MAR dürfen sich imputierte Werte unterscheiden, wenn das Fehlen mit anderen Variablen zusammenhängt."
+          en: "Nothing worrying: under MAR imputed values may differ if missingness relates to other variables."
+        correct: true
+        explain:
+          de: "Ja. Bedenklich wären unmögliche Werte oder Ketten mit Trend in `plot_trace()`."
+          en: "Yes. Worrying would be impossible values or chains with a trend in `plot_trace()`."
+      - text:
+          de: "Die Imputation ist falsch, imputierte Werte müssen wie die beobachteten verteilt sein."
+          en: "The imputation is wrong; imputed values must be distributed like the observed ones."
+        correct: false
+        explain:
+          de: "Das gälte nur unter MCAR. Mice imputiert gerade so, dass Zusammenhänge mit anderen Variablen erhalten bleiben."
+          en: "That would only hold under MCAR. mice imputes precisely so that relations with other variables are preserved."
+      - text:
+          de: "Die Daten sind MNAR."
+          en: "The data are MNAR."
+        correct: false
+        explain:
+          de: "MNAR lässt sich aus den Daten nicht ablesen; der Unterschied passt auch zu MAR."
+          en: "MNAR cannot be read from the data; the difference is also compatible with MAR."
+  - id: ms-e-q-delta
+    prompt:
+      de: "Wozu dient eine δ-Verschiebung der imputierten Werte?"
+      en: "What is a δ shift of the imputed values for?"
+    options:
+      - text:
+          de: "Zu zeigen, wie stark eine angenommene Abweichung von MAR das Ergebnis ändern würde."
+          en: "To show how much an assumed departure from MAR would change the result."
+        correct: true
+        explain:
+          de: "Genau, eine Sensitivitätsanalyse. Sie beweist nichts, macht aber die Annahme sichtbar."
+          en: "Exactly, a sensitivity analysis. It proves nothing but makes the assumption visible."
+      - text:
+          de: "Zu testen, ob die Daten MNAR sind."
+          en: "To test whether the data are MNAR."
+        correct: false
+        explain:
+          de: "Dafür gibt es keinen Test; man kann nur Annahmen durchspielen."
+          en: "There is no test for that; you can only play through assumptions."
+      - text:
+          de: "Die imputierten Werte zu korrigieren, damit sie den beobachteten gleichen."
+          en: "To correct the imputed values so that they resemble the observed ones."
+        correct: false
+        explain:
+          de: "δ verschiebt bewusst weg von der MAR-Imputation, um eine Annahme zu prüfen."
+          en: "δ deliberately shifts away from the MAR imputation to probe an assumption."
+  - id: ms-e-q-fiml
+    prompt:
+      de: "In einer Regression fehlt nur das Ergebnis, die Prädiktoren sind vollständig. Was liefert FIML ohne Hilfsvariablen?"
+      en: "In a regression only the outcome is missing; the predictors are complete. What does FIML without auxiliary variables return?"
+    options:
+      - text:
+          de: "Dasselbe wie der Fallausschluss."
+          en: "The same as case deletion."
+        correct: true
+        explain:
+          de: "Richtig. Erst Hilfsvariablen bringen Information über die fehlenden Werte ein."
+          en: "Right. Only auxiliary variables bring in information about the missing values."
+      - text:
+          de: "Genauere Schätzungen als der Fallausschluss, weil alle 160 Personen eingehen."
+          en: "More precise estimates than case deletion because all 160 respondents enter."
+        correct: false
+        explain:
+          de: "Personen ohne Ergebnis tragen hier nichts zur Regression bei."
+          en: "Respondents without an outcome contribute nothing to the regression here."
+      - text:
+          de: "Einen Fehler, weil FIML vollständige Daten braucht."
+          en: "An error, because FIML needs complete data."
+        correct: false
+        explain:
+          de: "FIML ist gerade für unvollständige Daten gemacht (`missing = \"fiml\"` in lavaan)."
+          en: "FIML is made precisely for incomplete data (`missing = \"fiml\"` in lavaan)."

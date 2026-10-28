@@ -1,0 +1,86 @@
+id: ms-e-impute-pool
+lesson: missing-expert
+order: 0
+title:
+  de: Imputieren, schätzen, zusammenfassen
+  en: Impute, estimate, pool
+kind: write
+required: false
+challenge: true
+packages: [dplyr, mice]
+data: [survey]
+setup: |
+  library(dplyr)
+  library(mice)
+  tlx <- survey |>
+    mutate(interface = factor(interface)) |>
+    select(interface, tech_affinity, starts_with("tlx_"))
+prompt:
+  de: |
+    Frage: Erleben Befragte mit Sprachbedienung mehr Frustration (`tlx_frustration`)
+    als mit Touch, bei gleicher Technikaffinität? In `tlx` fehlen bei 3–5 % der
+    Befragten einzelne TLX-Werte.
+
+    Imputiere `tlx` mit mice (`m = 10`, `seed = 2026`, `printFlag = FALSE`, sonst
+    Voreinstellungen), schätze in jedem imputierten Datensatz
+    `lm(tlx_frustration ~ interface + tech_affinity)` und fasse die Ergebnisse nach
+    Rubins Regeln zusammen. Gib die Zusammenfassung mit den Spalten `term`,
+    `estimate`, `std.error`, `p.value` zurück.
+  en: |
+    Question: do respondents using voice control experience more frustration
+    (`tlx_frustration`) than with touch, at the same technology affinity? In `tlx`,
+    3–5% of respondents are missing single TLX values.
+
+    Impute `tlx` with mice (`m = 10`, `seed = 2026`, `printFlag = FALSE`, otherwise
+    defaults), fit `lm(tlx_frustration ~ interface + tech_affinity)` in each imputed
+    dataset and combine the results according to Rubin's rules. Return the summary
+    with the columns `term`, `estimate`, `std.error`, `p.value`.
+starter: |
+  fit <- lm(tlx_frustration ~ interface + tech_affinity, data = tlx)
+  fit
+solution: |
+  imp <- mice(tlx, m = 10, seed = 2026, printFlag = FALSE)
+  fit <- with(imp, lm(tlx_frustration ~ interface + tech_affinity))
+  summary(pool(fit)) |>
+    select(term, estimate, std.error, p.value)
+hints:
+  - de: "Drei Schritte: `mice()` erzeugt die Datensätze, `with()` schätzt das Modell in jedem, `pool()` fasst zusammen."
+    en: "Three steps: `mice()` creates the datasets, `with()` fits the model in each, `pool()` combines them."
+  - de: "In `with(imp, lm(...))` steht kein `data =`; `with()` setzt jeden imputierten Datensatz ein."
+    en: "`with(imp, lm(...))` has no `data =`; `with()` plugs in each imputed dataset."
+  - de: "`summary(pool(fit))` liefert eine Tabelle; wähle die Spalten mit `select()`."
+    en: "`summary(pool(fit))` returns a table; pick the columns with `select()`."
+explanation:
+  de: |
+    `mice()` füllt jede Lücke `m`-mal mit plausiblen Werten (Voreinstellung für
+    Zahlen: predictive mean matching), `with()` rechnet das Analysemodell in jedem
+    der 10 Datensätze, `pool()` mittelt die Schätzungen und addiert zur
+    Unsicherheit innerhalb der Datensätze die Streuung zwischen ihnen (Rubins
+    Regeln). Ergebnis: mit Sprachbedienung etwa 9,6 Punkte mehr Frustration
+    (SE ≈ 2,9), kaum anders als im Fallausschluss, weil wenig fehlt. Der `seed`
+    macht die Imputation reproduzierbar; ohne ihn ändern sich die Zahlen in der
+    zweiten Nachkommastelle bei jedem Lauf.
+  en: |
+    `mice()` fills each gap `m` times with plausible values (default for numbers:
+    predictive mean matching), `with()` fits the analysis model in each of the 10
+    datasets, `pool()` averages the estimates and adds the spread between them to
+    the uncertainty within the datasets (Rubin's rules). Result: about 9.6 points
+    more frustration with voice control (SE ≈ 2.9), hardly different from case
+    deletion because little is missing. The `seed` makes the imputation
+    reproducible; without it the numbers change in the second decimal with every
+    run.
+misconception:
+  de: "Nach `mice()` rechnet man einfach mit einem der vervollständigten Datensätze weiter."
+  en: "After `mice()` you simply continue with one of the completed datasets."
+check:
+  type: value
+  tolerance: 1.0e-4
+common_mistakes:
+  - pattern: "data\\s*=\\s*complete\\("
+    message:
+      de: "Ein vervollständigter Datensatz ignoriert die Unsicherheit der Imputation. Schätze mit `with(imp, ...)` in allen und fasse mit `pool()` zusammen."
+      en: "A single completed dataset ignores the uncertainty of the imputation. Fit with `with(imp, ...)` in all of them and combine with `pool()`."
+  - pattern: "^(?![\\s\\S]*seed\\s*=\\s*2026)[\\s\\S]*mice\\("
+    message:
+      de: "Ohne `seed = 2026` entstehen andere Imputationen und leicht andere Zahlen."
+      en: "Without `seed = 2026` you get different imputations and slightly different numbers."

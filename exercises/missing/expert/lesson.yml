@@ -1,0 +1,19 @@
+# Lesson metadata; exercises are the other *.yml files in this folder
+# (sorted by `order`), the knowledge check is quiz.yml.
+lesson: missing-expert
+minutes: 60
+prerequisites: [missing-intermediate]
+langs: [de]
+packages: [dplyr, purrr, mice, ggmice, ggplot2, naniar]
+data: [survey]
+goals:
+  de:
+    - Mehrfachimputation mit mice vollständig durchführen und Ergebnisse mit `pool()` zusammenfassen
+    - Skalenwerte nach dem Imputieren berechnen (`complete(include = TRUE)` und `as.mids()`)
+    - Imputationen mit ggmice prüfen und typische Analysefehler mit imputierten Daten erkennen
+    - Die Robustheit gegen MNAR mit einer δ-Verschiebung prüfen und FIML als Alternative einordnen
+  en:
+    - Run multiple imputation with mice end to end and combine the results with `pool()`
+    - Compute scale scores after imputing (`complete(include = TRUE)` and `as.mids()`)
+    - Check imputations with ggmice and recognise typical analysis errors with imputed data
+    - Test the robustness against MNAR with a δ shift and place FIML as an alternative

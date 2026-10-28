@@ -1,0 +1,89 @@
+id: rs-e-glance-windows
+lesson: reshaping-expert
+order: 0
+title:
+  de: Blicke den Durchgängen zuordnen
+  en: Assigning glances to trials
+kind: write
+required: false
+challenge: true
+packages: [dplyr]
+data: [driving_sim]
+setup: |
+  library(dplyr)
+  set.seed(42)
+  windows <- driving_sim |>
+    distinct(participant, condition, trial) |>
+    mutate(start_s = (row_number() - 1) * 30, end_s = start_s + 20, .by = participant)
+  glances <- tibble(participant = rep(unique(driving_sim$participant), each = 25)) |>
+    mutate(time_s = round(runif(n(), 0, 360), 1))
+prompt:
+  de: |
+    Im Fahrsimulator dauert jeder der 12 Durchgänge einer Person 20 Sekunden, danach
+    folgen 10 Sekunden Pause. `windows` enthält pro Durchgang `start_s` und `end_s`
+    (Sekunden seit Sitzungsbeginn), `glances` die Zeitpunkte `time_s`, zu denen der
+    Eyetracker einen Blick weg von der Straße erkannt hat.
+
+    Zähle pro Person, Bedingung und Durchgang die Blicke, die **innerhalb** des
+    Fensters liegen (Grenzen eingeschlossen). Blicke in den Pausen zählen nicht,
+    Durchgänge ohne Blick erhalten 0. Ergebnis: 480 Zeilen mit den Spalten
+    `participant`, `condition`, `trial`, `n_glances`.
+  en: |
+    In the driving simulator each of a participant's 12 trials lasts 20 seconds,
+    followed by a 10-second break. `windows` holds `start_s` and `end_s` per trial
+    (seconds since the session started), `glances` the times `time_s` at which the
+    eye tracker detected a glance away from the road.
+
+    Count the glances that fall **within** the window (bounds included) per
+    participant, condition and trial. Glances during breaks do not count; trials
+    without a glance get 0. Result: 480 rows with the columns `participant`,
+    `condition`, `trial`, `n_glances`.
+starter: |
+  windows |>
+    left_join(glances, by = join_by(participant)) |>
+    summarise(n_glances = n(), .by = c(participant, condition, trial))
+solution: |
+  windows |>
+    left_join(glances, by = join_by(participant, between(y$time_s, x$start_s, x$end_s))) |>
+    summarise(n_glances = sum(!is.na(time_s)), .by = c(participant, condition, trial))
+hints:
+  - de: "Der Join über `participant` allein verbindet jeden Durchgang mit allen 25 Blicken der Person. Die Zuordnung zum Fenster gehört in den Join selbst."
+    en: "Joining on `participant` alone pairs every trial with all 25 glances of the participant. The assignment to the window belongs in the join itself."
+  - de: "`join_by()` kennt Ungleichungen und `between()`. Bei `between()` steht die Spalte der linken Tabelle zuerst; mit `y$` und `x$` legst du fest, welche Spalte woher kommt."
+    en: "`join_by()` understands inequalities and `between()`. In `between()` the column of the left table comes first; with `y$` and `x$` you specify which column comes from where."
+  - de: "`join_by(participant, between(y$time_s, x$start_s, x$end_s))`, danach zählt `sum(!is.na(time_s))` nur echte Treffer."
+    en: "`join_by(participant, between(y$time_s, x$start_s, x$end_s))`, then `sum(!is.na(time_s))` counts only real matches."
+explanation:
+  de: |
+    Ein Ungleichungs-Join verbindet Zeilen, deren Werte in einer Beziehung stehen
+    (`<=`, `>=`, `between()`), statt gleich zu sein. Hier ordnet er jeden Blick dem
+    Durchgang zu, in dessen Fenster er fällt; Blicke in Pausen finden keinen Partner.
+    Zwei Fallen: `left_join()` behält Durchgänge ohne Blick als eine Zeile mit `NA`,
+    deshalb zählt `n()` sie als 1, `sum(!is.na(time_s))` richtig als 0. Und
+    `inner_join()` ließe diese Durchgänge ganz verschwinden, sodass im Mittel zu viele
+    Blicke pro Durchgang herauskämen. Dieselbe Logik brauchst du für Blickdaten pro
+    Aufgabe, Herzrate pro Phase oder Ereignisse pro Versuchsblock.
+  en: |
+    An inequality join connects rows whose values stand in a relation (`<=`, `>=`,
+    `between()`) instead of being equal. Here it assigns each glance to the trial in
+    whose window it falls; glances during breaks find no partner. Two traps:
+    `left_join()` keeps trials without a glance as one row with `NA`, so `n()` counts
+    them as 1, whereas `sum(!is.na(time_s))` correctly counts 0. And `inner_join()`
+    would drop these trials entirely, so the mean number of glances per trial would
+    come out too high. You need the same logic for gaze data per task, heart rate per
+    phase or events per block.
+misconception:
+  de: "Ein Join kann nur gleiche Schlüssel verbinden; Zeitfenster muss man nachträglich mit `filter()` prüfen."
+  en: "A join can only connect equal keys; time windows have to be checked afterwards with `filter()`."
+check:
+  type: value
+  ignore_row_order: true
+common_mistakes:
+  - pattern: "inner_join"
+    message:
+      de: "`inner_join()` verliert die Durchgänge ohne Blick; sie sollen mit 0 im Ergebnis stehen."
+      en: "`inner_join()` drops the trials without a glance; they should appear with 0."
+  - pattern: "n_glances\\s*=\\s*n\\(\\)"
+    message:
+      de: "`n()` zählt Zeilen. Ein Durchgang ohne Treffer hat nach `left_join()` trotzdem eine Zeile (mit `NA`) und bekäme 1."
+      en: "`n()` counts rows. A trial without a match still has one row (with `NA`) after `left_join()` and would get 1."

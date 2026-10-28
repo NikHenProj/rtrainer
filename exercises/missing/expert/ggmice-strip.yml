@@ -1,0 +1,80 @@
+id: ms-e-ggmice-strip
+lesson: missing-expert
+order: 2
+title:
+  de: Imputierte Werte prüfen
+  en: Checking imputed values
+kind: write
+required: true
+packages: [dplyr, mice, ggplot2, ggmice]
+data: [survey]
+setup: |
+  library(dplyr)
+  library(mice)
+  library(ggplot2)
+  library(ggmice)
+  tlx <- survey |>
+    mutate(interface = factor(interface)) |>
+    select(interface, tech_affinity, starts_with("tlx_"))
+  imp <- mice(tlx, m = 5, seed = 2026, printFlag = FALSE)
+prompt:
+  de: |
+    Bevor du mit `imp` rechnest, prüfst du, ob die imputierten Werte plausibel sind.
+    Zeichne mit ggmice einen Streifenplot für `tlx_effort`: auf der x-Achse die
+    Imputationsnummer `.imp` (0 = beobachtete Daten), auf der y-Achse
+    `tlx_effort`, die Punkte mit `geom_jitter(width = 0.25, height = 0)`. ggmice
+    färbt beobachtete und imputierte Werte selbst ein. Der Plot steht in der letzten
+    Zeile.
+  en: |
+    Before you compute with `imp`, you check whether the imputed values are
+    plausible. Draw a strip plot of `tlx_effort` with ggmice: the imputation number
+    `.imp` on the x axis (0 = observed data), `tlx_effort` on the y axis, the
+    points with `geom_jitter(width = 0.25, height = 0)`. ggmice colours observed and
+    imputed values itself. The plot is on the last line.
+starter: |
+  ggmice(imp, aes(x = tlx_effort))
+solution: |
+  ggmice(imp, aes(x = .imp, y = tlx_effort)) +
+    geom_jitter(width = 0.25, height = 0)
+hints:
+  - de: "`ggmice()` funktioniert wie `ggplot()`, nimmt aber das `mids`-Objekt; Ebenen fügst du mit `+` an."
+    en: "`ggmice()` works like `ggplot()` but takes the `mids` object; you add layers with `+`."
+  - de: "Im `aes()` von `ggmice()` gibt es die Spalte `.imp` für die Imputationsnummer."
+    en: "In the `aes()` of `ggmice()` there is the column `.imp` for the imputation number."
+  - de: "`ggmice(imp, aes(x = .imp, y = ______)) + geom_jitter(width = 0.25, height = 0)`"
+    en: "`ggmice(imp, aes(x = .imp, y = ______)) + geom_jitter(width = 0.25, height = 0)`"
+explanation:
+  de: |
+    `ggmice()` stapelt Original und Imputationen und färbt nach beobachtet und
+    imputiert (`colour = .where`). Bei predictive mean matching liegen die
+    imputierten Werte immer im Bereich der beobachteten, weil sie von ähnlichen
+    Personen „geliehen“ werden; Werte außerhalb (z. B. negative TLX-Werte) wären
+    ein Zeichen für ein falsches Verfahren. Unterscheiden sich die imputierten
+    Werte systematisch von den beobachteten, ist das nicht automatisch falsch:
+    Unter MAR dürfen sie das, wenn das Fehlen mit anderen Variablen zusammenhängt.
+    Für die Konvergenz der Ketten zeigt `plot_trace(imp)` Mittel und SD über die
+    Iterationen; die Linien sollen sich ohne Trend mischen.
+  en: |
+    `ggmice()` stacks the original and the imputations and colours by observed and
+    imputed (`colour = .where`). With predictive mean matching the imputed values
+    always lie within the range of the observed ones because they are "borrowed"
+    from similar respondents; values outside (e.g. negative TLX values) would
+    indicate a wrong method. If the imputed values differ systematically from the
+    observed ones, that is not automatically wrong: under MAR they may, if
+    missingness relates to other variables. For the convergence of the chains,
+    `plot_trace(imp)` shows mean and SD across iterations; the lines should mix
+    without a trend.
+misconception:
+  de: "Imputierte Werte müssen genauso verteilt sein wie die beobachteten, sonst ist die Imputation falsch."
+  en: "Imputed values must be distributed exactly like the observed ones, otherwise the imputation is wrong."
+check:
+  type: plot
+common_mistakes:
+  - pattern: "ggplot\\(\\s*complete\\("
+    message:
+      de: "`complete()` liefert nur einen vervollständigten Datensatz ohne Kennzeichnung. `ggmice(imp, ...)` zeigt alle Imputationen und markiert die imputierten Werte."
+      en: "`complete()` returns only one completed dataset without marking. `ggmice(imp, ...)` shows all imputations and marks the imputed values."
+  - pattern: "geom_point\\(\\s*\\)"
+    message:
+      de: "Ohne Streuung liegen die Punkte übereinander; nimm `geom_jitter(width = 0.25, height = 0)`."
+      en: "Without jitter the points overlap; use `geom_jitter(width = 0.25, height = 0)`."

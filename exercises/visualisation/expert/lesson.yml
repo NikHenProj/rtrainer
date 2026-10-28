@@ -1,0 +1,19 @@
+# Lesson metadata; exercises are the other *.yml files in this folder
+# (sorted by `order`), the knowledge check is quiz.yml.
+lesson: visualisation-expert
+minutes: 60
+prerequisites: [visualisation-intermediate]
+langs: [de]
+packages: [dplyr, ggplot2, ggdist, distributional, ggrepel, ggtext, colorspace]
+data: [usability, driving_sim]
+goals:
+  de:
+    - Verteilung der Daten und Unsicherheit eines Kennwerts mit ggdist unterscheiden und zeigen
+    - Ein eigenes Theme als Funktion schreiben, das sich wie `theme_minimal()` verwenden lässt
+    - Gezielt beschriften mit ggrepel und Markdown-Text mit ggtext statt Legende
+    - Farben mit colorspace auf Farbsehschwäche und Graustufen prüfen
+  en:
+    - Distinguish and show the distribution of the data and the uncertainty of an estimate with ggdist
+    - Write a custom theme as a function that can be used like `theme_minimal()`
+    - Label selectively with ggrepel and use Markdown text with ggtext instead of a legend
+    - Check colours for colour vision deficiency and greyscale with colorspace

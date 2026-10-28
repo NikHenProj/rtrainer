@@ -79,6 +79,14 @@ jobs:
             any::rempsyc
             any::flextable
             any::posterior
+            any::dtplyr
+            any::data.table
+            any::ggmice
+            any::ggdist
+            any::distributional
+            any::ggrepel
+            any::ggtext
+            any::colorspace
             any::here
             any::jsonlite
             any::chromote
